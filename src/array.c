@@ -80,6 +80,7 @@ land_type(LandList)
 /* Inserts a new item to the end of the list. */
 void land_list_insert_item(LandList *list, LandListItem *item)
 {
+    item->next = NULL;
     item->prev = list->last;
     if (list->last)
     {

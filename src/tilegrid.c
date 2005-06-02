@@ -22,8 +22,9 @@ LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
 static void dummy_draw(LandGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y)
 {
     // TODO: draw sprites/tiles
+    land_color(1, 0, 0);
     land_rectangle(pixel_x, pixel_y, pixel_x + self->cell_w - 1,
-        pixel_y + self->cell_h - 1, 1, 0, 0);
+        pixel_y + self->cell_h - 1);
 }
 
 /* Convert a view position inside the grid into cell and pixel position. */

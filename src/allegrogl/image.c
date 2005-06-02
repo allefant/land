@@ -3,11 +3,12 @@
 #endif /* _PROTOTYPE_ */
 
 #include <alleggl.h>
+#include "display.h"
 #include "allegrogl/image.h"
 
 static LandImageInterface *vtable;
 
-LandImage *land_image_allegrogl_new(void)
+LandImage *land_image_allegrogl_new(LandDisplay *super)
 {
     LandImage *self;
     land_alloc(self);

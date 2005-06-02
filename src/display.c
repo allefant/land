@@ -18,23 +18,27 @@ typedef struct LandDisplay LandDisplay;
 struct LandDisplayInterface
 {
     land_method(void, set, (LandDisplay *self));
-    land_method(void, clear, (LandDisplay *self, float r, float g, float b));
+    land_method(void, clear, (LandDisplay *self));
     land_method(void, flip, (LandDisplay *self));
-    land_method(void, rectangle, (LandDisplay *self, float x, float y, float x_, float y_,
-        float r, float g, float b));
-    land_method(void, line, (LandDisplay *self, float x, float y, float x_, float y_,
-        float r, float g, float b));
-    land_method(void, filled_circle, (LandDisplay *self, float x, float y, float x_, float y_,
-        float r, float g, float b));
-    land_method(void, circle, (LandDisplay *self, float x, float y, float x_, float y_,
-        float r, float g, float b));
+    land_method(void, rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
+    land_method(void, filled_rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
+    land_method(void, line, (LandDisplay *self, float x, float y, float x_, float y_));
+    land_method(void, filled_circle, (LandDisplay *self, float x, float y, float x_, float y_));
+    land_method(void, circle, (LandDisplay *self, float x, float y, float x_, float y_));
     land_method(LandImage *, new_image, (LandDisplay *self));
+    land_method(void, color, (LandDisplay *self));
+    land_method(void, clip, (LandDisplay *self));
 };
 
 struct LandDisplay
 {
     LandDisplayInterface *vt;
     int w, h, bpp, hz, flags;
+
+    float color_r, color_g, color_b, color_a;
+
+    int clip_off;
+    float clip_x1, clip_y1, clip_x2, clip_y2;
 };
 
 #endif /* _PROTOTYPE_ */
@@ -70,6 +74,8 @@ LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
 void land_display_set(void)
 {
     _land_active_display->vt->set(_land_active_display);
+    _land_active_display->vt->color(_land_active_display);
+    _land_active_display->vt->clip(_land_active_display);
 }
 
 void land_display_init(void)
@@ -85,37 +91,79 @@ void land_clear(float r, float g, float b)
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void land_color(float r, float g, float b)
+{
+    LandDisplay *d = _land_active_display;
+    d->color_r = r;
+    d->color_g = g;
+    d->color_b = b;
+    _land_active_display->vt->color(_land_active_display);
+}
+
+void land_transparency(float a)
+{
+    LandDisplay *d = _land_active_display;
+    d->color_a = a;
+    _land_active_display->vt->color(_land_active_display);
+}
+
+void land_clip(float x, float y, float x_, float y_)
+{
+    LandDisplay *d = _land_active_display;
+    d->clip_x1 = x;
+    d->clip_y1 = y;
+    d->clip_x2 = x_;
+    d->clip_y2 = y_;
+    _land_active_display->vt->clip(_land_active_display);
+}
+
+void land_clip_on(void)
+{
+    LandDisplay *d = _land_active_display;
+    d->clip_off = 0;
+    _land_active_display->vt->clip(_land_active_display);
+}
+
+void land_clip_off(void)
+{
+    LandDisplay *d = _land_active_display;
+    d->clip_off = 1;
+    _land_active_display->vt->clip(_land_active_display);
+}
+
 void land_flip(void)
 {
     _land_active_display->vt->flip(_land_active_display);
 }
 
 void land_rectangle(
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+    float x, float y, float x_, float y_)
 {
-    _land_active_display->vt->rectangle(_land_active_display, x, y, x_, y_, r, g, b);
+    _land_active_display->vt->rectangle(_land_active_display, x, y, x_, y_);
+}
+
+void land_filled_rectangle(
+    float x, float y, float x_, float y_)
+{
+    _land_active_display->vt->filled_rectangle(_land_active_display, x, y, x_, y_);
 }
 
 void land_filled_circle(
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+    float x, float y, float x_, float y_)
 {
-    _land_active_display->vt->filled_circle(_land_active_display, x, y, x_, y_, r, g, b);
+    _land_active_display->vt->filled_circle(_land_active_display, x, y, x_, y_);
 }
 
 void land_circle(
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+    float x, float y, float x_, float y_)
 {
-    _land_active_display->vt->circle(_land_active_display, x, y, x_, y_, r, g, b);
+    _land_active_display->vt->circle(_land_active_display, x, y, x_, y_);
 }
 
 void land_line(
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+    float x, float y, float x_, float y_)
 {
-    _land_active_display->vt->line(_land_active_display, x, y, x_, y_, r, g, b);
+    _land_active_display->vt->line(_land_active_display, x, y, x_, y_);
 }
 
 int land_display_width(void)

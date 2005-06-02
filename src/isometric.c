@@ -169,24 +169,25 @@ static void placeholder(LandGrid *self, LandView *view, int cell_x, int cell_y, 
     int x_, y_;
     int w = self->cell_w / 2 - 2; /* So no overlap. */
     int h = self->cell_h / 2 - 1;
+    land_color(255, 0, 0);
     x_ = x + w;
     y_ = y + h;
-    land_line(x, y, x_, y_, 255, 0, 0);
+    land_line(x, y, x_, y_);
     x = x_;
     y = y_ + 1;
     x_ = x - w;
     y_ = y + h;
-    land_line(x, y, x_, y_, 255, 0, 0);
+    land_line(x, y, x_, y_);
     x = x_ - 1;
     y = y_;
     x_ = x - w;
     y_ = y - h;
-    land_line(x, y, x_, y_, 255, 0, 0);
+    land_line(x, y, x_, y_);
     x = x_;
     y = y_ - 1;
     x_ = x + w;
     y_ = y - h;
-    land_line(x, y, x_, y_, 255, 0, 0);
+    land_line(x, y, x_, y_);
 }
 
 void land_grid_draw_isometric(LandGrid *self, LandView *view)

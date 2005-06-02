@@ -108,6 +108,8 @@ void land_text_on(void)
 void _print(char const *text, int newline)
 {
     LandFont *self = text_font;
+    if (!self)
+        return;
     int w = gk_text_width_utf8(self->rend, text);
     int h = gk_text_height_utf8(self->rend, text);
     int a = (gk_face_ascender(self->face) >> 6) * h / workaround_bug_size;

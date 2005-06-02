@@ -14,6 +14,8 @@ land_type(LandDisplayAllegroGL)
     LandDisplay super;
 };
 
+#define LAND_DISPLAY_ALLEGROGL(_x_) ((LandDisplayAllegroGL *)_x_)
+
 #endif /* _PROTOTYPE_ */
 
 #include "allegrogl/display.h"
@@ -34,13 +36,22 @@ LandDisplayAllegroGL *land_display_allegrogl_new(int w, int h, int bpp, int hz,
     super->flags = flags;
     super->vt = vtable;
 
+    super->clip_x1 = 0;
+    super->clip_y1 = 0;
+    super->clip_x2 = w;
+    super->clip_y2 = h;
+
+    super->color_r = 1;
+    super->color_g = 1;
+    super->color_b = 1;
+    super->color_a = 1;
+
     return self;
 }
 
-void land_display_allegrogl_set(LandDisplayAllegroGL *self)
+void land_display_allegrogl_set(LandDisplay *super)
 {
     land_log_msg("land_display_allegrogl_set\n");
-    LandDisplay *super = &self->super;
     int mode = GFX_AUTODETECT;
 
     int cd = desktop_color_depth();
@@ -94,19 +105,17 @@ void land_display_allegrogl_set(LandDisplayAllegroGL *self)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void land_display_allegrogl_flip(LandDisplayAllegroGL *self)
+void land_display_allegrogl_flip(LandDisplay *super)
 {
     allegro_gl_flip();
 }
 
-void land_display_allegrogl_rectangle(LandDisplayAllegroGL *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+void land_display_allegrogl_rectangle(LandDisplay *super,
+    float x, float y, float x_, float y_)
 {
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     glDisable(GL_TEXTURE_2D);
-    glColor4f(r, g, b, 1);
     glBegin(GL_LINE_LOOP);
     glVertex2f(x, y);
     glVertex2f(x_, y);
@@ -116,15 +125,28 @@ void land_display_allegrogl_rectangle(LandDisplayAllegroGL *self,
     glPopMatrix();
 }
 
-void land_display_allegrogl_filled_circle(LandDisplayAllegroGL *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+void land_display_allegrogl_filled_rectangle(LandDisplay *super,
+    float x, float y, float x_, float y_)
+{
+    glPushMatrix();
+    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_POLYGON);
+    glVertex2f(x, y);
+    glVertex2f(x_, y);
+    glVertex2f(x_, y_);
+    glVertex2f(x, y_);
+    glEnd();
+    glPopMatrix();
+}
+
+void land_display_allegrogl_filled_circle(LandDisplay *super,
+    float x, float y, float x_, float y_)
 {
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     float min_side_length = 2;
     glDisable(GL_TEXTURE_2D);
-    glColor4f(r, g, b, 1);
     glBegin(GL_POLYGON);
     float xradius = (x_ - x) * 0.5;
     float yradius = (y_ - y) * 0.5;
@@ -145,14 +167,12 @@ void land_display_allegrogl_filled_circle(LandDisplayAllegroGL *self,
     glPopMatrix();
 }
 
-void land_display_allegrogl_circle(LandDisplayAllegroGL *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+void land_display_allegrogl_circle(LandDisplay *super,
+    float x, float y, float x_, float y_)
 {
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     float min_side_length = 2;
-    glColor4f(r, g, b, 1);
     glBegin(GL_LINE_LOOP);
     float xradius = (x_ - x) * 0.5;
     float yradius = (y_ - y) * 0.5;
@@ -172,9 +192,8 @@ void land_display_allegrogl_circle(LandDisplayAllegroGL *self,
     glPopMatrix();
 }
 
-void land_display_allegrogl_line(LandDisplayAllegroGL *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
+void land_display_allegrogl_line(LandDisplay *super,
+    float x, float y, float x_, float y_)
 {
     float dx = x_ - x;
     float dy = y_ - y;
@@ -182,7 +201,6 @@ void land_display_allegrogl_line(LandDisplayAllegroGL *self,
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     glDisable(GL_TEXTURE_2D);
-    glColor4f(r, g, b, 1);
     glBegin(GL_LINES);
     glVertex2f(x, y);
     glVertex2f(x_ + dx / d, y_ + dy / d);
@@ -190,16 +208,34 @@ void land_display_allegrogl_line(LandDisplayAllegroGL *self,
     glPopMatrix();
 }
 
+void land_display_allegrogl_color(LandDisplay *super)
+{
+    glColor4f(super->color_r, super->color_g, super->color_b, super->color_a);
+}
+
+void land_display_allegrogl_clip(LandDisplay *super)
+{
+    if (super->clip_off)
+        glDisable(GL_SCISSOR_TEST);
+    else
+        glEnable(GL_SCISSOR_TEST);
+    glScissor(super->clip_x1, super->h - super->clip_y2, super->clip_x2 - super->clip_x1,
+        super->clip_y2 - super->clip_y1);
+}
+
 void land_display_allegrogl_init(void)
 {
     land_log_msg("land_display_allegrogl_init\n");
     land_alloc(vtable);
 
-    vtable->set = (void *)land_display_allegrogl_set;
-    vtable->flip = (void *)land_display_allegrogl_flip;
-    vtable->rectangle = (void *)land_display_allegrogl_rectangle;
-    vtable->line = (void *)land_display_allegrogl_line;
-    vtable->new_image = (void *)land_image_allegrogl_new;
-    vtable->filled_circle = (void *)land_display_allegrogl_filled_circle;
-    vtable->circle = (void *)land_display_allegrogl_circle;
+    vtable->set = land_display_allegrogl_set;
+    vtable->flip = land_display_allegrogl_flip;
+    vtable->rectangle = land_display_allegrogl_rectangle;
+    vtable->filled_rectangle = land_display_allegrogl_filled_rectangle;
+    vtable->line = land_display_allegrogl_line;
+    vtable->new_image = land_image_allegrogl_new;
+    vtable->filled_circle = land_display_allegrogl_filled_circle;
+    vtable->circle = land_display_allegrogl_circle;
+    vtable->color = land_display_allegrogl_color;
+    vtable->clip = land_display_allegrogl_clip;
 };
