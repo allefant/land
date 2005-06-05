@@ -113,8 +113,6 @@ void land_display_allegrogl_flip(LandDisplay *super)
 void land_display_allegrogl_rectangle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINE_LOOP);
     glVertex2f(x, y);
@@ -122,14 +120,11 @@ void land_display_allegrogl_rectangle(LandDisplay *super,
     glVertex2f(x_, y_);
     glVertex2f(x, y_);
     glEnd();
-    glPopMatrix();
 }
 
 void land_display_allegrogl_filled_rectangle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_POLYGON);
     glVertex2f(x, y);
@@ -137,14 +132,11 @@ void land_display_allegrogl_filled_rectangle(LandDisplay *super,
     glVertex2f(x_, y_);
     glVertex2f(x, y_);
     glEnd();
-    glPopMatrix();
 }
 
 void land_display_allegrogl_filled_circle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     float min_side_length = 2;
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_POLYGON);
@@ -163,15 +155,12 @@ void land_display_allegrogl_filled_circle(LandDisplay *super,
         glVertex2f(xcenter + xradius * cos(a), ycenter - yradius * sin(a));
         a += ai;
     }
-    glEnd();
-    glPopMatrix();
+    glEnd(); 
 }
 
 void land_display_allegrogl_circle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     float min_side_length = 2;
     glBegin(GL_LINE_LOOP);
     float xradius = (x_ - x) * 0.5;
@@ -189,7 +178,6 @@ void land_display_allegrogl_circle(LandDisplay *super,
         a += ai;
     }
     glEnd();
-    glPopMatrix();
 }
 
 void land_display_allegrogl_line(LandDisplay *super,
@@ -198,14 +186,11 @@ void land_display_allegrogl_line(LandDisplay *super,
     float dx = x_ - x;
     float dy = y_ - y;
     float d = sqrt(dx * dx + dy * dy);
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0); /* Center of pixel in GL. */
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINES);
     glVertex2f(x, y);
     glVertex2f(x_ + dx / d, y_ + dy / d);
     glEnd();
-    glPopMatrix();
 }
 
 void land_display_allegrogl_color(LandDisplay *super)

@@ -15,6 +15,18 @@ USECPROTO = 1
 
 include ../makefile.template
 
+shiny: examples-shiny
+clean: examples-clean
+
+examples:
+	$(MAK) -C examples examples
+
+examples-clean:
+	$(MAK) -C examples examples-clean
+
+examples-shiny:
+	$(MAK) -C examples examples-shiny
+
 install:
 	cp libland.a /usr/local/lib
 	for i in "" "/allegro" "/allegrogl"; do \
@@ -25,3 +37,5 @@ install:
 uninstall:
 	-rm /usr/local/lib/libland.a
 	-rm -r /usr/local/include/land
+
+.PHONY: clean examples examples-clean install uninstall
