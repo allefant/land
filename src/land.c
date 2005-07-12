@@ -22,6 +22,9 @@
 #include "isometric.h"
 #include "sprite.h"
 #include "log.h"
+#include "color.h"
+
+#include "widget.h"
 
 #define land_begin() \
     static void _land_main(void); \

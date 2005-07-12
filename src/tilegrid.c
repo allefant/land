@@ -30,7 +30,7 @@ static void dummy_draw(LandGrid *self, LandView *view, int cell_x, int cell_y, f
 /* Convert a view position inside the grid into cell and pixel position. */
 static void view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, int *pixel_x)
 {
-    if (self->wrap_x)
+    if (0)//self->wrap_x)
     {
         /* wrap around -> there's always a cell at the left border */
         *cell_x = (unsigned int)view_x / self->cell_w;
@@ -55,7 +55,7 @@ static void view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, 
 /* Convert a view position inside the grid into cell and pixel position. */
 static void view_y_to_cell_and_pixel_y(LandGrid *self, int view_y, int *cell_y, int *pixel_y)
 {
-    if (self->wrap_y)
+    if (0)//self->wrap_y)
     {
         /* wrap around -> there's always a cell at the top border */
         *cell_y = (unsigned int)view_y / self->cell_h;
@@ -92,7 +92,7 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
     {
         if (cell_y >= self->y_cells)
         {
-            if (self->wrap_y)
+            if (0)//self->wrap_y)
                 cell_y -= self->y_cells;
             else
                 break;
@@ -105,7 +105,7 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
         {
             if (cell_x >= self->x_cells)
             {
-                if (self->wrap_x)
+                if (0)//self->wrap_x)
                     cell_x -= self->x_cells;
                 else
                     break;

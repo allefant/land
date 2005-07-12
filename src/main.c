@@ -66,6 +66,7 @@ void land_quit(void)
 
 void land_set_frequency(int f)
 {
+    land_log_msg("land_set_frequency %d.\n", f);
     parameters->frequency = f;
 }
 

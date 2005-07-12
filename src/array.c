@@ -20,8 +20,11 @@
     static name **name##_array = NULL; \
     static int name##_count = 0;
 
-#define land_alloc(self) \
+#define land_alloc(self); \
     self = calloc(1, sizeof *self);
+
+#define land_free(self); \
+    free(self);
 
 #define land_new(type, self) \
     type *self; \
@@ -70,6 +73,7 @@ land_type(LandListItem)
 
 land_type(LandList)
 {
+    int count;
     LandListItem *first, *last;
 };
 
@@ -91,6 +95,7 @@ void land_list_insert_item(LandList *list, LandListItem *item)
         list->first = item;
     }
     list->last = item;
+    list->count++;
 }
 
 /* May only be called with an item which is in the list. */
@@ -112,6 +117,7 @@ void land_list_remove_item(LandList *list, LandListItem *item)
     {
         list->last = item->prev;
     }
+    list->count--;
 }
 
 /* Given a pointer to a (possibly NULL valued) list pointer, create a new node
@@ -122,13 +128,9 @@ void land_add_list_data(LandList **list, void *data)
     LandListItem *item;
     land_alloc(item);
     item->data = data;
-    if (*list)
+    if (!*list)
     {
-        land_list_insert_item(*list, item);
+        land_alloc(*list)
     }
-    else
-    {
-        land_alloc(*list);
-        (*list)->first = (*list)->last = item;
-    }
+    land_list_insert_item(*list, item);
 }

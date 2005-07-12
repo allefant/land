@@ -78,6 +78,7 @@ land_log_msg_nostamp (char const *template, ...)
     logfile = fopen(logname, "a");
     vfprintf(logfile, template, va_args);
     fclose(logfile);
+    //vprintf(template, va_args);
     va_end(va_args);
 }
 
@@ -106,6 +107,7 @@ land_log_msg (char const *template, ...)
         tv.tv_usec);
     vfprintf(logfile, template, va_args);
     fclose(logfile);
+    //vprintf(template, va_args);
     va_end(va_args);
 }
 

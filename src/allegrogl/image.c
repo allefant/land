@@ -16,26 +16,36 @@ LandImage *land_image_allegrogl_new(LandDisplay *super)
     return self;
 }
 
+void land_image_allegrogl_del(LandDisplay *super, LandImage *self)
+{
+    if (self->gl_texture)
+    {
+        glDeleteTextures(1, &self->gl_texture);
+    }
+    land_free(self);
+}
+
 static void quad(LandImage *self)
 {
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, self->gl_texture);
     glBegin(GL_TRIANGLE_FAN);
 
-    GLfloat w = self->bitmap->w;
-    GLfloat h = self->bitmap->h;
+    GLfloat w = self->memory_cache->w;
+    GLfloat h = self->memory_cache->h;
 
     GLfloat l = 0;
     GLfloat t = 0;
-    GLfloat r = self->bitmap->w;
-    GLfloat b = self->bitmap->h;
+    GLfloat r = self->memory_cache->w;
+    GLfloat b = self->memory_cache->h;
 
     GLfloat mx = l + self->x;
     GLfloat my = t + self->y;
 
-    l += 0;
-    t += 0;
-    r -= 0;
-    b -= 0;
+    l += self->l;
+    t += self->t;
+    r -= self->r;
+    b -= self->b;
 
     glTexCoord2f(r / w, (h - b) / h);
     glVertex2d(r - mx, b - my);
@@ -74,6 +84,10 @@ void land_image_allegrogl_init(void)
 
 void land_image_allegrogl_prepare(LandImage *self)
 {
+    if (self->gl_texture)
+    {
+        glDeleteTextures(1, &self->gl_texture);
+    }
     allegro_gl_set_texture_format(GL_RGBA8);
     self->gl_texture = allegro_gl_make_texture(self->memory_cache);
 }

@@ -25,7 +25,9 @@ struct LandImage
     BITMAP *memory_cache;
     int gl_texture;
 
-    int x, y;
+    float x, y; /* Offset to origin. */
+
+    float l, t, r, b; /* Cut-away left, top, right, bottom. */
 };
 
 #endif /* _PROTOTYPE_ */
@@ -36,21 +38,25 @@ struct LandImage
 
 land_array(LandImage)
 
-LandImage *land_load_image(char const *filename)
+LandImage *land_image_load(char const *filename)
 {
-    land_log_msg("land_load_image %s..", filename);
+    land_log_msg("land_image_load %s..", filename);
     set_color_conversion(COLORCONV_NONE);
     BITMAP *bmp = load_bitmap(filename, NULL);
     if (bmp)
     {
         LandImage *self = land_display_new_image();
-        land_add(LandImage, self);
         self->filename = strdup(filename);
         self->name = strdup(filename);
         self->bitmap = bmp;
         self->memory_cache = bmp;
         land_image_prepare(self);
         land_log_msg_nostamp("success (%d x %d)\n", bmp->w, bmp->h);
+
+        float red, green, blue, alpha;
+        int n;
+        n = land_image_color_stats(self, &red, &green, &blue, &alpha);
+        land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
         return self;
     }
     else
@@ -60,6 +66,67 @@ LandImage *land_load_image(char const *filename)
     return NULL;
 }
 
+LandImage *land_image_new(int w, int h)
+{
+    BITMAP *bmp = create_bitmap(w, h);
+    LandImage *self = land_display_new_image();
+    self->filename = NULL;
+    self->name = NULL;
+    self->bitmap = bmp;
+    self->memory_cache = bmp;
+    land_log_msg("land_image_new %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+    land_image_prepare(self);
+    return self;
+}
+
+void land_image_del(LandImage *self)
+{
+    if (self->bitmap != self->memory_cache)
+        destroy_bitmap(self->bitmap);
+    destroy_bitmap(self->memory_cache);
+    land_display_del_image(self);
+}
+
+void land_image_crop(LandImage *self, int x, int y, int w, int h)
+{
+    // TODO
+}
+
+LandImage *land_image_new_from(LandImage *copy, int x, int y, int w, int h)
+{
+    LandImage *self = land_image_new(w, h);
+    blit(copy->memory_cache, self->memory_cache, x, y, 0, 0, w, h);
+    float red, green, blue, alpha;
+    int n;
+    n = land_image_color_stats(self, &red, &green, &blue, &alpha);;
+    land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
+    land_image_prepare(self);
+    return self;
+}
+
+int land_image_color_stats(LandImage *self, float *red, float *green, float *blue, float *alpha)
+{
+    int n = 0;
+    *red = 0;
+    *green = 0;
+    *blue = 0;
+    *alpha = 0;
+    int i, j;
+    for (j = 0; j < land_image_height(self); j++)
+    {
+        for (i = 0; i < land_image_width(self); i++)
+        {
+            int rgba = getpixel(self->memory_cache, i, j);
+            *red += getr(rgba) * 1.0 / 255.0;
+            *green += getg(rgba) * 1.0 / 255.0;
+            *blue += getb(rgba) * 1.0 / 255.0;
+            *alpha += geta(rgba) * 1.0 / 255.0;
+            n++;
+        }
+    }
+    return n;
+}
+
 void land_image_prepare(LandImage *self)
 {
     self->vt->prepare(self);
@@ -67,7 +134,7 @@ void land_image_prepare(LandImage *self)
 
 static int callback(const char *filename, int attrib, void *param)
 {
-    land_load_image(filename);
+    land_image_load(filename);
     return 0;
 }
 
@@ -110,6 +177,11 @@ void land_image_draw_scaled(LandImage *self, float x, float y, float sx, float s
     land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, 1, 1, 1);
 }
 
+void land_image_draw_rotated(LandImage *self, float x, float y, float a)
+{
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, 1, 1, 1);
+}
+
 void land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, float sy,
     float r, float g, float b)
 {
@@ -137,4 +209,35 @@ void land_image_init(void)
 {
     land_image_allegro_init();
     land_image_allegrogl_init();
+}
+
+/* Set's a source clip rectangle for the image. That is, only the specified
+ * rectangle out of the image will actually be used when this image is drawn
+ * somewhere.
+ */
+void land_image_clip(LandImage *self, float x, float y, float x_, float y_)
+{
+    self->l = x;
+    self->t = y;
+    self->r = self->bitmap->w - x_;
+    self->b = self->bitmap->h - y_;
+}
+
+/* Just a shortcut for land_image_clip(image, 0, 0, 0, 0); */
+void land_image_unclip(LandImage *self)
+{
+    self->l = 0;
+    self->t = 0;
+    self->r = 0;
+    self->b = 0;
+}
+
+int land_image_height(LandImage *self)
+{
+    return self->bitmap->h;
+}
+
+int land_image_width(LandImage *self)
+{
+    return self->bitmap->w;
 }

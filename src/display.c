@@ -14,6 +14,7 @@ typedef struct LandDisplay LandDisplay;
 #define LAND_WINDOWED 1
 #define LAND_FULLSCREEN 2
 #define LAND_OPENGL 4
+#define LAND_CLOSE_LINES 8
 
 struct LandDisplayInterface
 {
@@ -26,6 +27,7 @@ struct LandDisplayInterface
     land_method(void, filled_circle, (LandDisplay *self, float x, float y, float x_, float y_));
     land_method(void, circle, (LandDisplay *self, float x, float y, float x_, float y_));
     land_method(LandImage *, new_image, (LandDisplay *self));
+    land_method(void, del_image, (LandDisplay *self, LandImage *image));
     land_method(void, color, (LandDisplay *self));
     land_method(void, clip, (LandDisplay *self));
 };
@@ -39,6 +41,7 @@ struct LandDisplay
 
     int clip_off;
     float clip_x1, clip_y1, clip_x2, clip_y2;
+    LandList *clip_stack;
 };
 
 #endif /* _PROTOTYPE_ */
@@ -117,6 +120,43 @@ void land_clip(float x, float y, float x_, float y_)
     _land_active_display->vt->clip(_land_active_display);
 }
 
+void land_clip_intersect(float x, float y, float x_, float y_)
+{
+    LandDisplay *d = _land_active_display;
+    d->clip_x1 = MAX(d->clip_x1, x);
+    d->clip_y1 = MAX(d->clip_y1, y);
+    d->clip_x2 = MIN(d->clip_x2, x_);
+    d->clip_y2 = MIN(d->clip_y2, y_);
+    _land_active_display->vt->clip(_land_active_display);
+}
+
+void land_clip_push(void)
+{
+    LandDisplay *d = _land_active_display;
+    int *clip = malloc(5 * sizeof *clip);
+    clip[0] = d->clip_x1;
+    clip[1] = d->clip_y1;
+    clip[2] = d->clip_x2;
+    clip[3] = d->clip_y2;
+    clip[4] = d->clip_off;
+    land_add_list_data(&d->clip_stack, clip);
+}
+
+void land_clip_pop(void)
+{
+    LandDisplay *d = _land_active_display;
+    LandListItem *item = d->clip_stack->last;
+    land_list_remove_item(d->clip_stack, item);
+    int *clip = item->data;
+    d->clip_x1 = clip[0];
+    d->clip_y1 = clip[1];
+    d->clip_x2 = clip[2];
+    d->clip_y2 = clip[3];
+    d->clip_off = clip[4];
+    free(clip);
+    free(item);
+}
+
 void land_clip_on(void)
 {
     LandDisplay *d = _land_active_display;
@@ -129,6 +169,16 @@ void land_clip_off(void)
     LandDisplay *d = _land_active_display;
     d->clip_off = 1;
     _land_active_display->vt->clip(_land_active_display);
+}
+
+void land_unclip(void)
+{
+    LandDisplay *d = _land_active_display;
+    d->clip_x1 = 0;
+    d->clip_y1 = 0;
+    d->clip_x2 = land_display_width();
+    d->clip_y2 = land_display_height();
+    d->vt->clip(d);
 }
 
 void land_flip(void)
@@ -187,5 +237,10 @@ int land_display_flags(void)
 LandImage *land_display_new_image(void)
 {
     return _land_active_display->vt->new_image(_land_active_display);
+}
+
+void land_display_del_image(LandImage *image)
+{
+    return _land_active_display->vt->del_image(_land_active_display, image);
 }
 

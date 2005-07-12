@@ -183,13 +183,21 @@ void land_display_allegrogl_circle(LandDisplay *super,
 void land_display_allegrogl_line(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
-    float dx = x_ - x;
-    float dy = y_ - y;
-    float d = sqrt(dx * dx + dy * dy);
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINES);
     glVertex2f(x, y);
-    glVertex2f(x_ + dx / d, y_ + dy / d);
+    if (super->flags & LAND_CLOSE_LINES)
+    {
+        /* Draw line by one pixel longer, since OpenGL never draws the last pixel. */
+        float dx = x_ - x;
+        float dy = y_ - y;
+        float d = sqrt(dx * dx + dy * dy);
+        glVertex2f(x_ + dx / d, y_ + dy / d);
+    }
+    else
+    {
+        glVertex2f(x_, y_);
+    }
     glEnd();
 }
 
@@ -219,6 +227,7 @@ void land_display_allegrogl_init(void)
     vtable->filled_rectangle = land_display_allegrogl_filled_rectangle;
     vtable->line = land_display_allegrogl_line;
     vtable->new_image = land_image_allegrogl_new;
+    vtable->del_image = land_image_allegrogl_del;
     vtable->filled_circle = land_display_allegrogl_filled_circle;
     vtable->circle = land_display_allegrogl_circle;
     vtable->color = land_display_allegrogl_color;
