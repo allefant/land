@@ -23,7 +23,7 @@ struct LandImage
     char *name;
     BITMAP *bitmap;
     BITMAP *memory_cache;
-    int gl_texture;
+    unsigned int gl_texture;
 
     float x, y; /* Offset to origin. */
 

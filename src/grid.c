@@ -16,8 +16,8 @@ struct LandGridInterface
 struct LandGrid
 {
     LandGridInterface *vt;
-    unsigned int x_cells, y_cells; /* in cells */
-    unsigned int cell_w, cell_h; /* in pixels */
+    int x_cells, y_cells; /* in cells */
+    int cell_w, cell_h; /* in pixels */
 };
 
 #endif /* _PROTOTYPE_ */
