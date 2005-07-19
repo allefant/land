@@ -22,8 +22,8 @@ struct LandSprite
 
 land_type(LandSpritesGrid)
 {
-    LandGrid super;
-    LandList **sprites; /* 2D-array of sprite lists */
+    LandGrid super; /* 2D-array of sprite lists */
+    LandList **sprites;
 };
 
 #endif /* _PROTOTYPE_ */
@@ -91,9 +91,22 @@ static void grid_place(LandSprite *self, LandSpritesGrid *grid)
     int tx = self->x / grid->super.cell_w;
     int ty = self->y / grid->super.cell_h;
 
+    //FIXME: need proper sprites container, with allocating a new ListItem
     land_add_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
         self);
 }
+
+static void grid_unplace(LandSprite *self, LandSpritesGrid *grid)
+{
+    int tx = self->x / grid->super.cell_w;
+    int ty = self->y / grid->super.cell_h;
+
+    //FIXME: need proper sprites container, without iterating the whole list and
+    //de-allocating the ListItem
+    land_remove_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
+        self);
+}
+
 
 void land_sprite_place_into_grid(LandSprite *self, LandGrid *grid, float x, float y)
 {
@@ -102,9 +115,20 @@ void land_sprite_place_into_grid(LandSprite *self, LandGrid *grid, float x, floa
     grid_place(self, (LandSpritesGrid *)grid);
 }
 
-void land_sprite_move(LandSprite *self, float x, float y)
+void land_sprite_move(LandSprite *self, LandGrid *grid, float x, float y)
 {
+    grid_unplace(self, (LandSpritesGrid *)grid);
+    self->x += x;
+    if (self->x < 0) self->x = 0;
+    if (self->x >= grid->cell_w * grid->x_cells)
+        self->x = grid->cell_w * grid->x_cells - 1;
 
+    self->y += y;
+    if (self->y < 0) self->y = 0;
+    if (self->y >= grid->cell_h * grid->y_cells)
+        self->y = grid->cell_h * grid->y_cells - 1;
+
+    grid_place(self, (LandSpritesGrid *)grid);
 }
 
 static void land_sprites_grid_draw_cell(LandSpritesGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y)
