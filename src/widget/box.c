@@ -3,8 +3,6 @@
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
-#include "widget/base.h"
-#include "widget/box.h"
 
 WidgetInterface *widget_box_interface = NULL;
 

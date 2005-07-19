@@ -3,7 +3,7 @@
 typedef struct Widget Widget;
 typedef struct WidgetInterface WidgetInterface;
 
-#include "widget/gul.h"
+#include "gul.h"
 
 struct WidgetInterface
 {
@@ -70,6 +70,14 @@ void widget_base_initialize(Widget *self, Widget *parent, int x, int y, int w, i
         self->theme = parent->theme;
         land_call_method(parent, add, (parent, self));
     }
+}
+
+void widget_create_interface(Widget *widget)
+{
+    WidgetInterface *vt;
+    land_alloc(vt);
+    memcpy(vt, widget->vt, sizeof *vt);
+    widget->vt = vt;
 }
 
 Widget *widget_new(Widget *parent, int x, int y, int w, int h)

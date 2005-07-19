@@ -2,7 +2,7 @@
 
 typedef struct WidgetText WidgetText;
 
-#include "widget/base.h"
+#include "base.h"
 
 struct WidgetText
 {
@@ -22,14 +22,11 @@ void widget_text_draw(Widget *base)
 {
     WidgetText *self = WIDGET_TEXT(base);
     widget_box_draw(base);
-    land_color(0, 0.5, 0);
-    land_filled_rectangle(base->box.x, base->box.y,
-        base->box.x + base->box.w, base->box.y + base->box.h);
     if (self->text)
     {
         int x = base->box.x + base->box.il + 1;
         int y = base->box.y + base->box.it + 1;
-        land_text_color(0, 1, 0, 1);
+        land_text_color(0, 0.5, 1, 0.8);
         land_text_pos(x, y);
         land_print(self->text);
     }

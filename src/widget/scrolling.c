@@ -2,7 +2,7 @@
 
 typedef struct WidgetScrolling WidgetScrolling;
 
-#include "widget/container.h"
+#include "container.h"
 
 struct WidgetScrolling
 {

@@ -1,7 +1,7 @@
 #ifdef _PROTOTYPE_
 
-#include "widget/base.h"
-#include "widget/scrolling.h"
+#include "base.h"
+#include "scrolling.h"
 
 typedef struct WidgetList WidgetList;
 

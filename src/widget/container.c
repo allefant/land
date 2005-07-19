@@ -2,9 +2,9 @@
 
 typedef struct WidgetContainer WidgetContainer;
 
-#include "widget/base.h"
+#include "base.h"
 
-#include "array.h"
+#include "../array.h"
 
 struct WidgetContainer
 {

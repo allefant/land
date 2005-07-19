@@ -1,12 +1,12 @@
 #ifdef _PROTOTYPE_
 
-#include "land.h"
+#include "../land.h"
 
 typedef struct WigetTheme WidgetTheme;
 typedef struct WidgetThemeElement WidgetThemeElement;
 typedef enum WidgetThemeFlags WidgetThemeFlags;
 
-#include "widget/base.h"
+#include "base.h"
 
 enum WidgetThemeFlags
 {

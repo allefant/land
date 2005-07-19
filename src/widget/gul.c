@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-
-#include "widget/gul.h"
-
 #ifdef _PROTOTYPE_
 
 typedef struct GUL_BOX GUL_BOX;
@@ -70,6 +63,13 @@ struct GUL_BOX
 };
 
 #endif /* _PROTOTYPE_ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+
+#include "widget/gul.h"
 
 //#define ERR(_) printf (_), printf("\n");
 //#define D(_) _

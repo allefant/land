@@ -1,8 +1,8 @@
 #ifdef _PROTOTYPE_
 
-#include "land.h"
+#include "../land.h"
 
-#include "widget/container.h"
+#include "container.h"
 
 typedef struct WidgetScrollbar WidgetScrollbar;
 

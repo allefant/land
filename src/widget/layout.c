@@ -1,11 +1,11 @@
-#include "widget/layout.h"
-
 #ifdef _PROTOTYPE_
 
-#include "land.h"
-#include "widget/base.h"
+#include "../land.h"
+#include "base.h"
 
 #endif /* _PROTOTYPE_ */
+
+#include "widget/layout.h"
 
 void widget_layout_set_grid(Widget *self, int columns, int rows)
 {

@@ -2,8 +2,8 @@
 
 typedef struct WidgetMover WidgetMover;
 
-#include "widget/base.h"
-#include "widget/container.h"
+#include "base.h"
+#include "container.h"
 
 struct WidgetMover
 {

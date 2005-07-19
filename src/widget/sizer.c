@@ -2,8 +2,8 @@
 
 typedef struct WidgetSizer WidgetSizer;
 
-#include "widget/base.h"
-#include "widget/layout.h"
+#include "base.h"
+#include "layout.h"
 
 struct WidgetSizer
 {
