@@ -79,7 +79,7 @@ static void view_y_to_cell_and_pixel_y(LandGrid *self, int view_y, int *cell_y, 
 
 void land_grid_draw_normal(LandGrid *self, LandView *view)
 {
-    unsigned int cell_x, cell_y;
+    int cell_x, cell_y;
     int pixel_x, pixel_y;
 
     float view_x = view->scroll_x;
