@@ -50,6 +50,14 @@ LandGrid *land_isometric_new(int cell_w, int cell_h, int x_cells, int y_cells)
     return self;
 }
 
+LandGrid *land_isometric_wrap_new(int cell_w, int cell_h, int x_cells, int y_cells)
+{
+    land_new(LandGrid, self);
+    land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells);
+    self->vt = land_grid_vtable_isometric_wrap;
+    return self;
+}
+
 /* Returns the grid position in cells below the specified pixel position in
  * the given view. */
 void land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
@@ -71,23 +79,40 @@ void land_grid_pixel_to_cell_isometric_wrap(LandGrid *self, LandView *view,
 }
 
 /* Returns the grid position in cells below the specified view position in
- * pixels. */
+ * pixels. The view position must be valid. */
 static void view_to_cell(LandGrid *self, float view_x, float view_y,
     int *cell_x, int *cell_y)
 {
     float w = self->cell_w / 2;
     float h = self->cell_h / 2;
 
-    // TODO: clarify wrapped/clamped case
     *cell_x = (view_x / w + view_y / h) / 2;
     *cell_y = (view_y / h - view_x / w) / 2;
+}
+
+/* Returns the grid position in cells below the specified view position in
+ * pixels, wrapping around in both dimensions. */
+static void view_to_cell_wrap(LandGrid *self, float view_x, float view_y,
+    int *cell_x, int *cell_y)
+{
+    int cx = floor(view_x / self->cell_w + view_y / self->cell_h);
+    int cy = floor(view_y / self->cell_h - view_x / self->cell_w);
+
+    // NOTE: C99 semantics for negative values assumed
+    cx %= self->x_cells;
+    cy %= self->y_cells;
+    if (cx < 0) cx += self->x_cells;
+    if (cy < 0) cy += self->y_cells;
+
+    *cell_x = cx;
+    *cell_y = cy;
 }
 
 static void cell_to_view(LandGrid *self, int cell_x, int cell_y,
     float *view_x, float *view_y)
 {
-    int w = self->cell_w / 2;
-    int h = self->cell_h / 2;
+    float w = self->cell_w / 2;
+    float h = self->cell_h / 2;
 
     *view_x = cell_x * w - cell_y * w;
     *view_y = cell_x * h + cell_y * h;
@@ -122,8 +147,6 @@ static int find_offset(LandGrid *self, float view_x, float view_y,
 
     float out_x = (int)(self->x_cells - self->y_cells) * w;
     float out_y = (self->x_cells + self->y_cells) * h;
-
-    // TODO: Currently, this does not work in the wrapped case
 
     if (view_y >= out_y) /* (1) */
     {
@@ -185,13 +208,20 @@ done:
     return 1;
 }
 
-static int find_offset_wrap(LandGrid *self, float view_x, float view_y,
+static void find_offset_wrap(LandGrid *self, float view_x, float view_y,
     int *cell_x, int *cell_y, float *pixel_x, float *pixel_y)
 {
-    view_to_cell(self, view_x, view_y, cell_x, cell_y);
-    cell_to_view(self, *cell_x, *cell_y, pixel_x, pixel_y);
-    *pixel_x -= view_x;
-    *pixel_y -= view_y;
+    float vw = (self->x_cells * self->cell_w) / 2;
+    float vh = (self->y_cells * self->cell_h) / 2;
+    float x, y;
+    view_to_cell_wrap(self, view_x, view_y, cell_x, cell_y);
+    cell_to_view(self, *cell_x, *cell_y, &x, &y);
+
+    x -= view_x;
+    y -= view_y;
+
+    *pixel_x = x - (1 + floorf(x / vw - 0.5)) * vw;
+    *pixel_y = y - (1 + floorf(y / vh - 0.5)) * vh;
 }
 
 /*
@@ -255,13 +285,13 @@ void land_grid_draw_isometric(LandGrid *self, LandView *view)
     /* One row up might also be in. */
     if (pixel_y > -h)
     {
-        if (cell_x > 0 && pixel_x > 0)
+        /*if (cell_x > 0 && pixel_x > 0)
         {
             cell_x--;
             pixel_x -= w;
             pixel_y -= h;
         }
-        else
+        else*/
         if (cell_y > 0)
         {
             cell_y--;
@@ -321,7 +351,7 @@ void land_grid_draw_isometric(LandGrid *self, LandView *view)
     }
 }
 
-void land_grid_draw_isometric_wrapped(LandGrid *self, LandView *view)
+void land_grid_draw_isometric_wrap(LandGrid *self, LandView *view)
 {
     float w = self->cell_w / 2;
     float h = self->cell_h / 2;
@@ -331,26 +361,16 @@ void land_grid_draw_isometric_wrapped(LandGrid *self, LandView *view)
     float view_x = view->scroll_x;
     float view_y = view->scroll_y;
 
-
-    if (!find_offset(self, view_x, view_y, &cell_x, &cell_y, &pixel_x, &pixel_y))
-        return;
+    find_offset_wrap(self, view_x, view_y, &cell_x, &cell_y, &pixel_x, &pixel_y);
 
     /* One row up might also be in. */
     if (pixel_y > -h)
     {
-        if (cell_x > 0 && pixel_x > 0)
-        {
-            cell_x--;
-            pixel_x -= w;
-            pixel_y -= h;
-        }
-        else
-        if (cell_y > 0)
-        {
-            cell_y--;
-            pixel_x += w;
-            pixel_y -= h;
-        }
+        cell_y--;
+        if (cell_y < 0)
+            cell_y += self->y_cells;
+        pixel_x += w;
+        pixel_y -= h;
     }
 
     pixel_x += view->x;
@@ -365,41 +385,39 @@ void land_grid_draw_isometric_wrapped(LandGrid *self, LandView *view)
         while (pixel_x - w < view->x + view->w)
         {
             self->vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y);
-            if (cell_x < (int)self->x_cells - 1)
-            {
-                pixel_x += w;
-                pixel_y += h;
-                cell_x++;
-            }
-            else
-                break;
-            if (cell_y > 0)
-            {
-                pixel_x += w;
-                pixel_y -= h;
-                cell_y--;
-            }
-            else
-                break;
+
+            pixel_x += w;
+            pixel_y += h;
+            cell_x++;
+            if (cell_x >= self->x_cells)
+                cell_x -= self->x_cells;
+
+            pixel_x += w;
+            pixel_y -= h;
+            cell_y--;
+            if (cell_y < 0)
+                cell_y += self->y_cells;
         }
         cell_x = line_cell_x;
         cell_y = line_cell_y;
         pixel_x = line_pixel_x;
         pixel_y = line_pixel_y;
 
-        if (pixel_x > view->x && cell_y < (int)self->y_cells - 1)
+        if (pixel_x > view->x)
         {
             pixel_x -= w;
             pixel_y += h;
             cell_y++;
+            if (cell_y >= self->y_cells)
+                cell_y -= self->y_cells;
         }
         else
         {
-            if (cell_x >= (int)self->x_cells - 1)
-                break;
             pixel_x += w;
             pixel_y += h;
             cell_x++;
+            if (cell_x >= self->x_cells)
+                cell_x -= self->x_cells;
         }
     }
 }
@@ -407,8 +425,15 @@ void land_grid_draw_isometric_wrapped(LandGrid *self, LandView *view)
 void land_isometric_init(void)
 {
     land_log_msg("land_isometric_init\n");
+
     land_alloc(land_grid_vtable_isometric);
     land_grid_vtable_isometric->draw = land_grid_draw_isometric;
     land_grid_vtable_isometric->draw_cell = placeholder;
+    land_grid_vtable_isometric->get_cell_at = land_grid_pixel_to_cell_isometric;
+
+    land_alloc(land_grid_vtable_isometric_wrap);
+    land_grid_vtable_isometric_wrap->draw = land_grid_draw_isometric_wrap;
+    land_grid_vtable_isometric_wrap->draw_cell = placeholder;
+    land_grid_vtable_isometric_wrap->get_cell_at = land_grid_pixel_to_cell_isometric_wrap;
 }
 
