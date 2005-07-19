@@ -155,6 +155,7 @@ void land_clip_pop(void)
     d->clip_off = clip[4];
     free(clip);
     free(item);
+    _land_active_display->vt->clip(_land_active_display);
 }
 
 void land_clip_on(void)
