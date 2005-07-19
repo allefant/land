@@ -15,7 +15,7 @@ USECPROTO = 1
 
 include ../makefile.template
 
-shiny: examples-shiny
+shiny: examples-shiny docs-shiny
 clean: examples-clean
 
 examples:
@@ -42,7 +42,7 @@ uninstall:
 	mkdir -p $*
 	touch $@
 
-DOCS = land primitives tiles
+DOCS = land primitives tiles widget
 DOCS_SRC = $(addprefix misc/, $(addsuffix .src, $(DOCS)))
 DOCS_HTML = $(addprefix docs/html/, $(addsuffix .html, $(DOCS)))
 DOCS_TEXT = $(addprefix docs/text/, $(addsuffix .txt, $(DOCS)))
@@ -55,4 +55,7 @@ docs/html/%.html: misc/%.src misc/gendoc.py docs/html/timestamp
 docs/text/%.txt: misc/%.src misc/gendoc.py docs/text/timestamp
 	misc/gendoc.py $< text > $@
 
-.PHONY: clean examples examples-clean install uninstall
+docs-shiny:
+	rm -fr docs
+
+.PHONY: clean examples examples-clean install uninstall docs docs-shiny

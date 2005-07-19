@@ -1,4 +1,4 @@
-EXAMPLES = draw font isometric
+EXAMPLES = image draw font isometric imperium widget
 
 EXAMPLES-CLEAN = $(patsubst %,%-clean, $(EXAMPLES))
 EXAMPLES-SHINY = $(patsubst %,%-shiny, $(EXAMPLES))

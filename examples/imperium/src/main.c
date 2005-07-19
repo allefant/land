@@ -1,4 +1,4 @@
-#include <land/land.h>
+#include <land.h>
 
 LandMap *map;
 LandView *view;
@@ -13,8 +13,7 @@ static LandMap *land_create_map(int cw, int ch, int w, int h, int layers, int fl
     {
         LandLayer *layer = land_layer_new();
         if (flags & LAND_MAP_ISOMETRIC)
-            layer->grid = land_isometric_new(cw, ch, w, h);
-        layer->grid->vt = land_grid_vtable_isometric;
+            layer->grid = land_isometric_wrap_new(cw, ch, w, h);
         layer->x = 0;
         layer->y = 0;
         land_map_add_layer(self, layer);
@@ -65,7 +64,7 @@ static void game_draw(void)
     land_text_pos(view->x, view->y);
     land_text_color(1, 1, 1, 1);
     float x, y;
-    land_grid_pixel_to_cell_isometric(map->first_layer->grid, view,
+    land_grid_get_cell_at(map->first_layer->grid, view,
         land_mouse_x(), land_mouse_y(), &x, &y);
     land_print("%.2f / %.2f", x, y);
 }

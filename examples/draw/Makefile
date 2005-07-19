@@ -1,6 +1,7 @@
 EXE = draw
 
 SRCDIR = src
+ADDFLAG = -I../../pro
 
 PRETTY = 1
 
@@ -11,6 +12,6 @@ STATICLINK = 1
 
 ALLEGROGL = 1
 
-ADDLIB = -lland -lldpng -lpng
+ADDLIB = -L../.. -lland -lldpng -lpng
 
 include ../makefile.template

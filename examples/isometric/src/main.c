@@ -1,4 +1,4 @@
-#include <land/land.h>
+#include <land.h>
 
 LandMap *map;
 LandView *view;
