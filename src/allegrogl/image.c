@@ -10,8 +10,7 @@ static LandImageInterface *vtable;
 
 LandImage *land_image_allegrogl_new(LandDisplay *super)
 {
-    LandImage *self;
-    land_alloc(self);
+    land_new(LandImage, self);
     self->vt = vtable;
     return self;
 }
