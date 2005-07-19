@@ -134,3 +134,22 @@ void land_add_list_data(LandList **list, void *data)
     }
     land_list_insert_item(*list, item);
 }
+
+/* Don't use, it will loop through the whole list every time, removing the item
+ * with the given data.
+ */
+void land_remove_list_data(LandList **list, void *data)
+{
+    LandListItem *item = (*list)->first;
+    while (item)
+    {
+        LandListItem *next = item->next;
+        if (item->data == data)
+        {
+            land_list_remove_item(*list, item);
+            land_free(item);
+            return;
+        }
+        item = next;
+    }
+}
