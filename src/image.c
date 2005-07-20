@@ -25,6 +25,8 @@ struct LandImage
     BITMAP *memory_cache;
     unsigned int gl_texture;
 
+    unsigned int *mask; /* Bit-mask of the image. */
+
     float x, y; /* Offset to origin. */
 
     float l, t, r, b; /* Cut-away left, top, right, bottom. */
@@ -104,6 +106,9 @@ LandImage *land_image_new_from(LandImage *copy, int x, int y, int w, int h)
     return self;
 }
 
+/* Returns the number of pixels in the image, and the average red, gree, blue
+ * and alpha component.
+ */
 int land_image_color_stats(LandImage *self, float *red, float *green, float *blue, float *alpha)
 {
     int n = 0;
@@ -125,6 +130,34 @@ int land_image_color_stats(LandImage *self, float *red, float *green, float *blu
         }
     }
     return n;
+}
+
+/* Colorizes the part of the image specified by the mask with the current color. */
+void land_image_colorize(LandImage *self, LandImage *colormask)
+{
+    int allegro_pink = bitmap_mask_color(colormask->bitmap);
+    int x, y;
+    float ch, cs, v;
+    int r, g, b;
+    r = _land_active_display->color_r * 255;
+    g = _land_active_display->color_g * 255;
+    b = _land_active_display->color_b * 255;
+    rgb_to_hsv(r, g, b, &ch, &cs, &v);
+
+    for (x = 0; x < self->bitmap->w; x++)
+    {
+        for (y = 0; y < self->bitmap->h; y++)
+        {
+            int col = getpixel(colormask->bitmap, x, y);
+            if (col != allegro_pink)
+            {
+                float h, s;
+                rgb_to_hsv(getr(col), getg(col), getb(col), &h, &s, &v);
+                hsv_to_rgb(ch, cs, v, &r, &g, &b);
+                putpixel(self->bitmap, x, y, makecol(r, g, b));
+            }
+        }
+    }
 }
 
 void land_image_prepare(LandImage *self)
@@ -241,3 +274,54 @@ int land_image_width(LandImage *self)
 {
     return self->bitmap->w;
 }
+
+/* Optimizes a bitmap to take only as little space as necesary, whilst
+ * maintaining the correct offset.
+ */
+static BITMAP *optimize_bitmap(BITMAP *bmp, int *x, int *y)
+{
+    int l = bmp->w;
+    int r = -1;
+    int t = bmp->h;
+    int b = -1;
+    int i, j;
+    for (j = 0; j < bmp->h; j++)
+    {
+        for (i = 0; i < bmp->w; i++)
+        {
+            if (getpixel(bmp, i, j) != bitmap_mask_color(bmp))
+            {
+                if (i < l)
+                        l = i;
+                if (j < t)
+                        t = j;
+                if (i > r)
+                        r = i;
+                if (j > b)
+                        b = j;
+            }
+        }
+    }
+    BITMAP *optimized = create_bitmap(1 + r - l, 1 + b - t);
+    blit(bmp, optimized, l, t, 0, 0, optimized->w, optimized->h);
+    *x -= l;
+    *y -= t;
+    return optimized;
+}
+
+void land_image_optimize(LandImage *self)
+{
+    int offx = 0, offy = 0;
+    BITMAP *opt = optimize_bitmap(self->memory_cache, &offx, &offy);
+    // FIXME: self->bitmap
+    destroy_bitmap(self->memory_cache);
+    self->memory_cache = opt;
+
+    self->x += offx;
+    self->y += offy;
+
+    // FIXME: source clip rect?
+
+    self->vt->prepare(self);
+}
+
