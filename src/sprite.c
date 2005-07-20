@@ -12,6 +12,7 @@ land_type(LandSpriteType)
     int w, h; /* collision bounding box. */
 
     void (*draw)(LandSprite *self, LandView *view);
+    int (*collision)(LandSprite *self, LandSprite *with);
 };
 
 struct LandSprite
@@ -91,7 +92,7 @@ static void grid_place(LandSprite *self, LandSpritesGrid *grid)
     int tx = self->x / grid->super.cell_w;
     int ty = self->y / grid->super.cell_h;
 
-    //FIXME: need proper sprites container, with allocating a new ListItem
+    //FIXME: need proper sprites container, without allocating a new ListItem
     land_add_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
         self);
 }
@@ -131,7 +132,8 @@ void land_sprite_move(LandSprite *self, LandGrid *grid, float x, float y)
     grid_place(self, (LandSpritesGrid *)grid);
 }
 
-static void land_sprites_grid_draw_cell(LandSpritesGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y)
+static void land_sprites_grid_draw_cell(LandSpritesGrid *self, LandView *view,
+    int cell_x, int cell_y, float pixel_x, float pixel_y)
 {
     LandList *list = self->sprites[cell_y * self->super.x_cells + cell_x];
     if (list)
@@ -155,3 +157,4 @@ void land_sprites_init(void)
     land_grid_vtable_sprites->draw = land_grid_draw_normal;
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell;
 }
+
