@@ -1,6 +1,3 @@
-#include <string.h>
-#include "display.h"
-
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
@@ -8,6 +5,8 @@
 #include "log.h"
 
 typedef struct LandImage LandImage;
+
+#include "pixelmask.h"
 
 land_type(LandImageInterface)
 {
@@ -34,6 +33,8 @@ struct LandImage
 
 #endif /* _PROTOTYPE_ */
 
+#include <string.h>
+#include "display.h"
 #include "image.h"
 #include "allegro/image.h"
 #include "allegrogl/image.h"
