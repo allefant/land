@@ -4,10 +4,10 @@
 #include <alleggl.h>
 #include <math.h>
 
-#include "array.h"
+#include "../array.h"
 #include "../display.h"
-#include "log.h"
-#include "exception.h"
+#include "../log.h"
+#include "../exception.h"
 
 land_type(LandDisplayAllegroGL)
 {
@@ -216,6 +216,12 @@ void land_display_allegrogl_clip(LandDisplay *super)
         super->clip_y2 - super->clip_y1);
 }
 
+void land_display_allegrogl_clear(LandDisplay *super, float r, float g, float b)
+{
+    glClearColor(r, g, b, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
 void land_display_allegrogl_init(void)
 {
     land_log_msg("land_display_allegrogl_init\n");
@@ -232,4 +238,5 @@ void land_display_allegrogl_init(void)
     vtable->circle = land_display_allegrogl_circle;
     vtable->color = land_display_allegrogl_color;
     vtable->clip = land_display_allegrogl_clip;
+    vtable->clear = land_display_allegrogl_clear;
 };
