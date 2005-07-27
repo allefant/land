@@ -1,6 +1,7 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
+#include <stdio.h>
 #include "image.h"
 
 #endif /* _PROTOTYPE_ */
@@ -30,9 +31,10 @@ static unsigned int *pixelmask_create(BITMAP *bmp)
 
             for (i = 0; i < 32 && x + i < bmp->w; i++)
             {
-                if (getpixel(bmp, x + i, y) != bitmap_mask_color(bmp))
+                if (geta(getpixel(bmp, x + i, y)) > 0)
                 {
                     bits += 1 << i;
+                    //putpixel(bmp, x + i, y, makeacol(255, 255, 255, 255));
                 }
             }
             mask[1 + y * mask_w + x / 32] = bits;
@@ -44,6 +46,28 @@ static unsigned int *pixelmask_create(BITMAP *bmp)
     return mask;
 }
 
+#if 0
+static void printout_mask(unsigned int *mask, int y, int h)
+{
+    int i;
+    int mask_w = mask[0];
+    for (i = 0; i < h; i++)
+    {
+        int j;
+        for (j = 0; j < mask_w; j++)
+        {
+            int m = mask[1 + mask_w * (y + i) + j];
+            int b;
+            for (b = 0; b < 32; b++)
+            {
+                printf("%c", m & (1 << b) ? '1' : '0');
+            }
+        }
+        printf("\n");
+    }
+}
+#endif
+
 /* Compare two rectangles of two bit masks, using efficient bit checking. */
 static int pixelmask_part_collision(unsigned int *mask, int x, int y,
                                     unsigned int *mask_, int x_, int y_,
@@ -53,8 +77,8 @@ static int pixelmask_part_collision(unsigned int *mask, int x, int y,
     int mask_w_ = mask_[0];
     unsigned int *li = mask + 1 + mask_w * y;
     unsigned int *li_ = mask_ + 1 + mask_w_ * y_;
-    int bit = x & 31;
-    int bit_ = x_ & 31;
+    unsigned int bit = x & 31;
+    unsigned int bit_ = x_ & 31;
     int j;
 
     for (j = 0; j < h; j++)
@@ -65,12 +89,22 @@ static int pixelmask_part_collision(unsigned int *mask, int x, int y,
 
         for (lw = w; lw > 0; lw -= 32)
         {
-            int m = (li[i] >> bit) + (li[i + 1] << (32 - bit));
-            int m_ = (li_[i_] >> bit_) + (li_[i_ + 1] << (32 - bit_));
+            unsigned int m, m_;
+            if (bit == 0)
+                m = li[i];
+            else
+                m = (li[i] >> bit) + (li[i + 1] << (32 - bit));
+
+            if (bit_ == 0)
+                m_ = li_[i_];
+            else
+                m_ = (li_[i_] >> bit_) + (li_[i_ + 1] << (32 - bit_));
 
             /* Compare 32 pixels in one go. */
             if (m & m_)
+            {
                 return 1;
+            }
             i++;
             i_++;
         }
@@ -124,6 +158,7 @@ static int pixelmask_collision(unsigned int *mask, int x, int y, int w, int h,
     }
 }
 
+/* Returns one if non-transparent pixels overlap, 0 otherwise. */
 int land_image_overlaps(LandImage *self, float x, float y, LandImage *other, float x_, float y_)
 {
     int w = land_image_width(self);
@@ -131,9 +166,15 @@ int land_image_overlaps(LandImage *self, float x, float y, LandImage *other, flo
     int w_ = land_image_width(other);
     int h_ = land_image_height(other);
     if (!self->mask)
+    {
         self->mask = pixelmask_create(self->memory_cache);
+        //self->vt->prepare(self);
+    }
     if (!other->mask)
+    {
         other->mask = pixelmask_create(other->memory_cache);
+        //other->vt->prepare(other);
+    }
     return pixelmask_collision(
         self->mask, x - self->x, y - self->y, w, h,
         other->mask, x_ - other->x, y_ - other->y, w_, h_);
