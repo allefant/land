@@ -1,6 +1,6 @@
 LIB = libland.a
 SRCDIR = src
-SUBDIRS = allegro allegrogl widget image
+SUBDIRS = allegro allegrogl widget
 
 GUARD_PREFIX = LAND_LAND_
 

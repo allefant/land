@@ -1,9 +1,9 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
-#include "../array.h"
+#include "array.h"
 #include "../display.h"
-#include "../log.h"
+#include "log.h"
 
 land_type(LandDisplayAllegro)
 {

@@ -19,7 +19,7 @@ typedef struct LandDisplay LandDisplay;
 struct LandDisplayInterface
 {
     land_method(void, set, (LandDisplay *self));
-    land_method(void, clear, (LandDisplay *self, float r, float g, float b));
+    land_method(void, clear, (LandDisplay *self));
     land_method(void, flip, (LandDisplay *self));
     land_method(void, rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
     land_method(void, filled_rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
@@ -44,17 +44,14 @@ struct LandDisplay
     LandList *clip_stack;
 };
 
-#include "allegro/display.h"
-#include "allegrogl/display.h"
-#include "image/display.h"
-
 #endif /* _PROTOTYPE_ */
 
 #include "display.h"
+#include "allegro/display.h"
+#include "allegrogl/display.h"
 
 land_array(LandDisplay)
 
-static LandList *_previous = NULL;
 LandDisplay *_land_active_display = NULL;
 
 LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
@@ -73,8 +70,7 @@ LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
         self = &allegro->super;
     }
 
-    land_display_select(self);
-
+    _land_active_display = self;
     return self;
 }
 
@@ -85,23 +81,17 @@ void land_display_set(void)
     _land_active_display->vt->clip(_land_active_display);
 }
 
-void land_display_unset(void)
-{
-    // FIXME: TODO
-}
-
 void land_display_init(void)
 {
     land_log_msg("land_display_init\n");
     land_display_allegro_init();
     land_display_allegrogl_init();
-    land_display_image_init();
 }
 
 void land_clear(float r, float g, float b)
 {
-    LandDisplay *d = _land_active_display;
-    _land_active_display->vt->clear(d, r, g, b);
+    glClearColor(r, g, b, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void land_color(float r, float g, float b)
@@ -110,7 +100,7 @@ void land_color(float r, float g, float b)
     d->color_r = r;
     d->color_g = g;
     d->color_b = b;
-    _land_active_display->vt->color(d);
+    _land_active_display->vt->color(_land_active_display);
 }
 
 void land_transparency(float a)
@@ -253,32 +243,5 @@ LandImage *land_display_new_image(void)
 void land_display_del_image(LandImage *image)
 {
     return _land_active_display->vt->del_image(_land_active_display, image);
-}
-
-void land_display_select(LandDisplay *display)
-{
-    if (_land_active_display)
-        land_add_list_data(&_previous, _land_active_display);
-    _land_active_display = display;
-}
-
-void land_display_unselect(void)
-{
-    if (_previous)
-    {
-        LandListItem *last = _previous->last;
-        _land_active_display = last->data;
-        land_list_remove_item(_previous, _previous->last);
-    }
-    else
-        _land_active_display = NULL;
-}
-
-void land_display_del(LandDisplay *self)
-{
-    // TODO: land_display_unset(self)?
-    if (self == _land_active_display)
-        land_display_unselect();
-    land_free(self);
 }
 

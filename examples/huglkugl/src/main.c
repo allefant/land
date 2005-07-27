@@ -10,8 +10,8 @@ typedef struct Game Game;
 struct Game
 {
     LandMap *map;
-    LandLayer *back_layer; /* for level */
-    LandLayer *front_layer; /* for sprites */
+    LandLayer *back_layer;
+    LandLayer *front_layer;
     LandGrid *back_grid;
     LandGrid *front_grid;
     LandView *view;
@@ -21,10 +21,22 @@ Game game;
 
 LandSprite *sprites[100];
 
+static void player_type_draw(LandSprite *sprite, LandView *view)
+{
+    float x = sprite->x + sprite->type->x - view->scroll_x + view->x;
+    float y = sprite->y + sprite->type->y - view->scroll_y + view->y;
+    land_image_draw(player_image, x, y);
+}
+
+static void platform_type_draw(LandSprite *sprite, LandView *view)
+{
+    float x = sprite->x + sprite->type->x - view->scroll_x + view->x;
+    float y = sprite->y + sprite->type->y - view->scroll_y + view->y;
+    land_image_draw(platform_image, x, y);
+}
+
 static void game_init(void)
 {
-    land_load_font("../../data/galaxy.ttf", 10);
-
     game.map = land_map_new();
     game.back_layer = land_layer_new();
     game.front_layer = land_layer_new();
@@ -37,13 +49,16 @@ static void game_init(void)
     game.view = land_view_new(-64, -64, land_display_width() + 128,
         land_display_height() + 128);
 
+    player_type = land_spritetype_new();
+    player_type->draw = player_type_draw;
+
+    platform_type = land_spritetype_new();
+    platform_type->draw = platform_type_draw;
+
     player_image = land_image_load("../../data/huglkugl.png");
     land_image_center(player_image);
     platform_image = land_image_load("../../data/platform1.png");
     land_image_center(platform_image);
-
-    player_type = land_spritetype_new_with_image(player_image);
-    platform_type = land_spritetype_new_with_image(platform_image);
 
     sprites[0] = land_sprite_new(player_type);
     land_sprite_place_into_grid(sprites[0], game.front_grid, 0, 0);
@@ -76,20 +91,6 @@ static void game_draw(void)
 {
     land_clear(0, 0, 0);
     land_map_draw(game.map, game.view);
-
-    LandList *overlappers = land_sprites_grid_overlap(sprites[0], game.back_grid);
-    if (overlappers)
-    {
-        LandListItem *item = overlappers->first;
-        land_text_color(1, 0, 0, 1);
-        land_text_pos(0, 0);
-        while (item)
-        {
-            land_print("%p", item->data);
-            item = item->next;
-        }
-        land_list_destroy(overlappers);
-    }
 }
 
 static void game_exit(void)

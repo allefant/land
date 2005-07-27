@@ -153,15 +153,3 @@ void land_remove_list_data(LandList **list, void *data)
         item = next;
     }
 }
-
-void land_list_destroy(LandList *list)
-{
-    LandListItem *item = list->first;
-    while (item)
-    {
-        LandListItem *next = item->next;
-        land_free(item);
-        item = next;
-    }
-    land_free(list);
-}
