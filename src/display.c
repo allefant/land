@@ -30,6 +30,8 @@ struct LandDisplayInterface
     land_method(void, del_image, (LandDisplay *self, LandImage *image));
     land_method(void, color, (LandDisplay *self));
     land_method(void, clip, (LandDisplay *self));
+    land_method(void, polygon, (LandDisplay *self, int n, float *x, float *y));
+    land_method(void, filled_polygon, (LandDisplay *self, int n, float *x, float *y));
 };
 
 struct LandDisplay
@@ -225,6 +227,16 @@ void land_line(
     float x, float y, float x_, float y_)
 {
     _land_active_display->vt->line(_land_active_display, x, y, x_, y_);
+}
+
+void land_polygon(int n, float *x, float *y)
+{
+    _land_active_display->vt->polygon(_land_active_display, n, x, y);
+}
+
+void land_filled_polygon(int n, float *x, float *y)
+{
+    _land_active_display->vt->filled_polygon(_land_active_display, n, x, y);
 }
 
 int land_display_width(void)
