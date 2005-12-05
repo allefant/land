@@ -180,6 +180,18 @@ void land_display_allegrogl_circle(LandDisplay *super,
     glEnd();
 }
 
+void land_display_allegrogl_filled_polygon(LandDisplay *super, int n,
+    float *x, float *y)
+{
+    int i;
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_POLYGON);
+    for (i = 0; i < n; i++)
+    {
+        glVertex2f(x[i], y[i]);
+    }
+}
+
 void land_display_allegrogl_line(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
@@ -199,6 +211,18 @@ void land_display_allegrogl_line(LandDisplay *super,
         glVertex2f(x_, y_);
     }
     glEnd();
+}
+
+void land_display_allegrogl_polygon(LandDisplay *super, int n,
+    float *x, float *y)
+{
+    int i;
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_LINE_LOOP);
+    for (i = 0; i < n; i++)
+    {
+        glVertex2f(x[i], y[i]);
+    }
 }
 
 void land_display_allegrogl_color(LandDisplay *super)
@@ -239,4 +263,6 @@ void land_display_allegrogl_init(void)
     vtable->color = land_display_allegrogl_color;
     vtable->clip = land_display_allegrogl_clip;
     vtable->clear = land_display_allegrogl_clear;
+    vtable->polygon = land_display_allegrogl_polygon;
+    vtable->filled_polygon = land_display_allegrogl_filled_polygon;
 };
