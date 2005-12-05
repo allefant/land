@@ -1,6 +1,6 @@
 #include <land/land.h>
 
-static void game_tick(void)
+static void game_tick(LandRunner *self)
 {
     if (land_key(KEY_ESC))
         land_quit();
@@ -55,7 +55,7 @@ static void draw_star(float middle_x, float middle_y, int n, float r, float star
     }
 }
 
-static void game_draw(void)
+static void game_draw(LandRunner *self)
 {
 /*
     glClearColor(0, 0, 0, 0);
@@ -174,8 +174,8 @@ land_begin()
 {
     land_init();
     land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL);
-    LandRunner *game_runner = land_runner_register("game",
-        NULL, NULL, game_tick, game_draw, NULL, NULL);
+    LandRunner *game_runner = land_runner_new("game", NULL, NULL, game_tick, game_draw, NULL, NULL);
+    land_runner_register(game_runner);
     land_set_initial_runner(game_runner);
     land_main();
 }

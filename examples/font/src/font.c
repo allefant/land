@@ -4,20 +4,20 @@ LandFont *big;
 LandFont *small;
 LandFont *builtin;
 
-static void game_init(void)
+static void game_init(LandRunner *self)
 {
     big = land_load_font("../../data/galaxy.ttf", 40);
-    small = land_load_font("../../data/galaxy.ttf", 10);
+    small = land_load_font("../../data/galaxy.ttf", 15);
     //builtin = land_allegro_font();
 }
 
-static void game_tick(void)
+static void game_tick(LandRunner *self)
 {
     if (land_key(KEY_ESC))
         land_quit();
 }
 
-static void game_draw(void)
+static void game_draw(LandRunner *self)
 {
     land_clear(1, 1, 1);
 

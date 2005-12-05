@@ -18,7 +18,7 @@ static void my_draw(Widget *self)
     land_rectangle(x + 0.5, y + 0.5, x + self->box.w - 0.5, y + self->box.h - 0.5);
 }
 
-static void init(void)
+static void init(LandRunner *self)
 {
     int i;
 
@@ -62,6 +62,11 @@ static void init(void)
 #endif
 
     Widget *text = widget_text_new(desktop, "Land", 10, 10, 100, 20);
+
+#if 1
+    Widget *window = widget_container_new(desktop, 100, 100, 100, 100);
+    Widget *mover = widget_mover_new(window, 100, 100, 100, 20);
+#endif
 
 //    scrolling1 = widget_scrolling_new(desktop, 100, 200, 100, 100);
 
@@ -112,7 +117,7 @@ static void init(void)
     }*/
 }
 
-static void tick(void)
+static void tick(LandRunner *self)
 {
     if (land_key(KEY_ESC))
         land_quit();
@@ -132,7 +137,7 @@ static void tick(void)
     desktop->vt->mouse_tick(desktop);
 }
 
-static void draw(void)
+static void draw(LandRunner *self)
 {
     land_unclip();
     land_clear(0, 0, 0);

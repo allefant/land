@@ -21,7 +21,7 @@ Game game;
 
 LandSprite *sprites[100];
 
-static void game_init(void)
+static void game_init(LandRunner *self)
 {
     land_load_font("../../data/galaxy.ttf", 10);
 
@@ -57,7 +57,7 @@ static void game_init(void)
     }
 }
 
-static void game_tick(void)
+static void game_tick(LandRunner *self)
 {
     if (land_key_pressed(KEY_ESC)) land_quit();
 
@@ -72,7 +72,7 @@ static void game_tick(void)
     land_view_ensure_visible(game.view, sprites[0]->x, sprites[0]->y, 140, 140);
 }
 
-static void game_draw(void)
+static void game_draw(LandRunner *self)
 {
     land_clear(0, 0, 0);
     land_map_draw(game.map, game.view);
@@ -92,7 +92,7 @@ static void game_draw(void)
     }
 }
 
-static void game_exit(void)
+static void game_exit(LandRunner *self)
 {
 }
 

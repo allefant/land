@@ -56,20 +56,20 @@ static LandImage *create_test_image(void)
     return image;
 }
 
-static void init(void)
+static void init(LandRunner *self)
 {
     //image = create_test_image();
     image = land_image_load("../../data/land2.png");
     //image = create_test_image();
 }
 
-static void tick(void)
+static void tick(LandRunner *self)
 {
     if (land_key(KEY_ESC))
         land_quit();
 }
 
-static void draw(void)
+static void draw(LandRunner *self)
 {
     static float angle = 0;
     int w = land_image_width(image);

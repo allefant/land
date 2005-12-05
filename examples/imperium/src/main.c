@@ -21,7 +21,7 @@ static LandMap *land_create_map(int cw, int ch, int w, int h, int layers, int fl
     return self;
 }
 
-static void game_init(void)
+static void game_init(LandRunner *self)
 {
     land_load_font("../../data/galaxy.ttf", 10);
 
@@ -30,7 +30,7 @@ static void game_init(void)
     view = land_view_new(50, 50, land_display_width() - 100, land_display_height() - 100);
 }
 
-static void game_tick(void)
+static void game_tick(LandRunner *self)
 {
     int kx = 0, ky = 0;
     if (land_key(KEY_ESC))
@@ -54,7 +54,7 @@ static void game_tick(void)
     view->scroll_y += ky;
 }
 
-static void game_draw(void)
+static void game_draw(LandRunner *self)
 {
     land_clear(0, 0, 0);
     land_color(0, 0, 1);
@@ -69,7 +69,7 @@ static void game_draw(void)
     land_print("%.2f / %.2f", x, y);
 }
 
-static void game_exit(void)
+static void game_exit(LandRunner *self)
 {
 }
 

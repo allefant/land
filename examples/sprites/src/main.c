@@ -25,7 +25,7 @@ static void sprite_drawer(MySprite *self, LandView *view)
     sprites++;
 }
 
-static void game_init(void)
+static void game_init(LandRunner *self)
 {
     map = land_map_new();
 
@@ -64,7 +64,7 @@ static void game_init(void)
     land_load_font("../../data/galaxy.ttf", 10);
 }
 
-static void game_tick(void)
+static void game_tick(LandRunner *self)
 {
     int kx = 0, ky = 0;
     if (land_key(KEY_ESC))
@@ -88,7 +88,7 @@ static void game_tick(void)
     my_view->scroll_y += ky;
 }
 
-static void game_draw(void)
+static void game_draw(LandRunner *self)
 {
     sprites = 0;
     land_clear(0, 0, 0);
@@ -101,7 +101,7 @@ static void game_draw(void)
     land_print("%d/%d sprites visible", sprites, sprites_count);
 }
 
-static void game_exit(void)
+static void game_exit(LandRunner *self)
 {
 }
 
