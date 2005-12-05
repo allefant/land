@@ -1,62 +1,67 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
+#include <alleggl.h>
 #include <stdio.h>
+
+typedef struct LandPixelMask LandPixelMask;
+
 #include "image.h"
+
+typedef struct SinglePixelMask SinglePixelMask;
+
+struct LandPixelMask
+{
+    int n;
+    SinglePixelMask *rotation[0];
+};
 
 #endif /* _PROTOTYPE_ */
 
+#include <math.h>
 #include "pixelmask.h"
 
-/* Creates a bit mask of the given bitmap. The width of the mask is stored in
- * the first int of the returned array, then follow 32-bit ints, each bit
- * of an int representing a pixel.
- */
-static unsigned int *pixelmask_create(BITMAP *bmp)
+#include "font.h"
+
+// TODO: 64bit version
+// TODO: Defer creation of masks?
+//       E.g. if a bitmap is used with 256 rotations, but it only ever is
+//       rotated 5 degree left/right.. then that would only cache the necessary
+//       masks.
+
+struct SinglePixelMask
 {
-    unsigned int *mask;
-    int mask_w = 2 + (bmp->w + 31) / 32;
+    int w, h;
+    uint32_t data[0];
+};
 
-    mask = malloc((1 + mask_w * bmp->h) * sizeof *mask);
-    int y;
+#define BB(x1, y1, x2, y2, x3, y3, x4, y4) {\
+    *bl = x1 * cos(angle) + y1 * sin(angle); \
+    *bt = y2 * cos(angle) - x2 * sin(angle); \
+    *br = x3 * cos(angle) + y3 * sin(angle); \
+    *bb = y4 * cos(angle) - x4 * sin(angle); \
+}
 
-    for (y = 0; y < bmp->h; y++)
-    {
-        int x;
-
-        for (x = 0; x < bmp->w; x += 32)
-        {
-            int i;
-            int bits = 0;
-
-            for (i = 0; i < 32 && x + i < bmp->w; i++)
-            {
-                if (geta(getpixel(bmp, x + i, y)) > 0)
-                {
-                    bits += 1 << i;
-                    //putpixel(bmp, x + i, y, makeacol(255, 255, 255, 255));
-                }
-            }
-            mask[1 + y * mask_w + x / 32] = bits;
-        }
-        /* Extra 0 padding. */
-        mask[1 + y * mask_w + x / 32] = 0;
-    }
-    mask[0] = mask_w;
-    return mask;
+static void get_bounding_box(float l, float t, float r, float b, float angle,
+    float *bl, float *bt, float *br, float *bb)
+{
+    if (angle < AL_PI / 2) BB(l, t, r, t, r, b, l, b)
+    else if (angle < AL_PI) BB(r, t, r, b, l, b, l, t)
+    else if (angle < 3 * AL_PI / 2) BB(r, b, l, b, l, t, r, t)
+    else BB(l, b, l, t, r, t, r, b)
 }
 
 #if 0
-static void printout_mask(unsigned int *mask, int y, int h)
+static void printout_mask(SinglePixelMask *mask)
 {
     int i;
-    int mask_w = mask[0];
-    for (i = 0; i < h; i++)
+    int mask_w = mask->w;
+    for (i = 0; i < mask->h; i++)
     {
         int j;
         for (j = 0; j < mask_w; j++)
         {
-            int m = mask[1 + mask_w * (y + i) + j];
+            int m = mask->data[mask_w * i + j];
             int b;
             for (b = 0; b < 32; b++)
             {
@@ -68,15 +73,138 @@ static void printout_mask(unsigned int *mask, int y, int h)
 }
 #endif
 
+/* Creates n prerotated bitmasks for the given bitmap. A single bit represents
+ * one pixel.
+ */
+static LandPixelMask *pixelmask_create(BITMAP *bmp, int n)
+{
+    LandPixelMask *mask;
+    int j;
+    mask = malloc(sizeof *mask + sizeof(SinglePixelMask *) * n);
+    mask->n = n;
+    for (j = 0; j < n; j++)
+    {
+        float angle = j * AL_PI * 2 / n;
+        float w, h;
+        if (angle < AL_PI / 2)
+        {
+            w = bmp->w * cos(angle) + bmp->h * sin(angle);
+            h = bmp->h * cos(angle) + bmp->w * sin(angle);
+        }
+        else if (angle < AL_PI)
+        {
+            w = bmp->w * -cos(angle) + bmp->h * sin(angle);
+            h = bmp->h * -cos(angle) + bmp->w * sin(angle);
+        }
+        else if (angle < 3 * AL_PI / 2)
+        {
+            w = bmp->w * -cos(angle) + bmp->h * -sin(angle);
+            h = bmp->h * -cos(angle) + bmp->w * -sin(angle);
+        }
+        else
+        {
+            w = bmp->w * cos(angle) + bmp->h * -sin(angle);
+            h = bmp->h * cos(angle) + bmp->w * -sin(angle);
+        }
+        BITMAP *temp = create_bitmap_ex(32, w, h);
+        clear_to_color(temp, makeacol(0, 0, 0, 0));
+        pivot_sprite(temp, bmp, temp->w / 2, temp->h / 2, bmp->w / 2, bmp->h / 2,
+            -ftofix(128 * angle / AL_PI));
+
+        int mask_w = 1 + (temp->w + 31) / 32;
+
+        mask->rotation[j] = malloc(sizeof *mask->rotation[j] + mask_w * temp->h * sizeof(uint32_t));
+        mask->rotation[j]->w = mask_w;
+        mask->rotation[j]->h = temp->h;
+
+        int y;
+
+        for (y = 0; y < temp->h; y++)
+        {
+            int x;
+
+            for (x = 0; x < temp->w; x += 32)
+            {
+                int i;
+                int bits = 0;
+
+                for (i = 0; i < 32 && x + i < temp->w; i++)
+                {
+                    if (geta(getpixel(temp, x + i, y)) > 0)
+                    {
+                        bits += 1 << i;
+                    }
+                }
+                mask->rotation[j]->data[y * mask_w + x / 32] = bits;
+            }
+            /* Extra 0 padding, so if *pos is valid, *(pos + 1) will point to
+             * all 0 - useful to not need special case the right border. */
+            mask->rotation[j]->data[y * mask_w + x / 32] = 0;
+        }
+        destroy_bitmap(temp);
+    }
+    return mask;
+}
+
+static int mask_get_rotation_frame(LandPixelMask *mask, float angle)
+{
+    float r = mask->n * angle / (2 * AL_PI);
+    if (r > 0)
+        r += 0.5;
+    else
+        r -= 0.5;
+    int i = (int)(r) % mask->n;
+    if (i < 0)
+        i += mask->n;
+    return i;
+}
+
+void land_image_debug_pixelmask(LandImage *self, float x, float y, float angle)
+{
+    int i;
+    int k = mask_get_rotation_frame(self->mask, angle);
+    int mask_w = self->mask->rotation[k]->w;
+
+    int w = land_image_width(self);
+    int h = land_image_height(self);
+    float ml, mt, mr, mb;
+    get_bounding_box(-self->x, -self->y, w - self->x, h - self->y, k * 2.0 * AL_PI / self->mask->n,
+        &ml, &mt, &mr, &mb);
+
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_POINTS);
+    glColor4f(1, 1, 1, 0.5);
+    glVertex2f(x + ml, y + mt);
+    glVertex2f(x + mr, y + mt);
+    glVertex2f(x + ml, y + mb);
+    glVertex2f(x + mr, y + mb);
+    glColor4f(1, 1, 1, 1);
+    for (i = 0; i < self->mask->rotation[k]->h; i++)
+    {
+        int j;
+        for (j = 0; j < mask_w; j++)
+        {
+            int m = self->mask->rotation[k]->data[mask_w * i + j];
+            int b;
+            for (b = 0; b < 32; b++)
+            {
+                if (m & (1 << b))
+                    glVertex2f(x + ml + j * 32 + b, y + mt + i);
+            }
+        }
+    }
+    glEnd();
+}
+
 /* Compare two rectangles of two bit masks, using efficient bit checking. */
-static int pixelmask_part_collision(unsigned int *mask, int x, int y,
-                                    unsigned int *mask_, int x_, int y_,
+static int pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
+                                    SinglePixelMask *mask_, int x_, int y_,
                                     int w, int h)
 {
-    int mask_w = mask[0];
-    int mask_w_ = mask_[0];
-    unsigned int *li = mask + 1 + mask_w * y;
-    unsigned int *li_ = mask_ + 1 + mask_w_ * y_;
+    int mask_w = mask->w;
+    int mask_w_ = mask_->w;
+    unsigned int *li = mask->data + mask_w * y;
+    unsigned int *li_ = mask_->data + mask_w_ * y_;
     unsigned int bit = x & 31;
     unsigned int bit_ = x_ & 31;
     int j;
@@ -117,8 +245,8 @@ static int pixelmask_part_collision(unsigned int *mask, int x, int y,
 /* Compare a bit mask on x/y and size w/h with another on x_/y_ and size w_/h_.
  * This is very efficient, only doing bit-checks if there is overlap at all.
  */
-static int pixelmask_collision(unsigned int *mask, int x, int y, int w, int h,
-                        unsigned int *mask_, int x_, int y_, int w_, int h_)
+static int pixelmask_collision(SinglePixelMask *mask, int x, int y, int w, int h,
+                        SinglePixelMask *mask_, int x_, int y_, int w_, int h_)
 {
     if (x >= x_ + w_ || x_ >= x + w || y >= y_ + h_ || y_ >= y + h)
         return 0;
@@ -158,8 +286,14 @@ static int pixelmask_collision(unsigned int *mask, int x, int y, int w, int h,
     }
 }
 
-/* Returns one if non-transparent pixels overlap, 0 otherwise. */
-int land_image_overlaps(LandImage *self, float x, float y, LandImage *other, float x_, float y_)
+void land_image_create_pixelmasks(LandImage *self, int n)
+{
+    self->mask = pixelmask_create(self->memory_cache, n);
+}
+
+/* Returns 1 if non-transparent pixels overlap, 0 otherwise. */
+int land_image_overlaps(LandImage *self, float x, float y, float angle,
+    LandImage *other, float x_, float y_, float angle_)
 {
     int w = land_image_width(self);
     int h = land_image_height(self);
@@ -167,16 +301,24 @@ int land_image_overlaps(LandImage *self, float x, float y, LandImage *other, flo
     int h_ = land_image_height(other);
     if (!self->mask)
     {
-        self->mask = pixelmask_create(self->memory_cache);
-        //self->vt->prepare(self);
+        return 0;
     }
     if (!other->mask)
     {
-        other->mask = pixelmask_create(other->memory_cache);
-        //other->vt->prepare(other);
+        return 0;
     }
+
+    int i = mask_get_rotation_frame(self->mask, angle);
+    int i_ = mask_get_rotation_frame(other->mask, angle_);
+
+    float ml, mt, mr, mb, ml_, mt_, mr_, mb_;
+    get_bounding_box(-self->x, -self->y, w - self->x, h - self->y, i * 2.0 * AL_PI / self->mask->n,
+        &ml, &mt, &mr, &mb);
+    get_bounding_box(-other->x, -other->y, w_ - other->x, h_ - other->y, i * 2.0 * AL_PI / other->mask->n,
+        &ml_, &mt_, &mr_, &mb_);
+
     return pixelmask_collision(
-        self->mask, x - self->x, y - self->y, w, h,
-        other->mask, x_ - other->x, y_ - other->y, w_, h_);
+        self->mask->rotation[i], x + ml, y + mt, mr - ml, mb - mt,
+        other->mask->rotation[i_], x_ + ml_, y_ + mt_, mr_ - ml_, mb_ - mt_);
 }
 
