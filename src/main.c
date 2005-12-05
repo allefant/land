@@ -44,13 +44,13 @@ void land_init(void)
 static void land_tick(void)
 {
     land_mouse_tick();
-    land_runner_tick();
+    land_runner_tick_active();
     land_keyboard_tick();
 }
 
 static void land_draw(void)
 {
-    land_runner_draw();
+    land_runner_draw_active();
     land_flip();
 }
 
@@ -111,9 +111,9 @@ int land_main(void)
 
     install_int_ex(ticker, BPS_TO_TIMER(parameters->frequency));
 
-    land_runner_init();
+    land_runner_init_all();
 
-    land_runner_switch(parameters->start);
+    land_runner_switch_active(parameters->start);
 
     int frames = ticks;
     int gframes = frames;
@@ -134,6 +134,8 @@ int land_main(void)
             rest(1);
         }
     }
+    land_runner_switch_active(NULL);
+    land_runner_destroy_all();
     land_exit();
     return 0;
 }

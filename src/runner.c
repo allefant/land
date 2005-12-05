@@ -8,27 +8,33 @@
 land_type(LandRunner)
 {
     char *name;
-    void (*init)(void);
-    void (*enter)(void);
-    void (*tick)(void);
-    void (*draw)(void);
-    void (*leave)(void);
-    void (*destroy)(void);
+    void (*init)(LandRunner *self);
+    void (*enter)(LandRunner *self);
+    void (*tick)(LandRunner *self);
+    void (*draw)(LandRunner *self);
+    void (*leave)(LandRunner *self);
+    void (*destroy)(LandRunner *self);
 };
 
 #endif /* _PROTOTYPE_ */
 
 #include "runner.h"
+#include "log.h"
 
-land_array(LandRunner)
+static LandList *runners;
 
 static LandRunner *active_runner;
 
-LandRunner *land_runner_register(char const *name, void (*init)(void),
-        void (*enter)(void), void (*tick)(void),
-        void (*draw)(void), void (*leave)(void), void (*destroy)(void))
+void land_runner_register(LandRunner *self)
 {
-    land_new(LandRunner, self);
+    land_log_msg("land_runner_register \"%s\"\n", self->name);
+    land_add_list_data(&runners, self);
+}
+
+void land_runner_initialize(LandRunner *self, char const *name, void (*init)(LandRunner *self),
+    void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
+    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
+{
     self->name = strdup(name);
     self->init = init;
     self->enter = enter;
@@ -36,64 +42,72 @@ LandRunner *land_runner_register(char const *name, void (*init)(void),
     self->draw = draw;
     self->leave = leave;
     self->destroy = destroy;
+}
+
+LandRunner *land_runner_new(char const *name, void (*init)(LandRunner *self),
+    void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
+    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
+{
+    LandRunner *self = calloc(1, sizeof *self);
+    land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy);
     return self;
 }
 
-void land_runner_init(void)
+void land_runner_init_all(void)
 {
-    int i;
-    land_foreach(LandRunner, i)
+    LandListItem *i;
+    for (i = runners->first; i; i = i->next)
     {
-        LandRunner *self = land_pointer(LandRunner, i);
+        LandRunner *self = (LandRunner *)i->data;
         if (self->init)
-            self->init();
+            self->init(self);
     }
 }
 
-void land_runner_switch(LandRunner *self)
+void land_runner_switch_active(LandRunner *self)
 {
-    land_runner_leave();
+    land_runner_leave_active();
     active_runner = self;
-    land_runner_enter();
+    land_runner_enter_active();
 }
 
-void land_runner_enter(void)
+void land_runner_enter_active(void)
 {
     LandRunner *self = active_runner;
     if (self && self->enter)
-        self->enter();
+        self->enter(self);
 }
 
-void land_runner_tick(void)
+void land_runner_tick_active(void)
 {
     LandRunner *self = active_runner;
     if (self)
-        self->tick();
+        self->tick(self);
 }
 
-void land_runner_draw(void)
+void land_runner_draw_active(void)
 {
     LandRunner *self = active_runner;
     if (self && self->draw)
-        self->draw();
+        self->draw(self);
 }
 
-void land_runner_leave(void)
+void land_runner_leave_active(void)
 {
     LandRunner *self = active_runner;
     if (self && self->leave)
-        self->leave();
+        self->leave(self);
 }
 
 
-void land_runner_destroy(void)
+void land_runner_destroy_all(void)
 {
-   int i;
-    land_foreach(LandRunner, i)
+    LandListItem *i;
+    for (i = runners->first; i; i = i->next)
     {
-        LandRunner *self = land_pointer(LandRunner, i);
+        LandRunner *self = (LandRunner *)i->data;
         if (self->destroy)
-            self->destroy();
+            self->destroy(self);
     }
 }
 
