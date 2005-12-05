@@ -1,3 +1,4 @@
+
 #ifdef _PROTOTYPE_
 
 typedef struct Widget Widget;
@@ -52,7 +53,7 @@ struct Widget
 
 WidgetInterface *widget_base_interface = NULL;
 
-// FIXME: Themeing
+// FIXME: Themeing!
 int theme_scrollbar_broadness = 16;
 int theme_scrollbar_minimum_length = 8;
 

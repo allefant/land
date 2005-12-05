@@ -22,7 +22,8 @@ WidgetInterface *widget_mover_interface = NULL;
 
 void widget_mover_draw(Widget *self)
 {
-    float r = 1, g = 0, b = 0;
+    widget_theme_draw(self);
+    /*float r = 1, g = 0, b = 0;
     if (self->got_mouse)
         g = 1;
     land_color(r, g, b);
@@ -32,7 +33,7 @@ void widget_mover_draw(Widget *self)
     land_rectangle(self->box.x, self->box.y, self->box.x + self->box.w - 1,
         self->box.y + self->box.h - 1);
     land_text_pos(self->box.x, self->box.y);
-    land_print("%p", self);
+    land_print("%p", self);*/
 }
 
 void widget_mover_mouse_tick(Widget *super)
