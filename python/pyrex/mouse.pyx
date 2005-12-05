@@ -1,0 +1,22 @@
+cdef extern from "land.h":
+    void land_mouse_init();
+    int land_have_os_cursor()
+    void land_mouse_tick()
+    int land_mouse_x()
+    int land_mouse_y()
+    int land_mouse_z()
+    int land_mouse_b()
+    int land_mouse_delta_x()
+    int land_mouse_delta_y()
+    int land_mouse_delta_z()
+    int land_mouse_delta_b()
+
+def have_os_cursor(): land_have_os_cursor()
+def x(): return land_mouse_x()
+def y(): return land_mouse_y()
+def z(): return land_mouse_z()
+def b(): return land_mouse_b()
+def dx(): return land_mouse_delta_x()
+def dy(): return land_mouse_delta_y()
+def dz(): return land_mouse_delta_z()
+def db(): return land_mouse_delta_b()
