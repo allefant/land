@@ -28,7 +28,7 @@ static void quad(LandImage *self)
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, self->gl_texture);
-    glBegin(GL_TRIANGLE_FAN);
+    glBegin(GL_QUADS);
 
     GLfloat w = self->memory_cache->w;
     GLfloat h = self->memory_cache->h;
@@ -68,7 +68,7 @@ void land_image_allegrogl_draw_scaled_rotated_tinted(LandImage *self, float x, f
     glPushMatrix();
     glTranslatef(x, y, 0);
     glScalef(sx, sy, 1);
-    glRotatef(a * 180 / AL_PI, 0, 0, 1);
+    glRotatef(a * 180 / AL_PI, 0, 0, -1);
     quad(self);
     glPopMatrix();
 }
@@ -89,5 +89,13 @@ void land_image_allegrogl_prepare(LandImage *self)
     }
     allegro_gl_set_texture_format(GL_RGBA8);
     self->gl_texture = allegro_gl_make_texture(self->memory_cache);
+    glBindTexture(GL_TEXTURE_2D, self->gl_texture);
+    // TODO: Allow different modes
+    // anti-aliased: use GL_NEAREST
+    // tiled: use GL_REPEAT
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
