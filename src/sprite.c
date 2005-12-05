@@ -8,8 +8,11 @@ typedef struct LandSprite LandSprite;
 
 land_type(LandSpriteType)
 {
+    // TODO need those 4 variables?
+    /* A sprite does not need a image, so the below variables are needed. */
     float x, y; /* collision offset in pixel, relative to its position. */
     int w, h; /* collision bounding box. */
+
     LandImage *image;
 
     void (*draw)(LandSprite *self, LandView *view);
@@ -18,7 +21,7 @@ land_type(LandSpriteType)
 
 struct LandSprite
 {
-    float x, y;
+    float x, y, angle;
     LandSpriteType *type;
 };
 
@@ -102,8 +105,8 @@ void land_sprite_hide(int sprite, int grid)
 }
 
 int land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other) {
-    return land_image_overlaps(self->type->image, self->x, self->y, other->type->image,
-        other->x, other->y);
+    return land_image_overlaps(self->type->image, self->x, self->y, self->angle,
+        other->type->image, other->x, other->y, other->angle);
 }
 
 LandList *land_sprites_grid_overlap(LandSprite *self, LandGrid *sprites_grid)
