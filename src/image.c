@@ -24,7 +24,7 @@ struct LandImage
     BITMAP *memory_cache;
     unsigned int gl_texture;
 
-    unsigned int *mask; /* Bit-mask of the image. */
+    LandPixelMask *mask; /* Bit-mask of the image. */
 
     float x, y; /* Offset to origin. */
 
