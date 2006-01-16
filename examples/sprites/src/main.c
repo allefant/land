@@ -15,7 +15,7 @@ static void sprite_drawer(MySprite *self, LandView *view)
 {
     float x = self->super.x + self->super.type->x - view->scroll_x + view->x;
     float y = self->super.y + self->super.type->y - view->scroll_y + view->y;
-    land_color(1, 0, 0);
+    land_color(1, 0, 0, 1);
     land_rectangle(x, y, x + self->super.type->w,
         y + self->super.type->h);
     land_text_color(1, 1, 1, 1);
@@ -91,8 +91,8 @@ static void game_tick(LandRunner *self)
 static void game_draw(LandRunner *self)
 {
     sprites = 0;
-    land_clear(0, 0, 0);
-    land_color(0, 0, 1);
+    land_clear(0, 0, 0, 0);
+    land_color(0, 0, 1, 1);
     land_rectangle(my_view->x - 1, my_view->y - 1, my_view->x + my_view->w,
         my_view->y + my_view->h);
     land_map_draw(map, my_view);
@@ -109,8 +109,9 @@ land_begin()
 {
     land_init();
     land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL);
-    LandRunner *game_runner = land_runner_register("game",
+    LandRunner *game_runner = land_runner_new("game",
         game_init, NULL, game_tick, game_draw, NULL, game_exit);
+    land_runner_register(game_runner);
     land_set_initial_runner(game_runner);
     land_main();
 }

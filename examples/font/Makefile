@@ -7,10 +7,9 @@ PRETTY = 1
 USECPROTO = 1
 
 DEBUGMODE = 1
-STATICLINK = 1
 
 ALLEGROGL = 1
 
-ADDLIB = -lland -lldpng -lpng -lglyphkeeper-agl -lfreetype
+ADDLIB = -llandd -lldpng -lpng -lglyphkeeper-alleggl -lfudgefont -lfreetype
 
 include ../makefile.template

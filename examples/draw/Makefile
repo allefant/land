@@ -12,6 +12,6 @@ STATICLINK = 1
 
 ALLEGROGL = 1
 
-ADDLIB = -L../.. -lland -lldpng -lpng
+ADDLIB = -L../.. -lland -lldpng -lpng -lglyphkeeper-agl -lfreetype
 
 include ../makefile.template
