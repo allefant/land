@@ -4,18 +4,22 @@
 #include "../array.h"
 #include "../display.h"
 #include "../log.h"
+#include "../image/display.h"
 
 land_type(LandDisplayAllegro)
 {
-    struct LandDisplay super;
+    struct LandDisplayImage super;
     BITMAP *screen;
     BITMAP *pages[3];
     BITMAP *back, *front, *triple;
 };
 
+#define LAND_DISPLAY_ALLEGRO(_x_) ((LandDisplayAllegro *)_x_)
+
 #endif /* _PROTOTYPE_ */
 
 #include "allegro/display.h"
+#include "allegro/image.h"
 
 static LandDisplayInterface *vtable;
 
@@ -23,7 +27,7 @@ LandDisplayAllegro *land_display_allegro_new(int w, int h, int bpp, int hz,
     int flags)
 {
     LandDisplayAllegro *self = calloc(1, sizeof *self);
-    LandDisplay *super = &self->super;
+    LandDisplay *super = &self->super.super;
     super->w = w;
     super->h = h;
     super->bpp = bpp;
@@ -34,10 +38,15 @@ LandDisplayAllegro *land_display_allegro_new(int w, int h, int bpp, int hz,
     return self;
 }
 
-void land_display_allegro_set(LandDisplayAllegro *self)
+static int color(LandDisplay *self)
+{
+    return makecol(self->color_r * 255, self->color_g * 255, self->color_b * 255);
+}
+
+void land_display_allegro_set(LandDisplay *super)
 {
     land_log_msg("land_display_allegro_set\n");
-    LandDisplay *super = &self->super;
+    LandDisplayAllegro *self = LAND_DISPLAY_ALLEGRO(super);
     int mode = GFX_AUTODETECT;
 
     int cd = desktop_color_depth();
@@ -74,50 +83,48 @@ void land_display_allegro_set(LandDisplayAllegro *self)
     {
         self->back = create_bitmap(SCREEN_W, SCREEN_H);
     }
+    self->super.bitmap = self->back;
 }
 
-void land_display_allegro_flip(LandDisplayAllegro *self)
+void land_display_allegro_flip(LandDisplay *self)
 {
-    BITMAP *page = self->back;
-    if (self->triple)
+    LandDisplayAllegro *sub = LAND_DISPLAY_ALLEGRO(self);
+    BITMAP *page = sub->back;
+    if (sub->triple)
     {
-        request_video_bitmap(self->back);
-        self->back = self->front;
-        self->front = self->triple;
-        self->triple = page;
+        request_video_bitmap(sub->back);
+        sub->back = sub->front;
+        sub->front = sub->triple;
+        sub->triple = page;
     }
-    else if (self->front)
+    else if (sub->front)
     {
-        show_video_bitmap(self->back);
-        self->back = self->front;
-        self->front = page;
+        show_video_bitmap(sub->back);
+        sub->back = sub->front;
+        sub->front = page;
     }
     else
     {
-        blit(self->back, self->screen, 0, 0, 0, 0, self->super.w, self->super.h);
+        blit(sub->back, sub->screen, 0, 0, 0, 0, self->w, self->h);
     }
-}
-
-void land_display_allegro_rectangle(LandDisplayAllegro *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
-{
-    rect(self->back, x, y, x_, y_, makecol(r * 255, g * 255, b * 255));
-}
-
-void land_display_allegro_line(LandDisplayAllegro *self,
-    float x, float y, float x_, float y_,
-    float r, float g, float b)
-{
-    line(self->back, x, y, x_, y_, makecol(r * 255, g * 255, b * 255));
+    sub->super.bitmap = sub->back;
 }
 
 void land_display_allegro_init(void)
 {
     land_log_msg("land_display_allegro_init\n");
     land_alloc(vtable);
-    vtable->set = (void *)land_display_allegro_set;
-    vtable->flip = (void *)land_display_allegro_flip;
-    vtable->rectangle = (void *)land_display_allegro_rectangle;
-    vtable->line = (void *)land_display_allegro_line;
+    vtable->clear = land_display_image_clear;
+    vtable->clip = land_display_image_clip;
+    vtable->color = land_display_image_color;
+    vtable->rectangle = land_display_image_rectangle;
+    vtable->filled_rectangle = land_display_image_filled_rectangle;
+    vtable->line = land_display_image_line;
+    vtable->filled_circle = land_display_image_filled_circle;
+    vtable->plot = land_display_image_plot;
+
+    vtable->set = land_display_allegro_set;
+    vtable->flip = land_display_allegro_flip;
+    vtable->del_image = land_image_allegro_del;
+    vtable->new_image = land_image_allegro_new;
 };

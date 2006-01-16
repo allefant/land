@@ -1,5 +1,6 @@
 #ifdef _PROTOTYPE_
 
+
 #include "../land.h"
 
 typedef struct WigetTheme WidgetTheme;
@@ -381,7 +382,7 @@ void widget_theme_draw(Widget *self)
 
     if (!theme)
     {
-        land_color(1, 0, 0);
+        land_color(1, 0, 0, 1);
         land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
             self->box.y + self->box.h - 0.5);
         return;
@@ -394,7 +395,7 @@ void widget_theme_draw(Widget *self)
 
     if (!element)
     {
-        land_color(1, 1, 0);
+        land_color(1, 1, 0, 1);
         land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
             self->box.y + self->box.h - 0.5);
         return;

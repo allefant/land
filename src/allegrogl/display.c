@@ -138,6 +138,7 @@ void land_display_allegrogl_filled_circle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
     float min_side_length = 2;
+    float max_sides = 32;
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_POLYGON);
     float xradius = (x_ - x) * 0.5;
@@ -145,6 +146,8 @@ void land_display_allegrogl_filled_circle(LandDisplay *super,
     float xcenter = x + xradius;
     float ycenter = y + yradius;
     float n = AL_PI / (asin(min_side_length / (2 * xradius)));
+    if (n > max_sides)
+        n = max_sides;
     float a = 0;
     float ai = AL_PI * 2 / n;
     if (ai > AL_PI / 4)
@@ -162,12 +165,16 @@ void land_display_allegrogl_circle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
     float min_side_length = 2;
+    float max_sides = 32;
+    glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINE_LOOP);
     float xradius = (x_ - x) * 0.5;
     float yradius = (y_ - y) * 0.5;
     float xcenter = x + xradius;
     float ycenter = y + yradius;
     float n = AL_PI / (asin(min_side_length / (2 * xradius)));
+    if (n > max_sides)
+        n = max_sides;
     float a = 0;
     float ai = AL_PI * 2 / n;
     if (ai > AL_PI / 4)
@@ -177,6 +184,15 @@ void land_display_allegrogl_circle(LandDisplay *super,
         glVertex2f(xcenter + xradius * cos(a), ycenter + yradius * sin(a));
         a += ai;
     }
+    glEnd();
+}
+
+void land_display_allegrogl_plot(LandDisplay *super,
+    float x, float y)
+{
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_POINTS);
+    glVertex2f(x + 0.5, y + 0.5);
     glEnd();
 }
 
@@ -223,6 +239,7 @@ void land_display_allegrogl_polygon(LandDisplay *super, int n,
     {
         glVertex2f(x[i], y[i]);
     }
+    glEnd();
 }
 
 void land_display_allegrogl_color(LandDisplay *super)
@@ -240,9 +257,9 @@ void land_display_allegrogl_clip(LandDisplay *super)
         super->clip_y2 - super->clip_y1);
 }
 
-void land_display_allegrogl_clear(LandDisplay *super, float r, float g, float b)
+void land_display_allegrogl_clear(LandDisplay *super, float r, float g, float b, float a)
 {
-    glClearColor(r, g, b, 0);
+    glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -263,6 +280,7 @@ void land_display_allegrogl_init(void)
     vtable->color = land_display_allegrogl_color;
     vtable->clip = land_display_allegrogl_clip;
     vtable->clear = land_display_allegrogl_clear;
+    vtable->plot = land_display_allegrogl_plot;
     vtable->polygon = land_display_allegrogl_polygon;
     vtable->filled_polygon = land_display_allegrogl_filled_polygon;
 };

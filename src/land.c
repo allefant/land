@@ -36,8 +36,9 @@
     int main(void) \
     { \
         land_init(); \
-        LandRunner *runner = land_runner_register("shortcut", \
+        LandRunner *runner = land_runner_new("shortcut", \
             init, enter, tick, draw, leave, destroy); \
+        land_runner_register(runner); \
         land_set_display_parameters(w, h, bpp, hz, flags); \
         land_set_initial_runner(runner); \
         land_set_frequency(hz); \
@@ -50,6 +51,7 @@
 #include "land.h"
 
 static LandDisplay *_global_image_shortcut_display = NULL;
+static LandImage *_global_image = NULL;
 static int nested = 0;
 
 void land_set_image_display(LandImage *image)
@@ -65,17 +67,18 @@ void land_set_image_display(LandImage *image)
     }
     else
     {
-        self->target = image;
+        self->bitmap = image->memory_cache;
         self->super.w = land_image_width(image);
         self->super.h = land_image_height(image);
         self->super.bpp = bitmap_color_depth(image->memory_cache);
     }
+    _global_image = image;
     land_display_select(_global_image_shortcut_display);
 }
 
 void land_unset_image_display(void)
 {
-    LandDisplayImage *self = LAND_DISPLAY_IMAGE(_global_image_shortcut_display);
     land_display_unselect();
-    land_image_prepare(self->target);
+    land_image_prepare(_global_image);
+    _global_image = NULL;
 }

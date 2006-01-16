@@ -248,7 +248,7 @@ static void placeholder(LandGrid *self, LandView *view, int cell_x, int cell_y, 
     int x_, y_;
     int w = self->cell_w / 2;
     int h = self->cell_h / 2;
-    land_color(255, 0, 0);
+    land_color(255, 0, 0, 1);
     x_ = x + w;
     y_ = y + h;
     land_line(x, y, x_, y_);

@@ -26,7 +26,7 @@ void widget_text_draw(Widget *base)
     {
         int x = base->box.x + base->box.il + 1;
         int y = base->box.y + base->box.it + 1;
-        land_text_color(0, 0.5, 1, 0.8);
+        land_color(0, 0.5, 1, 0.8);
         land_text_pos(x, y);
         land_print(self->text);
     }

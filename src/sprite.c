@@ -63,7 +63,7 @@ static void dummy(LandSprite *self, LandView *view)
 {
     float x = self->x - self->type->x - view->scroll_x + view->x;
     float y = self->y - self->type->y - view->scroll_y + view->y;
-    land_color(1, 0, 0);
+    land_color(1, 0, 0, 1);
     land_rectangle(x, y, x + self->type->w,
         y + self->type->h);
 }

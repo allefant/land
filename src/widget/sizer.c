@@ -26,7 +26,7 @@ void widget_sizer_draw(Widget *self)
     float r = 1, g = 0, b = 0;
     if (self->got_mouse)
         g = 1;
-    land_color(r, g, b);
+    land_color(r, g, b, 1);
     land_rectangle(self->box.x, self->box.y, self->box.x + self->box.w - 1,
         self->box.y + self->box.h - 1);
 }

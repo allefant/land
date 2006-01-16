@@ -4,6 +4,7 @@
 
 #include <allegro.h>
 
+#include "fudgefont.h"
 #include "land.h"
 
 land_type(LandParameters)
@@ -14,12 +15,19 @@ land_type(LandParameters)
     LandRunner *start;
 };
 
+static double frequency;
 static LandParameters *parameters;
 static int quit = 0;
 static volatile int ticks = 0;
+static int x_clicked = 0;
 static void ticker(void)
 {
     ticks++;
+}
+
+static void closebutton(void)
+{
+    x_clicked++;
 }
 
 void land_init(void)
@@ -39,6 +47,7 @@ void land_init(void)
         land_exception("Error in allegro_init: %s", allegro_error);
 
     loadpng_init();
+    install_fudgefont();
 }
 
 static void land_tick(void)
@@ -64,9 +73,16 @@ void land_quit(void)
     quit = 1;
 }
 
+int land_closebutton(void)
+{
+    int r = x_clicked;
+    x_clicked = 0;
+    return r;
+}
+
 void land_set_frequency(int f)
 {
-    land_log_msg("land_set_frequency %d.\n", f);
+    land_log_msg("land_set_frequency %d\n", f);
     parameters->frequency = f;
 }
 
@@ -85,6 +101,26 @@ void land_set_initial_runner(LandRunner *runner)
     parameters->start = runner;
 }
 
+double land_get_frequency(void)
+{
+    return frequency;
+}
+
+int land_get_ticks(void)
+{
+    return ticks;
+}
+
+double land_get_time(void)
+{
+    return ticks / frequency;
+}
+
+int land_get_flags(void)
+{
+    return parameters->flags;
+}
+
 int land_main(void)
 {
     land_log_msg("land_main\n");
@@ -98,6 +134,7 @@ int land_main(void)
         land_exception("Error in install_sound: %s", allegro_error);
 
     land_display_init();
+    land_font_init();
     land_image_init();
     land_grid_init();
 
@@ -106,10 +143,15 @@ int land_main(void)
 
     land_display_set();
 
+    set_close_button_callback(closebutton);
+
     land_mouse_init();
     land_keyboard_init();
 
-    install_int_ex(ticker, BPS_TO_TIMER(parameters->frequency));
+    frequency = parameters->frequency;
+    long altime = BPS_TO_TIMER(parameters->frequency);
+    frequency = TIMERS_PER_SECOND / altime;
+    install_int_ex(ticker, altime);
 
     land_runner_init_all();
 

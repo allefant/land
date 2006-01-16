@@ -22,7 +22,7 @@ LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
 static void dummy_draw(LandGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y)
 {
     // TODO: draw sprites/tiles
-    land_color(1, 0, 0);
+    land_color(1, 0, 0, 1);
     land_rectangle(pixel_x, pixel_y, pixel_x + self->cell_w - 1,
         pixel_y + self->cell_h - 1);
 }
@@ -30,13 +30,15 @@ static void dummy_draw(LandGrid *self, LandView *view, int cell_x, int cell_y, f
 /* Convert a view position inside the grid into cell and pixel position. */
 static void view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, int *pixel_x)
 {
-    if (0)//self->wrap_x)
+#if 0
+    if (self->wrap_x)
     {
         /* wrap around -> there's always a cell at the left border */
         *cell_x = (unsigned int)view_x / self->cell_w;
         *pixel_x = -((unsigned int)view_x % self->cell_w);
     }
     else
+#endif
     {
         if (view_x < 0)
         {
@@ -55,13 +57,15 @@ static void view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, 
 /* Convert a view position inside the grid into cell and pixel position. */
 static void view_y_to_cell_and_pixel_y(LandGrid *self, int view_y, int *cell_y, int *pixel_y)
 {
-    if (0)//self->wrap_y)
+#if 0
+    if (self->wrap_y)
     {
         /* wrap around -> there's always a cell at the top border */
         *cell_y = (unsigned int)view_y / self->cell_h;
         *pixel_y = -((unsigned int)view_y % self->cell_h);
     }
     else
+#endif
     {
         if (view_y < 0)
         {
@@ -92,9 +96,11 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
     {
         if (cell_y >= self->y_cells)
         {
-            if (0)//self->wrap_y)
+#if 0
+            if (self->wrap_y)
                 cell_y -= self->y_cells;
             else
+#endif
                 break;
         }
 
@@ -105,9 +111,11 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
         {
             if (cell_x >= self->x_cells)
             {
-                if (0)//self->wrap_x)
+#if 0
+                if (self->wrap_x)
                     cell_x -= self->x_cells;
                 else
+#endif
                     break;
             }
 

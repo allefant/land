@@ -19,7 +19,7 @@ typedef struct LandDisplay LandDisplay;
 struct LandDisplayInterface
 {
     land_method(void, set, (LandDisplay *self));
-    land_method(void, clear, (LandDisplay *self, float r, float g, float b));
+    land_method(void, clear, (LandDisplay *self, float r, float g, float b, float a));
     land_method(void, flip, (LandDisplay *self));
     land_method(void, rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
     land_method(void, filled_rectangle, (LandDisplay *self, float x, float y, float x_, float y_));
@@ -32,6 +32,7 @@ struct LandDisplayInterface
     land_method(void, clip, (LandDisplay *self));
     land_method(void, polygon, (LandDisplay *self, int n, float *x, float *y));
     land_method(void, filled_polygon, (LandDisplay *self, int n, float *x, float *y));
+    land_method(void, plot, (LandDisplay *self, float x, float y));
 };
 
 struct LandDisplay
@@ -72,8 +73,14 @@ LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
     {
         LandDisplayAllegro *allegro = land_display_allegro_new(
             w, h, bpp, hz, flags);
-        self = &allegro->super;
+        self = &allegro->super.super;
     }
+
+    self->clip_x1 = 0;
+    self->clip_y1 = 0;
+    self->clip_x2 = w;
+    self->clip_y2 = h;
+    self->clip_off = 0;
 
     land_display_select(self);
 
@@ -100,26 +107,29 @@ void land_display_init(void)
     land_display_image_init();
 }
 
-void land_clear(float r, float g, float b)
+void land_clear(float r, float g, float b, float a)
 {
     LandDisplay *d = _land_active_display;
-    _land_active_display->vt->clear(d, r, g, b);
+    _land_active_display->vt->clear(d, r, g, b, a);
 }
 
-void land_color(float r, float g, float b)
+void land_color(float r, float g, float b, float a)
 {
     LandDisplay *d = _land_active_display;
     d->color_r = r;
     d->color_g = g;
     d->color_b = b;
+    d->color_a = a;
     _land_active_display->vt->color(d);
 }
 
-void land_transparency(float a)
+void land_get_color(float *r, float *g, float *b, float *a)
 {
     LandDisplay *d = _land_active_display;
-    d->color_a = a;
-    _land_active_display->vt->color(_land_active_display);
+    *r = d->color_r;
+    *g = d->color_g;
+    *b = d->color_b;
+    *a = d->color_a;
 }
 
 void land_clip(float x, float y, float x_, float y_)
@@ -237,6 +247,11 @@ void land_polygon(int n, float *x, float *y)
 void land_filled_polygon(int n, float *x, float *y)
 {
     _land_active_display->vt->filled_polygon(_land_active_display, n, x, y);
+}
+
+void land_plot(float x, float y)
+{
+    _land_active_display->vt->plot(_land_active_display, x, y);
 }
 
 int land_display_width(void)

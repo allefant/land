@@ -74,3 +74,18 @@ int land_mouse_delta_b(void)
 {
     return mb ^ omb;
 }
+
+void land_mouse_set_pos(int x, int y)
+{
+    position_mouse(x, y);
+}
+
+int land_hide_mouse_cursor(void)
+{
+    return !show_os_cursor(MOUSE_CURSOR_NONE);
+}
+
+int land_show_mouse_cursor(void)
+{
+    return !show_os_cursor(MOUSE_CURSOR_ARROW);
+}

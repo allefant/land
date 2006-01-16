@@ -12,7 +12,9 @@ land_type(LandImageInterface)
 {
     land_method(void, prepare, (LandImage *self));
     land_method(void, draw_scaled_rotated_tinted, (LandImage *self,
-        float x, float y, float sx, float sy, float a, float r, float g, float b));
+        float x, float y, float sx, float sy, float angle, float r, float g, float b, float alpha));
+    land_method(void, grab, (LandImage *self, int x, int y));
+    land_method(void, grab_into, (LandImage *self, int x, int y, int tx, int ty, int tw, int th));
 };
 
 struct LandImage
@@ -22,7 +24,6 @@ struct LandImage
     char *name;
     BITMAP *bitmap;
     BITMAP *memory_cache;
-    unsigned int gl_texture;
 
     LandPixelMask *mask; /* Bit-mask of the image. */
 
@@ -97,17 +98,24 @@ void land_image_crop(LandImage *self, int x, int y, int w, int h)
 
 LandImage *land_image_new_from(LandImage *copy, int x, int y, int w, int h)
 {
-    LandImage *self = land_image_new(w, h);
+    BITMAP *bmp = create_bitmap(w, h);
+    LandImage *self = land_display_new_image();
+    self->filename = NULL;
+    self->name = NULL;
+    self->bitmap = bmp;
+    self->memory_cache = bmp;
+    land_log_msg("land_image_new_from %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+
     blit(copy->memory_cache, self->memory_cache, x, y, 0, 0, w, h);
     float red, green, blue, alpha;
     int n;
-    n = land_image_color_stats(self, &red, &green, &blue, &alpha);;
+    n = land_image_color_stats(self, &red, &green, &blue, &alpha);
     land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
     land_image_prepare(self);
     return self;
 }
 
-/* Returns the number of pixels in the image, and the average red, gree, blue
+/* Returns the number of pixels in the image, and the average red, green, blue
  * and alpha component.
  */
 int land_image_color_stats(LandImage *self, float *red, float *green, float *blue, float *alpha)
@@ -195,36 +203,46 @@ LandImage *land_find_image(char const *name)
 
 
 void land_image_draw_scaled_rotated_tinted(LandImage *self, float x, float y, float sx, float sy,
-    float a, float r, float g, float b)
+    float angle, float r, float g, float b, float alpha)
 {
-    self->vt->draw_scaled_rotated_tinted(self, x, y, sx, sy, a, r, g, b);
+    self->vt->draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha);
 }
 
 void land_image_draw_scaled_rotated(LandImage *self, float x, float y, float sx, float sy,
-    float a)
+    float angle)
 {
-    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, a, 1, 1, 1);
+    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, 1, 1, 1, 1);
 }
 
 void land_image_draw_scaled(LandImage *self, float x, float y, float sx, float sy)
 {
-    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, 1, 1, 1);
+    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, 1, 1, 1, 1);
 }
 
 void land_image_draw_rotated(LandImage *self, float x, float y, float a)
 {
-    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, 1, 1, 1);
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, 1, 1, 1, 1);
 }
 
 void land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, float sy,
-    float r, float g, float b)
+    float r, float g, float b, float alpha)
 {
-    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, r, g, b);
+    land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, r, g, b, alpha);
 }
 
 void land_image_draw(LandImage *self, float x, float y)
 {
-    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, 1, 1, 1);
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, 1, 1, 1, 1);
+}
+
+void land_image_grab(LandImage *self, int x, int y)
+{
+    self->vt->grab(self, x, y);
+}
+
+void land_image_grab_into(LandImage *self, int x, int y, int tx, int ty, int tw, int th)
+{
+    self->vt->grab_into(self, x, y, tx, ty, tw, th);
 }
 
 void land_image_offset(LandImage *self, int x, int y)

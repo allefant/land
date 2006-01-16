@@ -5,7 +5,8 @@
 
 #include "array.h"
 
-land_type(LandRunner)
+typedef struct LandRunner LandRunner;
+struct LandRunner
 {
     char *name;
     void (*init)(LandRunner *self);
@@ -56,6 +57,8 @@ LandRunner *land_runner_new(char const *name, void (*init)(LandRunner *self),
 void land_runner_init_all(void)
 {
     LandListItem *i;
+    if (!runners)
+        return;
     for (i = runners->first; i; i = i->next)
     {
         LandRunner *self = (LandRunner *)i->data;
@@ -103,6 +106,8 @@ void land_runner_leave_active(void)
 void land_runner_destroy_all(void)
 {
     LandListItem *i;
+    if (!runners)
+        return;
     for (i = runners->first; i; i = i->next)
     {
         LandRunner *self = (LandRunner *)i->data;
