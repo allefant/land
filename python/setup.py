@@ -4,17 +4,19 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Pyrex.Distutils import build_ext
 
-libraries = ["land", "ldpng", "png", "glyphkeeper-agl", "agl", "GL", "GLU", "freetype"]
+libraries = ["landd", "ldpng", "png", "glyphkeeper-alleggl", "fudgefont", "agld", "GL", "GLU",
+    "freetype", "m"]
 library_dirs = ["../"]
 extra_link_args = []
 
-args = os.popen("allegro-config --shared release").read()
+args = os.popen("allegro-config --shared debug").read()
 for arg in args.split():
     if arg[:2] == '-L': library_dirs.append(arg[2:])
     elif arg[:2] == '-l': libraries.append(arg[2:])
     else: extra_link_args.append(arg)
 
-modules = ["land", "main", "runner", "display", "keyboard", "mouse"]
+modules = ["land", "main", "runner", "display", "keyboard", "mouse", "image",
+    "text"]
 ext_modules = []
 
 for module in modules:

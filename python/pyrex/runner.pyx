@@ -1,26 +1,54 @@
+import traceback, sys
+
+cdef extern void land_quit()
+
 cdef _init(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.init()
+    try:
+        self.init()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef _enter(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.enter()
+    try:
+        self.enter()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef _tick(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.tick()
+    try:
+        self.tick()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef _draw(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.draw()
+    try:
+        self.draw()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef _leave(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.leave()
+    try:
+        self.leave()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef _destroy(LandRunnerPyrex *wrapped):
     self = <object>wrapped.self
-    self.destroy()
+    try:
+        self.destroy()
+    except:
+        traceback.print_exc()
+        land_quit()
 
 cdef class Runner:
     def __new__(self):

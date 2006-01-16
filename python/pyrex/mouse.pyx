@@ -1,5 +1,5 @@
 cdef extern from "land.h":
-    void land_mouse_init();
+    void land_mouse_init()
     int land_have_os_cursor()
     void land_mouse_tick()
     int land_mouse_x()
@@ -10,6 +10,9 @@ cdef extern from "land.h":
     int land_mouse_delta_y()
     int land_mouse_delta_z()
     int land_mouse_delta_b()
+    void land_mouse_set_pos(int x, int y)
+    int land_hide_mouse_cursor()
+    int land_show_mouse_cursor()
 
 def have_os_cursor(): land_have_os_cursor()
 def x(): return land_mouse_x()
@@ -20,3 +23,6 @@ def dx(): return land_mouse_delta_x()
 def dy(): return land_mouse_delta_y()
 def dz(): return land_mouse_delta_z()
 def db(): return land_mouse_delta_b()
+def set_pos(x, y): land_mouse_set_pos(x, y)
+def show(): return land_show_mouse_cursor()
+def hide(): return land_hide_mouse_cursor()

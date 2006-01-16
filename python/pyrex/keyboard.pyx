@@ -3,6 +3,9 @@ cdef extern from "land.h":
     int land_key(int k)
     int land_key_pressed(int k)
     void land_keyboard_tick()
+    int keypressed()
+    int ureadkey(int *)
+    void clear_keybuf()
 
     ctypedef enum:
         KEY_A
@@ -143,6 +146,16 @@ def pressed(k):
 def tick():
     land_keyboard_tick()
 
+def clear():
+    clear_keybuf()
+
+def next():
+    cdef int k
+    if keypressed():
+        u = ureadkey(&k)
+        return unichr(u).encode("utf8"), k
+    return None
+
 A = KEY_A
 B = KEY_B
 C = KEY_C
@@ -201,7 +214,7 @@ F9 = KEY_F9
 F10 = KEY_F10
 F11 = KEY_F11
 F12 = KEY_F12
-ESC = KEY_ESC
+ESC = ESCAPE = KEY_ESC
 TILDE = KEY_TILDE
 MINUS = KEY_MINUS
 EQUALS = KEY_EQUALS
@@ -219,11 +232,11 @@ STOP = KEY_STOP
 SLASH = KEY_SLASH
 SPACE = KEY_SPACE
 INSERT = KEY_INSERT
-DEL = KEY_DEL
+DEL = DELETE = KEY_DEL
 HOME = KEY_HOME
 END = KEY_END
-PGUP = KEY_PGUP
-PGDN = KEY_PGDN
+PGUP = PAGEUP = KEY_PGUP
+PGDN = PAGEDOWN = KEY_PGDN
 LEFT = KEY_LEFT
 RIGHT = KEY_RIGHT
 UP = KEY_UP
@@ -271,3 +284,5 @@ SCRLOCK = KEY_SCRLOCK
 NUMLOCK = KEY_NUMLOCK
 CAPSLOCK = KEY_CAPSLOCK
 MAX = KEY_MAX
+
+ESCAPE = ESC

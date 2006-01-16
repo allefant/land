@@ -1,3 +1,5 @@
+cimport image
+
 cdef extern from "land.h":
     ctypedef enum:
         LAND_WINDOWED
@@ -8,16 +10,12 @@ cdef extern from "land.h":
     cdef struct LandDisplay:
         pass
 
-    cdef struct LandImage:
-        pass
-
     LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
     void land_display_set()
     void land_display_unset()
     void land_display_init()
-    void land_clear(float r, float g, float b)
-    void land_color(float r, float g, float b)
-    void land_transparency(float a)
+    void land_clear(float r, float g, float b, float a)
+    void land_color(float r, float g, float b, float a)
     void land_clip(float x, float y, float x_, float y_)
     void land_clip_intersect(float x, float y, float x_, float y_)
     void land_clip_push()
@@ -31,25 +29,31 @@ cdef extern from "land.h":
     void land_filled_circle(float x, float y, float x_, float y_)
     void land_circle(float x, float y, float x_, float y_)
     void land_line(float x, float y, float x_, float y_)
+    void land_plot(float x, float y)
     void land_polygon(int n, float *x, float *y)
     void land_filled_polygon(int n, float *x, float *y)
     int land_display_width()
     int land_display_height()
     int land_display_flags()
-    LandImage *land_display_new_image()
-    void land_display_del_image(LandImage *image)
+    image.LandImage *land_display_new_image()
+    void land_display_del_image(image.LandImage *image)
     void land_display_select(LandDisplay *display)
     void land_display_unselect()
     void land_display_del(LandDisplay *self)
+    void land_set_image_display(image.LandImage *image)
+    void land_unset_image_display()
 
 WINDOWED = LAND_WINDOWED
 FULLSCREEN = LAND_FULLSCREEN
 OPENGL = LAND_OPENGL
 CLOSE_LINES = LAND_CLOSE_LINES
 
-def clear(r, g, b): land_clear(r, g, b)
-def color(r, g, b): land_color(r, g, b)
-def transparency(a): land_transparency(a)
+def c(color):
+    if color:
+        land_color(color[0], color[1], color[2], color[3])
+
+def clear(r, g, b, a): land_clear(r, g, b, a)
+def color(r, g, b, a): land_color(r, g, b, a)
 def clip(x, y, x_, y_): land_clip(x, y, x_, y_)
 def clip_intersect(x, y, x_, y_): land_clip_intersect(x, y, x_, y_)
 def clip_push(): land_clip_push()
@@ -58,11 +62,16 @@ def clip_on(): land_clip_on()
 def clip_off(): land_clip_off()
 def unclip(): land_unclip()
 def flip(): land_flip()
-def rectangle(x, y, x_, y_): land_rectangle(x, y, x_, y_)
-def filled_rectangle(x, y, x_, y_): land_filled_rectangle(x, y, x_, y_)
+def rectangle(x, y, x_ = None, y_ = None, color = None, w = None, h = None):
+    c(color)
+    if x_ == None: x_ = x + w
+    if y_ == None: y_ = y + h
+    land_rectangle(x, y, x_, y_)
+def filled_rectangle(x, y, x_, y_, color = None): c(color); land_filled_rectangle(x, y, x_, y_)
 def filled_circle(x, y, x_, y_): land_filled_circle(x, y, x_, y_)
 def circle(x, y, x_, y_): land_circle(x, y, x_, y_)
 def line(x, y, x_, y_): land_line(x, y, x_, y_)
+def plot(x, y): land_plot(x, y)
 def polygon(l):
     cdef int n
     n = len(l)
@@ -95,3 +104,6 @@ def flags(): return land_display_flags()
 #def select(display): land_display_select(display)
 #def unselect(): land_display_unselect()
 #def del(display): land_display_del(display)
+def select_image(image.Image image): land_set_image_display(image.wrapped)
+def unselect_image(): land_unset_image_display()
+

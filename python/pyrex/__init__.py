@@ -1,3 +1,4 @@
 from main import *
-import land, runner, display, keyboard
+from land import *
+import runner, display, keyboard, image, mouse, text
 

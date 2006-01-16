@@ -7,6 +7,8 @@ cdef extern from "land.h":
     void land_set_display_parameters(int w, int h, int bpp, int hz, int flags)
     void land_set_initial_runner(runner.LandRunner *runner)
     int land_main()
+    double land_get_time()
+    int land_closebutton()
 
 def init():
     land_init()
@@ -25,3 +27,9 @@ def set_initial_runner(runner.Runner runner):
 
 def main():
     land_main()
+
+def get_time():
+    return land_get_time()
+
+def closebutton():
+    return land_closebutton()
