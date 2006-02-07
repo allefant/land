@@ -217,6 +217,18 @@ void land_image_allegrogl_prepare(LandImage *self)
 
     BITMAP *temp = create_bitmap_ex(32, w + pad_w, h + pad_h);
     blit(self->memory_cache, temp, 0, 0, 0, 0, w, h);
+    if (bitmap_color_depth(self->memory_cache) != 32)
+    {
+        /* Fix up empty alpha channel. */
+        int x, y;
+        for (y = 0; y < h; y++)
+        {
+            for (x = 0; x < w; x++)
+            {
+                ((unsigned char *)temp->line[y])[x * 4 + 3] = 255;
+            }
+        }
+    }
 
     /* Repeat border pixels across padding area of texture. */
     int i;
