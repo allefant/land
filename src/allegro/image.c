@@ -57,4 +57,13 @@ void land_image_allegro_init(void)
 
 void land_image_allegro_prepare(LandImage *self)
 {
+    if (bitmap_color_depth(self->bitmap) != bitmap_color_depth(screen))
+    {
+        int w = land_image_width(self);
+        int h = land_image_height(self);
+        if (self->bitmap != self->memory_cache)
+            destroy_bitmap(self->bitmap);
+        self->bitmap = create_bitmap_ex(bitmap_color_depth(screen), w, h);
+        blit(self->memory_cache, self->bitmap, 0, 0, 0, 0, w, h);
+    }
 }
