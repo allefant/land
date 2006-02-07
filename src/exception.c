@@ -5,6 +5,8 @@
 
 #ifdef _PROTOTYPE_
 
+extern int (*land_exception_handler)(char const *str);
+
 #endif /* _PROTOTYPE_ */
 
 #include "exception.h"

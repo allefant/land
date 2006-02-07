@@ -44,6 +44,11 @@ struct Widget
    struct WidgetTheme *theme;
 };
 
+extern int theme_scrollbar_broadness;
+extern int theme_scrollbar_minimum_length;
+
+extern WidgetInterface *widget_base_interface;
+
 #define WIDGET(self) ((Widget *)self)
 
 #endif /* _PROTOTYPE_ */

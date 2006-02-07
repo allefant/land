@@ -44,7 +44,7 @@ LandGridInterface *land_grid_vtable_isometric_wrap;
 
 LandGrid *land_isometric_new(int cell_w, int cell_h, int x_cells, int y_cells)
 {
-    land_new(LandGrid, self);
+    LandGrid *self = calloc(1, sizeof *self);
     land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells);
     self->vt = land_grid_vtable_isometric;
     return self;
@@ -52,7 +52,7 @@ LandGrid *land_isometric_new(int cell_w, int cell_h, int x_cells, int y_cells)
 
 LandGrid *land_isometric_wrap_new(int cell_w, int cell_h, int x_cells, int y_cells)
 {
-    land_new(LandGrid, self);
+    LandGrid *self = calloc(1, sizeof *self);
     land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells);
     self->vt = land_grid_vtable_isometric_wrap;
     return self;

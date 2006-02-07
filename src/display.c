@@ -51,6 +51,8 @@ struct LandDisplay
 #include "allegrogl/display.h"
 #include "image/display.h"
 
+extern LandDisplay *_land_active_display;
+
 #endif /* _PROTOTYPE_ */
 
 #include "display.h"

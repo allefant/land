@@ -49,8 +49,7 @@ void widget_list_initialize(WidgetList *self, Widget *parent, int x, int y, int 
 
 Widget *widget_list_new(Widget *parent, int x, int y, int w, int h)
 {
-    WidgetList *self;
-    land_alloc(self);
+    WidgetList *self = calloc(1, sizeof *self);
     widget_list_initialize(self, parent, x, y, w, h);
 
     return WIDGET(self);
@@ -58,7 +57,7 @@ Widget *widget_list_new(Widget *parent, int x, int y, int w, int h)
 
 void widget_list_interface_initialize(void)
 {
-    land_alloc(widget_list_interface);
+    widget_list_interface = calloc(1, sizeof *widget_list_interface);
     memcpy(widget_list_interface, widget_container_interface,
         sizeof *widget_list_interface);
     widget_list_interface->name = "list";

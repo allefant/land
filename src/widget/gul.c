@@ -76,7 +76,7 @@ struct GUL_BOX
 #define ERR(_) (void)0;
 #define D(_) (void)0;
 
-void gul_box_initialize(GUL_BOX * self)
+void gul_box_initialize(GUL_BOX *self)
 {
     memset(self, 0, sizeof *self);
     self->min_width = 3;
@@ -97,7 +97,7 @@ void gul_box_del(GUL_BOX * self)
 }
 
 /* Find box which contains the specified grid position. */
-static GUL_BOX *find_box_in_grid(GUL_BOX * self, int col, int row)
+static GUL_BOX *find_box_in_grid(GUL_BOX *self, int col, int row)
 {
     assert(col < self->cols && row < self->rows);
     GUL_BOX *c = self->children;

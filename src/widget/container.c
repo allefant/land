@@ -14,6 +14,8 @@ struct WidgetContainer
     Widget *keyboard;
 };
 
+extern WidgetInterface *widget_container_interface;
+
 #define WIDGET_CONTAINER(widget) ((WidgetContainer *)widget)
 
 #endif /* _PROTOTYPE_ */

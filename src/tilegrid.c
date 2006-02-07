@@ -13,7 +13,7 @@ LandGridInterface *land_grid_vtable_normal;
 
 LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
 {
-    land_new(LandGrid, self);
+    LandGrid *self = calloc(1, sizeof *self);
     land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells);
     self->vt = land_grid_vtable_normal;
     return self;
