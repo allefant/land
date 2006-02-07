@@ -56,18 +56,20 @@ cdef class Font:
         if color:
             land_color(color[0], color[1], color[2], color[3])
 
-        if pos or x or y:
+        if pos or (x != None) or (y != None):
             if pos: x, y = pos
-            if not x: x = land_text_x_pos()
-            if not y: y = land_text_y_pos()
+            if x == None: x = land_text_x_pos()
+            if y == None: y = land_text_y_pos()
             land_text_pos(x, y)
 
         land_set_font(self.wrapped)
+        cdef char *s
+        s = str
         if right:
-            land_print_right(str)
+            land_print_right("%s", s)
         elif centered:
-            land_print_center(str)
+            land_print_center("%s", s)
         else:
-            land_print(str)
+            land_print("%s", s)
 def glyphkeeper(onoff):
     land_set_glyphkeeper(onoff)
