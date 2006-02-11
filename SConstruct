@@ -1,11 +1,20 @@
 # vi: syntax=python
 import glob, os
 
+# We put all generated files into this directory, but scons can't create it itself
+try: os.mkdir("scons")
+except OSError: pass
+
+# Cross compile using mingw
+crosscompile = ARGUMENTS.get("crosscompile", "")
+
+debug = ARGUMENTS.get("debug", "")
+
 sfiles = glob.glob("src/*.c")
 sfiles += glob.glob("src/*/*.c")
 
 # Environment to generate headers.
-headerenv = Environment()
+headerenv = Environment(ENV = os.environ)
 headerenv.SConsignFile("scons/signatures")
 headerenv.BuildDir("h", "src", duplicate = False)
 
@@ -13,7 +22,8 @@ headerenv.BuildDir("h", "src", duplicate = False)
 headerenv.TargetSignatures("content")
 
 for c in sfiles:
-    dir = c[4:c.rfind("/")]
+    dir = os.path.split(c)[0]
+    dir = dir[4:]
     if dir:
         d = "-d " + dir + " "
     else:
@@ -36,10 +46,20 @@ for c in sfiles:
     p = protoenv.Command(
         pro,
         c,
-        "cproto -e -v -D _CPROTO_ -Ih $SOURCE > $TARGET")
+        "cproto.py $SOURCE > $TARGET")
 
 # Main environment.
 env = Environment()
+
+if crosscompile:
+    env["PLATFORM"] = "mingw"
+
+# We use C99, so MSVC probably won't do in any case.
+if env["PLATFORM"] == "win32":
+    Tool("mingw")(env)
+
+print "platform", env["PLATFORM"]
+print crosscompile and "cross" or "native", debug and "debug" or "release", "build"
 
 env.SConsignFile("scons/signatures")
 
@@ -55,18 +75,40 @@ env.Append(CCFLAGS = "-Wunreachable-code")
 env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 
-if ARGUMENTS.get("debug", 0):
+if debug:
     env.Append(CCFLAGS = "-g")
-    BUILDDIR = "build/debug"
+    BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "landd"
 else:
-    BUILDDIR = "build/release"
+    env.Append(CCFLAGS = "-O3")
+    BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "land"
 
+env.Append(CPPPATH = ["pro", "h"])
+
+if crosscompile:
+    env["CC"] = "i586-mingw32msvc-gcc"
+    env["AR"] = "i586-mingw32msvc-ar"
+
+if env["PLATFORM"] == "mingw":
+    env.Append(CCFLAGS = ["-DALLEGRO_STATICLINK"])
+
+    env.Append(CPPPATH = ["dependencies/include"])
+    env.Append(LIBPATH = ["dependencies/lib"])
+    env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "glyphkeeper-alleggl", "agl_s", "ldpng", "alleg_s", "freetype"])
+
+    env.Append(LIBS = ["opengl32", "glu32", "png", "z"])
+
+    env.Append(LIBS = ["kernel32", "user32", "gdi32", "comdlg32", "ole32", "dinput", "ddraw", "dxguid", "winmm",
+        "dsound"])
+
 env.BuildDir(BUILDDIR, "src", duplicate = False)
-lib = env.SharedLibrary(LIBNAME,
-    [BUILDDIR + "/" + x[4:] for x in sfiles],
-    CPPPATH = ["pro", "h"])
+
+sharedlib = env.SharedLibrary(LIBNAME,
+    [BUILDDIR + "/" + x[4:] for x in sfiles])
+
+staticlib = env.StaticLibrary(LIBNAME,
+    [BUILDDIR + "/" + x[4:] for x in sfiles])
 
 basenames = [x[4:-2] for x in sfiles]
 hfiles = ["h/" + x + ".h" for x in basenames]
@@ -97,7 +139,7 @@ for incdir in INCDIRS:
     env.Install(instdir, INCDICT[incdir])
     INSTALL_HEADERS.append(instdir)
 
-env.Install(LIBDIR, lib)
+env.Install(LIBDIR, [sharedlib, staticlib])
 
 env.Alias('install', ["h", "pro", LIBDIR, INSTALL_HEADERS])
-env.Default(["h", "pro", lib])
+env.Default(["h", "pro", sharedlib, staticlib])
