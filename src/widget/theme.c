@@ -335,7 +335,7 @@ WidgetThemeElement *widget_theme_element_new(struct WidgetTheme *theme, char con
     return self;
 }
 
-struct WidgetTheme *widget_theme_new(char const *filename)
+WidgetTheme *widget_theme_new(char const *filename)
 {
     struct WidgetTheme *self;
     land_alloc(self);
