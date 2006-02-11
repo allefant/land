@@ -4,7 +4,8 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Pyrex.Distutils import build_ext
 
-if "mingw" in sys.args: platform = "mingw"
+platform = "linux"
+if "mingw" in sys.argv: platform = "mingw"
 
 libraries = ["land", "ldpng", "png", "glyphkeeper-alleggl", "fudgefont", "agl",
     "freetype", "m"]
