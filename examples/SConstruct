@@ -1,0 +1,39 @@
+# vi: syntax=python
+import glob, os
+
+try: os.mkdir("scons")
+except OSError: pass
+
+examples = [ex for ex in glob.glob("*") if os.path.isdir(ex) and ex != "scons"]
+
+for ex in examples:
+    srcdir = os.path.join(ex, "src")
+
+    sfiles = glob.glob(os.path.join(srcdir, "*.c"))
+
+    env = Environment()
+
+    BUILDDIR = os.path.join("scons", "build")
+
+    if ARGUMENTS.get("debug", 0):
+        env.Append(CCFLAGS = "-g")
+        env.Append(LIBS = ["landd", "agld"])
+        env.ParseConfig("allegro-config --libs debug")
+        BUILDDIR = os.path.join(BUILDDIR, "debug")
+    else:
+        env.Append(LIBS = ["land", "agl"])
+        env.ParseConfig("allegro-config --libs release")
+        BUILDDIR = os.path.join(BUILDDIR, "release")
+
+    BUILDDIR = os.path.join(BUILDDIR, ex)
+
+    env.Append(CCFLAGS = "-I /usr/local/include/land")
+
+    env.Append(LIBS = ["ldpng", "png", "fudgefont", "glyphkeeper-alleggl", "freetype", "GL", "GLU", "dumb"])
+
+    env.SConsignFile("scons/signatures")
+
+    env.BuildDir(BUILDDIR, srcdir, duplicate = False)
+    sources = [os.path.join(BUILDDIR, os.path.split(x)[1]) for x in sfiles]
+    prog = env.Program(os.path.join(ex, ex), sources)
+

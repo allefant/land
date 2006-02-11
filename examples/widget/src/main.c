@@ -7,7 +7,7 @@ Widget *list;
 
 static void my_draw(Widget *self)
 {
-    land_color(1, 1, 0);
+    land_color(1, 1, 0, 1);
     int x, y;
     x = self->box.x;
     for (y = self->box.y; y < self->box.y + self->box.h; y += 8)
@@ -24,7 +24,7 @@ static void init(LandRunner *self)
 
     WidgetTheme *theme = widget_theme_new("blue/agup.cfg");
 
-    LandFont *f = land_load_font("../../data/galaxy.ttf", 10);
+    LandFont *f = land_font_load("../../data/galaxy.ttf", 10);
     land_set_font(f);
 
     desktop = widget_container_new(NULL, 0, 0, 640, 480);
@@ -140,7 +140,7 @@ static void tick(LandRunner *self)
 static void draw(LandRunner *self)
 {
     land_unclip();
-    land_clear(0, 0, 0);
+    land_clear(0, 0, 0, 1);
     widget_draw(desktop);
     /*land_color(1, 0, 0);
       land_rectangle(scrolling1->box.x - 1.5, scrolling1->box.y - 1.5,

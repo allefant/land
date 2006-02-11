@@ -18,7 +18,7 @@ static void sprite_drawer(MySprite *self, LandView *view)
     land_color(1, 0, 0, 1);
     land_rectangle(x, y, x + self->super.type->w,
         y + self->super.type->h);
-    land_text_color(1, 1, 1, 1);
+    land_color(1, 1, 1, 1);
     land_text_pos(x + 1, y + 1);
     land_print("%d", self->id);
 
@@ -61,7 +61,7 @@ static void game_init(LandRunner *self)
         land_sprite_place_into_grid(&sprite->super, layer->grid, x, y);
     }
 
-    land_load_font("../../data/galaxy.ttf", 10);
+    land_font_load("../../data/galaxy.ttf", 10);
 }
 
 static void game_tick(LandRunner *self)
@@ -97,7 +97,7 @@ static void game_draw(LandRunner *self)
         my_view->y + my_view->h);
     land_map_draw(map, my_view);
     land_text_pos(0, 0);
-    land_text_color(1, 1, 1, 1);
+    land_color(1, 1, 1, 1);
     land_print("%d/%d sprites visible", sprites, sprites_count);
 }
 

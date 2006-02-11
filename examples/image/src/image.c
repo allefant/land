@@ -62,7 +62,8 @@ static LandImage *create_test_image(void)
 static void init(LandRunner *self)
 {
     image = create_test_image();
-    //image = land_image_load("../../data/land2.png");
+    image = land_image_load("../../data/land3.png");
+    land_image_offset(image, 20, 12);
 
     int w = land_image_width(image);
     int h = land_image_height(image);
@@ -121,10 +122,14 @@ static void draw(LandRunner *self)
     land_image_draw(image, 10, 10);
 
     land_image_draw_rotated(image, 480, 160, angle);
+    land_color(0, 1, 0, 1);
+    land_filled_circle(480 - 2, 160 - 2, 480 + 2, 160 + 2);
 
     float sx = cos(angle + AL_PI / 4) * 1.5;
     float sy = sin(angle + AL_PI / 4) * 1.5;
-    land_image_draw_scaled(image, 480, 320, sx, sy);
+    land_image_draw_scaled_rotated(image, 480, 320, sx, sy, -sin(angle));
+    land_color(0, 1, 0, 1);
+    land_filled_circle(480 - 2, 320 - 2, 480 + 2, 320 + 2);
 
     float s = (cos(angle * 3) + 1) * 10;
     land_image_draw(image_parts[0], 40 - s, 240 - s);
@@ -139,5 +144,5 @@ static void draw(LandRunner *self)
 
 }
 
-land_begin_shortcut(640, 480, 0, 60, LAND_WINDOWED,
+land_begin_shortcut(640, 480, 0, 60, LAND_WINDOWED | LAND_OPENGL,
     init, NULL, tick, draw, NULL, destroy);

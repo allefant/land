@@ -23,7 +23,7 @@ LandSprite *sprites[100];
 
 static void game_init(LandRunner *self)
 {
-    land_load_font("../../data/galaxy.ttf", 10);
+    land_font_load("../../data/galaxy.ttf", 10);
 
     game.map = land_map_new();
     game.back_layer = land_layer_new();
@@ -74,14 +74,14 @@ static void game_tick(LandRunner *self)
 
 static void game_draw(LandRunner *self)
 {
-    land_clear(0, 0, 0);
+    land_clear(0, 0, 0, 1);
     land_map_draw(game.map, game.view);
 
     LandList *overlappers = land_sprites_grid_overlap(sprites[0], game.back_grid);
     if (overlappers)
     {
         LandListItem *item = overlappers->first;
-        land_text_color(1, 0, 0, 1);
+        land_color(1, 0, 0, 1);
         land_text_pos(0, 0);
         while (item)
         {
