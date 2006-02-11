@@ -1,19 +1,29 @@
 #!/usr/bin/env python
-import os
+import os, sys
 from distutils.core import setup
 from distutils.extension import Extension
 from Pyrex.Distutils import build_ext
 
-libraries = ["landd", "ldpng", "png", "glyphkeeper-alleggl", "fudgefont", "agld", "GL", "GLU",
-    "freetype", "m"]
-library_dirs = ["../"]
-extra_link_args = []
+if "mingw" in sys.args: platform = "mingw"
 
-args = os.popen("allegro-config --shared debug").read()
-for arg in args.split():
-    if arg[:2] == '-L': library_dirs.append(arg[2:])
-    elif arg[:2] == '-l': libraries.append(arg[2:])
-    else: extra_link_args.append(arg)
+libraries = ["land", "ldpng", "png", "glyphkeeper-alleggl", "fudgefont", "agl",
+    "freetype", "m"]
+
+library_dirs = [".."]
+extra_link_args = []
+extra_compile_args = []
+
+if platform == "linux":
+    libraries.extend(["GL", "GLU"])
+    args = os.popen("allegro-config --shared debug").read()
+    for arg in args.split():
+        if arg[:2] == '-L': library_dirs.append(arg[2:])
+        elif arg[:2] == '-l': libraries.append(arg[2:])
+        else: extra_link_args.append(arg)
+    extra_compile_args.append("-I/usr/local/include/land")
+else:
+    libraries.extend(["opengl32", "glu32"])
+    extra_compile_args.extend(["-I../pro", "-I../h", "-DALLEGRO_STATICLINK"])
 
 modules = ["land", "main", "runner", "display", "keyboard", "mouse", "image",
     "text"]
@@ -25,7 +35,7 @@ for module in modules:
         library_dirs = library_dirs,
         libraries = libraries,
         extra_link_args = extra_link_args,
-        extra_compile_args = ["-I/usr/local/include/land"]))
+        extra_compile_args = extra_compile_args))
 
 setup(
   name = "land",
