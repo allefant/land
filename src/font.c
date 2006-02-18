@@ -78,7 +78,7 @@ void land_set_font(LandFont *self)
     land_font_state->font = self;
 }
 
-void land_text_size(float sx, float sy)
+void __attribute__((noreturn)) land_text_size(float sx, float sy)
 {
     land_exception("Text sizing currently not implemented, use different fonts instead.");
     //LandFont *self = land_pointer(LandFont, text_font);
