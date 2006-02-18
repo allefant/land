@@ -45,6 +45,11 @@ LandImage *land_image_allegrogl_new(LandDisplay *super)
     return &self->super;
 }
 
+void land_image_allegrogl_sub(LandImage *self, LandImage *parent)
+{
+    LAND_IMAGE_OPENGL(self)->gl_texture = LAND_IMAGE_OPENGL(parent)->gl_texture;
+}
+
 void land_image_allegrogl_del(LandDisplay *super, LandImage *self)
 {
     LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self);
@@ -199,6 +204,7 @@ void land_image_allegrogl_init(void)
     vtable->draw_scaled_rotated_tinted = land_image_allegrogl_draw_scaled_rotated_tinted;
     vtable->grab = land_image_allegrogl_grab;
     vtable->grab_into = land_image_allegrogl_grab_into;
+    vtable->sub = land_image_allegrogl_sub;
 }
 
 void land_image_allegrogl_prepare(LandImage *self)
