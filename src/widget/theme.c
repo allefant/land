@@ -3,7 +3,7 @@
 
 #include "../land.h"
 
-typedef struct WigetTheme WidgetTheme;
+typedef struct WidgetTheme WidgetTheme;
 typedef struct WidgetThemeElement WidgetThemeElement;
 typedef enum WidgetThemeFlags WidgetThemeFlags;
 
@@ -337,7 +337,7 @@ WidgetThemeElement *widget_theme_element_new(struct WidgetTheme *theme, char con
 
 WidgetTheme *widget_theme_new(char const *filename)
 {
-    struct WidgetTheme *self;
+    WidgetTheme *self;
     land_alloc(self);
 
     push_config_state();
