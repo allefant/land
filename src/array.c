@@ -77,6 +77,12 @@ land_type(LandList)
     LandListItem *first, *last;
 };
 
+land_type(LandArray)
+{
+    int count;
+    void **data;
+};
+
 #endif /* _PROTOTYPE_ */
 
 #include "array.h"
@@ -133,6 +139,27 @@ void land_add_list_data(LandList **list, void *data)
         land_alloc(*list)
     }
     land_list_insert_item(*list, item);
+}
+
+/* Given a pointer to a (possibly NULL valued) array pointer, create a new node
+ * with the given data, and add to the (possibly modified) array.
+ */
+void land_array_add_data(LandArray **array, void *data)
+{
+    LandArray *self = *array;
+    if (!self)
+    {
+        land_alloc(self)
+    }
+    self->data = realloc(self->data, (self->count + 1) * sizeof *self->data);
+    self->data[self->count] = data;
+    self->count++;
+    *array = self;
+}
+
+void *land_array_get_nth(LandArray *array, int i)
+{
+    return array->data[i];
 }
 
 /* Don't use, it will loop through the whole list every time, removing the item
