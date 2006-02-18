@@ -1,6 +1,14 @@
-#ifndef _PROTOTYPE_
+#ifdef _PROTOTYPE_
 
 #include "grid.h"
+#include "image.h"
+
+typedef struct LandTileGrid LandTileGrid;
+struct LandTileGrid
+{
+    LandGrid super;
+    LandImage **tiles;
+};
 
 #endif /* _PROTOTYPE_ */
 
@@ -9,22 +17,39 @@
 #include "display.h"
 #include "log.h"
 
-LandGridInterface *land_grid_vtable_normal;
+#define LAND_TILE_GRID(_) ((LandTileGrid *)(_))
+
+LandGridInterface *land_grid_vtable_tilegrid;
 
 LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
 {
-    LandGrid *self = calloc(1, sizeof *self);
-    land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells);
-    self->vt = land_grid_vtable_normal;
-    return self;
+    LandTileGrid *self = calloc(1, sizeof *self);
+    land_grid_initialize(&self->super, cell_w, cell_h, x_cells, y_cells);
+    self->super.vt = land_grid_vtable_tilegrid;
+    
+    self->tiles = calloc(x_cells * y_cells, sizeof *self->tiles);
+    return &self->super;
 }
 
-static void dummy_draw(LandGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y)
+void land_tilegrid_place(LandGrid *super, int cell_x, int cell_y,
+    LandImage *image)
 {
-    // TODO: draw sprites/tiles
-    land_color(1, 0, 0, 1);
-    land_rectangle(pixel_x, pixel_y, pixel_x + self->cell_w - 1,
-        pixel_y + self->cell_h - 1);
+    if (cell_x < 0 || cell_y < 0 || cell_x >= super->x_cells ||
+        cell_y >= super->y_cells)
+        return;
+    LandTileGrid *self = LAND_TILE_GRID(super);
+    self->tiles[cell_y * super->x_cells + cell_x] = image;
+}
+
+static void land_tilegrid_draw_cell(LandGrid *self, LandView *view,
+    int cell_x, int cell_y, float pixel_x, float pixel_y)
+{
+    LandImage *image = LAND_TILE_GRID(self)->tiles
+        [cell_y * self->x_cells + cell_x];
+    if (image)
+    {
+        land_image_draw(image, pixel_x, pixel_y);
+    }
 }
 
 /* Convert a view position inside the grid into cell and pixel position. */
@@ -127,7 +152,7 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
 void land_tilemap_init(void)
 {
     land_log_msg("land_tilemap_init\n");
-    land_alloc(land_grid_vtable_normal);
-    land_grid_vtable_normal->draw = land_grid_draw_normal;
-    land_grid_vtable_normal->draw_cell = dummy_draw;
+    land_alloc(land_grid_vtable_tilegrid);
+    land_grid_vtable_tilegrid->draw = land_grid_draw_normal;
+    land_grid_vtable_tilegrid->draw_cell = land_tilegrid_draw_cell;
 }
