@@ -38,11 +38,6 @@ LandDisplayAllegro *land_display_allegro_new(int w, int h, int bpp, int hz,
     return self;
 }
 
-static int color(LandDisplay *self)
-{
-    return makecol(self->color_r * 255, self->color_g * 255, self->color_b * 255);
-}
-
 void land_display_allegro_set(LandDisplay *super)
 {
     land_log_msg("land_display_allegro_set\n");
