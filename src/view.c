@@ -1,8 +1,11 @@
 #ifdef _PROTOTYPE_
 
+typedef struct LandView LandView;
+
+#include "grid.h"
 #include "array.h"
 
-land_type (LandView)
+struct LandView
 {
     float scroll_x, scroll_y; /* position inside the map (origin of view relative to origin of map) */
     int x, y, w, h; /* screen area */
@@ -48,3 +51,13 @@ void land_view_ensure_visible(LandView *self, float x, float y, float bx, float 
         self->scroll_y = y - self->h + by;
 }
 
+void land_view_ensure_inside_grid(LandView *self, LandGrid *grid)
+{
+    int w = grid->x_cells * grid->cell_w;
+    int h = grid->y_cells * grid->cell_h;
+
+    if (self->scroll_x < 0) self->scroll_x = 0;
+    if (self->scroll_y < 0) self->scroll_y = 0;
+    if (self->w > w - self->w) self->w = w - self->w;
+    if (self->h > h - self->h) self->h = h - self->h;
+}
