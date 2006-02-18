@@ -1,9 +1,8 @@
 #ifdef _PROTOTYPE_
 
-land_type(LandAnimation)
+struct LandAnimation
 {
-    int count;
-    int *frames; /* Image ids. */
+    LandList *frames;
 };
 
 #endif /* _PROTOTYPE_ */
