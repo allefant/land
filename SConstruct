@@ -52,7 +52,7 @@ for c in sfiles:
 env = Environment()
 
 if crosscompile:
-    env["PLATFORM"] = "mingw"
+    env["PLATFORM"] = "win32"
 
 # We use C99, so MSVC probably won't do in any case.
 if env["PLATFORM"] == "win32":
@@ -78,23 +78,26 @@ env.Append(CCFLAGS = "-Wno-unused-parameter")
 if debug:
     env.Append(CCFLAGS = "-g")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
-    LIBNAME = "landd"
+    LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
 else:
     env.Append(CCFLAGS = "-O3")
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
-    LIBNAME = "land"
+    LIBNAME = "lib/%s/land" % (env["PLATFORM"])
 
 env.Append(CPPPATH = ["pro", "h"])
 
 if crosscompile:
     env["CC"] = "i586-mingw32msvc-gcc"
+    env["LINK"] = "i586-mingw32msvc-gcc"
     env["AR"] = "i586-mingw32msvc-ar"
+    env['SHLIBSUFFIX'] = ".dll"
+    env['SHLIBPREFIX'] = ""
 
-if env["PLATFORM"] == "mingw":
+if env["PLATFORM"] == "win32":
     env.Append(CCFLAGS = ["-DALLEGRO_STATICLINK"])
 
-    env.Append(CPPPATH = ["dependencies/include"])
-    env.Append(LIBPATH = ["dependencies/lib"])
+    env.Append(CPPPATH = ["dependencies/mingw-include"])
+    env.Append(LIBPATH = ["dependencies/mingw-lib"])
     env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "glyphkeeper-alleggl", "agl_s", "ldpng", "alleg_s", "freetype"])
 
     env.Append(LIBS = ["opengl32", "glu32", "png", "z"])
