@@ -78,11 +78,13 @@ static void game_draw(LandRunner *self)
     land_map_draw(game.map, game.view);
 
     LandList *overlappers = land_sprites_grid_overlap(sprites[0], game.back_grid);
+    land_color(1, 0, 0, 1);
+    land_text_pos(0, 0);
+    land_print("Overlap:");
     if (overlappers)
     {
         LandListItem *item = overlappers->first;
-        land_color(1, 0, 0, 1);
-        land_text_pos(0, 0);
+
         while (item)
         {
             land_print("%p", item->data);
