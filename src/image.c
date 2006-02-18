@@ -15,6 +15,7 @@ land_type(LandImageInterface)
         float x, float y, float sx, float sy, float angle, float r, float g, float b, float alpha));
     land_method(void, grab, (LandImage *self, int x, int y));
     land_method(void, grab_into, (LandImage *self, int x, int y, int tx, int ty, int tw, int th));
+    land_method(void, sub, (LandImage *self, LandImage *parent));
 };
 
 struct LandImage
@@ -22,7 +23,9 @@ struct LandImage
     LandImageInterface *vt;
     char *filename;
     char *name;
-    BITMAP *bitmap;
+
+    BITMAP *bitmap; // FIXME: what for is this used?
+    /* We always keep a memory cache. FIXME: when is it updated? */
     BITMAP *memory_cache;
 
     LandPixelMask *mask; /* Bit-mask of the image. */
@@ -30,6 +33,14 @@ struct LandImage
     float x, y; /* Offset to origin. */
 
     float l, t, r, b; /* Cut-away left, top, right, bottom. */
+};
+
+// TODO
+struct LandSubImage
+{
+    LandImage super;
+    LandImage *parent;
+    float x, y, w, h;
 };
 
 #endif /* _PROTOTYPE_ */
@@ -180,13 +191,52 @@ static int callback(const char *filename, int attrib, void *param)
     return 0;
 }
 
-int land_load_images(char const *pattern)
+// FIXME: broken
+LandList *land_load_images(char const *pattern)
 {
-    int id = LandImage_count;
     int count = for_each_file_ex(pattern, 0, 0, callback, NULL);
     if (count)
-        return id;
-    return 0;
+        return NULL;
+    return NULL;
+}
+
+LandImage *land_image_sub(LandImage *parent, float x, float y, float w, float h)
+{
+    LandImage *self = land_display_new_image();
+    self->vt->sub(self, parent);
+    self->bitmap = parent->bitmap;
+    self->memory_cache = parent->memory_cache;
+    self->l = x;
+    self->t = y;
+    self->r = land_image_width(parent) - x - w;
+    self->b = land_image_height(parent) - y - h;
+    self->x = x;
+    self->y = y;
+    return self;
+}
+
+LandArray *land_load_sheet(char const *filename, int offset_x, int offset_y,
+    int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
+    int auto_crop)
+{
+    LandArray *array = NULL;
+    LandImage *sheet = land_image_load(filename);
+    if (!sheet)
+        return NULL;
+    int w = land_image_width(sheet);
+    int h = land_image_height(sheet);
+    int x, y, i, j;
+    for (j = 0; j < y_count; j++)
+    {
+        for (i = 0; i < x_count; i++)
+        {
+            x = offset_x + i * (grid_w + x_gap);
+            y = offset_y + j * (grid_h + y_gap);
+            LandImage *sub = land_image_sub(sheet, x, y, grid_w, grid_h);
+            land_array_add_data(&array, sub);
+        }
+    }
+    return array;
 }
 
 LandImage *land_find_image(char const *name)
