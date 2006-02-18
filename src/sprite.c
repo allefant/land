@@ -1,6 +1,7 @@
 #ifdef _PROTOTYPE_
 
 typedef struct LandSprite LandSprite;
+#define LAND_SPRITE(_) ((LandSprite *)(_))
 
 #include "array.h"
 #include "display.h"
@@ -9,7 +10,10 @@ typedef struct LandSprite LandSprite;
 land_type(LandSpriteType)
 {
     // TODO need those 4 variables?
-    /* A sprite does not need a image, so the below variables are needed. */
+    /* A sprite does not need an image, so the below variables are used.
+     * If the sprite is on sx/sy, then collision is checked in the rectangle
+     * (sx - x, sy - y, sx - x + w, sy - y + h)
+     */
     float x, y; /* collision offset in pixel, relative to its position. */
     int w, h; /* collision bounding box. */
 
@@ -30,7 +34,12 @@ land_type(LandSpritesGrid)
     LandGrid super; /* 2D-array of sprite lists */
     LandList **sprites;
 
-    /* maximum sprite extents */
+    /* Maximum sprite extents. This is the maximum values of the x/y/w/h of
+     * the sprite type above, relative to the sprite position.
+     * E.g. if a sprite has: (5, 5, 20, 20), then the max values would be
+     * 5, 5, 15, 15, since a sprite on sx/sy could collide with anything
+     * overlapping (sx - 5, sy - 5, sx + 15, sy + 15).
+     */
     int max_l, max_t, max_r, max_b;
 };
 
@@ -73,6 +82,8 @@ static void dummy_image(LandSprite *self, LandView *view)
     float x = self->x - view->scroll_x + view->x;
     float y = self->y - view->scroll_y + view->y;
     land_image_draw(self->type->image, x, y);
+    //if (self->type->image->mask)
+    //    land_image_debug_pixelmask(self->type->image, x, y, 0);
 }
 
 LandSpriteType *land_spritetype_new(void)
@@ -137,8 +148,9 @@ LandList *land_sprites_grid_overlap(LandSprite *self, LandGrid *sprites_grid)
                 while (item)
                 {
                     LandSprite *other = item->data;
-                    if (self->type->overlap(self, other))
-                        land_add_list_data(&retlist, other);
+                    if (other != self)
+                        if (self->type->overlap(self, other))
+                            land_add_list_data(&retlist, other);
                     item = item->next;
                 }
             }
@@ -151,6 +163,9 @@ static void grid_place(LandSprite *self, LandSpritesGrid *grid)
 {
     int tx = self->x / grid->super.cell_w;
     int ty = self->y / grid->super.cell_h;
+
+    if (tx < 0 || ty < 0 || tx >= grid->super.x_cells || ty >= grid->super.y_cells)
+        return;
 
     if (self->type->x > grid->max_l)
         grid->max_l = self->type->x;
@@ -171,10 +186,18 @@ static void grid_unplace(LandSprite *self, LandSpritesGrid *grid)
     int tx = self->x / grid->super.cell_w;
     int ty = self->y / grid->super.cell_h;
 
+    if (tx < 0 || ty < 0 || tx >= grid->super.x_cells || ty >= grid->super.y_cells)
+        return;
+
     //FIXME: need proper sprites container, without iterating the whole list and
     //de-allocating the ListItem
     land_remove_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
         self);
+}
+
+void land_sprite_remove_from_grid(LandSprite *self, LandGrid *grid)
+{
+    grid_unplace(self, LAND_SPRITES_GRID(grid));
 }
 
 void land_sprite_place_into_grid(LandSprite *self, LandGrid *grid, float x, float y)
@@ -218,23 +241,41 @@ static void land_sprites_grid_draw_cell(LandSpritesGrid *self, LandView *view,
     }
 }
 
+static void land_sprites_grid_draw(LandGrid *super, LandView *view)
+{
+    LandSpritesGrid *self = LAND_SPRITES_GRID(super);
+    LandView v = *view;
+    /* If sprites extend right/down, we need draw more left and up. */
+    v.x -= self->max_r;
+    v.y -= self->max_b;
+    v.scroll_x -= self->max_r;
+    v.scroll_y -= self->max_b;
+    /* If sprites extend left/up, we need to draw more right/down. */
+    v.w += self->max_l + self->max_r;
+    v.h += self->max_t + self->max_b;
+    land_grid_draw_normal(super, &v);
+}
+
 void land_sprites_init(void)
 {
     land_log_msg("land_sprites_init\n");
     land_alloc(land_grid_vtable_sprites);
-    land_grid_vtable_sprites->draw = land_grid_draw_normal;
+    land_grid_vtable_sprites->draw = land_sprites_grid_draw;
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell;
 }
 
+/* Create a new sprite type with the given image. The source clipping of the
+ * image is honored.
+ */
 LandSpriteType *land_spritetype_new_with_image(LandImage *image)
 {
     land_new(LandSpriteType, self);
     self->draw = dummy_image;
     self->overlap = land_sprite_overlap_pixelperfect;
     self->image = image;
-    self->x = image->x;
-    self->y = image->y;
-    self->w = image->bitmap->w;
-    self->h = image->bitmap->h;
+    self->x = image->x - image->l;
+    self->y = image->y - image->t;
+    self->w = image->bitmap->w - image->l - image->r;
+    self->h = image->bitmap->h - image->t - image->b;
     return self;
 }
