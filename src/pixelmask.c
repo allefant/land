@@ -12,6 +12,7 @@ typedef struct SinglePixelMask SinglePixelMask;
 
 struct LandPixelMask
 {
+    int w, h, x, y;
     int n;
     SinglePixelMask *rotation[0];
 };
@@ -76,12 +77,14 @@ static void printout_mask(SinglePixelMask *mask)
 /* Creates n prerotated bitmasks for the given bitmap. A single bit represents
  * one pixel.
  */
-static LandPixelMask *pixelmask_create(BITMAP *bmp, int n)
+static LandPixelMask *pixelmask_create(BITMAP *bmp, int n, int threshold)
 {
     LandPixelMask *mask;
     int j;
     mask = malloc(sizeof *mask + sizeof(SinglePixelMask *) * n);
     mask->n = n;
+    mask->w = bmp->w;
+    mask->h = bmp->h;
     for (j = 0; j < n; j++)
     {
         float angle = j * AL_PI * 2 / n;
@@ -113,7 +116,8 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n)
 
         int mask_w = 1 + (temp->w + 31) / 32;
 
-        mask->rotation[j] = malloc(sizeof *mask->rotation[j] + mask_w * temp->h * sizeof(uint32_t));
+        mask->rotation[j] = malloc(sizeof *mask->rotation[j] +
+            mask_w * temp->h * sizeof(uint32_t));
         mask->rotation[j]->w = mask_w;
         mask->rotation[j]->h = temp->h;
 
@@ -130,7 +134,7 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n)
 
                 for (i = 0; i < 32 && x + i < temp->w; i++)
                 {
-                    if (geta(getpixel(temp, x + i, y)) > 0)
+                    if (geta(getpixel(temp, x + i, y)) >= threshold)
                     {
                         bits += 1 << i;
                     }
@@ -286,19 +290,25 @@ static int pixelmask_collision(SinglePixelMask *mask, int x, int y, int w, int h
     }
 }
 
-void land_image_create_pixelmasks(LandImage *self, int n)
+/* Create pixelmasks for the given amount of rotations (starting with angle 0).
+ * The source offset and source clipping are considered for this.
+ */
+void land_image_create_pixelmasks(LandImage *self, int n, int threshold)
 {
-    self->mask = pixelmask_create(self->memory_cache, n);
+    int w = self->memory_cache->w;
+    int h = self->memory_cache->h;
+    BITMAP *tmp = create_sub_bitmap(self->memory_cache,
+        self->l, self->t, w - self->l - self->r, h - self->t - self->b);
+    self->mask = pixelmask_create(tmp, n, threshold);
+    self->mask->x = self->l;
+    self->mask->y = self->t;
+    destroy_bitmap(tmp);
 }
 
 /* Returns 1 if non-transparent pixels overlap, 0 otherwise. */
 int land_image_overlaps(LandImage *self, float x, float y, float angle,
     LandImage *other, float x_, float y_, float angle_)
 {
-    int w = land_image_width(self);
-    int h = land_image_height(self);
-    int w_ = land_image_width(other);
-    int h_ = land_image_height(other);
     if (!self->mask)
     {
         return 0;
@@ -307,14 +317,23 @@ int land_image_overlaps(LandImage *self, float x, float y, float angle,
     {
         return 0;
     }
+    int w = self->mask->w;
+    int h = self->mask->h;
+    int w_ = other->mask->w;
+    int h_ = other->mask->h;
 
     int i = mask_get_rotation_frame(self->mask, angle);
     int i_ = mask_get_rotation_frame(other->mask, angle_);
+    
+    int mx = self->mask->x - self->x;
+    int my = self->mask->y - self->y;
+    int mx_ = other->mask->x - other->x;
+    int my_ = other->mask->y - other->y;
 
     float ml, mt, mr, mb, ml_, mt_, mr_, mb_;
-    get_bounding_box(-self->x, -self->y, w - self->x, h - self->y, i * 2.0 * AL_PI / self->mask->n,
+    get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * AL_PI / self->mask->n,
         &ml, &mt, &mr, &mb);
-    get_bounding_box(-other->x, -other->y, w_ - other->x, h_ - other->y, i * 2.0 * AL_PI / other->mask->n,
+    get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i * 2.0 * AL_PI / other->mask->n,
         &ml_, &mt_, &mr_, &mb_);
 
     return pixelmask_collision(
