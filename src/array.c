@@ -162,8 +162,14 @@ void *land_array_get_nth(LandArray *array, int i)
     return array->data[i];
 }
 
-/* Don't use, it will loop through the whole list every time, removing the item
- * with the given data.
+void land_array_destroy(LandArray *self)
+{
+    free(self);
+}
+
+/* Don't use, it will loop through the whole list every time, removing the
+ * first item with the given data.
+ * But normal use of lists is with iterators (LandListItem).
  */
 void land_remove_list_data(LandList **list, void *data)
 {
