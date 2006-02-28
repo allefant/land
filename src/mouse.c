@@ -78,6 +78,8 @@ int land_mouse_delta_b(void)
 void land_mouse_set_pos(int x, int y)
 {
     position_mouse(x, y);
+    mx = x;
+    my = y;
 }
 
 int land_hide_mouse_cursor(void)
