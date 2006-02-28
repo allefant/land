@@ -58,6 +58,6 @@ void land_view_ensure_inside_grid(LandView *self, LandGrid *grid)
 
     if (self->scroll_x < 0) self->scroll_x = 0;
     if (self->scroll_y < 0) self->scroll_y = 0;
-    if (self->w > w - self->w) self->w = w - self->w;
-    if (self->h > h - self->h) self->h = h - self->h;
+    if (self->scroll_x > w - self->w) self->scroll_x = w - self->w;
+    if (self->scroll_y > h - self->h) self->scroll_y = h - self->h;
 }
