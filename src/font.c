@@ -40,7 +40,7 @@ struct LandFontState
 #include "glyphkeeper-alleggl/font.h"
 
 static LandFontState *land_font_state;
-static int land_use_glyphkeeper = 1;
+static int land_use_glyphkeeper = 0;
 
 void land_font_init(void)
 {
