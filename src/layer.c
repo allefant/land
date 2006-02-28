@@ -31,9 +31,13 @@ land_array(LandLayer);
 void land_layer_draw(LandLayer *self, LandView *view)
 {
     LandView v = *view;
+    v.scroll_x -= self->x;
+    v.scroll_y -= self->y;
     v.scroll_x *= self->scrolling_x;
     v.scroll_y *= self->scrolling_y;
-    land_grid_draw(self->grid, &v);
+    // TODO: can a layer have more than one grid?
+    if (self->grid)
+        land_grid_draw(self->grid, &v);
 }
 
 LandLayer *land_layer_new(void)
@@ -57,4 +61,10 @@ void land_layer_set_scroll_speed(LandLayer *self, float x, float y)
 {
     self->scrolling_x = x;
     self->scrolling_y = y;
+}
+
+void land_layer_set_position(LandLayer *self, float x, float y)
+{
+    self->x = x;
+    self->y = y;
 }
