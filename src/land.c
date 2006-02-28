@@ -44,7 +44,8 @@
         land_set_frequency(hz); \
         land_main(); \
         return 0; \
-    }
+    } \
+    END_OF_MAIN()
 
 #endif /* _PROTOTYPE_ */
 
