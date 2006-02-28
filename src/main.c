@@ -3,6 +3,7 @@
 #endif /* _PROTOTYPE_ */
 
 #include <allegro.h>
+#include <sys/time.h>
 
 #include "fudgefont.h"
 #include "land.h"
@@ -15,6 +16,9 @@ land_type(LandParameters)
     LandRunner *start;
 };
 
+
+static int _synchronized = 0;
+static int _maximize_fps = 0;
 static double frequency;
 static LandParameters *parameters;
 static int quit = 0;
@@ -113,12 +117,29 @@ int land_get_ticks(void)
 
 double land_get_time(void)
 {
+#ifndef ALLEGRO_WINDOWS
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000000.0 + tv.tv_usec) * 0.000001;
+#else
+    // FIXME
     return ticks / frequency;
+#endif
 }
 
 int land_get_flags(void)
 {
     return parameters->flags;
+}
+
+void land_set_synchronized(int onoff)
+{
+    _synchronized = onoff;
+}
+
+void land_maximize_fps(int onoff)
+{
+    _maximize_fps = onoff;
 }
 
 int land_main(void)
@@ -148,10 +169,7 @@ int land_main(void)
     land_mouse_init();
     land_keyboard_init();
 
-    frequency = parameters->frequency;
-    long altime = BPS_TO_TIMER(parameters->frequency);
-    frequency = TIMERS_PER_SECOND / altime;
-    install_int_ex(ticker, altime);
+    land_reprogram_timer();
 
     land_runner_init_all();
 
@@ -161,19 +179,28 @@ int land_main(void)
     int gframes = frames;
     while (!quit)
     {
-        while (frames <= ticks)
+        if (_synchronized)
         {
             land_tick();
             frames++;
-        }
-        if (gframes < frames)
-        {
             land_draw();
-            gframes = frames;
         }
         else
         {
-            rest(1);
+            while (frames <= ticks)
+            {
+                land_tick();
+                frames++;
+            }
+            if (gframes < frames)
+            {
+                land_draw();
+                gframes = frames;
+            }
+            else if (!_maximize_fps)
+            {
+                rest(1);
+            }
         }
     }
     land_runner_switch_active(NULL);
@@ -182,3 +209,10 @@ int land_main(void)
     return 0;
 }
 
+void land_reprogram_timer(void)
+{
+    frequency = parameters->frequency;
+    long altime = BPS_TO_TIMER(parameters->frequency);
+    frequency = TIMERS_PER_SECOND / altime;
+    install_int_ex(ticker, altime);
+}
