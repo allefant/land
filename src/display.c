@@ -56,6 +56,7 @@ extern LandDisplay *_land_active_display;
 #endif /* _PROTOTYPE_ */
 
 #include "display.h"
+#include "main.h"
 
 land_array(LandDisplay)
 
@@ -107,6 +108,26 @@ void land_display_init(void)
     land_display_allegro_init();
     land_display_allegrogl_init();
     land_display_image_init();
+}
+
+/* This function is dangerous! It will completely halt Land for the passed
+ * time in seconds.
+ * The function will try to determine how long flipping of the display takes.
+ * This can be used to see if the refresh rate is honored (usually because
+ * vsync is enabled).
+ */
+double land_display_time_flip_speed(double howlong)
+{
+    land_flip();
+    double t = land_get_time();
+    double t2;
+    int i = 0;
+    while ((t2 = land_get_time()) < t + howlong)
+    {
+        land_flip();
+        i += 1;
+    }
+    return i / (t2 - t);
 }
 
 void land_clear(float r, float g, float b, float a)
