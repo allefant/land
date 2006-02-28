@@ -187,17 +187,39 @@ void land_image_prepare(LandImage *self)
 
 static int callback(const char *filename, int attrib, void *param)
 {
-    land_image_load(filename);
+    LandArray **filenames = param;
+    land_array_add_data(filenames, strdup(filename));
     return 0;
 }
 
-// FIXME: broken
-LandList *land_load_images(char const *pattern)
+static int compar(void const *a, void const *b)
 {
-    int count = for_each_file_ex(pattern, 0, 0, callback, NULL);
-    if (count)
-        return NULL;
-    return NULL;
+    char *an = *(char **)a;
+    char *bn = *(char **)b;
+    return ustrcmp(an, bn);
+}
+
+LandArray *land_load_images(char const *pattern, int center, int optimize)
+{
+    LandArray *filenames = NULL;
+    int count = for_each_file_ex(pattern, 0, 0, callback, &filenames);
+    qsort(filenames->data, count, sizeof (void *), compar);
+    
+    LandArray *array = NULL;
+    int i;
+    for (i = 0; i < filenames->count; i++)
+    {
+        char *filename = land_array_get_nth(filenames, i);
+        LandImage *image = land_image_load(filename);
+        free(filename);
+        if (center)
+            land_image_center(image);
+        if (optimize)
+            land_image_optimize(image);
+        land_array_add_data(&array, image);
+    }
+    land_array_destroy(filenames);
+    return array;
 }
 
 LandImage *land_image_sub(LandImage *parent, float x, float y, float w, float h)
@@ -215,7 +237,7 @@ LandImage *land_image_sub(LandImage *parent, float x, float y, float w, float h)
     return self;
 }
 
-LandArray *land_load_sheet(char const *filename, int offset_x, int offset_y,
+LandArray *land_image_load_sheet(char const *filename, int offset_x, int offset_y,
     int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
     int auto_crop)
 {
@@ -223,8 +245,8 @@ LandArray *land_load_sheet(char const *filename, int offset_x, int offset_y,
     LandImage *sheet = land_image_load(filename);
     if (!sheet)
         return NULL;
-    int w = land_image_width(sheet);
-    int h = land_image_height(sheet);
+    land_image_width(sheet);
+    land_image_height(sheet);
     int x, y, i, j;
     for (j = 0; j < y_count; j++)
     {
@@ -373,6 +395,9 @@ static BITMAP *optimize_bitmap(BITMAP *bmp, int *x, int *y)
     }
     BITMAP *optimized = create_bitmap(1 + r - l, 1 + b - t);
     blit(bmp, optimized, l, t, 0, 0, optimized->w, optimized->h);
+    /* E.g. our image is 20x20, and x/y is 10/10, if now l/t is 10/10,
+     * then x/y becomes 0/0.
+     */
     *x -= l;
     *y -= t;
     return optimized;
