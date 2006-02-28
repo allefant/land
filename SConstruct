@@ -90,6 +90,7 @@ if crosscompile:
     env["CC"] = "i586-mingw32msvc-gcc"
     env["LINK"] = "i586-mingw32msvc-gcc"
     env["AR"] = "i586-mingw32msvc-ar"
+    env["RANLIB"] = "i586-mingw32msvc-ranlib"
     env['SHLIBSUFFIX'] = ".dll"
     env['SHLIBPREFIX'] = ""
 
@@ -145,4 +146,8 @@ for incdir in INCDIRS:
 env.Install(LIBDIR, [sharedlib, staticlib])
 
 env.Alias('install', ["h", "pro", LIBDIR, INSTALL_HEADERS])
-env.Default(["h", "pro", sharedlib, staticlib])
+
+if ARGUMENTS.get("static", ""):
+    env.Default(["h", "pro", staticlib])
+else:
+    env.Default(["h", "pro", sharedlib, staticlib])
