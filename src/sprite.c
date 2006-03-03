@@ -140,7 +140,8 @@ static void dummy_image(LandSprite *self, LandView *view)
 {
     float x = self->x - view->scroll_x + view->x;
     float y = self->y - view->scroll_y + view->y;
-    land_image_draw(LAND_SPRITE_TYPE_IMAGE(self->type)->image, x, y);
+    land_image_draw_rotated(LAND_SPRITE_TYPE_IMAGE(self->type)->image, x, y,
+        self->angle);
     //if (self->type->image->mask)
     //    land_image_debug_pixelmask(self->type->image, x, y, 0);
 }
@@ -153,7 +154,8 @@ static void dummy_animation(LandSprite *self, LandView *view)
     float y = self->y - view->scroll_y + view->y;
     LandImage *image = land_animation_get_frame(animation->animation,
         animated->frame);
-    land_image_draw_scaled(image, x, y, animated->sx, animated->sy);
+    land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
+        self->angle);
     //if (animation->super.image->mask)
     //    land_image_debug_pixelmask(animation->super.image, x, y, 0);
 }
@@ -275,7 +277,6 @@ LandList *land_sprites_grid_overlap(LandSprite *self, LandGrid *sprites_grid)
     }
     return retlist;
 }
-
 
 /* Return a list of all sprites in the grid, which are inside the given circle
  * (in pixels).
