@@ -51,8 +51,6 @@ struct LandSubImage
 #include "allegro/image.h"
 #include "allegrogl/image.h"
 
-land_array(LandImage)
-
 LandImage *land_image_load(char const *filename)
 {
     land_log_msg("land_image_load %s..", filename);
@@ -65,8 +63,8 @@ LandImage *land_image_load(char const *filename)
         self->name = strdup(filename);
         self->bitmap = bmp;
         self->memory_cache = bmp;
-        land_image_prepare(self);
         land_log_msg_nostamp("success (%d x %d)\n", bmp->w, bmp->h);
+        land_image_prepare(self);
 
         float red, green, blue, alpha;
         int n;
@@ -109,7 +107,8 @@ void land_image_crop(LandImage *self, int x, int y, int w, int h)
 
 LandImage *land_image_new_from(LandImage *copy, int x, int y, int w, int h)
 {
-    BITMAP *bmp = create_bitmap(w, h);
+    BITMAP *bmp = create_bitmap_ex(bitmap_color_depth(copy->memory_cache),
+        w, h);
     LandImage *self = land_display_new_image();
     self->filename = NULL;
     self->name = NULL;
@@ -237,16 +236,16 @@ LandImage *land_image_sub(LandImage *parent, float x, float y, float w, float h)
     return self;
 }
 
+/* Loads an image, and returns a list of sub-images out of it. */
 LandArray *land_image_load_sheet(char const *filename, int offset_x, int offset_y,
     int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
     int auto_crop)
 {
+    // FIXME: how can the sheet be destroyed again?
     LandArray *array = NULL;
     LandImage *sheet = land_image_load(filename);
     if (!sheet)
         return NULL;
-    land_image_width(sheet);
-    land_image_height(sheet);
     int x, y, i, j;
     for (j = 0; j < y_count; j++)
     {
@@ -261,18 +260,29 @@ LandArray *land_image_load_sheet(char const *filename, int offset_x, int offset_
     return array;
 }
 
-LandImage *land_find_image(char const *name)
+/* Loads multiple images out of a single file. */
+LandArray *land_image_load_split_sheet(char const *filename, int offset_x, int offset_y,
+    int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
+    int auto_crop)
 {
-    int i;
-    land_foreach(LandImage, i)
+    LandArray *array = NULL;
+    LandImage *sheet = land_image_load(filename);
+    if (!sheet)
+        return NULL;
+    int x, y, i, j;
+    for (j = 0; j < y_count; j++)
     {
-        LandImage *self = land_pointer(LandImage, i);
-        if (!strcmp(self->name, name))
-            return self;
+        for (i = 0; i < x_count; i++)
+        {
+            x = offset_x + i * (grid_w + x_gap);
+            y = offset_y + j * (grid_h + y_gap);
+            LandImage *sub = land_image_new_from(sheet, x, y, grid_w, grid_h);
+            land_array_add_data(&array, sub);
+        }
     }
-    return NULL;
+    land_image_del(sheet);
+    return array;
 }
-
 
 void land_image_draw_scaled_rotated_tinted(LandImage *self, float x, float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha)
@@ -418,4 +428,3 @@ void land_image_optimize(LandImage *self)
 
     self->vt->prepare(self);
 }
-
