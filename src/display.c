@@ -1,7 +1,6 @@
 #ifdef _PROTOTYPE_
 #include <allegro.h>
 #include <alleggl.h>
-#include <loadpng.h>
 #include <stdlib.h>
 
 typedef struct LandDisplayInterface LandDisplayInterface;
@@ -95,6 +94,14 @@ void land_display_set(void)
     _land_active_display->vt->set(_land_active_display);
     _land_active_display->vt->color(_land_active_display);
     _land_active_display->vt->clip(_land_active_display);
+    
+    if (set_display_switch_mode(SWITCH_BACKGROUND))
+        set_display_switch_mode(SWITCH_BACKAMNESIA);
+}
+
+LandDisplay *land_display_get(void)
+{
+    return _land_active_display;
 }
 
 void land_display_unset(void)
@@ -128,6 +135,17 @@ double land_display_time_flip_speed(double howlong)
         i += 1;
     }
     return i / (t2 - t);
+}
+
+void land_display_toggle_fullscreen(void)
+{
+    LandDisplay *d = _land_active_display;
+    d->flags ^= LAND_FULLSCREEN;
+    if (d->flags & LAND_FULLSCREEN)
+        d->flags &= ~LAND_WINDOWED;
+    else
+        d->flags |= LAND_WINDOWED;
+    land_display_set();
 }
 
 void land_clear(float r, float g, float b, float a)
@@ -297,7 +315,8 @@ int land_display_flags(void)
 
 LandImage *land_display_new_image(void)
 {
-    return _land_active_display->vt->new_image(_land_active_display);
+    LandImage *image = _land_active_display->vt->new_image(_land_active_display);
+    return image;
 }
 
 void land_display_del_image(LandImage *image)
