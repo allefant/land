@@ -1,6 +1,8 @@
 
 #ifdef _PROTOTYPE_
 
+typedef struct Widget LandWidget;
+
 typedef struct Widget Widget;
 typedef struct WidgetInterface WidgetInterface;
 
