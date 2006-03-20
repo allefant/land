@@ -68,9 +68,11 @@ void widget_container_draw(Widget *base)
     if (!self->children)
         return;
 
-    land_clip_intersect(base->box.x + base->box.il, base->box.y + base->box.it,
-        base->box.x + base->box.w - base->box.ir, base->box.y + base->box.h - base->box.ib);
-
+    if (!base->dont_clip)
+    {
+        land_clip_intersect(base->box.x + base->box.il, base->box.y + base->box.it,
+            base->box.x + base->box.w - base->box.ir, base->box.y + base->box.h - base->box.ib);
+    }
     LandListItem *item = self->children->first;
     while (item)
     {
