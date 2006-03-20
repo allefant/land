@@ -382,9 +382,9 @@ void widget_theme_draw(Widget *self)
 
     if (!theme)
     {
-        land_color(1, 0, 0, 1);
-        land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
-            self->box.y + self->box.h - 0.5);
+        //land_color(1, 0, 0, 1);
+        //land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
+        //    self->box.y + self->box.h - 0.5);
         return;
     }
 
@@ -400,7 +400,6 @@ void widget_theme_draw(Widget *self)
             self->box.y + self->box.h - 0.5);
         return;
     }
-    glDisable(GL_BLEND);
 
     draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h);
 }
