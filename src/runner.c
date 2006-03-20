@@ -9,6 +9,7 @@ typedef struct LandRunner LandRunner;
 struct LandRunner
 {
     char *name;
+    int inited;
     void (*init)(LandRunner *self);
     void (*enter)(LandRunner *self);
     void (*tick)(LandRunner *self);
@@ -54,23 +55,15 @@ LandRunner *land_runner_new(char const *name, void (*init)(LandRunner *self),
     return self;
 }
 
-void land_runner_init_all(void)
-{
-    LandListItem *i;
-    if (!runners)
-        return;
-    for (i = runners->first; i; i = i->next)
-    {
-        LandRunner *self = (LandRunner *)i->data;
-        if (self->init)
-            self->init(self);
-    }
-}
-
 void land_runner_switch_active(LandRunner *self)
 {
     land_runner_leave_active();
     active_runner = self;
+    if (active_runner && !active_runner->inited)
+    {
+        active_runner->inited = 1;
+        if (active_runner->init) active_runner->init(active_runner);
+    }
     land_runner_enter_active();
 }
 
@@ -84,7 +77,7 @@ void land_runner_enter_active(void)
 void land_runner_tick_active(void)
 {
     LandRunner *self = active_runner;
-    if (self)
+    if (self && self->tick)
         self->tick(self);
 }
 
