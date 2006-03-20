@@ -84,6 +84,9 @@ else:
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "lib/%s/land" % (env["PLATFORM"])
 
+SHAREDLIBNAME = LIBNAME
+STATICLIBNAME = LIBNAME
+
 env.Append(CPPPATH = ["pro", "h"])
 
 if crosscompile:
@@ -95,11 +98,13 @@ if crosscompile:
     env['SHLIBPREFIX'] = ""
 
 if env["PLATFORM"] == "win32":
+    STATICLIBNAME += "_s"
     env.Append(CCFLAGS = ["-DALLEGRO_STATICLINK"])
 
     env.Append(CPPPATH = ["dependencies/mingw-include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
-    env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "glyphkeeper-alleggl", "agl_s", "ldpng", "alleg_s", "freetype"])
+    env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "glyphkeeper-alleggl", "agl_s", "ldpng",
+        "jpgal", "alleg_s", "freetype"])
 
     env.Append(LIBS = ["opengl32", "glu32", "png", "z"])
 
@@ -108,10 +113,10 @@ if env["PLATFORM"] == "win32":
 
 env.BuildDir(BUILDDIR, "src", duplicate = False)
 
-sharedlib = env.SharedLibrary(LIBNAME,
+sharedlib = env.SharedLibrary(SHAREDLIBNAME,
     [BUILDDIR + "/" + x[4:] for x in sfiles])
 
-staticlib = env.StaticLibrary(LIBNAME,
+staticlib = env.StaticLibrary(STATICLIBNAME,
     [BUILDDIR + "/" + x[4:] for x in sfiles])
 
 basenames = [x[4:-2] for x in sfiles]
@@ -147,7 +152,4 @@ env.Install(LIBDIR, [sharedlib, staticlib])
 
 env.Alias('install', ["h", "pro", LIBDIR, INSTALL_HEADERS])
 
-if ARGUMENTS.get("static", ""):
-    env.Default(["h", "pro", staticlib])
-else:
-    env.Default(["h", "pro", sharedlib, staticlib])
+env.Default(["h", "pro", sharedlib, staticlib])
