@@ -15,6 +15,7 @@ typedef struct LandSpritesGrid LandSpritesGrid;
 #define LAND_SPRITE_ANIMATED(_) ((LandSpriteAnimated *)(_))
 #define LAND_SPRITE_TYPE(_) ((LandSpriteType *)(_))
 #define LAND_SPRITE_TYPE_IMAGE(_) ((LandSpriteTypeImage *)(_))
+#define LAND_SPRITE_TYPE_ANIMATION(_) ((LandSpriteTypeAnimation *)(_))
 
 #include "array.h"
 #include "display.h"
@@ -89,6 +90,7 @@ struct LandSpriteAnimated
     LandSprite super;
     int frame;
     float sx, sy;
+    float r, g, b, a;
 };
 
 struct LandSpritesGrid
@@ -127,6 +129,31 @@ LandGrid *land_sprites_grid_new(int cell_w, int cell_h, int x_cells, int y_cells
     return &self->super;
 }
 
+/* Deletes a sprites grid, and all the sprites in it. If you need to keep
+ * a sprite, first remove it from the grid.
+ */
+void land_sprites_grid_del(LandGrid *super)
+{
+    LandSpritesGrid *self = LAND_SPRITES_GRID(super);
+    int j;
+    for (j = 0; j < super->x_cells * super->y_cells; j++)
+    {
+        if (self->sprites[j])
+        {
+            /* Destroy all sprites in the list. */
+            LandListItem *i;
+            for (i = self->sprites[j]->first; i; i = i->next)
+            {
+                LandSprite *s = i->data;
+                land_sprite_del(s);
+            }
+            land_list_destroy(self->sprites[j]);
+        }
+    }
+    land_free(self->sprites);
+    land_free(self);
+}
+
 static void dummy(LandSprite *self, LandView *view)
 {
     float x = self->x - self->type->x - view->scroll_x + view->x;
@@ -154,8 +181,11 @@ static void dummy_animation(LandSprite *self, LandView *view)
     float y = self->y - view->scroll_y + view->y;
     LandImage *image = land_animation_get_frame(animation->animation,
         animated->frame);
-    land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
-        self->angle);
+    land_image_draw_scaled_rotated_tinted(image, x, y, animated->sx,
+        animated->sy, self->angle, animated->r, animated->g, animated->b,
+        animated->a);
+    //land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
+    //    self->angle);
     //if (animation->super.image->mask)
     //    land_image_debug_pixelmask(animation->super.image, x, y, 0);
 }
@@ -191,6 +221,10 @@ void land_sprite_animated_initialize(LandSpriteAnimated *self,
     land_sprite_initialize(LAND_SPRITE(self), type);
     self->sx = 1;
     self->sy = 1;
+    self->r = 1;
+    self->g = 1;
+    self->b = 1;
+    self->a = 1;
 }
 
 LandSprite *land_sprite_animated_new(LandSpriteType *type)
@@ -201,6 +235,9 @@ LandSprite *land_sprite_animated_new(LandSpriteType *type)
     return LAND_SPRITE(self);
 }
 
+/* Destroys a sprite. This will not remove its reference from a grid in case it
+ * is inside one - so only use this if you know what you are doing.
+ */
 void land_sprite_del(LandSprite *self)
 {
     land_free(self);
@@ -477,6 +514,7 @@ void land_sprites_init(void)
     land_alloc(land_grid_vtable_sprites);
     land_grid_vtable_sprites->draw = land_sprites_grid_draw;
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell;
+    land_grid_vtable_sprites->del = land_sprites_grid_del;
 }
 
 LandSpriteType *land_spritetype_new(void)
