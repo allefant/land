@@ -134,7 +134,7 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n, int threshold)
 
                 for (i = 0; i < 32 && x + i < temp->w; i++)
                 {
-                    if (geta(getpixel(temp, x + i, y)) >= threshold)
+                    if (geta32(getpixel(temp, x + i, y)) >= threshold)
                     {
                         bits += 1 << i;
                     }
