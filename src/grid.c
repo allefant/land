@@ -11,6 +11,7 @@ struct LandGridInterface
     void (*draw_cell)(LandGrid *self, LandView *view, int cell_x, int cell_y, float pixel_x, float pixel_y);
     void (*get_cell_at)(LandGrid *self, LandView *view, float pixel_x, float pixel_y,
         float *cell_x, float *cell_y);
+    void (*del)(LandGrid *self);
 };
 
 struct LandGrid
@@ -61,3 +62,7 @@ void land_grid_init(void)
     land_sprites_init();
 }
 
+void land_grid_del(LandGrid *self)
+{
+    self->vt->del(self);
+}
