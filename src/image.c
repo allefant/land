@@ -1,12 +1,16 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
+#include <jpgalleg.h>
+#include <loadpng.h>
 #include "array.h"
 #include "log.h"
 
 typedef struct LandImage LandImage;
 
 #include "pixelmask.h"
+
+#define LAND_SUBIMAGE 1
 
 land_type(LandImageInterface)
 {
@@ -27,6 +31,8 @@ struct LandImage
     BITMAP *bitmap; // FIXME: what for is this used?
     /* We always keep a memory cache. FIXME: when is it updated? */
     BITMAP *memory_cache;
+    
+    int flags;
 
     LandPixelMask *mask; /* Bit-mask of the image. */
 
@@ -48,17 +54,49 @@ struct LandSubImage
 #include <string.h>
 #include "display.h"
 #include "image.h"
+#include "data.h"
 #include "allegro/image.h"
 #include "allegrogl/image.h"
 
+extern LandDataFile *_land_datafile;
+
+static void (*_cb)(char const *path, LandImage *image) = NULL;
+
+void land_image_set_callback(void (*cb)(char const *path, LandImage *image))
+{
+    _cb = cb;
+}
+
 LandImage *land_image_load(char const *filename)
 {
+    LandImage *self = NULL;
     land_log_msg("land_image_load %s..", filename);
     set_color_conversion(COLORCONV_NONE);
-    BITMAP *bmp = load_bitmap(filename, NULL);
+    BITMAP *bmp = NULL;
+    if (_land_datafile)
+    {
+        int size;
+        char *buffer = land_datafile_read_entry(_land_datafile, filename,
+            &size);
+        if (buffer)
+        {
+            land_log_msg_nostamp(" [memory %d] ", size);
+            if (!ustrcmp(get_extension(filename), "jpg"))
+            {
+                bmp = load_memory_jpg(buffer, size, NULL);
+            }
+            else if (!strcmp(get_extension(filename), "png"))
+            {
+                bmp = load_memory_png(buffer, size, NULL);
+            }
+            land_free(buffer);
+        }
+    }
+    if (!bmp)
+        bmp = load_bitmap(filename, NULL);
     if (bmp)
     {
-        LandImage *self = land_display_new_image();
+        self = land_display_new_image();
         self->filename = strdup(filename);
         self->name = strdup(filename);
         self->bitmap = bmp;
@@ -70,13 +108,13 @@ LandImage *land_image_load(char const *filename)
         int n;
         n = land_image_color_stats(self, &red, &green, &blue, &alpha);
         land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
-        return self;
     }
     else
     {
         land_log_msg_nostamp("failure\n");
     }
-    return NULL;
+    if (_cb) _cb(filename, self);
+    return self;
 }
 
 LandImage *land_image_new(int w, int h)
@@ -141,10 +179,10 @@ int land_image_color_stats(LandImage *self, float *red, float *green, float *blu
         for (i = 0; i < land_image_width(self); i++)
         {
             int rgba = getpixel(self->memory_cache, i, j);
-            *red += getr(rgba) * 1.0 / 255.0;
-            *green += getg(rgba) * 1.0 / 255.0;
-            *blue += getb(rgba) * 1.0 / 255.0;
-            *alpha += geta(rgba) * 1.0 / 255.0;
+            *red += getr32(rgba) * 1.0 / 255.0;
+            *green += getg32(rgba) * 1.0 / 255.0;
+            *blue += getb32(rgba) * 1.0 / 255.0;
+            *alpha += geta32(rgba) * 1.0 / 255.0;
             n++;
         }
     }
@@ -201,7 +239,16 @@ static int compar(void const *a, void const *b)
 LandArray *land_load_images(char const *pattern, int center, int optimize)
 {
     LandArray *filenames = NULL;
-    int count = for_each_file_ex(pattern, 0, 0, callback, &filenames);
+    int count = 0;
+    if (_land_datafile)
+    {
+        count = land_datafile_for_each_entry(_land_datafile, pattern, callback,
+            &filenames);
+    }
+    if (!count)
+    {
+        count = for_each_file_ex(pattern, 0, 0, callback, &filenames);
+    }
     qsort(filenames->data, count, sizeof (void *), compar);
     
     LandArray *array = NULL;
@@ -224,6 +271,7 @@ LandArray *land_load_images(char const *pattern, int center, int optimize)
 LandImage *land_image_sub(LandImage *parent, float x, float y, float w, float h)
 {
     LandImage *self = land_display_new_image();
+    self->flags |= LAND_SUBIMAGE;
     self->vt->sub(self, parent);
     self->bitmap = parent->bitmap;
     self->memory_cache = parent->memory_cache;
@@ -257,6 +305,7 @@ LandArray *land_image_load_sheet(char const *filename, int offset_x, int offset_
             land_array_add_data(&array, sub);
         }
     }
+    if (_cb) _cb(filename, sheet);
     return array;
 }
 
@@ -315,6 +364,12 @@ void land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, 
 void land_image_draw(LandImage *self, float x, float y)
 {
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, 1, 1, 1, 1);
+}
+
+void land_image_draw_tinted(LandImage *self, float x, float y, float r, float g,
+    float b, float alpha)
+{
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, r, g, b, alpha);
 }
 
 void land_image_grab(LandImage *self, int x, int y)
