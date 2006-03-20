@@ -31,6 +31,13 @@ LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
     return &self->super;
 }
 
+/* Destroys a tile grid. Images used by the grid are not affected. */
+void land_tilegrid_del(LandGrid *self)
+{
+    land_free(LAND_TILE_GRID(self)->tiles);
+    land_free(self);
+}
+
 void land_tilegrid_place(LandGrid *super, int cell_x, int cell_y,
     LandImage *image)
 {
@@ -155,4 +162,5 @@ void land_tilemap_init(void)
     land_alloc(land_grid_vtable_tilegrid);
     land_grid_vtable_tilegrid->draw = land_grid_draw_normal;
     land_grid_vtable_tilegrid->draw_cell = land_tilegrid_draw_cell;
+    land_grid_vtable_tilegrid->del = land_tilegrid_del;
 }
