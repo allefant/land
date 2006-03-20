@@ -58,10 +58,16 @@ void land_display_allegrogl_set(LandDisplay *super)
     if (super->bpp)
         cd = super->bpp;
 
-    if (install_allegro_gl())
+    static int once = 0;
+    if (!once)
     {
-        land_exception("install_allegro_gl");
+        if (install_allegro_gl())
+        {
+            land_exception("install_allegro_gl");
+        }
+        once++;
     }
+
     allegro_gl_set(AGL_COLOR_DEPTH, cd);
     allegro_gl_set(AGL_SUGGEST, AGL_COLOR_DEPTH);
 
@@ -86,6 +92,10 @@ void land_display_allegrogl_set(LandDisplay *super)
     set_color_depth(cd);
     if (super->hz)
         request_refresh_rate(super->hz);
+    land_log_msg(" %s %dx%dx%d %dHz\n",
+        super->flags & LAND_FULLSCREEN ? "fullscreen" :
+        super->flags & LAND_WINDOWED ? "windowed" : "auto",
+        super->w, super->h, cd, super->hz);
     set_gfx_mode(mode, super->w, super->h, 0, 0);
 
     glDisable(GL_CULL_FACE);
@@ -103,6 +113,8 @@ void land_display_allegrogl_set(LandDisplay *super)
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    land_image_allegrogl_reupload();
 }
 
 void land_display_allegrogl_flip(LandDisplay *super)

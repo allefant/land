@@ -7,6 +7,7 @@
 #include "allegrogl/image.h"
 
 static LandImageInterface *vtable;
+static LandList *images;
 
 #define LAND_IMAGE_OPENGL(_x_) ((LandImageOpenGL *)_x_)
 
@@ -38,10 +39,33 @@ static void pad_pot(int w, int h, int *pad_w, int *pad_h)
     *pad_h -= h;
 }
 
+void land_image_allegrogl_reupload(void)
+{
+    if (!images) return;
+    int size = 0;
+    LandListItem *i;
+    land_log_msg("Re-uploading all textures..\n");
+    for (i = images->first; i; i = i->next)
+    {
+        LandImageOpenGL *image = i->data;
+        image->gl_texture = 0;
+    }
+
+    for (i = images->first; i; i = i->next)
+    {
+        LandImage *image = i->data;
+        land_image_allegrogl_prepare(image);
+        size += image->memory_cache->w * image->memory_cache->h * 4;
+    }
+    
+    land_log_msg(" %.1f MB of texture data uploaded.\n", size / 1048576.0);
+}
+
 LandImage *land_image_allegrogl_new(LandDisplay *super)
 {
     LandImageOpenGL *self = calloc(1, sizeof *self);
     self->super.vt = vtable;
+    land_add_list_data(&images, self);
     return &self->super;
 }
 
@@ -53,10 +77,11 @@ void land_image_allegrogl_sub(LandImage *self, LandImage *parent)
 void land_image_allegrogl_del(LandDisplay *super, LandImage *self)
 {
     LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self);
-    if (sub->gl_texture)
+    if (sub->gl_texture && !(self->flags & LAND_SUBIMAGE))
     {
         glDeleteTextures(1, &sub->gl_texture);
     }
+    land_remove_list_data(&images, self);
     land_free(self);
 }
 
@@ -210,6 +235,14 @@ void land_image_allegrogl_init(void)
 void land_image_allegrogl_prepare(LandImage *self)
 {
     LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self);
+
+    // FIXME: Sub-images don't work yet, they need a pointer to their parent,
+    // e.g. right now, there's no way to get the right texture ID if the
+    // parent texture changes
+    /* Assume that the parent is prepared. */
+    if (self->flags & LAND_SUBIMAGE)
+        return;
+
     if (sub->gl_texture)
     {
         glDeleteTextures(1, &sub->gl_texture);
@@ -250,16 +283,24 @@ void land_image_allegrogl_prepare(LandImage *self)
     rectfill(temp, w, h, w + pad_w - 1, h + pad_h - 1, c);
 
     sub->gl_texture = allegro_gl_make_texture_ex(AGL_TEXTURE_FLIP, temp, GL_RGBA8);
-
     destroy_bitmap(temp);
 
-    land_log_msg(" texture %d: %d = %d + %d x %d = %d + %d\n", sub->gl_texture,
+    glBindTexture(GL_TEXTURE_2D, sub->gl_texture);
+    // FIXME:
+    // For some reason, textures get some odd blur effect applied as returned
+    // by AGL. The below command somehow fixes it???
+    // Most probably a driver bug..
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, GL_RGBA,
+        GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+
+    land_log_msg(" texture %d: %.1fMB %d = %d + %d x %d = %d + %d\n",
+        sub->gl_texture,
+        (w + pad_w) * (h + pad_h) * 4.0 / (1024 * 1024),
         w + pad_w, w, pad_w,
         h + pad_h, h, pad_h);
-
-    glBindTexture(GL_TEXTURE_2D, sub->gl_texture);
+    
     // TODO: Allow different modes
-    // anti-aliased: use GL_NEAREST
+    // anti-aliased: use GL_LINEAR
     // tiled: use GL_REPEAT
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
