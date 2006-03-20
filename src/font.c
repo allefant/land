@@ -73,7 +73,7 @@ LandFont *land_font_load(char const *filename, float size)
     return self;
 }
 
-void land_set_font(LandFont *self)
+void land_font_set(LandFont *self)
 {
     land_font_state->font = self;
 }
@@ -143,7 +143,7 @@ void land_text_on(void)
     land_font_state->off = 0;
 }
 
-void _print(char const *str, int newline, int alignement)
+static void _print(char const *str, int newline, int alignement)
 {
     land_font_state->font->vt->print(land_font_state, _land_active_display, str, alignement);
     if (newline)
