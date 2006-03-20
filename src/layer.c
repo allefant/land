@@ -48,6 +48,12 @@ LandLayer *land_layer_new(void)
     return self;
 }
 
+void land_layer_del(LandLayer *self)
+{
+    land_grid_del(self->grid);
+    land_free(self);
+}
+
 LandLayer *land_layer_new_with_grid(LandGrid *grid)
 {
     land_new(LandLayer, self);
