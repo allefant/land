@@ -187,6 +187,9 @@ void land_remove_list_data(LandList **list, void *data)
     }
 }
 
+/* Destroys a list and all iterators, but not the data. If you want to destroy
+ * the data, first loop through the list and destroy them all.
+ */
 void land_list_destroy(LandList *list)
 {
     LandListItem *item = list->first;
