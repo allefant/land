@@ -23,8 +23,11 @@
 #include "sprite.h"
 #include "log.h"
 #include "color.h"
+#include "data.h"
 
 #include "widget.h"
+
+extern LandRunner *shortcut_runner;
 
 #define land_begin() \
     static void _land_main(void); \
@@ -36,11 +39,11 @@
     int main(void) \
     { \
         land_init(); \
-        LandRunner *runner = land_runner_new("shortcut", \
+        shortcut_runner = land_runner_new("shortcut", \
             init, enter, tick, draw, leave, destroy); \
-        land_runner_register(runner); \
+        land_runner_register(shortcut_runner); \
         land_set_display_parameters(w, h, bpp, hz, flags); \
-        land_set_initial_runner(runner); \
+        land_set_initial_runner(shortcut_runner); \
         land_set_frequency(hz); \
         land_main(); \
         return 0; \
@@ -54,6 +57,8 @@
 static LandDisplay *_global_image_shortcut_display = NULL;
 static LandImage *_global_image = NULL;
 static int nested = 0;
+
+LandRunner *shortcut_runner;
 
 void land_set_image_display(LandImage *image)
 {
