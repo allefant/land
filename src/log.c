@@ -93,15 +93,15 @@ land_log_msg (char const *template, ...)
     va_start(va_args, template);
     logfile = fopen(logname, "a");
     struct timeval tv;
-#ifndef ALLEGRO_WINDOWS
+#ifdef ALLEGRO_WINDOWS
+    tv.tv_usec = 0;
+#else
     gettimeofday(&tv, NULL);
 #endif
     time_t t;
     struct tm tm;
     time(&t);
-#ifndef ALLEGRO_WINDOWS
-    gmtime_r(&t, &tm);
-#endif
+    tm = *gmtime(&t);
     fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
         tm.tm_year + 1900,
         tm.tm_mon + 1,
