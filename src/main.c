@@ -4,6 +4,8 @@
 
 #include <allegro.h>
 #include <sys/time.h>
+#include <loadpng.h>
+#include <jpgalleg.h>
 
 #include "fudgefont.h"
 #include "land.h"
@@ -23,6 +25,7 @@ static double frequency;
 static LandParameters *parameters;
 static int quit = 0;
 static volatile int ticks = 0;
+static int frames = 0;
 static int x_clicked = 0;
 static void ticker(void)
 {
@@ -50,7 +53,10 @@ void land_init(void)
     if (allegro_init())
         land_exception("Error in allegro_init: %s", allegro_error);
 
+    _png_screen_gamma = 0;
     loadpng_init();
+    jpgalleg_init();
+
     install_fudgefont();
 }
 
@@ -142,6 +148,11 @@ void land_maximize_fps(int onoff)
     _maximize_fps = onoff;
 }
 
+void land_skip_frames(void)
+{
+    frames = ticks;
+}
+
 int land_main(void)
 {
     land_log_msg("land_main\n");
@@ -171,11 +182,9 @@ int land_main(void)
 
     land_reprogram_timer();
 
-    land_runner_init_all();
-
     land_runner_switch_active(parameters->start);
 
-    int frames = ticks;
+    land_skip_frames();
     int gframes = frames;
     while (!quit)
     {
