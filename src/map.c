@@ -42,3 +42,17 @@ LandMap *land_map_new(void)
     land_new(LandMap, self);
     return self;
 }
+
+void land_map_del(LandMap *self)
+{
+    if (self->first_layer)
+    {
+        LandLayer *l = self->first_layer;
+        while(l)
+        {
+            land_layer_del(l);
+            l = l->next_in_map;
+        }
+    }
+    land_free(self);
+}
