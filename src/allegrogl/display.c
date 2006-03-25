@@ -90,8 +90,8 @@ void land_display_allegrogl_set(LandDisplay *super)
         mode = GFX_OPENGL_FULLSCREEN;
 
     set_color_depth(cd);
-    if (super->hz)
-        request_refresh_rate(super->hz);
+    //if (super->hz)
+    //    request_refresh_rate(super->hz);
     land_log_msg(" %s %dx%dx%d %dHz\n",
         super->flags & LAND_FULLSCREEN ? "fullscreen" :
         super->flags & LAND_WINDOWED ? "windowed" : "auto",
