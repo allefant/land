@@ -2,7 +2,7 @@ cdef extern from "land.h":
     struct LandFont:
         pass
     LandFont *land_font_load(char *filename, float size)
-    void land_set_font(LandFont *self)
+    void land_font_set(LandFont *self)
     void land_text_pos(float x, float y)
     float land_text_x_pos()
     float land_text_y_pos()
@@ -22,7 +22,6 @@ cdef extern from "land.h":
     void land_write_center(char *text, ...)
 
     void land_color(float r, float g, float b, float a)
-    void land_set_glyphkeeper(int onoff)
 
 cdef class Font:
     cdef LandFont *wrapped
@@ -62,7 +61,7 @@ cdef class Font:
             if y == None: y = land_text_y_pos()
             land_text_pos(x, y)
 
-        land_set_font(self.wrapped)
+        land_font_set(self.wrapped)
         cdef char *s
         s = str
         if right:
@@ -71,5 +70,4 @@ cdef class Font:
             land_print_center("%s", s)
         else:
             land_print("%s", s)
-def glyphkeeper(onoff):
-    land_set_glyphkeeper(onoff)
+
