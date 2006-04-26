@@ -115,4 +115,3 @@ land_log_msg (char const *template, ...)
     //vprintf(template, va_args);
     va_end(va_args);
 }
-
