@@ -90,6 +90,7 @@ void land_display_allegrogl_set(LandDisplay *super)
         mode = GFX_OPENGL_FULLSCREEN;
 
     set_color_depth(cd);
+    // TODO: seems to have bad effects on some windows machines
     //if (super->hz)
     //    request_refresh_rate(super->hz);
     land_log_msg(" %s %dx%dx%d %dHz\n",
@@ -138,7 +139,7 @@ void land_display_allegrogl_filled_rectangle(LandDisplay *super,
     float x, float y, float x_, float y_)
 {
     glDisable(GL_TEXTURE_2D);
-    glBegin(GL_POLYGON);
+    glBegin(GL_QUADS);
     glVertex2f(x, y);
     glVertex2f(x_, y);
     glVertex2f(x_, y_);
@@ -265,8 +266,49 @@ void land_display_allegrogl_clip(LandDisplay *super)
         glDisable(GL_SCISSOR_TEST);
     else
         glEnable(GL_SCISSOR_TEST);
-    glScissor(super->clip_x1, super->h - super->clip_y2, super->clip_x2 - super->clip_x1,
-        super->clip_y2 - super->clip_y1);
+
+    /* If display is split into two columns, like this:
+     *
+     * clip(0, 0, 5.5, 10);
+     * clip(5.5, 0, 10, 10);
+     *
+     * Then if we just pass this to OpenGL with integer clipping:
+     *
+     * x = int(0) = 0, w = int(5.5 - 0) = 5
+     * x = int(5.5) = 5, w = int(10 - 5.5) = 4
+     *
+     * Now this means, we get a blank stripe:
+     *
+     * 00 01 02 03 04 05 06 07 08 09
+     * xx xx xx xx xx yy yy yy yy ?? 
+     *
+     * If we convert to integer and add 1 to the width:
+     *
+     * x = int(0) = 0, w = 1 + int(5.5) - int(0) = 5
+     * x = int(5.5) = 5, w = 1 + int(10) - int(5.5) = 6
+     *
+     * But, this results in an extra pixel:
+     *
+     * 00 01 02 03 04 05 06 07 08 09 10
+     * xx xx xx xx xx yy yy yy yy yy yy
+     *
+     * The below seems to be the best compromise:
+     *
+     * x = int(0) = 0, w = int(5.5) - int(0)) = 5
+     * x = int(5.5) = 5, w = int(10) - int(5.5) = 5
+     *
+     * 00 01 02 03 04 05 06 07 08 09
+     * xx xx xx xx xx yy yy yy yy yy 
+     *
+     * This means, any clipping area not having at least one integer crossing
+     * inside will be reduced to nothign.
+     */
+      
+    int x_1 = super->clip_x1;
+    int y_1 = super->clip_y1;
+    int x_2 = super->clip_x2;
+    int y_2 = super->clip_y2;
+    glScissor(x_1, super->h - y_2, x_2 - x_1, y_2 - y_1);
 }
 
 void land_display_allegrogl_clear(LandDisplay *super, float r, float g, float b, float a)
