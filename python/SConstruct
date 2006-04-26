@@ -1,0 +1,17 @@
+modules = ["land", "main", "runner", "display", "keyboard", "mouse", "image",
+    "text"]
+
+env = Environment(tool = "mingw")
+
+env["PYREXC"] = "pyrexc"
+env["CC"] = "i586-mingw32msvc-gcc"
+env["LINK"] = "i586-mingw32msvc-gcc"
+env["SHLIBSUFFIX"] = ".pyd"
+env['SHLIBPREFIX'] = ""
+env["LIBS"] = ["python24", "land"]
+env["LIBPATH"] = ["/XP/Python24/libs/", "../lib/win32"]
+env["CPPPATH"] = ["/XP/Python24/include", "../h", "../pro"]
+
+for module in modules:
+    env.Command("build/mingw/%s.c" % module, "pyrex/%s.pyx" % module, "$PYREXC $SOURCES -o $TARGET")
+    env.SharedLibrary("build/mingw/%s" % module, "build/mingw/%s.c" % module)
