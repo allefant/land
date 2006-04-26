@@ -23,6 +23,8 @@
 #define land_alloc(self); \
     self = calloc(1, sizeof *self);
 
+#define land_allocate malloc
+
 #define land_free(self); \
     free(self);
 
@@ -104,6 +106,32 @@ void land_list_insert_item(LandList *list, LandListItem *item)
     list->count++;
 }
 
+/* Inserts a new item to the list, positioned before the given one. */
+void land_list_insert_item_before(LandList *list, LandListItem *insert,
+    LandListItem *before)
+{
+    if (before)
+    {
+        insert->next = before;
+        insert->prev = before->prev;
+
+        if (before->prev)
+        {
+            before->prev->next = insert;
+        }
+        else
+        {
+            list->first = insert;
+        }
+
+        before->prev = insert;
+
+        list->count++;
+    }
+    else
+        land_list_insert_item(list, insert);
+}
+
 /* May only be called with an item which is in the list. */
 void land_list_remove_item(LandList *list, LandListItem *item)
 {
@@ -126,6 +154,13 @@ void land_list_remove_item(LandList *list, LandListItem *item)
     list->count--;
 }
 
+LandList *land_list_new(void)
+{
+    LandList *self;
+    land_alloc(self);
+    return self;
+}
+
 /* Given a pointer to a (possibly NULL valued) list pointer, create a new node
  * with the given data, and add to the (possibly newly created) list.
  */
@@ -139,32 +174,6 @@ void land_add_list_data(LandList **list, void *data)
         land_alloc(*list)
     }
     land_list_insert_item(*list, item);
-}
-
-/* Given a pointer to a (possibly NULL valued) array pointer, create a new node
- * with the given data, and add to the (possibly modified) array.
- */
-void land_array_add_data(LandArray **array, void *data)
-{
-    LandArray *self = *array;
-    if (!self)
-    {
-        land_alloc(self)
-    }
-    self->data = realloc(self->data, (self->count + 1) * sizeof *self->data);
-    self->data[self->count] = data;
-    self->count++;
-    *array = self;
-}
-
-void *land_array_get_nth(LandArray *array, int i)
-{
-    return array->data[i];
-}
-
-void land_array_destroy(LandArray *self)
-{
-    free(self);
 }
 
 /* Don't use, it will loop through the whole list every time, removing the
@@ -200,4 +209,30 @@ void land_list_destroy(LandList *list)
         item = next;
     }
     land_free(list);
+}
+
+/* Given a pointer to a (possibly NULL valued) array pointer, create a new node
+ * with the given data, and add to the (possibly modified) array.
+ */
+void land_array_add_data(LandArray **array, void *data)
+{
+    LandArray *self = *array;
+    if (!self)
+    {
+        land_alloc(self)
+    }
+    self->data = realloc(self->data, (self->count + 1) * sizeof *self->data);
+    self->data[self->count] = data;
+    self->count++;
+    *array = self;
+}
+
+void *land_array_get_nth(LandArray *array, int i)
+{
+    return array->data[i];
+}
+
+void land_array_destroy(LandArray *self)
+{
+    free(self);
 }
