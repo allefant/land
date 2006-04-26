@@ -57,7 +57,7 @@ void land_image_allegrogl_reupload(void)
         land_image_allegrogl_prepare(image);
         size += image->memory_cache->w * image->memory_cache->h * 4;
     }
-    
+
     land_log_msg(" %.1f MB of texture data uploaded.\n", size / 1048576.0);
 }
 
@@ -221,6 +221,27 @@ void land_image_allegrogl_grab_into(LandImage *self, int x, int y, int tx, int t
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, tx, h - ty - th, x, dh - y - th, tw, th);
 }
 
+void land_image_allegrogl_cache(LandImage *super)
+{
+    LandImageOpenGL *self = LAND_IMAGE_OPENGL(self);
+    glBindTexture(GL_TEXTURE_2D, self->gl_texture);
+    GLint w, h;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    char *pixels = land_allocate(w * h * 4);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV,
+        pixels);
+    int x, y;
+    for (y = 0; y < super->memory_cache->h; y++)
+    {
+        for (x = 0; x < super->memory_cache->w; x++)
+        {
+            ((int *)super->memory_cache->line[y])[x] = ((int *)(pixels + w * 4))[x];
+        }
+    }
+    land_free(pixels);
+}
+
 void land_image_allegrogl_init(void)
 {
     land_log_msg("land_image_allegrogl_init\n");
@@ -298,7 +319,7 @@ void land_image_allegrogl_prepare(LandImage *self)
         (w + pad_w) * (h + pad_h) * 4.0 / (1024 * 1024),
         w + pad_w, w, pad_w,
         h + pad_h, h, pad_h);
-    
+
     // TODO: Allow different modes
     // anti-aliased: use GL_LINEAR
     // tiled: use GL_REPEAT
