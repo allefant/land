@@ -1,4 +1,4 @@
-import land
+import land, random
 
 land.init()
 
@@ -14,21 +14,35 @@ class Game(land.runner.Runner):
         land.display.filled_circle(mx - r, my - r, mx + r, my + r)
         land.display.unselect_image()
 
+        w = 640 / 32
+        h = 480 / 32
+        self.jitter = []
+        for k in range(w * h):
+            self.jitter += [(0, 0)]
+
     def enter(self):
         print "Enter from python"
 
     def tick(self):
         if land.keyboard.pressed(land.keyboard.ESC):
             land.quit()
+        w = 640 / 32
+        h = 480 / 32
+
+        for k in range(w * h):
+            x, y = self.jitter[k]
+            self.jitter[k] = (x + random.random() - 0.5, y + random.random() - 0.5)
 
     def draw(self):
         land.display.clear(0.7, 0.1, 0, 0)
         mx = land.display.width() / 2
         my = land.display.height() / 2
 
+        k = 0
         for i in range(640 / 32):
             for j in range(480 / 32):
-                self.image.draw(i * 32, j * 32)
+                self.image.draw(i * 32 + self.jitter[k][0], j * 32 + self.jitter[k][1])
+                k += 1
 
     def leave(self):
         print "Leave from python"
