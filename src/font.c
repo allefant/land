@@ -37,23 +37,14 @@ struct LandFontState
 
 #include "allegro/font.h"
 #include "allegrogl/font.h"
-#include "glyphkeeper-alleggl/font.h"
 
 static LandFontState *land_font_state;
-static int land_use_glyphkeeper = 0;
 
 void land_font_init(void)
 {
     land_font_state = calloc(1, sizeof *land_font_state);
     land_font_allegrogl_init();
     land_font_allegro_init();
-    land_font_glyphkeeper_init();
-}
-
-void land_set_glyphkeeper(int onoff)
-{
-    land_log_msg("land_set_glyphkeeper %d\n", onoff);
-    land_use_glyphkeeper = onoff;
 }
 
 LandFont *land_font_load(char const *filename, float size)
@@ -61,10 +52,7 @@ LandFont *land_font_load(char const *filename, float size)
     LandFont *self;
     if (land_get_flags() & LAND_OPENGL)
     {
-        if (land_use_glyphkeeper && !ustrcmp(get_extension(filename), "ttf"))
-            self = land_font_glyphkeeper_load(filename, size);
-        else
-            self = land_font_allegrogl_load(filename, size);
+        self = land_font_allegrogl_load(filename, size);
     }
     else
         self = land_font_allegro_load(filename, size);
@@ -81,10 +69,6 @@ void land_font_set(LandFont *self)
 void __attribute__((noreturn)) land_text_size(float sx, float sy)
 {
     land_exception("Text sizing currently not implemented, use different fonts instead.");
-    //LandFont *self = land_pointer(LandFont, text_font);
-    //gk_rend_set_size_pixels(self->rend, sx, sy);
-
-    //workaround_bug_size = sy;
 }
 
 void land_text_pos(float x, float y)

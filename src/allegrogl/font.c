@@ -8,9 +8,9 @@
 land_type(LandFontAllegrogl)
 {
     struct LandFont super;
-    //FONT *font;
-    LandImage *image;
-    int x[256], y[256], w[256], h[256];
+    FONT *font;
+    //LandImage *image;
+    //int x[256], y[256], w[256], h[256];
 };
 
 #define LAND_FONT_ALLEGROGL(_x_) ((LandFontAllegrogl *)_x_)
@@ -22,7 +22,12 @@ land_type(LandFontAllegrogl)
 
 static LandFontInterface *vtable;
 
-static void grab(LandFontAllegrogl *self)
+/* Simple font implementation bypassing AllegroGL. Probably we should switch
+ * to using this one, and ditch the AllegroGL one, which is way too
+ * complicated, and doesn't even support kerning.
+ */
+#if 0
+//static void grab(LandFontAllegrogl *self)
 {
     LandImage *image = self->image;
     BITMAP *bmp = image->memory_cache;
@@ -71,7 +76,7 @@ static void grab(LandFontAllegrogl *self)
     land_image_prepare(self->image);
 }
 
-LandFont *land_font_allegrogl_load(char const *filename, float size)
+//LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
     land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
     LandFontAllegrogl *self = calloc(1, sizeof *self);
@@ -92,7 +97,7 @@ LandFont *land_font_allegrogl_load(char const *filename, float size)
     return &self->super;
 }
 
-void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
+//void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     char const *text, int alignement)
 {
     LandFontAllegrogl *self = LAND_FONT_ALLEGROGL(state->font);
@@ -139,10 +144,9 @@ void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     state->w = w;
     state->h = h;
 }
+#endif
 
-
-#if 0
-//LandFont *land_font_allegrogl_load(char const *filename, float size)
+LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
     land_log_msg("land_font_allegrogl_load %s %.1f..", filename, size);
     LandFontAllegrogl *self = calloc(1, sizeof *self);
@@ -181,7 +185,7 @@ void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     return &self->super;
 }
 
-//void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
+void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     char const *text, int alignement)
 {
     LandFontAllegrogl *self = LAND_FONT_ALLEGROGL(state->font);
@@ -209,7 +213,7 @@ void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     state->w = w;
     state->h = h;
 }
-#endif
+
 void land_font_allegrogl_init(void)
 {
     land_log_msg("land_font_allegrogl_init\n");

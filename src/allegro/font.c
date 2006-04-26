@@ -21,7 +21,7 @@ static LandFontInterface *vtable;
 
 LandFont *land_font_allegro_load(char const *filename, int size)
 {
-    land_log_msg("land_font_glyphkeeper_allegrogl_load %s %d..", filename, size);
+    land_log_msg("land_font_allegr_load %s %d..", filename, size);
     LandFontAllegro *self = calloc(1, sizeof *self);
     self->font = load_font(filename, NULL, NULL);
     self->super.size = text_height(self->font);
