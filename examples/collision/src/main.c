@@ -38,8 +38,8 @@ static void game_init(LandRunner *self)
     land_line(0, 0, land_display_width(), land_display_height());
     land_unset_image_display();
 
-    land_image_create_pixelmasks(game.img1, 256);
-    land_image_create_pixelmasks(game.img2, 1);
+    land_image_create_pixelmasks(game.img1, 256, 128);
+    land_image_create_pixelmasks(game.img2, 1, 128);
 
     game.x_ = land_display_width() / 2 + 100;
     game.y_ = land_display_height() / 2;

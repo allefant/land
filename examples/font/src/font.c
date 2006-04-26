@@ -8,7 +8,6 @@ LandFont *paletted;
 
 static void game_init(LandRunner *self)
 {
-    land_set_glyphkeeper(0);
     big = land_font_load("../../data/galaxy.ttf", 60);
     small = land_font_load("../../data/galaxy.ttf", 30);
     tiny = land_font_load("../../data/galaxy.ttf", 12);
@@ -30,7 +29,7 @@ static void game_draw(LandRunner *self)
     glMatrixMode(GL_MODELVIEW_MATRIX);
     glLoadIdentity();
 
-    land_set_font(big);
+    land_font_set(big);
     float x = land_display_width() / 2;
     float y = land_display_height() / 2 - land_font_height(big) / 2;
     land_color(0, 1, 0, 0.5);
@@ -40,16 +39,16 @@ static void game_draw(LandRunner *self)
     land_text_pos(x, y);
     land_print_center("Land Fonts");
 
-    land_set_font(small);
+    land_font_set(small);
     land_color(0, 0, 0, 1);
     land_print_center("font example");
 
-    land_set_font(tiny);
+    land_font_set(tiny);
     land_color(0, 0, 0, 1);
     land_print_center("Demonstrates use of different fonts accessible with Land.");
     land_print_center("And shows how to use the text cursor for positioning.");
 
-    land_set_font(truecolor);
+    land_font_set(truecolor);
     land_color(1, 1, 1, 1);
     glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -62,7 +61,7 @@ static void game_draw(LandRunner *self)
     float s = 0.6 + 0.5 * sin(land_get_time() * AL_PI);
 
     glLoadIdentity();
-    land_set_font(paletted);
+    land_font_set(paletted);
     glTranslatef(land_display_width() / 4, land_display_height() / 4, 0);
     glRotatef(land_get_time() * 180, 0, 0, 1);
     glScalef(s, s, s);
@@ -73,7 +72,7 @@ static void game_draw(LandRunner *self)
     land_print_center("paletted");
 
     glLoadIdentity();
-    land_set_font(paletted);
+    land_font_set(paletted);
     glTranslatef(land_display_width() * 0.75, land_display_height() / 4, 0);
     glRotatef(land_get_time() * -180, 0, 0, 1);
     glScalef(s, s, s);

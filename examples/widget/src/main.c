@@ -25,7 +25,7 @@ static void init(LandRunner *self)
     WidgetTheme *theme = widget_theme_new("blue/agup.cfg");
 
     LandFont *f = land_font_load("../../data/galaxy.ttf", 10);
-    land_set_font(f);
+    land_font_set(f);
 
     desktop = widget_container_new(NULL, 0, 0, 640, 480);
     desktop->theme = theme;

@@ -15,6 +15,9 @@ for ex in examples:
 
     BUILDDIR = os.path.join("scons", "build")
 
+    env.Append(CPPPATH = ["../include/land"])
+    env.Append(LIBPATH = ["../lib/posix"])
+
     if ARGUMENTS.get("debug", 0):
         env.Append(CCFLAGS = "-g")
         env.Append(LIBS = ["landd", "agld"])
@@ -27,9 +30,8 @@ for ex in examples:
 
     BUILDDIR = os.path.join(BUILDDIR, ex)
 
-    env.Append(CCFLAGS = "-I /usr/local/include/land")
-
-    env.Append(LIBS = ["ldpng", "png", "fudgefont", "glyphkeeper-alleggl", "freetype", "GL", "GLU", "dumb"])
+    env.Append(LIBS = ["ldpng", "png", "fudgefont",
+        "freetype", "GL", "GLU", "dumb", "jpgal"])
 
     env.SConsignFile("scons/signatures")
 

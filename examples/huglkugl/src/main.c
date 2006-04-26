@@ -42,8 +42,8 @@ static void game_init(LandRunner *self)
     platform_image = land_image_load("../../data/platform1.png");
     land_image_center(platform_image);
 
-    player_type = land_spritetype_new_with_image(player_image);
-    platform_type = land_spritetype_new_with_image(platform_image);
+    player_type = land_spritetype_image_new(player_image);
+    platform_type = land_spritetype_image_new(platform_image);
 
     sprites[0] = land_sprite_new(player_type);
     land_sprite_place_into_grid(sprites[0], game.front_grid, 0, 0);
