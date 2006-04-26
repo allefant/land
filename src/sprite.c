@@ -542,6 +542,10 @@ void land_spritetype_image_initialize(LandSpriteTypeImage *self,
     LAND_SPRITE_TYPE(self)->h = image->bitmap->h - image->t - image->b;
     self->image = image;
     LAND_SPRITE_TYPE(self)->name = "image";
+
+    // TODO: Ok, so we automatically create a mask here.. but is this wanted?
+    if (!image->mask)
+        land_image_create_pixelmasks(image, 1, 128);
 }
 
 /* Create a new image sprite type with the given image. The source clipping of
@@ -565,10 +569,6 @@ LandSpriteType *land_spritetype_animation_new(LandAnimation *animation,
     land_alloc(self);
     if (!image)
         image = land_animation_get_frame(animation, 0);
-
-    // TODO: Ok, so we automatically create a mask here.. but is this wanted?
-    if (!image->mask)
-        land_image_create_pixelmasks(image, 1, 128);
 
     land_spritetype_image_initialize(LAND_SPRITE_TYPE_IMAGE(self), image);
     LAND_SPRITE_TYPE(self)->draw = dummy_animation;
