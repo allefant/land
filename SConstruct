@@ -16,7 +16,7 @@ sfiles += glob.glob("src/*/*.c")
 # Environment to generate headers.
 headerenv = Environment(ENV = os.environ)
 headerenv.SConsignFile("scons/signatures")
-headerenv.BuildDir("h", "src", duplicate = False)
+headerenv.BuildDir("inc", "src", duplicate = False)
 
 # This means, if the same h is created, it is recognized as unmodified
 headerenv.TargetSignatures("content")
@@ -29,7 +29,7 @@ for c in sfiles:
     else:
         d = ""
     headerenv.Command(
-        "h/" + c[4:-2] + ".h",
+        "inc/" + c[4:-2] + ".inc",
         c,
         "splitheader -i $SOURCE -o $TARGET " + d + "-p LAND_LAND_")
 
@@ -47,6 +47,29 @@ for c in sfiles:
         pro,
         c,
         "cproto.py $SOURCE > $TARGET")
+
+# Environment to generate includes.
+includeenv = Environment()
+includeenv.SConsignFile("scons/signatures")
+includeenv.BuildDir("include/land", "src", duplicate = False)
+protoenv.TargetSignatures("content")
+
+def make_include(env, target, source):
+    h = file(source[0].path).readlines()
+    pro = file(source[1].path).readlines()
+    inc = file(target[0].path, "w").writelines(h[:-4] + pro + ["\n"] + h[-1:])
+
+for c in sfiles:
+    pro = "pro/" + c[4:-2] + ".pro"
+    h = "inc/" + c[4:-2] + ".inc"
+    inc = "include/land/" + c[4:-2] + ".h"
+    p = includeenv.Command(
+        inc,
+        [h, pro],
+        make_include)
+
+includeenv.Command("include/land.h", [],
+    "echo '#include \"land/land.h\"' > include/land.h")
 
 # Main environment.
 env = Environment()
@@ -87,7 +110,7 @@ else:
 SHAREDLIBNAME = LIBNAME
 STATICLIBNAME = LIBNAME
 
-env.Append(CPPPATH = ["pro", "h"])
+env.Append(CPPPATH = ["include/land"])
 
 if crosscompile:
     env["CC"] = "i586-mingw32msvc-gcc"
@@ -103,12 +126,16 @@ if env["PLATFORM"] == "win32":
 
     env.Append(CPPPATH = ["dependencies/mingw-include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
-    env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "glyphkeeper-alleggl", "agl_s", "ldpng",
+    env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "ldpng",
         "jpgal", "alleg_s", "freetype"])
+
+    if debug: env.Append(LIBS = ["agld_s"])
+    else: env.Append(LIBS = ["agl_s"])
 
     env.Append(LIBS = ["opengl32", "glu32", "png", "z"])
 
-    env.Append(LIBS = ["kernel32", "user32", "gdi32", "comdlg32", "ole32", "dinput", "ddraw", "dxguid", "winmm",
+    env.Append(LIBS = ["kernel32", "user32", "gdi32", "comdlg32",
+        "ole32", "dinput", "ddraw", "dxguid", "winmm",
         "dsound"])
 
 env.BuildDir(BUILDDIR, "src", duplicate = False)
@@ -120,9 +147,6 @@ staticlib = env.StaticLibrary(STATICLIBNAME,
     [BUILDDIR + "/" + x[4:] for x in sfiles])
 
 basenames = [x[4:-2] for x in sfiles]
-hfiles = ["h/" + x + ".h" for x in basenames]
-profiles = ["pro/" + x + ".pro" for x in basenames]
-headers = hfiles + profiles
 
 LIBDIR = '/usr/local/lib'
 INCDIR = '/usr/local/include'
@@ -130,26 +154,21 @@ INCDIR = '/usr/local/include'
 # Install locations for headers and prototypes.
 INCDIRS = []
 INCDICT = {}
-for f in headers:
-    dir = os.path.dirname(f)
-    pos = dir.find("/")
-    if pos < 0:
-        dir = ""
-    else:
-        dir = dir[pos + 1:]
+for f in basenames:
+    dir = INCDIR + "/land/" + os.path.dirname(f)
     if not dir in INCDIRS:
         INCDIRS.append(dir)
         INCDICT[dir] = []
-    INCDICT[dir].append(f)
+    INCDICT[dir].append("include/land/" + f + ".h")
 
 INSTALL_HEADERS = []
 for incdir in INCDIRS:
-    instdir = INCDIR + "/land/" + incdir
-    env.Install(instdir, INCDICT[incdir])
-    INSTALL_HEADERS.append(instdir)
+    env.Install(incdir, INCDICT[incdir])
+    INSTALL_HEADERS.append(incdir)
+INSTALL_HEADERS.append(env.Install(INCDIR, ["include/land.h"]))
 
 env.Install(LIBDIR, [sharedlib, staticlib])
 
-env.Alias('install', ["h", "pro", LIBDIR, INSTALL_HEADERS])
+env.Alias('install', ["inc", "pro", "include", LIBDIR, INSTALL_HEADERS])
 
-env.Default(["h", "pro", sharedlib, staticlib])
+env.Default(["inc", "pro", "include", sharedlib, staticlib])
