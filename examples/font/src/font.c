@@ -29,6 +29,8 @@ static void game_draw(LandRunner *self)
     glMatrixMode(GL_MODELVIEW_MATRIX);
     glLoadIdentity();
 
+    glEnable(GL_LINE_SMOOTH);
+
     land_font_set(big);
     float x = land_display_width() / 2;
     float y = land_display_height() / 2 - land_font_height(big) / 2;
@@ -50,36 +52,35 @@ static void game_draw(LandRunner *self)
 
     land_font_set(truecolor);
     land_color(1, 1, 1, 1);
-    glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+
+    glLoadIdentity();
     glTranslatef(land_display_width() / 2, land_display_height() * 0.7, 0);
     glRotatef(45 * sin(land_get_time() * AL_PI * 0.5), 0, 0, 1);
     land_text_pos(0, 0);
     land_print_center("Truecolor");
 
     float s = 0.6 + 0.5 * sin(land_get_time() * AL_PI);
+    double t = land_get_time();
+    double a = fmod((t + sin(t)) * 180, 360);
 
     glLoadIdentity();
     land_font_set(paletted);
-    glTranslatef(land_display_width() / 4, land_display_height() / 4, 0);
-    glRotatef(land_get_time() * 180, 0, 0, 1);
-    glScalef(s, s, s);
+    glTranslatef(land_display_width() / 4, 2 * land_display_height() / 5, 0);
+    glRotatef(a, 0, 0, 1);
+    glScalef(s, s, 1);
     land_color(0, 0, 0, 1);
     land_text_pos(0, -30);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     land_print_center("paletted");
 
     glLoadIdentity();
     land_font_set(paletted);
-    glTranslatef(land_display_width() * 0.75, land_display_height() / 4, 0);
-    glRotatef(land_get_time() * -180, 0, 0, 1);
-    glScalef(s, s, s);
+    glTranslatef(land_display_width() * 0.75, 2 * land_display_height() / 5, 0);
+    glRotatef(-a, 0, 0, 1);
+    glScalef(s, s, 1);
     land_color(0, 0, 0, 1);
     land_text_pos(0, -30);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     land_print_center("paletted");
 }
 
