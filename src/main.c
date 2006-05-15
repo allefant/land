@@ -18,7 +18,6 @@ land_type(LandParameters)
     LandRunner *start;
 };
 
-
 static int _synchronized = 0;
 static int _maximize_fps = 0;
 static double frequency;
@@ -48,7 +47,7 @@ void land_init(void)
     if (!land_exception_handler)
         land_exception_handler_set(land_default_exception_handler);
 
-    srand(time(NULL));
+    land_seed(time(NULL));
 
     if (allegro_init())
         land_exception("Error in allegro_init: %s", allegro_error);
@@ -156,14 +155,6 @@ void land_skip_frames(void)
 int land_main(void)
 {
     land_log_msg("land_main\n");
-    if (install_keyboard())
-        land_exception("Error in install_keyboard: %s", allegro_error);
-    if (install_mouse() <= 0)
-        land_exception("Error in install_mouse: %s", allegro_error);
-    if (install_timer())
-        land_exception("Error in install_timer: %s", allegro_error);
-    if (install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
-        land_exception("Error in install_sound: %s", allegro_error);
 
     land_display_init();
     land_font_init();
@@ -176,6 +167,15 @@ int land_main(void)
     land_display_set();
 
     set_close_button_callback(closebutton);
+    
+    if (install_keyboard())
+        land_exception("Error in install_keyboard: %s", allegro_error);
+    if (install_mouse() <= 0)
+        land_exception("Error in install_mouse: %s", allegro_error);
+    if (install_timer())
+        land_exception("Error in install_timer: %s", allegro_error);
+    if (install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
+        land_exception("Error in install_sound: %s", allegro_error);
 
     land_mouse_init();
     land_keyboard_init();

@@ -3,7 +3,7 @@
 
 #ifdef _PROTOTYPE_
 
-#include "array.h"
+#include "list.h"
 
 typedef struct LandRunner LandRunner;
 struct LandRunner

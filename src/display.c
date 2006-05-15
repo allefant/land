@@ -6,7 +6,7 @@
 typedef struct LandDisplayInterface LandDisplayInterface;
 typedef struct LandDisplay LandDisplay;
 
-#include "array.h"
+#include "list.h"
 #include "image.h"
 #include "log.h"
 

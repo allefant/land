@@ -98,6 +98,7 @@ void land_display_allegrogl_set(LandDisplay *super)
         super->flags & LAND_WINDOWED ? "windowed" : "auto",
         super->w, super->h, cd, super->hz);
     set_gfx_mode(mode, super->w, super->h, 0, 0);
+    land_log_msg(" gfx mode switch successfull.\n");
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -308,6 +309,7 @@ void land_display_allegrogl_clip(LandDisplay *super)
     int y_1 = super->clip_y1;
     int x_2 = super->clip_x2;
     int y_2 = super->clip_y2;
+
     glScissor(x_1, super->h - y_2, x_2 - x_1, y_2 - y_1);
 }
 

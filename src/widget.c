@@ -12,6 +12,6 @@
 #include "widget/list.h"
 #include "widget/mover.h"
 #include "widget/sizer.h"
-#include "widget/text.h"
+#include "widget/button.h"
 
 #endif /* _PROTOTYPE_ */
