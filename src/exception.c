@@ -44,12 +44,17 @@ void land_exception_handler_set(int (*handler)(char const *str))
     land_exception_handler = handler;
 }
 
-void __attribute__((noreturn)) land_exception(char const *template, ...)
+//__attribute__((noreturn))
+void land_exception(char const *template, ...)
 {
     va_list args;
     va_start(args, template);
     vsnprintf(exception_string, 1024, template, args);
     va_end(args);
-    longjmp(exception, 1);
+    
+    // for now, let's not use longjmp
+    int r = land_exception_handler(exception_string);
+    if (r) abort();
+    //longjmp(exception, 1);
 }
 
