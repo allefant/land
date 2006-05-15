@@ -1,12 +1,12 @@
 #ifdef _PROTOTYPE_
 
-typedef struct WidgetScrolling WidgetScrolling;
+typedef struct LandWidgetScrolling LandWidgetScrolling;
 
 #include "container.h"
 
-struct WidgetScrolling
+struct LandWidgetScrolling
 {
-    WidgetContainer super;
+    LandWidgetContainer super;
 };
 
 /* This has 3 fixed children:
@@ -15,7 +15,8 @@ struct WidgetScrolling
  * 3. A horizontal scrollbar at the bottom.
  */
 
-#define WIDGET_SCROLLING(widget) ((WidgetScrolling *)widget)
+#define LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *) \
+    land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
 
 #endif /* _PROTOTYPE_ */
 
@@ -23,139 +24,202 @@ struct WidgetScrolling
 #include "widget/box.h"
 #include "widget/scrollbar.h"
 
-WidgetInterface *widget_scrolling_interface = NULL;
+LandWidgetInterface *land_widget_scrolling_interface;
+LandWidgetInterface *land_widget_scrolling_contents_container_interface;
+LandWidgetInterface *land_widget_scrolling_vertical_container_interface;
+LandWidgetInterface *land_widget_scrolling_horizontal_container_interface;
 
-void widget_scrolling_mouse_enter(Widget *self)
+void land_widget_scrolling_mouse_enter(LandWidget *self)
 {
     self->got_mouse = 1;
 }
 
-void widget_scrolling_mouse_leave(Widget *super)
+void land_widget_scrolling_mouse_leave(LandWidget *super)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (self->mouse)
         land_call_method(self->mouse, mouse_leave, (self->mouse));
     super->got_mouse = 0;
     self->mouse = NULL;
 }
 
-void widget_scrolling_move(Widget *widget, float dx, float dy)
+void land_widget_scrolling_move(LandWidget *widget, float dx, float dy)
 {
-    widget_container_move(widget, dx, dy);
+    land_widget_container_move(widget, dx, dy);
 }
 
-Widget *widget_scrolling_get_at_pos(Widget *super, int x, int y)
+LandWidget *land_widget_scrolling_get_at_pos(LandWidget *super, int x, int y)
 {
-    return widget_container_get_at_pos(super, x, y);
+    return land_widget_container_get_at_pos(super, x, y);
 }
 
-void widget_scrolling_mouse_tick(Widget *super)
+void land_widget_scrolling_mouse_tick(LandWidget *super)
 {
-    widget_container_mouse_tick(super);
+    land_widget_container_mouse_tick(super);
 }
 
-void widget_scrolling_tick(Widget *super)
+void land_widget_scrolling_tick(LandWidget *super)
 {
 
 }
 
-void widget_scrolling_add(Widget *widget, Widget *add)
+void land_widget_scrolling_add(LandWidget *widget, LandWidget *add)
 {
-    WidgetContainer *container = WIDGET_CONTAINER(widget);
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget);
     LandListItem *item = container->children->first;
-    Widget *contents = WIDGET(item->data);
-    widget_container_add(contents, add);
+    LandWidget *contents = LAND_WIDGET(item->data);
+    land_widget_container_add(contents, add);
+
+    /* There is no need to add extra references to the added widget from the
+     * scrollbars. They live and die with the whole scrolling widget anyway,
+     * so if the added widget is to be destroyed, then it has to detached
+     * first from contents, which can *only* happen over
+     * land_widget_scrolling_destroy_child.
+     */
 
     item = item->next;
-    WidgetContainer *right = WIDGET_CONTAINER(item->data);
+    LandWidgetContainer *right = LAND_WIDGET_CONTAINER(item->data);
     LandListItem *item2 = right->children->first;
-    WidgetScrollbar *rightbar = WIDGET_SCROLLBAR(item2->data);
+    LandWidgetScrollbar *rightbar = LAND_WIDGET_SCROLLBAR(item2->data);
     rightbar->target = add;
 
     item = item->next;
-    WidgetContainer *bottom = WIDGET_CONTAINER(item->data);
+    LandWidgetContainer *bottom = LAND_WIDGET_CONTAINER(item->data);
     item2 = bottom->children->first;
-    WidgetScrollbar *bottombar = WIDGET_SCROLLBAR(item2->data);
+    LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item2->data);
     bottombar->target = add;
 }
 
-Widget *widget_scrolling_new(Widget *parent, int x, int y, int w, int h)
+/* Return the child window of the scrolling window. Usually, a scrolling
+ * window has exactly one child window, which is controlled by the scrollbars.
+ * This window is returned.
+ */
+LandWidget *land_widget_scrolling_get_child(LandWidget *base)
 {
-    WidgetScrolling *self;
-    if (!widget_scrolling_interface)
-        widget_scrolling_interface_initialize();
+    LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data;
+    LandList *children = LAND_WIDGET_CONTAINER(contents)->children;
+    return children ? children->first->data : NULL;
+}
+
+void land_widget_scrolling_remove_child(LandWidget *base)
+{
+    LandList *list = LAND_WIDGET_CONTAINER(base)->children;
+    LandWidget *contents = list->first->data;
+    LandList *children = LAND_WIDGET_CONTAINER(contents)->children;
+    LandWidget *child = children ? children->first->data : NULL;
+    if (child)
+        land_widget_container_remove(contents, child);
+
+    /* Detach scrollbars. */
+    LandWidgetContainer * c;
+    c = LAND_WIDGET_CONTAINER(list->first->next->data);
+    LAND_WIDGET_SCROLLBAR(c->children->first->data)->target = NULL;
+    c = LAND_WIDGET_CONTAINER(list->first->next->next->data);
+    LAND_WIDGET_SCROLLBAR(c->children->first->data)->target = NULL;
+    
+}
+
+/* Creates a new Scrolling widget. You can add a child widget to it, and it
+ * will automatically display scrollbars and translate mouse coordinates.
+ */
+LandWidget *land_widget_scrolling_new(LandWidget *parent, int x, int y, int w, int h)
+{
+    LandWidgetScrolling *self;
+    
+    land_widget_scrolling_interface_initialize();
+
     land_alloc(self);
-    WidgetContainer *super = &self->super;
-    widget_container_initialize(super, parent, x, y, w, h);
-    Widget *widget = &super->super;
+    LandWidgetContainer *super = &self->super;
+    land_widget_container_initialize(super, parent, x, y, w, h);
+    LandWidget *widget = &super->super;
 
     /* Add own widgets without special hook. */
-    widget->vt = widget_container_interface;
+    widget->vt = land_widget_container_interface;
 
     /* child 1: container */
-    Widget *contents = widget_container_new(widget, 0, 0, 0, 0);
-    widget_layout_set_border(contents, 2, 2, 2, 2, 1, 1);
+    LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0);
+    contents->vt = land_widget_scrolling_contents_container_interface;
+    land_widget_theme_layout_border(contents);
 
     /* child 2: vertical scrollbar */
-    Widget *right = widget_container_new(widget, 0, 0, 0, 0);
-    Widget *rightbar = widget_scrollbar_new(right, NULL, 1, 0, 0, 0, 0);
+    LandWidget *right = land_widget_container_new(widget, 0, 0, 0, 0);
+    right->vt = land_widget_scrolling_vertical_container_interface;
+    land_widget_theme_set_minimum_size(right);
+    LandWidget *rightbar = land_widget_scrollbar_new(right, NULL, 1, 0, 0, 0, 0);
+    land_widget_theme_set_minimum_size(rightbar);
 
-    widget_layout_set_grid(right, 1, 1);
-    widget_layout_set_grid_position(rightbar, 0, 0);
-    widget_layout_add(right, rightbar);
+    land_widget_layout_set_grid(right, 1, 1);
+    land_widget_layout_set_grid_position(rightbar, 0, 0);
+    land_widget_layout_add(right, rightbar);
 
     /* child 3: horizontal scrollbar */
-    Widget *bottom = widget_container_new(widget, 0, 0, 0, 0);
-    Widget *bottombar = widget_scrollbar_new(bottom, NULL, 0, 0, 0, 0, 0);
+    LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0);
+    bottom->vt = land_widget_scrolling_horizontal_container_interface;
+    land_widget_theme_set_minimum_size(bottom);
+    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL, 0, 0, 0, 0, 0);
+    land_widget_theme_set_minimum_size(bottombar);
 
-    widget_layout_set_grid(bottom, 1, 1);
-    widget_layout_set_grid_position(bottombar, 0, 0);
-    widget_layout_add(bottom, bottombar);
+    land_widget_layout_set_grid(bottom, 1, 1);
+    land_widget_layout_set_grid_position(bottombar, 0, 0);
+    land_widget_layout_add(bottom, bottombar);
 
-    widget_layout_set_grid(widget, 2, 2);
-    widget_layout_set_border(widget, 2, 2, 2, 2, 1, 1);
-    widget_layout_add(widget, contents);
-    widget_layout_add(widget, right);
-    widget_layout_add(widget, bottom);
+    /* overall layout */
+    land_widget_layout_set_grid(widget, 2, 2);
+    land_widget_theme_layout_border(widget);
+    land_widget_layout_add(widget, contents);
+    land_widget_layout_add(widget, right);
+    land_widget_layout_add(widget, bottom);
 
-    widget_layout_set_grid_position(contents, 0, 0);
+    land_widget_layout_set_grid_position(contents, 0, 0);
 
     /* Vertical scrollbar layout. */
-    widget_layout_set_grid_position(right, 1, 0);
-    widget_layout_set_border(right, 2, 2, 2, 2, 1, 1);
-    widget_layout_set_minimum_size(right, theme_scrollbar_broadness, theme_scrollbar_minimum_length);
-    widget_layout_set_shrinking(right, 1, 0);
+    land_widget_layout_set_grid_position(right, 1, 0);
+    land_widget_theme_layout_border(right);
+    land_widget_layout_set_shrinking(right, 1, 0);
 
     /* Horizontal scrollbar layout. */
-    widget_layout_set_grid_position(bottom, 0, 1);
-    widget_layout_set_border(bottom, 2, 2, 2, 2, 1, 1);
-    widget_layout_set_minimum_size(bottom, theme_scrollbar_minimum_length, theme_scrollbar_broadness);
-    widget_layout_set_shrinking(bottom, 0, 1);
+    land_widget_layout_set_grid_position(bottom, 0, 1);
+    land_widget_theme_layout_border(bottom);
+    land_widget_layout_set_shrinking(bottom, 0, 1);
 
     /* FIXME: The layout lib allows no empty cells yet, so need to put an empty box. */
-    Widget *empty = widget_box_new(widget, 0, 0, 0, 0);
-    widget_layout_add(widget, empty);
-    widget_layout_set_grid_position(empty, 1, 1);
-    widget_layout_set_shrinking(empty, 1, 1);
+    LandWidget *empty = land_widget_box_new(widget, 0, 0, 0, 0);
+    land_widget_layout_add(widget, empty);
+    land_widget_layout_set_grid_position(empty, 1, 1);
+    land_widget_layout_set_shrinking(empty, 1, 1);
 
-    widget_layout(widget);
+    land_widget_layout(widget);
 
     /* From now on, special vtable is used. */
-    widget->vt = widget_scrolling_interface;
+    widget->vt = land_widget_scrolling_interface;
 
     return widget;
 }
 
-void widget_scrolling_interface_initialize(void)
+void land_widget_scrolling_interface_initialize(void)
 {
-    land_alloc(widget_scrolling_interface);
-    widget_scrolling_interface->name = "scrolling";
-    widget_scrolling_interface->draw = widget_container_draw;
-    widget_scrolling_interface->tick = widget_scrolling_tick;
-    widget_scrolling_interface->add = widget_scrolling_add;
-    widget_scrolling_interface->move = widget_scrolling_move;
-    widget_scrolling_interface->mouse_tick = widget_scrolling_mouse_tick;
-    widget_scrolling_interface->mouse_enter = widget_scrolling_mouse_enter;
-    widget_scrolling_interface->mouse_leave = widget_scrolling_mouse_leave;
+    if (land_widget_scrolling_interface) return;
+
+    land_widget_container_interface_initialize();
+
+    land_widget_scrolling_interface = land_widget_copy_interface(
+        land_widget_container_interface, "scrolling");
+    land_widget_scrolling_interface->id |= LAND_WIDGET_ID_SCROLLING;
+    land_widget_scrolling_interface->tick = land_widget_scrolling_tick;
+    land_widget_scrolling_interface->add = land_widget_scrolling_add;
+    land_widget_scrolling_interface->move = land_widget_scrolling_move;
+    land_widget_scrolling_interface->mouse_tick = land_widget_scrolling_mouse_tick;
+    land_widget_scrolling_interface->mouse_enter = land_widget_scrolling_mouse_enter;
+    land_widget_scrolling_interface->mouse_leave = land_widget_scrolling_mouse_leave;
+
+    land_widget_scrolling_contents_container_interface =
+        land_widget_copy_interface(land_widget_container_interface,
+        "scrolling.contents.container");
+    land_widget_scrolling_vertical_container_interface =
+        land_widget_copy_interface(land_widget_container_interface,
+        "scrolling.vertical.container");
+    land_widget_scrolling_horizontal_container_interface =
+        land_widget_copy_interface(land_widget_container_interface,
+        "scrolling.horizontal.container");
 }
 

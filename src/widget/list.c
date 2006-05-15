@@ -3,64 +3,79 @@
 #include "base.h"
 #include "scrolling.h"
 
-typedef struct WidgetList WidgetList;
+typedef struct LandWidgetList LandWidgetList;
 
-struct WidgetList
+struct LandWidgetList
 {
-    WidgetContainer super;
+    LandWidgetContainer super;
     int columns;
 };
 
-
-#define WIDGET_LIST(widget) ((WidgetList *)widget)
+#define LAND_WIDGET_LIST(widget) ((LandWidgetList *) \
+    land_widget_check(widget, LAND_WIDGET_ID_LIST, __FILE__, __LINE__))
 
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
 
-WidgetInterface *widget_list_interface = NULL;
+LandWidgetInterface *land_widget_list_interface = NULL;
 
-void widget_list_add(Widget *base, Widget *add)
+void land_widget_list_add(LandWidget *base, LandWidget *add)
 {
-    widget_container_add(base, add);
-    WidgetContainer *container = WIDGET_CONTAINER(base);
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
+    LandWidgetList *list = LAND_WIDGET_LIST(base);
+    
+    land_widget_container_add(base, add);
     int n = container->children->count;
+    int rows = (n + list->columns - 1) / list->columns;
+    int row = rows - 1;
+    int column = n - row * list->columns - 1;
 
-    widget_layout_set_grid_position(add, 0, n - 1);
-    widget_layout_add(base, add);
-    widget_layout_set_minimum_size(add, 10, 10);
-    widget_layout_set_shrinking(add, 0, 1);
+    land_widget_layout_set_grid_position(add, column, row);
+    land_widget_layout_add(base, add);
+    land_widget_layout_set_shrinking(add, 0, 1);
 
-    widget_layout_set_grid(base, 1, n);
-    //widget_layout_set_shrinking(base, 0, 1);
-    widget_layout_set_border(base, 2, 2, 2, 2, 1, 1);
-    widget_layout(base);
+    land_widget_layout_set_grid(base, list->columns, n);
+    land_widget_layout_adjust(base, 0, 1);
 }
 
-void widget_list_initialize(WidgetList *self, Widget *parent, int x, int y, int w, int h)
+void land_widget_list_set_columns(LandWidget *base, int n)
 {
-   if (!widget_list_interface)
-        widget_list_interface_initialize();
-   WidgetContainer *super = &self->super;
-   widget_container_initialize(super, parent, x, y, w, h);
-   Widget *base = &super->super;
-   base->vt = widget_list_interface;
+    LAND_WIDGET_LIST(base)->columns = n;
 }
 
-Widget *widget_list_new(Widget *parent, int x, int y, int w, int h)
+void land_widget_list_initialize(LandWidgetList *self, LandWidget *parent,
+    int x, int y, int w, int h)
 {
-    WidgetList *self = calloc(1, sizeof *self);
-    widget_list_initialize(self, parent, x, y, w, h);
+    land_widget_list_interface_initialize();
 
-    return WIDGET(self);
+    LandWidgetContainer *super = &self->super;
+    land_widget_container_initialize(super, parent, x, y, w, h);
+    LandWidget *base = &super->super;
+    base->vt = land_widget_list_interface;
+    self->columns = 1;
+   
+    land_widget_theme_layout_border(base);
 }
 
-void widget_list_interface_initialize(void)
+/* Create a new List widget. A list is simply a container with a layout in
+ * rows and columns. Each time you add a widget to it, it will be placed in the
+ * next column/row.
+ */
+LandWidget *land_widget_list_new(LandWidget *parent, int x, int y, int w, int h)
 {
-    widget_list_interface = calloc(1, sizeof *widget_list_interface);
-    memcpy(widget_list_interface, widget_container_interface,
-        sizeof *widget_list_interface);
-    widget_list_interface->name = "list";
-    widget_list_interface->add = widget_list_add;
+    LandWidgetList *self = calloc(1, sizeof *self);
+    land_widget_list_initialize(self, parent, x, y, w, h);
+
+    return LAND_WIDGET(self);
 }
 
+void land_widget_list_interface_initialize(void)
+{
+    if (land_widget_list_interface) return;
+
+    land_widget_list_interface = land_widget_copy_interface(
+        land_widget_container_interface, "list");
+    land_widget_list_interface->id |= LAND_WIDGET_ID_LIST;
+    land_widget_list_interface->add = land_widget_list_add;
+}

@@ -71,9 +71,9 @@ struct GUL_BOX
 
 #include "widget/gul.h"
 
-//#define ERR(_) printf (_), printf("\n");
+#define ERR(_) land_log_msg(_ "\n");
 //#define D(_) _
-#define ERR(_) (void)0;
+//#define ERR(_) (void)0;
 #define D(_) (void)0;
 
 void gul_box_initialize(GUL_BOX *self)
@@ -123,7 +123,7 @@ static int row_min_height(GUL_BOX * self, int row)
     {
         GUL_BOX *c = find_box_in_grid(self, i, row);
 
-        if (c->min_height > v)
+        if (c && c->min_height > v)
             v = c->min_height;
     }
     return v;
@@ -139,7 +139,7 @@ static int column_min_width(GUL_BOX * self, int col)
     {
         GUL_BOX *c = find_box_in_grid(self, col, i);
 
-        if (c->min_width > v)
+        if (c && c->min_width > v)
             v = c->min_width;
     }
     return v;
@@ -154,7 +154,7 @@ static int is_column_expanding(GUL_BOX * self, int col)
     {
         GUL_BOX *c = find_box_in_grid(self, col, i);
 
-        if (!(c->flags & GUL_SHRINK_X))
+        if (c && !(c->flags & GUL_SHRINK_X))
             return 1;
     }
     return 0;
@@ -169,7 +169,7 @@ static int is_row_expanding(GUL_BOX * self, int row)
     {
         GUL_BOX *c = find_box_in_grid(self, i, row);
 
-        if (!(c->flags & GUL_SHRINK_Y))
+        if (c && !(c->flags & GUL_SHRINK_Y))
             return 1;
     }
     return 0;
@@ -369,7 +369,7 @@ static int gul_box_top_down(GUL_BOX * self)
         {
             GUL_BOX *c = find_box_in_grid(self, i, j);
 
-            if (c->row == j)
+            if (c && c->row == j)
                 /* Multi-row cells already were handled. */
             {
                 if (c->col == i)
@@ -420,7 +420,7 @@ static int gul_box_top_down(GUL_BOX * self)
         {
             GUL_BOX *c = find_box_in_grid(self, i, j);
 
-            if (c->col == i)
+            if (c && c->col == i)
                 /* Multi-column cells already were handled. */
             {
                 if (c->row == j)
@@ -446,12 +446,17 @@ static int gul_box_top_down(GUL_BOX * self)
     return r;
 }
 
-/* Given a box, (recursively) fit its children into it. */
-int gul_box_fit_children(GUL_BOX * self)
+/* Given a box, (recursively) fit its children into it. If adjust is 1, then
+ * the box changes its size to the minimum size for the children to fit.
+ */
+int gul_box_fit_children(GUL_BOX * self, int adjustx, int adjusty)
 {
     int r = 0;
     D(printf("gul_box_bottom_up\n");)
     gul_box_bottom_up(self);
+    if (adjustx) self->w = self->min_width;
+    if (adjusty) self->h = self->min_height;
+
     D(printf("gul_box_top_down\n");)
     if (gul_box_top_down(self))
         r = 1;

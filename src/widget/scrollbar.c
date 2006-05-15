@@ -4,78 +4,82 @@
 
 #include "container.h"
 
-typedef struct WidgetScrollbar WidgetScrollbar;
+typedef struct LandWidgetScrollbar LandWidgetScrollbar;
 
-struct WidgetScrollbar
+struct LandWidgetScrollbar
 {
-    Widget super;
-    Widget *target;
+    LandWidget super;
+    LandWidget *target;
     int dragged;
     int drag_x, drag_y;
     int vertical;
-    void (*callback)(Widget *self, int set, int *min, int *max, int *range, int *pos);
+    void (*callback)(LandWidget *self, int set, int *min, int *max, int *range, int *pos);
 };
 
-#define WIDGET_SCROLLBAR(widget) ((WidgetScrollbar *)widget)
+#define LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)widget)
 
 #endif /* _PROTOTYPE_ */
 
 #include "widget/scrollbar.h"
 #include "widget/box.h"
 
-WidgetInterface *widget_scrollbar_interface = NULL;
+LandWidgetInterface *land_widget_scrollbar_vertical_interface = NULL;
+LandWidgetInterface *land_widget_scrollbar_horizontal_interface = NULL;
 
-static void scroll_vertical_cb(Widget *self, int set, int *min, int *max, int *range, int *pos)
+static void scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, int *range, int *pos)
 {
-    WidgetScrollbar *bar = WIDGET_SCROLLBAR(self);
-    Widget *target = bar->target;
+    LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self);
+    LandWidget *target = bar->target;
     if (target)
     {
-	Widget *viewport = target->parent;
-	if (set)
-	{
-            int ty = viewport->box.y + viewport->box.it - *pos;
-            widget_move(target, 0, ty - target->box.y);
-	}
-	else
-	{
-	    *min = 0;
-	    *max = target->box.h - 1;
-	    *range = viewport->box.h - viewport->box.it - viewport->box.ib;
-	    *pos = viewport->box.y + viewport->box.it - target->box.y;
-	}
+        LandWidget *viewport = target->parent;
+        if (set)
+        {
+                int ty = viewport->box.y + viewport->box.it - *pos;
+                land_widget_move(target, 0, ty - target->box.y);
+        }
+        else
+        {
+            *min = 0;
+            *max = target->box.h - 1;
+            *range = viewport->box.h - viewport->box.it - viewport->box.ib;
+            *pos = viewport->box.y + viewport->box.it - target->box.y;
+            if (*pos + *range - 1 > *max)
+                *max = *pos + *range - 1;
+        }
     }
 }
 
-static void scroll_horizontal_cb(Widget *self, int set, int *min, int *max, int *range, int *pos)
+static void scroll_horizontal_cb(LandWidget *self, int set, int *min, int *max, int *range, int *pos)
 {
-    WidgetScrollbar *bar = WIDGET_SCROLLBAR(self);
-    Widget *target = bar->target;
+    LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self);
+    LandWidget *target = bar->target;
     if (target)
     {
-	Widget *viewport = target->parent;
-	if (set)
-	{
-            int tx = viewport->box.x + viewport->box.il - *pos;
-            widget_move(target, tx - target->box.x, 0);
-	}
-	else
-	{
-	    *min = 0;
-	    *max = target->box.w - 1;
-	    *range = viewport->box.w - viewport->box.il - viewport->box.ir;
-	    *pos = viewport->box.x + viewport->box.il - target->box.x;
-	}
+        LandWidget *viewport = target->parent;
+        if (set)
+        {
+                int tx = viewport->box.x + viewport->box.il - *pos;
+                land_widget_move(target, tx - target->box.x, 0);
+        }
+        else
+        {
+            *min = 0;
+            *max = target->box.w - 1;
+            *range = viewport->box.w - viewport->box.il - viewport->box.ir;
+            *pos = viewport->box.x + viewport->box.il - target->box.x;
+        }
     }
 }
 
-void widget_scrollbar_update(Widget *super, int set)
+void land_widget_scrollbar_update(LandWidget *super, int set)
 {
-    WidgetScrollbar *self = WIDGET_SCROLLBAR(super);
+    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super);
     int minval, maxval, val, valrange;
     int minpos, maxpos, pos, posrange;
 
     self->callback(super, 0, &minval, &maxval, &valrange, &val);
+
     if (self->vertical)
     {
         minpos = super->parent->box.y + super->parent->box.it;
@@ -95,6 +99,7 @@ void widget_scrollbar_update(Widget *super, int set)
     {
         maxpos -= posrange - 1;
         maxval -= valrange - 1;
+
         if (maxpos == minpos)
             val = minval;
         else
@@ -130,15 +135,15 @@ void widget_scrollbar_update(Widget *super, int set)
     }
 }
 
-void widget_scrollbar_draw(Widget *self)
+void land_widget_scrollbar_draw(LandWidget *self)
 {
-    widget_scrollbar_update(self, 0);
-    widget_theme_draw(self);
+    land_widget_scrollbar_update(self, 0);
+    land_widget_theme_draw(self);
 }
 
-void widget_scrollbar_mouse_tick(Widget *super)
+void land_widget_scrollbar_mouse_tick(LandWidget *super)
 {
-    WidgetScrollbar *self = WIDGET_SCROLLBAR(super);
+    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super);
     if (land_mouse_delta_b())
     {
         if (land_mouse_b() & 1)
@@ -159,47 +164,66 @@ void widget_scrollbar_mouse_tick(Widget *super)
         int t = super->parent->box.y + super->parent->box.it;
         int r = super->parent->box.x + super->parent->box.w - super->box.w - super->parent->box.ir;
         int b = super->parent->box.y + super->parent->box.h - super->box.h - super->parent->box.ib;
-        if (newx < l)
-            newx = l;
-        if (newy < t)
-            newy = t;
         if (newx > r)
             newx = r;
         if (newy > b)
             newy = b;
-        widget_move(super, newx - super->box.x, newy - super->box.y);
-        widget_scrollbar_update(super, 1);
+        if (newx < l)
+            newx = l;
+        if (newy < t)
+            newy = t;
+        land_widget_move(super, newx - super->box.x, newy - super->box.y);
+        land_widget_scrollbar_update(super, 1);
     }
 }
 
-Widget *widget_scrollbar_new(Widget *parent, Widget *target, int vertical, int x, int y, int w, int h)
+LandWidget *land_widget_scrollbar_new(LandWidget *parent, LandWidget *target, int vertical, int x, int y, int w, int h)
 {
-    WidgetScrollbar *self;
-    if (!widget_scrollbar_interface)
-        widget_scrollbar_interface_initialize();
+    LandWidgetScrollbar *self;
+    
+    land_widget_scrollbar_interface_initialize();
+
     land_alloc(self);
-    Widget *super = &self->super;
-    widget_base_initialize(super, parent, x, y, w, h);
-    super->vt = widget_scrollbar_interface;
+    LandWidget *super = &self->super;
+    land_widget_base_initialize(super, parent, x, y, w, h);
+
     self->target = target;
     self->vertical = vertical;
     if (vertical)
     {
         self->callback = scroll_vertical_cb;
+        super->vt = land_widget_scrollbar_vertical_interface;
     }
     else
     {
         self->callback = scroll_horizontal_cb;
+        super->vt = land_widget_scrollbar_horizontal_interface;
     }
     return super;
 }
 
-void widget_scrollbar_interface_initialize(void)
+void land_widget_scrollbar_interface_initialize(void)
 {
-    land_alloc(widget_scrollbar_interface);
-    widget_scrollbar_interface->name = "scrollbar";
-    widget_scrollbar_interface->draw = widget_scrollbar_draw;
-    widget_scrollbar_interface->move = widget_base_move;
-    widget_scrollbar_interface->mouse_tick = widget_scrollbar_mouse_tick;
+    if (!land_widget_scrollbar_vertical_interface)
+    {
+        LandWidgetInterface *i;
+        land_alloc(i);
+        i->name = "scrollbar.vertical";
+        i->draw = land_widget_scrollbar_draw;
+        i->move = land_widget_base_move;
+        i->mouse_tick = land_widget_scrollbar_mouse_tick;
+        land_widget_scrollbar_vertical_interface = i;
+    }
+    
+    if (!land_widget_scrollbar_horizontal_interface)
+    {
+        LandWidgetInterface *i;
+        land_alloc(i);
+        i->name = "scrollbar.horizontal";
+        i->draw = land_widget_scrollbar_draw;
+        i->move = land_widget_base_move;
+        i->mouse_tick = land_widget_scrollbar_mouse_tick;
+        land_widget_scrollbar_horizontal_interface = i;
+    }
 }
 

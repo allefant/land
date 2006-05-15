@@ -1,28 +1,28 @@
 #ifdef _PROTOTYPE_
 
-typedef struct WidgetMover WidgetMover;
+typedef struct LandWidgetMover LandWidgetMover;
 
 #include "base.h"
 #include "container.h"
 
-struct WidgetMover
+struct LandWidgetMover
 {
-    Widget super;
-    Widget *target;
+    LandWidget super;
+    LandWidget *target;
     int dragged;
 };
 
-#define WIDGET_MOVER(widget) ((WidgetMover *)widget)
+#define LAND_WIDGET_MOVER(widget) ((LandWidgetMover *)widget)
 
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
 
-WidgetInterface *widget_mover_interface = NULL;
+LandWidgetInterface *land_widget_mover_interface = NULL;
 
-void widget_mover_draw(Widget *self)
+void land_widget_mover_draw(LandWidget *self)
 {
-    widget_theme_draw(self);
+    land_widget_theme_draw(self);
     /*float r = 1, g = 0, b = 0;
     if (self->got_mouse)
         g = 1;
@@ -36,9 +36,9 @@ void widget_mover_draw(Widget *self)
     land_print("%p", self);*/
 }
 
-void widget_mover_mouse_tick(Widget *super)
+void land_widget_mover_mouse_tick(LandWidget *super)
 {
-    WidgetMover *self = WIDGET_MOVER(super);
+    LandWidgetMover *self = LAND_WIDGET_MOVER(super);
     if (land_mouse_delta_b())
     {
         if (land_mouse_b() & 1)
@@ -52,32 +52,32 @@ void widget_mover_mouse_tick(Widget *super)
 
     if ((land_mouse_b() & 1) && self->dragged)
     {
-        widget_move(self->target, land_mouse_delta_x(), land_mouse_delta_y());
+        land_widget_move(self->target, land_mouse_delta_x(), land_mouse_delta_y());
     }
 }
 
-Widget *widget_mover_new(Widget *parent, int x, int y, int w, int h)
+LandWidget *land_widget_mover_new(LandWidget *parent, int x, int y, int w, int h)
 {
-    WidgetMover *self;
-    if (!widget_mover_interface)
-        widget_mover_interface_initialize();
+    LandWidgetMover *self;
+    if (!land_widget_mover_interface)
+        land_widget_mover_interface_initialize();
     land_alloc(self);
-    Widget *super = WIDGET(self);
-    widget_base_initialize(super, parent, x, y, w, h);
-    super->vt = widget_mover_interface;
+    LandWidget *super = LAND_WIDGET(self);
+    land_widget_base_initialize(super, parent, x, y, w, h);
+    super->vt = land_widget_mover_interface;
     /* by default, move the parent. */
     self->target = parent;
     self->dragged = 0;
     return super;
 }
 
-void widget_mover_interface_initialize(void)
+void land_widget_mover_interface_initialize(void)
 {
-    land_alloc(widget_mover_interface);
-    widget_mover_interface->name = "mover";
-    widget_mover_interface->draw = widget_mover_draw;
-    widget_mover_interface->mouse_tick = widget_mover_mouse_tick;
-    widget_mover_interface->mouse_enter = widget_base_mouse_enter;
-    widget_mover_interface->mouse_leave = widget_base_mouse_leave;
+    land_alloc(land_widget_mover_interface);
+    land_widget_mover_interface->name = "mover";
+    land_widget_mover_interface->draw = land_widget_mover_draw;
+    land_widget_mover_interface->mouse_tick = land_widget_mover_mouse_tick;
+    land_widget_mover_interface->mouse_enter = land_widget_base_mouse_enter;
+    land_widget_mover_interface->mouse_leave = land_widget_base_mouse_leave;
 }
 

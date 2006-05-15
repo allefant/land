@@ -1,15 +1,14 @@
 #ifdef _PROTOTYPE_
 
-
 #include "../land.h"
 
-typedef struct WidgetTheme WidgetTheme;
-typedef struct WidgetThemeElement WidgetThemeElement;
-typedef enum WidgetThemeFlags WidgetThemeFlags;
+typedef struct LandWidgetTheme LandWidgetTheme;
+typedef struct LandWidgetThemeElement LandWidgetThemeElement;
+typedef enum LandWidgetThemeFlags LandWidgetThemeFlags;
 
 #include "base.h"
 
-enum WidgetThemeFlags
+enum LandWidgetThemeFlags
 {
     TILE_H = 0,
     TILE_V = 0,
@@ -22,19 +21,20 @@ enum WidgetThemeFlags
 };
 
 /* data for a single GUI bitmap */
-struct WidgetThemeElement
+struct LandWidgetThemeElement
 {
     char const *name;
     LandImage *bmp;
-    WidgetThemeFlags flags;
+    LandWidgetThemeFlags flags;
     int bl, bt, br, bb; /* border to cut out of the image */
-    Widget *anchor; /* for the ALIGNED modes */
+    int minw, minh;
+    LandWidget *anchor; /* for the ALIGNED modes */
     int ox, oy; /* extra offset into the anchor widget */
-    int color;
+    float r, g, b, a; /* text color */
     LandFont *font;
 };
 
-struct WidgetTheme
+struct LandWidgetTheme
 {
     char const *name;
     char const *prefix;
@@ -92,7 +92,7 @@ enum COLUMN_TYPE
 };
 /* Draw a column of pattern pat (at bx, width bw) into the given rectangle.
  */
-static inline void blit_column(WidgetThemeElement *pat, int bx, int bw, int x, int y, int w, int h)
+static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int x, int y, int w, int h)
 {
     int oy;
     int j;
@@ -192,7 +192,7 @@ static inline void blit_column(WidgetThemeElement *pat, int bx, int bw, int x, i
  * align flag is set. In this case, it will be aligned NW to the anchor.
  *
  */
-static void draw_bitmap(WidgetThemeElement *pat, int x, int y, int w, int h)
+static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
 {
     int i;
 
@@ -283,15 +283,19 @@ static void read_int_arg(int argc, char **argv, int *a, int *val)
     (*a)++;
     if (*a < argc)
     {
-        *val = strtol (argv[*a], NULL, 10);
+        *val = strtoul(argv[*a], NULL, 0);
     }
 }
 
-WidgetThemeElement *widget_theme_element_new(struct WidgetTheme *theme, char const *element, int argc, char **argv)
+LandWidgetThemeElement *land_widget_theme_element_new(
+    struct LandWidgetTheme *theme, char const *element, int argc, char **argv)
 {
-    WidgetThemeElement *self;
+    LandWidgetThemeElement *self;
     land_alloc(self);
     self->name = strdup(element);
+    self->a = 1;
+    self->minw = 4;
+    self->minh = 4;
 
     LandImage *img = NULL;
     if (argc)
@@ -318,6 +322,11 @@ WidgetThemeElement *widget_theme_element_new(struct WidgetTheme *theme, char con
                         ch += land_image_height(img);
                     self->bmp = land_image_new_from(img, cx, cy, cw, ch);
                 }
+                else if (!strcmp (argv[a], "min"))
+                {
+                    read_int_arg(argc, argv, &a, &self->minw);
+                    read_int_arg(argc, argv, &a, &self->minh);
+                }
                 else if (!strcmp (argv[a], "border"))
                 {
                     read_int_arg(argc, argv, &a, &self->bl);
@@ -325,19 +334,36 @@ WidgetThemeElement *widget_theme_element_new(struct WidgetTheme *theme, char con
                     read_int_arg(argc, argv, &a, &self->bt);
                     read_int_arg(argc, argv, &a, &self->bb);
                 }
+                else if (!ustrcmp(argv[a], "color"))
+                {
+                    int c;
+                    read_int_arg(argc, argv, &a, &c);
+                    self->a = (c & 255) / 255.0; c >>= 8;
+                    self->b = (c & 255) / 255.0; c >>= 8;
+                    self->g = (c & 255) / 255.0; c >>= 8;
+                    self->r = (c & 255) / 255.0; c >>= 8;
+                }
             }
+            if (!self->bmp)
+                self->bmp = land_image_new_from(img, 0, 0,
+                    land_image_width(img), land_image_height(img));
+            land_log_msg("element: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
+                land_image_width(self->bmp), land_image_height(self->bmp),
+                self->bl, self->bt, self->br, self->bb,
+                self->r, self->g, self->b, self->a);
         }
+        else
+            land_log_msg("element: Error: %s not found!\n", name);
     }
-
-    land_log_msg("element: %d x %d, %d/%d/%d/%d\n", land_image_width(self->bmp),
-        land_image_height(self->bmp), self->bl, self->bt, self->br, self->bb);
+    
+    //FIXME ASAP XXX: img is leaked!!!
 
     return self;
 }
 
-WidgetTheme *widget_theme_new(char const *filename)
+LandWidgetTheme *land_widget_theme_new(char const *filename)
 {
-    WidgetTheme *self;
+    LandWidgetTheme *self;
     land_alloc(self);
 
     push_config_state();
@@ -354,7 +380,8 @@ WidgetTheme *widget_theme_new(char const *filename)
     {
         int argc;
         char **argv = get_config_argv("agup.cfg/elements", entries[i], &argc);
-        WidgetThemeElement *elem = widget_theme_element_new(self, entries[i], argc, argv);
+        LandWidgetThemeElement *elem = land_widget_theme_element_new(self,
+            entries[i], argc, argv);
         land_add_list_data(&self->elements, elem);
     }
 
@@ -363,12 +390,12 @@ WidgetTheme *widget_theme_new(char const *filename)
     return self;
 }
 
-static WidgetThemeElement *find_element(LandList *list, char const *name)
+static LandWidgetThemeElement *find_element(LandList *list, char const *name)
 {
     LandListItem *item = list->first;
     while (item)
     {
-        WidgetThemeElement *elem = item->data;
+        LandWidgetThemeElement *elem = item->data;
         if (!ustrcmp(elem->name, name))
             return elem;
         item = item->next;
@@ -376,30 +403,44 @@ static WidgetThemeElement *find_element(LandList *list, char const *name)
     return NULL;
 }
 
-void widget_theme_draw(Widget *self)
+static LandWidgetThemeElement *get_element(LandWidget *self)
 {
-    struct WidgetTheme *theme = self->theme;
-
+    struct LandWidgetTheme *theme = self->theme;
     if (!theme)
-    {
-        //land_color(1, 0, 0, 1);
-        //land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
-        //    self->box.y + self->box.h - 0.5);
-        return;
-    }
-
-    WidgetThemeElement *element = find_element(theme->elements, self->vt->name);
-
+        return NULL;
+    LandWidgetThemeElement *element;
+    element = find_element(theme->elements, self->vt->name);
     if (!element)
         element = find_element(theme->elements, "base");
+    return element;
+}
 
-    if (!element)
-    {
-        land_color(1, 1, 0, 1);
-        land_rectangle(self->box.x + 0.5, self->box.y + 0.5, self->box.x + self->box.w - 0.5,
-            self->box.y + self->box.h - 0.5);
-        return;
-    }
+void land_widget_theme_draw(LandWidget *self)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
 
     draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h);
+}
+
+void land_widget_theme_color(LandWidget *self)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
+    land_color(element->r, element->g, element->b, element->a);
+}
+
+void land_widget_theme_layout_border(LandWidget *self)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
+    land_widget_layout_set_border(self, element->bl,
+        element->bt, element->br, element->bb, 0, 0);
+}
+
+void land_widget_theme_set_minimum_size(LandWidget *self)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
+    land_widget_layout_set_minimum_size(self, element->minw, element->minh);
 }

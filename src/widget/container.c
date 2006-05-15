@@ -1,46 +1,67 @@
 #ifdef _PROTOTYPE_
 
-typedef struct WidgetContainer WidgetContainer;
+typedef struct LandWidgetContainer LandWidgetContainer;
 
 #include "base.h"
 
-#include "../array.h"
+#include "../list.h"
 
-struct WidgetContainer
+struct LandWidgetContainer
 {
-    Widget super;
+    LandWidget super;
     LandList *children;
-    Widget *mouse;
-    Widget *keyboard;
+    LandWidget *mouse;
+    LandWidget *keyboard;
 };
 
-extern WidgetInterface *widget_container_interface;
+extern LandWidgetInterface *land_widget_container_interface;
 
-#define WIDGET_CONTAINER(widget) ((WidgetContainer *)widget)
+#define LAND_WIDGET_CONTAINER(widget) ((LandWidgetContainer *) \
+    land_widget_check(widget, LAND_WIDGET_ID_CONTAINER, __FILE__, __LINE__))
 
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
 
-WidgetInterface *widget_container_interface = NULL;
+LandWidgetInterface *land_widget_container_interface = NULL;
 
-void widget_container_mouse_enter(Widget *self)
+/* Destroy the container and all its children. */
+void land_widget_container_destroy(LandWidget *base)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
+    LandListItem *item = self->children->first;
+    while (item)
+    {
+        LandListItem *next = item->next;
+        LandWidget *child = item->data;
+        /* Detach it. It won't get destroyed if there are still outside
+         * references to it.
+         */
+        child->parent = NULL;
+        land_widget_unreference(item->data);
+        item = next;
+    }
+    land_list_destroy(self->children);
+    land_widget_base_destroy(base);
+}
+
+void land_widget_container_mouse_enter(LandWidget *self)
 {
     self->got_mouse = 1;
 }
 
-void widget_container_mouse_leave(Widget *super)
+void land_widget_container_mouse_leave(LandWidget *super)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (self->mouse)
         land_call_method(self->mouse, mouse_leave, (self->mouse));
     super->got_mouse = 0;
     self->mouse = NULL;
 }
 
-LandListItem *widget_container_child_item(Widget *super, Widget *child)
+LandListItem *land_widget_container_child_item(LandWidget *super, LandWidget *child)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (!self->children)
         return NULL;
     LandListItem *item = self->children->first;
@@ -53,60 +74,75 @@ LandListItem *widget_container_child_item(Widget *super, Widget *child)
     return NULL;
 }
 
-void widget_container_to_top(Widget *super, Widget *child)
+void land_widget_container_to_top(LandWidget *super, LandWidget *child)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
-    LandListItem *item = widget_container_child_item(super, child);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    LandListItem *item = land_widget_container_child_item(super, child);
     land_list_remove_item(self->children, item);
     land_list_insert_item(self->children, item);
 }
 
-void widget_container_draw(Widget *base)
+void land_widget_container_draw(LandWidget *base)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(base);
-    widget_theme_draw(base);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
+    land_widget_theme_draw(base);
     if (!self->children)
         return;
+        
+    //land_color(0, 0, 0, 1);
+    //land_text_pos(base->box.x, base->box.y);
 
     if (!base->dont_clip)
     {
-        land_clip_intersect(base->box.x + base->box.il, base->box.y + base->box.it,
-            base->box.x + base->box.w - base->box.ir, base->box.y + base->box.h - base->box.ib);
+        int l = base->box.x + base->box.il;
+        int t = base->box.y + base->box.it;
+        int r = base->box.x + base->box.w - base->box.ir;
+        int b = base->box.y + base->box.h - base->box.ib;
+        
+        //land_print("%s %d %d %d %d", base->vt->name, l, t, r, b);
+        land_clip_push();
+        land_clip_intersect(l, t, r, b);
     }
+
     LandListItem *item = self->children->first;
     while (item)
     {
-        Widget *child = item->data;
-        widget_draw(child);
+        LandWidget *child = item->data;
+        land_widget_draw(child);
         item = item->next;
+    }
+
+    if (!base->dont_clip)
+    {
+        land_clip_pop();
     }
 }
 
-void widget_container_move(Widget *super, float dx, float dy)
+void land_widget_container_move(LandWidget *super, float dx, float dy)
 {
     super->box.x += dx;
     super->box.y += dy;
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (!self->children)
         return;
     LandListItem *item = self->children->first;
     while (item)
     {
-        Widget *child = item->data;
-        widget_move(child, dx, dy);
+        LandWidget *child = item->data;
+        land_widget_move(child, dx, dy);
         item = item->next;
     }
 }
 
-Widget *widget_container_get_at_pos(Widget *super, int x, int y)
+LandWidget *land_widget_container_get_at_pos(LandWidget *super, int x, int y)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (!self->children)
         return NULL;
     LandListItem *item = self->children->last;
     while (item)
     {
-        Widget *child = item->data;
+        LandWidget *child = item->data;
         if (x >= child->box.x && y >= child->box.y &&
             x < child->box.x + child->box.w && y < child->box.y + child->box.h)
             return child;
@@ -115,17 +151,22 @@ Widget *widget_container_get_at_pos(Widget *super, int x, int y)
     return NULL;
 }
 
-void widget_container_mouse_tick(Widget *super)
+void land_widget_container_mouse_tick(LandWidget *super)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (self->mouse)
         land_call_method(self->mouse, mouse_tick, (self->mouse));
-    Widget *mouse = widget_container_get_at_pos(super, land_mouse_x(),
+    LandWidget *mouse = land_widget_container_get_at_pos(super, land_mouse_x(),
         land_mouse_y());
     if (mouse != self->mouse && !(land_mouse_b() & 1))
     {
+        if (mouse)
+            land_widget_reference(mouse);
         if (self->mouse)
+        {
             land_call_method(self->mouse, mouse_leave, (self->mouse));
+            land_widget_unreference(self->mouse);
+        }
         self->mouse = mouse;
         if (self->mouse)
             land_call_method(self->mouse, mouse_enter, (self->mouse));
@@ -140,10 +181,10 @@ void widget_container_mouse_tick(Widget *super)
         while (item)
         {
             next = item->next;
-            Widget *child = item->data;
+            LandWidget *child = item->data;
             if (child->send_to_top)
             {
-                widget_container_to_top(super, child);
+                land_widget_container_to_top(super, child);
                 child->send_to_top = 0;
                 f = 1;
             }
@@ -154,46 +195,67 @@ void widget_container_mouse_tick(Widget *super)
     }
 }
 
-void widget_container_tick(Widget *super)
+void land_widget_container_tick(LandWidget *super)
 {
-
+    land_widget_container_mouse_tick(super);
 }
 
-void widget_container_add(Widget *super, Widget *add)
+void land_widget_container_add(LandWidget *super, LandWidget *add)
 {
-    WidgetContainer *self = WIDGET_CONTAINER(super);
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+
+    /* We increase the reference count of the child only. Increasing the
+     * parent's reference (even though there is the ->parent pointer), would
+     * cause a cyclic dependancy! We still never get a dangling pointer, since
+     * the parent cannot be destroyed without first detaching its children.
+     */
     land_add_list_data(&self->children, add);
+    land_widget_reference(add);
+
     add->parent = super;
 }
 
-void widget_container_initialize(WidgetContainer *self, Widget *parent, int x, int y, int w, int h)
+void land_widget_container_remove(LandWidget *base, LandWidget *rem)
 {
-   if (!widget_container_interface)
-        widget_container_interface_initialize();
-   Widget *super = &self->super;
-   widget_base_initialize(super, parent, x, y, w, h);
-   super->vt = widget_container_interface;
+    // TODO: assert here that parent points to base, of not.. we're fucked
+    rem->parent = NULL;
+    land_remove_list_data(&LAND_WIDGET_CONTAINER(base)->children, rem);
+    land_widget_unreference(rem);
+}
+
+void land_widget_container_initialize(LandWidgetContainer *self, LandWidget *parent, int x, int y, int w, int h)
+{
+   land_widget_container_interface_initialize();
+
+   LandWidget *super = &self->super;
+   land_widget_base_initialize(super, parent, x, y, w, h);
+   super->vt = land_widget_container_interface;
    self->children = NULL;
 }
 
-Widget *widget_container_new(Widget *parent, int x, int y, int w, int h)
+LandWidget *land_widget_container_new(LandWidget *parent, int x, int y, int w, int h)
 {
-    WidgetContainer *self;
+    LandWidgetContainer *self;
     land_alloc(self);
-    widget_container_initialize(self, parent, x, y, w, h);
+    land_widget_container_initialize(self, parent, x, y, w, h);
     return &self->super;
 }
 
-void widget_container_interface_initialize(void)
+void land_widget_container_interface_initialize(void)
 {
-    land_alloc(widget_container_interface);
-    widget_container_interface->name = "container";
-    widget_container_interface->draw = widget_container_draw;
-    widget_container_interface->tick = widget_container_tick;
-    widget_container_interface->add = widget_container_add;
-    widget_container_interface->move = widget_container_move;
-    widget_container_interface->mouse_tick = widget_container_mouse_tick;
-    widget_container_interface->mouse_enter = widget_container_mouse_enter;
-    widget_container_interface->mouse_leave = widget_container_mouse_leave;
+    if (land_widget_container_interface) return;
+
+    land_alloc(land_widget_container_interface);
+    land_widget_container_interface->id = LAND_WIDGET_ID_BASE |
+        LAND_WIDGET_ID_CONTAINER;
+    land_widget_container_interface->name = "container";
+    land_widget_container_interface->destroy = land_widget_container_destroy;
+    land_widget_container_interface->draw = land_widget_container_draw;
+    land_widget_container_interface->tick = land_widget_container_tick;
+    land_widget_container_interface->add = land_widget_container_add;
+    land_widget_container_interface->move = land_widget_container_move;
+    land_widget_container_interface->mouse_tick = land_widget_container_mouse_tick;
+    land_widget_container_interface->mouse_enter = land_widget_container_mouse_enter;
+    land_widget_container_interface->mouse_leave = land_widget_container_mouse_leave;
 }
 

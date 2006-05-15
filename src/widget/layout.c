@@ -7,25 +7,25 @@
 
 #include "widget/layout.h"
 
-void widget_layout_set_grid(Widget *self, int columns, int rows)
+void land_widget_layout_set_grid(LandWidget *self, int columns, int rows)
 {
     self->box.rows = rows;
     self->box.cols = columns;
 }
 
-void widget_layout_set_grid_position(Widget *self, int column, int row)
+void land_widget_layout_set_grid_position(LandWidget *self, int column, int row)
 {
     self->box.col = column;
     self->box.row = row;
 }
 
-void widget_layout_set_minimum_size(Widget *self, int w, int h)
+void land_widget_layout_set_minimum_size(LandWidget *self, int w, int h)
 {
     self->box.min_width = w;
     self->box.min_height = h;
 }
 
-void widget_layout_set_shrinking(Widget *self, int x, int y)
+void land_widget_layout_set_shrinking(LandWidget *self, int x, int y)
 {
     if (x)
         self->box.flags |= GUL_SHRINK_X;
@@ -33,7 +33,7 @@ void widget_layout_set_shrinking(Widget *self, int x, int y)
         self->box.flags |= GUL_SHRINK_Y;
 }
 
-void widget_layout_set_expanding(Widget *self, int x, int y)
+void land_widget_layout_set_expanding(LandWidget *self, int x, int y)
 {
     if (x)
         self->box.flags &= ~GUL_SHRINK_X;
@@ -41,7 +41,7 @@ void widget_layout_set_expanding(Widget *self, int x, int y)
         self->box.flags &= ~GUL_SHRINK_Y;
 }
 
-void widget_layout_set_border(Widget *self, int l, int t, int r, int b, int hgap, int vgap)
+void land_widget_layout_set_border(LandWidget *self, int l, int t, int r, int b, int hgap, int vgap)
 {
     self->box.il = l;
     self->box.it = t;
@@ -51,13 +51,19 @@ void widget_layout_set_border(Widget *self, int l, int t, int r, int b, int hgap
     self->box.vgap = vgap;
 }
 
-void widget_layout_add(Widget *parent, Widget *child)
+void land_widget_layout_add(LandWidget *parent, LandWidget *child)
 {
     gul_remove_child(&parent->box, &child->box);
     gul_attach_child(&parent->box, &child->box);
 }
 
-int widget_layout(Widget *self)
+int land_widget_layout(LandWidget *self)
 {
-    return gul_box_fit_children(&self->box);
+    return gul_box_fit_children(&self->box, 0, 0);
+}
+
+int land_widget_layout_adjust(LandWidget *self, int x, int y)
+{
+    
+    return gul_box_fit_children(&self->box, x, y);
 }
