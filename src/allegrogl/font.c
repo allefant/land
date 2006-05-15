@@ -1,6 +1,7 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
+#include <fudgefont.h>
 #include "../array.h"
 #include "../font.h"
 #include "../log.h"
@@ -148,21 +149,42 @@ static LandFontInterface *vtable;
 
 LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
-    land_log_msg("land_font_allegrogl_load %s %.1f..", filename, size);
+    land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
     LandFontAllegrogl *self = calloc(1, sizeof *self);
     PALETTE pal;
     int data = size;
     FONT *temp = load_font(filename, pal, &data);
-    FONT_COLOR_DATA *fcd = temp->data;
-    select_palette(pal);
+    int alpha = 0;
+    int paletted = 0;
+    if (is_color_font(temp))
+    {
+        FONT_COLOR_DATA *fcd = temp->data;
+        if (bitmap_color_depth(fcd->bitmaps[0]) == 32)
+            alpha = 1;
+        else
+        {
+            paletted = 1;
+            fudgefont_color_range(0, 0, 0, 255, 255, 255);
+        }
+    }
+    else
+    {
+        select_palette(pal);
+        paletted = 1;
+    }
+    
+    if (alpha) make_trans_font(temp);
+    
+        land_log_msg(" using %salpha, using %spalette\n",
+            alpha ? "" : "no ", paletted ? "" : "no ");
+
     self->font = allegro_gl_convert_allegro_font_ex(temp,
-         AGL_FONT_TYPE_TEXTURED, -1,
-         bitmap_color_depth(fcd->bitmaps[0]) == 32 ? GL_RGBA8 : GL_ALPHA8);
+        AGL_FONT_TYPE_TEXTURED, -1, paletted ? GL_ALPHA : GL_RGBA8);
     self->super.size = text_height(self->font);
     self->super.vt = vtable;
     if (self->font)
     {
-        land_log_msg_nostamp("%d success\n", text_height(temp));
+        land_log_msg_nostamp(" %d success\n", text_height(temp));
         GLuint ids[10];
         int n = allegro_gl_list_font_textures(self->font, ids, 10);
         int i;
@@ -206,6 +228,9 @@ void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     y = (int)y;
     if (!state->off)
     {
+        glEnable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         allegro_gl_printf_ex(self->font, x, y, 0, "%s", text);
     }
     state->x = x;
