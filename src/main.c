@@ -198,15 +198,16 @@ int land_main(void)
         {
             while (frames <= ticks)
             {
+                poll_keyboard(); /* just in case */
                 land_tick();
                 frames++;
             }
-            if (gframes < frames)
+            if (gframes < frames || _maximize_fps)
             {
                 land_draw();
                 gframes = frames;
             }
-            else if (!_maximize_fps)
+            else
             {
                 rest(1);
             }
