@@ -13,5 +13,7 @@
 #include "widget/mover.h"
 #include "widget/sizer.h"
 #include "widget/button.h"
+#include "widget/panel.h"
+#include "widget/menu.h"
 
 #endif /* _PROTOTYPE_ */
