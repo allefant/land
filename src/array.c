@@ -100,5 +100,11 @@ void *land_array_get_nth(LandArray *array, int i)
 
 void land_array_destroy(LandArray *self)
 {
+    free(self->data);
     free(self);
+}
+
+void land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b))
+{
+    qsort(self->data, self->count, sizeof(void *), cmpfnc);
 }
