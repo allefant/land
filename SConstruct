@@ -9,6 +9,7 @@ except OSError: pass
 crosscompile = ARGUMENTS.get("crosscompile", "")
 
 debug = ARGUMENTS.get("debug", "")
+profile = ARGUMENTS.get("profile", "")
 
 sfiles = glob.glob("src/*.c")
 sfiles += glob.glob("src/*/*.c")
@@ -82,7 +83,8 @@ if env["PLATFORM"] == "win32":
     Tool("mingw")(env)
 
 print "platform", env["PLATFORM"]
-print crosscompile and "cross" or "native", debug and "debug" or "release", "build"
+print crosscompile and "cross" or "native", \
+    debug and "debug" or profile and "profile" or "release", "build"
 
 env.SConsignFile("scons/signatures")
 
@@ -102,13 +104,18 @@ if debug:
     env.Append(CCFLAGS = "-g")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
+elif profile:
+    env.Append(CCFLAGS = "-g -pg -fprofile-arcs -ftest-coverage")
+    env.Append(LINKFLAGS = "-pg")
+    BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
+    LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
 else:
     env.Append(CCFLAGS = "-O3")
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "lib/%s/land" % (env["PLATFORM"])
 
 SHAREDLIBNAME = LIBNAME
-STATICLIBNAME = LIBNAME
+STATICLIBNAME = LIBNAME + "_s"
 
 env.Append(CPPPATH = ["include/land"])
 
@@ -121,7 +128,6 @@ if crosscompile:
     env['SHLIBPREFIX'] = ""
 
 if env["PLATFORM"] == "win32":
-    STATICLIBNAME += "_s"
     env.Append(CCFLAGS = ["-DALLEGRO_STATICLINK"])
 
     env.Append(CPPPATH = ["dependencies/mingw-include"])
@@ -129,7 +135,7 @@ if env["PLATFORM"] == "win32":
     env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "ldpng",
         "jpgal", "alleg_s", "freetype"])
 
-    if debug: env.Append(LIBS = ["agld_s"])
+    if debug or profile: env.Append(LIBS = ["agld_s"])
     else: env.Append(LIBS = ["agl_s"])
 
     env.Append(LIBS = ["opengl32", "glu32", "png", "z"])
