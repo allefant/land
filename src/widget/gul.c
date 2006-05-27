@@ -46,6 +46,8 @@ struct GUL_BOX
     GUL_BOX *children;          /* Linked list head. */
     GUL_BOX *next;              /* Linked list pointer. */
 
+    GUL_BOX **lookup_grid; /* to speed up locating a child. */
+
     int cols, rows;             /* How many children? */
 
     int col, row;               /* Where are we in the parent? */
@@ -59,6 +61,9 @@ struct GUL_BOX
     int max_width;              /* Maximum outer width in pixels. */
     int max_height;             /* Maximum outer height in pixels. */
 
+    int current_min_width;
+    int current_min_height;
+
     int flags;
 };
 
@@ -68,13 +73,29 @@ struct GUL_BOX
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
+#include <allegro.h>
+
+#include "log.h"
 
 #include "widget/gul.h"
 
-#define ERR(_) land_log_msg(_ "\n");
 //#define D(_) _
-//#define ERR(_) (void)0;
 #define D(_) (void)0;
+
+void ERR(char const *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    //vprintf(format, args);
+    char str[1024];
+    uvszprintf(str, sizeof str, format, args);
+    ustrzcat(str, sizeof str, "\n");
+    land_log_msg(str);
+    va_end(args);
+    
+    //printf("\n");
+}
 
 void gul_box_initialize(GUL_BOX *self)
 {
@@ -97,7 +118,7 @@ void gul_box_del(GUL_BOX * self)
 }
 
 /* Find box which contains the specified grid position. */
-static GUL_BOX *find_box_in_grid(GUL_BOX *self, int col, int row)
+/*static GUL_BOX *find_box_in_grid(GUL_BOX *self, int col, int row)
 {
     assert(col < self->cols && row < self->rows);
     GUL_BOX *c = self->children;
@@ -111,6 +132,38 @@ static GUL_BOX *find_box_in_grid(GUL_BOX *self, int col, int row)
         c = c->next;
     }
     return NULL;
+}*/
+
+/* Same as find_box_in_grid, but O(c) instead of O(n). */
+static GUL_BOX *lookup_box_in_grid(GUL_BOX *self, int col, int row)
+{
+    assert(col < self->cols && row < self->rows);
+
+    return self->lookup_grid[row * self->cols + col];
+}
+
+static void update_lookup_grid(GUL_BOX *self)
+{
+    if (self->lookup_grid) free(self->lookup_grid);
+    self->lookup_grid = calloc(self->cols * self->rows, sizeof *self->lookup_grid);
+    
+    GUL_BOX *c = self->children;
+    while (c)
+    {
+        int i, j;
+        for (i = c->col; i <= c->col + c->extra_cols; i++)
+            for (j = c->row; j <= c->row + c->extra_rows; j++)
+                self->lookup_grid[i + j * self->cols] = c;
+        c = c->next;
+    }
+}
+
+/* TODO: provide functions for changing grid-size and cell-position, and to
+ * optimized lookup of the lookup table in all cases.
+ */
+void gul_layout_changed(GUL_BOX *self)
+{
+    update_lookup_grid(self);
 }
 
 /* Get minimum height of the specified row. */
@@ -121,10 +174,10 @@ static int row_min_height(GUL_BOX * self, int row)
 
     for (i = 0; i < self->cols; i++)
     {
-        GUL_BOX *c = find_box_in_grid(self, i, row);
+        GUL_BOX *c = lookup_box_in_grid(self, i, row);
 
-        if (c && c->min_height > v)
-            v = c->min_height;
+        if (c && c->current_min_height > v)
+            v = c->current_min_height;
     }
     return v;
 }
@@ -137,10 +190,10 @@ static int column_min_width(GUL_BOX * self, int col)
 
     for (i = 0; i < self->rows; i++)
     {
-        GUL_BOX *c = find_box_in_grid(self, col, i);
+        GUL_BOX *c = lookup_box_in_grid(self, col, i);
 
-        if (c && c->min_width > v)
-            v = c->min_width;
+        if (c && c->current_min_width > v)
+            v = c->current_min_width;
     }
     return v;
 }
@@ -152,7 +205,7 @@ static int is_column_expanding(GUL_BOX * self, int col)
 
     for (i = 0; i < self->rows; i++)
     {
-        GUL_BOX *c = find_box_in_grid(self, col, i);
+        GUL_BOX *c = lookup_box_in_grid(self, col, i);
 
         if (c && !(c->flags & GUL_SHRINK_X))
             return 1;
@@ -167,7 +220,7 @@ static int is_row_expanding(GUL_BOX * self, int row)
 
     for (i = 0; i < self->cols; i++)
     {
-        GUL_BOX *c = find_box_in_grid(self, i, row);
+        GUL_BOX *c = lookup_box_in_grid(self, i, row);
 
         if (c && !(c->flags & GUL_SHRINK_Y))
             return 1;
@@ -235,7 +288,7 @@ static int min_width(GUL_BOX * self)
     return v;
 }
 
-void gul_attach_child(GUL_BOX * self, GUL_BOX * att)
+void gul_attach_child(GUL_BOX *self, GUL_BOX *att, int update)
 {
     GUL_BOX *c;
 
@@ -245,9 +298,12 @@ void gul_attach_child(GUL_BOX * self, GUL_BOX * att)
     else
         self->children = att;
     att->parent = self;
+
+    if (update)
+        update_lookup_grid(self);
 }
 
-void gul_remove_child(GUL_BOX * self, GUL_BOX * rem)
+void gul_remove_child(GUL_BOX * self, GUL_BOX * rem, int update)
 {
     GUL_BOX *c, *p = NULL;
 
@@ -263,6 +319,8 @@ void gul_remove_child(GUL_BOX * self, GUL_BOX * rem)
             {
                 self->children = c->next;
             }
+            if (update)
+                update_lookup_grid(self);
             return;
         }
         p = c;
@@ -271,15 +329,17 @@ void gul_remove_child(GUL_BOX * self, GUL_BOX * rem)
 
 void gul_box_replace_child(GUL_BOX * self, GUL_BOX * child, GUL_BOX * with)
 {
-    gul_remove_child(self, child);
-    gul_attach_child(self, with);
+    gul_remove_child(self, child, 0);
     with->col = child->col;
     with->row = child->row;
-    child->extra_cols = with->extra_cols;
-    child->extra_rows = with->extra_rows;
+    with->extra_cols = child->extra_cols;
+    with->extra_rows = child->extra_rows;
+    gul_attach_child(self, with, 0);
+    
+    update_lookup_grid(self); /* could just replace relevant entries, but we
+        don't bother */    
 }
 
-#define MAX(x, x_) (x > x_ ? x : x_)
 
 /*
  *
@@ -295,11 +355,23 @@ static void gul_box_bottom_up(GUL_BOX * self)
 
     if (self->children)
     {
-        self->min_width = MAX(self->min_width, min_width(self));
-        self->min_height = MAX(self->min_height, min_height(self));
+        self->current_min_width = MAX(self->min_width, min_width(self));
+        self->current_min_height = MAX(self->min_height, min_height(self));
+    }
+    else
+    {
+        self->current_min_width = self->min_width;
+        self->current_min_height = self->min_height;
     }
 }
 
+/* Return value:
+ *
+ * 0 - ok
+ * 1 - too small width
+ * 2 - too small height
+ * 3 - too small width as well as height
+ */
 static int gul_box_top_down(GUL_BOX * self)
 {
     int r = 0;
@@ -314,14 +386,20 @@ static int gul_box_top_down(GUL_BOX * self)
 
     if (minw > self->w)
     {
-        ERR("Fatal: Minimum width of children exceeds available space.");
-        r = 1;
+        ERR("Fatal: Minimum width of children (%d) "
+            "exceeds available space (%d).", minw, self->w);
+        r |= 1;
     }
     if (minh > self->h)
     {
-        ERR("Fatal: Minimum height of children exceeds available space.");
-        r = 1;
+        ERR("Fatal: Minimum height of children (%d) "
+            "exceeds available space (%d).", minh, self->h);
+        r |= 2;
     }
+
+    /* Check if user specified min size is exceeded. */
+    if (self->current_min_width > self->w) r |= 1;
+    if (self->current_min_height > self->h) r |= 2;
 
     int available_width = self->w - minw;
     int available_height = self->h - minh;
@@ -367,7 +445,7 @@ static int gul_box_top_down(GUL_BOX * self)
         /* Place all rows in the column accordingly */
         for (j = 0; j < self->rows; j++)
         {
-            GUL_BOX *c = find_box_in_grid(self, i, j);
+            GUL_BOX *c = lookup_box_in_grid(self, i, j);
 
             if (c && c->row == j)
                 /* Multi-row cells already were handled. */
@@ -418,7 +496,7 @@ static int gul_box_top_down(GUL_BOX * self)
         /* Place all columns in the row accordingly. */
         for (i = 0; i < self->cols; i++)
         {
-            GUL_BOX *c = find_box_in_grid(self, i, j);
+            GUL_BOX *c = lookup_box_in_grid(self, i, j);
 
             if (c && c->col == i)
                 /* Multi-column cells already were handled. */
@@ -441,7 +519,7 @@ static int gul_box_top_down(GUL_BOX * self)
 
     for (c = self->children; c; c = c->next)
     {
-        gul_box_top_down(c);
+        r |= gul_box_top_down(c);
     }
     return r;
 }
@@ -454,12 +532,11 @@ int gul_box_fit_children(GUL_BOX * self, int adjustx, int adjusty)
     int r = 0;
     D(printf("gul_box_bottom_up\n");)
     gul_box_bottom_up(self);
-    if (adjustx) self->w = self->min_width;
-    if (adjusty) self->h = self->min_height;
+    if (adjustx) self->w = self->current_min_width;
+    if (adjusty) self->h = self->current_min_height;
 
     D(printf("gul_box_top_down\n");)
-    if (gul_box_top_down(self))
-        r = 1;
+    r |= gul_box_top_down(self);
     return r;
 }
 

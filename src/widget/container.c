@@ -45,18 +45,19 @@ void land_widget_container_destroy(LandWidget *base)
     land_widget_base_destroy(base);
 }
 
-void land_widget_container_mouse_enter(LandWidget *self)
+void land_widget_container_mouse_enter(LandWidget *self, LandWidget *focus)
 {
-    self->got_mouse = 1;
 }
 
-void land_widget_container_mouse_leave(LandWidget *super)
+void land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (self->mouse)
-        land_call_method(self->mouse, mouse_leave, (self->mouse));
-    super->got_mouse = 0;
-    self->mouse = NULL;
+    {
+        land_call_method(self->mouse, mouse_leave, (self->mouse, focus));
+        land_widget_unreference(self->mouse);
+        self->mouse = NULL;
+    }
 }
 
 LandListItem *land_widget_container_child_item(LandWidget *super, LandWidget *child)
@@ -88,9 +89,6 @@ void land_widget_container_draw(LandWidget *base)
     land_widget_theme_draw(base);
     if (!self->children)
         return;
-        
-    //land_color(0, 0, 0, 1);
-    //land_text_pos(base->box.x, base->box.y);
 
     if (!base->dont_clip)
     {
@@ -98,18 +96,26 @@ void land_widget_container_draw(LandWidget *base)
         int t = base->box.y + base->box.it;
         int r = base->box.x + base->box.w - base->box.ir;
         int b = base->box.y + base->box.h - base->box.ib;
-        
-        //land_print("%s %d %d %d %d", base->vt->name, l, t, r, b);
         land_clip_push();
         land_clip_intersect(l, t, r, b);
     }
 
+    float cl, ct, cr, cb;
+    land_get_clip(&cl, &ct, &cr, &cb);
+
     LandListItem *item = self->children->first;
-    while (item)
+    for (; item; item = item->next)
     {
         LandWidget *child = item->data;
-        land_widget_draw(child);
-        item = item->next;
+        if (child->hidden) continue;
+        if (!base->dont_clip)
+        {
+            if (child->box.x <= cr && child->box.x + child->box.w >= cl &&
+                child->box.y <= cb && child->box.y + child->box.h >= ct)
+            land_widget_draw(child);
+        }
+        else
+            land_widget_draw(child);
     }
 
     if (!base->dont_clip)
@@ -140,13 +146,13 @@ LandWidget *land_widget_container_get_at_pos(LandWidget *super, int x, int y)
     if (!self->children)
         return NULL;
     LandListItem *item = self->children->last;
-    while (item)
+    for (; item; item = item->prev)
     {
         LandWidget *child = item->data;
+        if (child->hidden) continue;
         if (x >= child->box.x && y >= child->box.y &&
             x < child->box.x + child->box.w && y < child->box.y + child->box.h)
             return child;
-        item = item->prev;
     }
     return NULL;
 }
@@ -160,25 +166,43 @@ void land_widget_container_mouse_tick(LandWidget *super)
         land_mouse_y());
     if (mouse != self->mouse && !(land_mouse_b() & 1))
     {
+        /* We obtain a reference to mouse (which below gets self->mouse). This
+         * reference is hold as long as this is the mouse focus widget.
+         */
         if (mouse)
+        {
             land_widget_reference(mouse);
+            mouse->got_mouse = 1;
+            land_call_method(mouse, mouse_enter, (mouse, self->mouse));
+            if (!mouse->got_mouse) // refuses docus
+            {
+                land_widget_unreference(mouse);
+                goto focus_done;
+            }
+        }
         if (self->mouse)
         {
-            land_call_method(self->mouse, mouse_leave, (self->mouse));
+            self->mouse->got_mouse = 0;
+            land_call_method(self->mouse, mouse_leave, (self->mouse, mouse));
+            /* retains focus despite outside mouse? */
+            if (self->mouse->got_mouse)
+            {
+                if (mouse)
+                    land_widget_unreference(mouse);
+                goto focus_done;
+            }
             land_widget_unreference(self->mouse);
         }
         self->mouse = mouse;
-        if (self->mouse)
-            land_call_method(self->mouse, mouse_enter, (self->mouse));
+focus_done: ;
     }
-
     int f = 0;
     if (self->children)
     {
         LandListItem *item, *next, *last;
         item = self->children->first;
         last = self->children->last;
-        while (item)
+        for (; item; item = next)
         {
             next = item->next;
             LandWidget *child = item->data;
@@ -190,7 +214,6 @@ void land_widget_container_mouse_tick(LandWidget *super)
             }
             if (item == last)
                 break;
-            item = next;
         }
     }
 }
@@ -217,7 +240,7 @@ void land_widget_container_add(LandWidget *super, LandWidget *add)
 
 void land_widget_container_remove(LandWidget *base, LandWidget *rem)
 {
-    // TODO: assert here that parent points to base, of not.. we're fucked
+    // TODO: assert here that parent points to base, if not.. we're fucked
     rem->parent = NULL;
     land_remove_list_data(&LAND_WIDGET_CONTAINER(base)->children, rem);
     land_widget_unreference(rem);

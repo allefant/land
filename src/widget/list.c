@@ -9,6 +9,7 @@ struct LandWidgetList
 {
     LandWidgetContainer super;
     int columns;
+    int disable_updates : 1;
 };
 
 #define LAND_WIDGET_LIST(widget) ((LandWidgetList *) \
@@ -17,27 +18,51 @@ struct LandWidgetList
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
+#include "list.h"
 
 LandWidgetInterface *land_widget_list_interface = NULL;
+
+/* Call this before adding *many* items to the list, then call
+ * land_widget_list_update when done. This can speed things up, since there is
+ * no need to calculate intermediate layouts for each single added item.
+ */
+
+void land_widget_list_disable_updates(LandWidget *base)
+{
+    LAND_WIDGET_LIST(base)->disable_updates = 1;
+}
+
+void land_widget_list_update(LandWidget *base)
+{
+    LAND_WIDGET_LIST(base)->disable_updates = 0;
+    land_widget_layout_adjust(base, 1, 1, 1);
+}
 
 void land_widget_list_add(LandWidget *base, LandWidget *add)
 {
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
     LandWidgetList *list = LAND_WIDGET_LIST(base);
-    
+
     land_widget_container_add(base, add);
+    
     int n = container->children->count;
     int rows = (n + list->columns - 1) / list->columns;
     int row = rows - 1;
     int column = n - row * list->columns - 1;
 
-    land_widget_layout_set_grid_position(add, column, row);
-    land_widget_layout_add(base, add);
+    land_widget_layout_set_grid_position(add, column, row, 0);
+    land_widget_layout_set_grid(base, list->columns, n, 0);
+    
     land_widget_layout_set_shrinking(add, 0, 1);
+    land_widget_layout_add(base, add, 0);
 
-    land_widget_layout_set_grid(base, list->columns, n);
-    land_widget_layout_adjust(base, 0, 1);
+    if (!list->disable_updates)
+    {
+        land_widget_list_update(base);
+    }
 }
+
+
 
 void land_widget_list_set_columns(LandWidget *base, int n)
 {

@@ -32,6 +32,7 @@ struct LandWidgetThemeElement
     int ox, oy; /* extra offset into the anchor widget */
     float r, g, b, a; /* text color */
     LandFont *font;
+    unsigned int transparent : 1;
 };
 
 struct LandWidgetTheme
@@ -149,7 +150,7 @@ static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int 
         }
 
         /* top */
-        if (bt)
+        if (bt && y + bt >= _land_active_display->clip_y1)
         {
             land_clip_push();
             land_clip_intersect(0, y, land_display_width(),  MIN(y + h, y + bt));
@@ -161,14 +162,17 @@ static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int 
         {
             land_clip_push();
             land_clip_intersect(0, MIN(y + h, y + pat->bt), land_display_width(), MAX(y, y + h - pat->bb));
-            for (j = oy + y; j < y + h; j += bm)
+            int start = MAX(0, (_land_active_display->clip_y1 - (y + oy)) / bm);
+            start = y + oy + start * bm;
+            int end = MIN(_land_active_display->clip_y2, y + h);
+            for (j = start; j < end; j += bm)
             {
                 bfunc(pat->bmp, bx, pat->bt, bw, bm, x, j, w, bm);
             }
             land_clip_pop();
         }
         /* bottom */
-        if (bb)
+        if (bb && y + h - bb < _land_active_display->clip_y2)
         {
             land_clip_push();
             land_clip_intersect(0, MAX(y, y + h - bb), land_display_width(), y + h);
@@ -246,7 +250,7 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
         }
 
         /* left */
-        if (bl)
+        if (bl && x + bl >= _land_active_display->clip_x1)
         {
             land_clip_push();
             land_clip_intersect(x, 0, MIN(x + w, x + bl), land_display_height());
@@ -259,14 +263,17 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
             land_clip_push();
             land_clip_intersect(MIN(x + w, x + pat->bl), 0, MAX(x, x + w - pat->br),
                 land_display_height());
-            for (i = x + ox; i < x + w - pat->br; i += bm)
+            int start = MAX(0, (_land_active_display->clip_x1 - (x + ox)) / bm);
+            start = x + ox + start * bm;
+            int end = MIN(_land_active_display->clip_x2, x + w - pat->br);
+            for (i = start; i < end; i += bm)
             {
                 blit_column(pat, pat->bl, bm, i, y, bm, h);
             }
             land_clip_pop();
         }
         /* right */
-        if (br)
+        if (br && x + w - br < _land_active_display->clip_x2)
         {
             land_clip_push();
             land_clip_intersect(MAX(x, x + w - br), 0, x + w, land_display_height());
@@ -342,6 +349,10 @@ LandWidgetThemeElement *land_widget_theme_element_new(
                     self->b = (c & 255) / 255.0; c >>= 8;
                     self->g = (c & 255) / 255.0; c >>= 8;
                     self->r = (c & 255) / 255.0; c >>= 8;
+                }
+                else if (!ustrcmp(argv[a], "transparent"))
+                {
+                    self->transparent = 1;
                 }
             }
             if (!self->bmp)
@@ -419,6 +430,8 @@ void land_widget_theme_draw(LandWidget *self)
 {
     LandWidgetThemeElement *element = get_element(self);
     if (!element) return;
+
+    if (element->transparent) return;
 
     draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h);
 }

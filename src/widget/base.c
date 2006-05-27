@@ -103,6 +103,11 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 #define LAND_WIDGET_ID_SCROLLING 4
 #define LAND_WIDGET_ID_BUTTON 8
 #define LAND_WIDGET_ID_LIST 16
+#define LAND_WIDGET_ID_PANEL 32
+#define LAND_WIDGET_ID_MENU 64
+#define LAND_WIDGET_ID_MENUBUTTON 128
+#define LAND_WIDGET_ID_MENUBAR 256
+#define LAND_WIDGET_ID_MENUITEM 512
 
 struct LandWidgetInterface
 {
@@ -113,13 +118,13 @@ struct LandWidgetInterface
     void (*enter)(LandWidget *self);
     void (*tick)(LandWidget *self);
 
-    void (*mouse_enter)(LandWidget *self);
+    void (*mouse_enter)(LandWidget *self, LandWidget *focus);
     void (*mouse_tick)(LandWidget *self);
-    void (*mouse_leave)(LandWidget *self);
+    void (*mouse_leave)(LandWidget *self, LandWidget *focus);
 
-    void (*keyboard_enter)(LandWidget *self);
+    void (*keyboard_enter)(LandWidget *self, LandWidget *focus);
     void (*keyboard_tick)(LandWidget *self);
-    void (*keyboard_leave)(LandWidget *self);
+    void (*keyboard_leave)(LandWidget *self, LandWidget *focus);
 
     void (*add)(LandWidget *self, LandWidget *add);
     void (*move)(LandWidget *self, float dx, float dy);
@@ -135,10 +140,11 @@ struct LandWidget
     LandWidgetInterface *vt;
     LandWidget *parent;
     GUL_BOX box;
-    int got_mouse : 1;
-    int send_to_top : 1;
-    int dont_clip : 1;
-    int no_decoration : 1;
+    unsigned int got_mouse : 1;
+    unsigned int send_to_top : 1;
+    unsigned int dont_clip : 1;
+    unsigned int no_decoration : 1;
+    unsigned int hidden : 1;
     int reference;
     LandHash *properties;
 
@@ -161,7 +167,6 @@ extern LandWidgetInterface *land_widget_base_interface;
 #include "widget/base.h"
 #include "widget/layout.h"
 
-static LandList *cemetery;
 LandWidgetInterface *land_widget_base_interface = NULL;
 
 void *land_widget_check(void const *ptr, int id, char const *file,
@@ -286,14 +291,22 @@ void land_widget_reference(LandWidget *self)
     self->reference++;
 }
 
-void land_widget_base_mouse_enter(LandWidget *self)
+void land_widget_base_mouse_enter(LandWidget *self, LandWidget *focus)
 {
-    self->got_mouse = 1;
 }
 
-void land_widget_base_mouse_leave(LandWidget *self)
+void land_widget_base_mouse_leave(LandWidget *self, LandWidget *focus)
 {
-    self->got_mouse = 0;
+}
+
+void land_widget_hide(LandWidget *self)
+{
+    self->hidden = 1;
+}
+
+void land_widget_unhide(LandWidget *self)
+{
+    self->hidden = 0;
 }
 
 void land_widget_base_move(LandWidget *self, float dx, float dy)
@@ -316,13 +329,10 @@ void land_widget_base_size(LandWidget *self, float dx, float dy)
 {
     self->box.w += dx;
     self->box.h += dy;
-    if (land_widget_layout(self))
+    int r = land_widget_layout(self, 0);
+    if (r)
     {
-        if (self->box.w < self->box.min_width)
-            self->box.w = self->box.min_width;
-        if (self->box.h < self->box.min_height)
-            self->box.h = self->box.min_height;
-        land_widget_layout(self);
+        land_widget_layout_adjust(self, r & 1, r & 2, 0);
     }
 }
 
@@ -336,6 +346,16 @@ void land_widget_size(LandWidget *self, float dx, float dy)
     }
 }
 
+void land_widget_retain_mouse_focus(LandWidget *self)
+{
+    self->got_mouse = 1;
+}
+
+void land_widget_refuse_mouse_focus(LandWidget *self)
+{
+    self->got_mouse = 0;
+}
+
 void land_widget_tick(LandWidget *self)
 {
     land_call_method(self, tick, (self));
@@ -343,6 +363,7 @@ void land_widget_tick(LandWidget *self)
 
 void land_widget_draw(LandWidget *self)
 {
+    if (self->hidden) return;
     int pop = 0;
     if (!self->dont_clip)
     {

@@ -29,20 +29,6 @@ LandWidgetInterface *land_widget_scrolling_contents_container_interface;
 LandWidgetInterface *land_widget_scrolling_vertical_container_interface;
 LandWidgetInterface *land_widget_scrolling_horizontal_container_interface;
 
-void land_widget_scrolling_mouse_enter(LandWidget *self)
-{
-    self->got_mouse = 1;
-}
-
-void land_widget_scrolling_mouse_leave(LandWidget *super)
-{
-    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
-    if (self->mouse)
-        land_call_method(self->mouse, mouse_leave, (self->mouse));
-    super->got_mouse = 0;
-    self->mouse = NULL;
-}
-
 void land_widget_scrolling_move(LandWidget *widget, float dx, float dy)
 {
     land_widget_container_move(widget, dx, dy);
@@ -69,6 +55,10 @@ void land_widget_scrolling_add(LandWidget *widget, LandWidget *add)
     LandListItem *item = container->children->first;
     LandWidget *contents = LAND_WIDGET(item->data);
     land_widget_container_add(contents, add);
+
+    /* A freshly added widget start always at the no-scroll position. */
+    add->box.x = contents->box.x + contents->box.il;
+    add->box.y = contents->box.y + contents->box.it;
 
     /* There is no need to add extra references to the added widget from the
      * scrollbars. They live and die with the whole scrolling widget anyway,
@@ -148,9 +138,9 @@ LandWidget *land_widget_scrolling_new(LandWidget *parent, int x, int y, int w, i
     LandWidget *rightbar = land_widget_scrollbar_new(right, NULL, 1, 0, 0, 0, 0);
     land_widget_theme_set_minimum_size(rightbar);
 
-    land_widget_layout_set_grid(right, 1, 1);
-    land_widget_layout_set_grid_position(rightbar, 0, 0);
-    land_widget_layout_add(right, rightbar);
+    land_widget_layout_set_grid(right, 1, 1, 0);
+    land_widget_layout_set_grid_position(rightbar, 0, 0, 0);
+    land_widget_layout_add(right, rightbar, 1);
 
     /* child 3: horizontal scrollbar */
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0);
@@ -159,40 +149,39 @@ LandWidget *land_widget_scrolling_new(LandWidget *parent, int x, int y, int w, i
     LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL, 0, 0, 0, 0, 0);
     land_widget_theme_set_minimum_size(bottombar);
 
-    land_widget_layout_set_grid(bottom, 1, 1);
-    land_widget_layout_set_grid_position(bottombar, 0, 0);
-    land_widget_layout_add(bottom, bottombar);
+    land_widget_layout_set_grid(bottom, 1, 1, 0);
+    land_widget_layout_set_grid_position(bottombar, 0, 0, 0);
+    land_widget_layout_add(bottom, bottombar, 1);
 
     /* overall layout */
-    land_widget_layout_set_grid(widget, 2, 2);
+    land_widget_layout_set_grid(widget, 2, 2, 0);
     land_widget_theme_layout_border(widget);
-    land_widget_layout_add(widget, contents);
-    land_widget_layout_add(widget, right);
-    land_widget_layout_add(widget, bottom);
+    land_widget_layout_add(widget, contents, 1);
+    land_widget_layout_add(widget, right, 1);
+    land_widget_layout_add(widget, bottom, 1);
 
-    land_widget_layout_set_grid_position(contents, 0, 0);
+    land_widget_layout_set_grid_position(contents, 0, 0, 1);
 
     /* Vertical scrollbar layout. */
-    land_widget_layout_set_grid_position(right, 1, 0);
+    land_widget_layout_set_grid_position(right, 1, 0, 1);
     land_widget_theme_layout_border(right);
     land_widget_layout_set_shrinking(right, 1, 0);
 
     /* Horizontal scrollbar layout. */
-    land_widget_layout_set_grid_position(bottom, 0, 1);
+    land_widget_layout_set_grid_position(bottom, 0, 1, 1);
     land_widget_theme_layout_border(bottom);
     land_widget_layout_set_shrinking(bottom, 0, 1);
 
     /* FIXME: The layout lib allows no empty cells yet, so need to put an empty box. */
     LandWidget *empty = land_widget_box_new(widget, 0, 0, 0, 0);
-    land_widget_layout_add(widget, empty);
-    land_widget_layout_set_grid_position(empty, 1, 1);
+    land_widget_layout_add(widget, empty, 0);
+    land_widget_layout_set_grid_position(empty, 1, 1, 0);
     land_widget_layout_set_shrinking(empty, 1, 1);
-
-    land_widget_layout(widget);
 
     /* From now on, special vtable is used. */
     widget->vt = land_widget_scrolling_interface;
 
+    land_widget_layout(widget, 1);
     return widget;
 }
 
@@ -209,8 +198,6 @@ void land_widget_scrolling_interface_initialize(void)
     land_widget_scrolling_interface->add = land_widget_scrolling_add;
     land_widget_scrolling_interface->move = land_widget_scrolling_move;
     land_widget_scrolling_interface->mouse_tick = land_widget_scrolling_mouse_tick;
-    land_widget_scrolling_interface->mouse_enter = land_widget_scrolling_mouse_enter;
-    land_widget_scrolling_interface->mouse_leave = land_widget_scrolling_mouse_leave;
 
     land_widget_scrolling_contents_container_interface =
         land_widget_copy_interface(land_widget_container_interface,

@@ -68,6 +68,8 @@ static void scroll_horizontal_cb(LandWidget *self, int set, int *min, int *max, 
             *max = target->box.w - 1;
             *range = viewport->box.w - viewport->box.il - viewport->box.ir;
             *pos = viewport->box.x + viewport->box.il - target->box.x;
+            if (*pos + *range - 1 > *max)
+                *max = *pos + *range - 1;
         }
     }
 }

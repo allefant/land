@@ -23,12 +23,7 @@ LandWidgetInterface *land_widget_sizer_interface = NULL;
 
 void land_widget_sizer_draw(LandWidget *self)
 {
-    float r = 1, g = 0, b = 0;
-    if (self->got_mouse)
-        g = 1;
-    land_color(r, g, b, 1);
-    land_rectangle(self->box.x, self->box.y, self->box.x + self->box.w - 1,
-        self->box.y + self->box.h - 1);
+    land_widget_theme_draw(self);
 }
 
 void land_widget_sizer_mouse_tick(LandWidget *super)
@@ -50,7 +45,7 @@ void land_widget_sizer_mouse_tick(LandWidget *super)
 
     if ((land_mouse_b() & 1) && self->dragged)
     {
-        land_widget_size(self->target,land_mouse_x() -  r + self->drag_x,
+        land_widget_size(self->target, land_mouse_x() - r + self->drag_x,
             land_mouse_y() - b + self->drag_y);
     }
 }
@@ -58,10 +53,11 @@ void land_widget_sizer_mouse_tick(LandWidget *super)
 LandWidget *land_widget_sizer_new(LandWidget *parent, int x, int y, int w, int h)
 {
     LandWidgetSizer *self;
-    if (!land_widget_sizer_interface)
-        land_widget_sizer_interface_initialize();
+    
+    land_widget_sizer_interface_initialize();
+
     land_alloc(self);
-    LandWidget *super = LAND_WIDGET(self);
+    LandWidget *super = &self->super;
     land_widget_base_initialize(super, parent, x, y, w, h);
     super->vt = land_widget_sizer_interface;
     /* by default, size the parent. */
@@ -72,11 +68,11 @@ LandWidget *land_widget_sizer_new(LandWidget *parent, int x, int y, int w, int h
 
 void land_widget_sizer_interface_initialize(void)
 {
+    if (land_widget_sizer_interface) return;
+
     land_alloc(land_widget_sizer_interface);
     land_widget_sizer_interface->name = "sizer";
     land_widget_sizer_interface->draw = land_widget_sizer_draw;
     land_widget_sizer_interface->mouse_tick = land_widget_sizer_mouse_tick;
-    land_widget_sizer_interface->mouse_enter = land_widget_base_mouse_enter;
-    land_widget_sizer_interface->mouse_leave = land_widget_base_mouse_leave;
 }
 

@@ -12,6 +12,8 @@ struct LandWidgetButton
     void (*clicked)(LandWidget *self);
 };
 
+extern LandWidgetInterface *land_widget_button_interface;
+
 #define LAND_WIDGET_BUTTON(widget) ((LandWidgetButton *) \
     land_widget_check(widget, LAND_WIDGET_ID_BUTTON, __FILE__, __LINE__))
 
@@ -19,7 +21,7 @@ struct LandWidgetButton
 
 #include "land.h"
 
-LandWidgetInterface *land_widget_button_interface = NULL;
+LandWidgetInterface *land_widget_button_interface;
 
 void land_widget_button_draw(LandWidget *base)
 {
@@ -67,22 +69,28 @@ void land_widget_button_destroy(LandWidget *base)
     land_widget_base_destroy(base);
 }
 
+void land_widget_button_initialize(LandWidget *base,
+    LandWidget *parent, char const *text,
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h)
+{
+    land_widget_base_initialize(base, parent, x, y, w, h);
+    land_widget_button_interface_initialize();
+    base->vt = land_widget_button_interface;
+    LandWidgetButton *self = LAND_WIDGET_BUTTON(base);
+    self->text = strdup(text);
+    self->clicked = clicked;
+    }
+
 LandWidget *land_widget_button_new(LandWidget *parent, char const *text,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h)
 {
     LandWidgetButton *self;
-
-    land_widget_button_interface_initialize();
-
     land_alloc(self);
 
-    LandWidget *base = &self->super;
-    land_widget_base_initialize(base, parent, x, y, w, h);
-    base->vt = land_widget_button_interface;
-    self->text = strdup(text);
-    self->clicked = clicked;
-    
-    return base;
+    land_widget_button_initialize(&self->super,
+        parent, text, clicked, x, y, w, h);
+
+    return LAND_WIDGET(self);
 }
 
 void land_widget_button_interface_initialize(void)
