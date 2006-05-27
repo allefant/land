@@ -245,6 +245,16 @@ void land_unclip(void)
     d->vt->clip(d);
 }
 
+int land_get_clip(float *cx1, float *cy1, float *cx2, float *cy2)
+{
+    LandDisplay *d = _land_active_display;
+    *cx1 = d->clip_x1;
+    *cy1 = d->clip_y1;
+    *cx2 = d->clip_x2;
+    *cy2 = d->clip_y2;
+    return !d->clip_off;
+}
+
 void land_flip(void)
 {
     _land_active_display->vt->flip(_land_active_display);
