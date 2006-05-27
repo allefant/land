@@ -66,7 +66,8 @@ void land_font_set(LandFont *self)
     land_font_state->font = self;
 }
 
-void __attribute__((noreturn)) land_text_size(float sx, float sy)
+//__attribute__((noreturn))
+void land_text_size(float sx, float sy)
 {
     land_exception("Text sizing currently not implemented, use different fonts instead.");
 }
@@ -117,6 +118,11 @@ int land_font_height(LandFont *self)
     return self->size;
 }
 
+LandFont *land_font_current(void)
+{
+    return land_font_state->font;
+}
+
 void land_text_off(void)
 {
     land_font_state->off = 1;
@@ -138,6 +144,15 @@ static void _print(char const *str, int newline, int alignement)
     {
         land_font_state->x_pos = land_font_state->x + land_font_state->w;
     }
+}
+
+int land_text_get_width(char const *str)
+{
+    int onoff = land_font_state->off;
+    land_font_state->off = 1;
+    land_font_state->font->vt->print(land_font_state, NULL, str, 0);
+    land_font_state->off = onoff;
+    return land_font_state->w;
 }
 
 #define VPRINT \
