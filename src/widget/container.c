@@ -29,19 +29,22 @@ LandWidgetInterface *land_widget_container_interface = NULL;
 void land_widget_container_destroy(LandWidget *base)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
-    LandListItem *item = self->children->first;
-    while (item)
+    if (self->children)
     {
-        LandListItem *next = item->next;
-        LandWidget *child = item->data;
-        /* Detach it. It won't get destroyed if there are still outside
-         * references to it.
-         */
-        child->parent = NULL;
-        land_widget_unreference(item->data);
-        item = next;
+        LandListItem *item = self->children->first;
+        while (item)
+        {
+            LandListItem *next = item->next;
+            LandWidget *child = item->data;
+            /* Detach it. It won't get destroyed if there are still outside
+             * references to it.
+             */
+            child->parent = NULL;
+            land_widget_unreference(item->data);
+            item = next;
+        }
+        land_list_destroy(self->children);
     }
-    land_list_destroy(self->children);
     land_widget_base_destroy(base);
 }
 

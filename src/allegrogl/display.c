@@ -9,7 +9,9 @@
 #include "../log.h"
 #include "../exception.h"
 
-land_type(LandDisplayAllegroGL)
+typedef struct LandDisplayAllegroGL LandDisplayAllegroGL;
+
+struct LandDisplayAllegroGL
 {
     LandDisplay super;
 };
@@ -27,7 +29,8 @@ LandDisplayAllegroGL *land_display_allegrogl_new(int w, int h, int bpp, int hz,
     int flags)
 {
     land_log_msg("land_display_allegrogl_new\n");
-    LandDisplayAllegroGL *self = calloc(1, sizeof *self);
+    LandDisplayAllegroGL *self;
+    land_alloc(self);
     LandDisplay *super = &self->super;
     super->w = w;
     super->h = h;
@@ -339,4 +342,10 @@ void land_display_allegrogl_init(void)
     vtable->plot = land_display_allegrogl_plot;
     vtable->polygon = land_display_allegrogl_polygon;
     vtable->filled_polygon = land_display_allegrogl_filled_polygon;
-};
+}
+
+void land_display_allegrogl_exit(void)
+{
+    land_log_msg("land_display_allegrogl_exit\n");
+    land_free(vtable);
+}

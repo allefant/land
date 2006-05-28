@@ -81,7 +81,7 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n, int threshold)
 {
     LandPixelMask *mask;
     int j;
-    mask = malloc(sizeof *mask + sizeof(SinglePixelMask *) * n);
+    mask = land_malloc(sizeof *mask + sizeof(SinglePixelMask *) * n);
     mask->n = n;
     mask->w = bmp->w;
     mask->h = bmp->h;
@@ -116,7 +116,7 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n, int threshold)
 
         int mask_w = 1 + (temp->w + 31) / 32;
 
-        mask->rotation[j] = malloc(sizeof *mask->rotation[j] +
+        mask->rotation[j] = land_malloc(sizeof *mask->rotation[j] +
             mask_w * temp->h * sizeof(uint32_t));
         mask->rotation[j]->w = mask_w;
         mask->rotation[j]->h = temp->h;

@@ -22,6 +22,7 @@ struct LandRunner
 
 #include "runner.h"
 #include "log.h"
+#include "memory.h"
 
 static LandList *runners;
 
@@ -37,7 +38,7 @@ void land_runner_initialize(LandRunner *self, char const *name, void (*init)(Lan
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
     void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
 {
-    self->name = strdup(name);
+    self->name = land_strdup(name);
     self->init = init;
     self->enter = enter;
     self->tick = tick;
@@ -50,7 +51,8 @@ LandRunner *land_runner_new(char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
     void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
 {
-    LandRunner *self = calloc(1, sizeof *self);
+    LandRunner *self;
+    land_alloc(self);
     land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy);
     return self;
 }
@@ -106,6 +108,9 @@ void land_runner_destroy_all(void)
         LandRunner *self = (LandRunner *)i->data;
         if (self->destroy)
             self->destroy(self);
+        land_free(self->name);
+        land_free(self);
     }
+    land_list_destroy(runners);
 }
 

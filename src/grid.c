@@ -29,8 +29,6 @@ struct LandGrid
 #include "isometric.h"
 #include "sprite.h"
 
-land_array(LandGrid);
-
 static LandGrid *active_grid = 0;
 
 void land_grid_draw(LandGrid *self, LandView *view)
@@ -60,6 +58,14 @@ void land_grid_init(void)
     land_tilemap_init();
     land_isometric_init();
     land_sprites_init();
+}
+
+void land_grid_exit(void)
+{
+    land_log_msg("land_grid_exit\n");
+    land_tilemap_exit();
+    land_isometric_exit();
+    land_sprites_exit();
 }
 
 void land_grid_del(LandGrid *self)

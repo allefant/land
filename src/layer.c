@@ -4,7 +4,9 @@
 #include "grid.h"
 #include "sprite.h"
 
-land_type(LandLayer)
+typedef struct LandLayer LandLayer;
+
+struct LandLayer
 {
     float x, y; /* position inside the map (origin of layer relative to origin of map) */
 
@@ -26,8 +28,6 @@ land_type(LandLayer)
 
 #include "layer.h"
 
-land_array(LandLayer);
-
 void land_layer_draw(LandLayer *self, LandView *view)
 {
     LandView v = *view;
@@ -42,7 +42,8 @@ void land_layer_draw(LandLayer *self, LandView *view)
 
 LandLayer *land_layer_new(void)
 {
-    land_new(LandLayer, self);
+    LandLayer * self;
+    land_alloc(self);
     self->scrolling_x = 1;
     self->scrolling_y = 1;
     return self;
@@ -56,7 +57,8 @@ void land_layer_del(LandLayer *self)
 
 LandLayer *land_layer_new_with_grid(LandGrid *grid)
 {
-    land_new(LandLayer, self);
+    LandLayer *self;
+    land_alloc(self);
     self->scrolling_x = 1;
     self->scrolling_y = 1;
     self->grid = grid;

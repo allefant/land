@@ -7,12 +7,13 @@
 #include "log.h"
 
 typedef struct LandImage LandImage;
+typedef struct LandImageInterface LandImageInterface;
 
 #include "pixelmask.h"
 
 #define LAND_SUBIMAGE 1
 
-land_type(LandImageInterface)
+struct LandImageInterface
 {
     land_method(void, prepare, (LandImage *self));
     land_method(void, draw_scaled_rotated_tinted, (LandImage *self,
@@ -97,8 +98,8 @@ LandImage *land_image_load(char const *filename)
     if (bmp)
     {
         self = land_display_new_image();
-        self->filename = strdup(filename);
-        self->name = strdup(filename);
+        self->filename = land_strdup(filename);
+        self->name = land_strdup(filename);
         self->bitmap = bmp;
         self->memory_cache = bmp;
         land_log_msg_nostamp("success (%d x %d)\n", bmp->w, bmp->h);
@@ -135,7 +136,14 @@ void land_image_del(LandImage *self)
     if (self->bitmap != self->memory_cache)
         destroy_bitmap(self->bitmap);
     destroy_bitmap(self->memory_cache);
+    if (self->name) land_free(self->name);
+    if (self->filename && self->filename != self->name) land_free(self->filename);
     land_display_del_image(self);
+}
+
+void land_image_destroy(LandImage *self)
+{
+    land_image_del(self);
 }
 
 void land_image_crop(LandImage *self, int x, int y, int w, int h)
@@ -225,7 +233,7 @@ void land_image_prepare(LandImage *self)
 static int callback(const char *filename, int attrib, void *param)
 {
     LandArray **filenames = param;
-    land_array_add_data(filenames, strdup(filename));
+    land_array_add_data(filenames, land_strdup(filename));
     return 0;
 }
 
@@ -257,7 +265,7 @@ LandArray *land_load_images(char const *pattern, int center, int optimize)
     {
         char *filename = land_array_get_nth(filenames, i);
         LandImage *image = land_image_load(filename);
-        free(filename);
+        land_free(filename);
         if (center)
             land_image_center(image);
         if (optimize)
@@ -398,6 +406,12 @@ void land_image_init(void)
 {
     land_image_allegro_init();
     land_image_allegrogl_init();
+}
+
+void land_image_exit(void)
+{
+    land_image_allegrogl_exit();
+    land_image_allegro_exit();
 }
 
 /* Set's a source clip rectangle for the image. That is, only the specified

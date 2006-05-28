@@ -9,6 +9,7 @@ typedef struct LandDisplay LandDisplay;
 #include "list.h"
 #include "image.h"
 #include "log.h"
+#include "memory.h"
 
 #define LAND_WINDOWED 1
 #define LAND_FULLSCREEN 2
@@ -57,8 +58,6 @@ extern LandDisplay *_land_active_display;
 #include "display.h"
 #include "main.h"
 
-land_array(LandDisplay)
-
 static LandList *_previous = NULL;
 LandDisplay *_land_active_display = NULL;
 
@@ -89,6 +88,26 @@ LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
     return self;
 }
 
+void land_display_destroy(LandDisplay *self)
+{
+    if (self == _land_active_display)
+        land_display_unselect();
+
+    if (self->clip_stack)
+    {
+        if (self->clip_stack->count)
+            land_log_msg("Error: non-empty clip stack in display.\n");
+        land_list_destroy(self->clip_stack);
+    }
+    land_free(self);
+}
+
+
+void land_display_del(LandDisplay *self)
+{
+    land_display_destroy(self);
+}
+
 void land_display_set(void)
 {
     _land_active_display->vt->set(_land_active_display);
@@ -106,7 +125,7 @@ LandDisplay *land_display_get(void)
 
 void land_display_unset(void)
 {
-    // FIXME: TODO
+    _land_active_display = NULL;
 }
 
 void land_display_init(void)
@@ -115,6 +134,14 @@ void land_display_init(void)
     land_display_allegro_init();
     land_display_allegrogl_init();
     land_display_image_init();
+}
+
+void land_display_exit(void)
+{
+    land_log_msg("land_display_exit\n");
+    land_display_image_exit();
+    land_display_allegrogl_exit();
+    land_display_allegro_exit();
 }
 
 /* This function is dangerous! It will completely halt Land for the passed
@@ -196,7 +223,7 @@ void land_clip_intersect(float x, float y, float x_, float y_)
 void land_clip_push(void)
 {
     LandDisplay *d = _land_active_display;
-    int *clip = malloc(5 * sizeof *clip);
+    int *clip = land_malloc(5 * sizeof *clip);
     clip[0] = d->clip_x1;
     clip[1] = d->clip_y1;
     clip[2] = d->clip_x2;
@@ -216,8 +243,8 @@ void land_clip_pop(void)
     d->clip_x2 = clip[2];
     d->clip_y2 = clip[3];
     d->clip_off = clip[4];
-    free(clip);
-    free(item);
+    land_free(clip);
+    land_free(item);
     _land_active_display->vt->clip(_land_active_display);
 }
 
@@ -351,13 +378,5 @@ void land_display_unselect(void)
     }
     else
         _land_active_display = NULL;
-}
-
-void land_display_del(LandDisplay *self)
-{
-    // TODO: land_display_unset(self)?
-    if (self == _land_active_display)
-        land_display_unselect();
-    land_free(self);
 }
 

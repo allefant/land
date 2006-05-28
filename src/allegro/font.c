@@ -5,7 +5,9 @@
 #include "../font.h"
 #include "../log.h"
 
-land_type(LandFontAllegro)
+typedef struct LandFontAllegro LandFontAllegro;
+
+struct LandFontAllegro
 {
     struct LandFont super;
     FONT *font;
@@ -22,7 +24,8 @@ static LandFontInterface *vtable;
 LandFont *land_font_allegro_load(char const *filename, int size)
 {
     land_log_msg("land_font_allegr_load %s %d..", filename, size);
-    LandFontAllegro *self = calloc(1, sizeof *self);
+    LandFontAllegro *self;
+    land_alloc(self);
     self->font = load_font(filename, NULL, NULL);
     self->super.size = text_height(self->font);
     self->super.vt = vtable;
@@ -54,10 +57,23 @@ void land_font_allegro_print(LandFontState *state, LandDisplay *display,
     state->h = h;
 }
 
+void land_font_allegro_destroy(LandFont *self)
+{
+    LandFontAllegro *a = (LandFontAllegro *)self;
+    destroy_font(a->font);
+    land_free(a);
+}
+
 void land_font_allegro_init(void)
 {
     land_log_msg("land_font_allegro_init\n");   
     land_alloc(vtable);
     vtable->print = land_font_allegro_print;
+    vtable->destroy = land_font_allegro_destroy;
 }
 
+void land_font_allegro_exit(void)
+{
+    land_log_msg("land_font_allegro_exit\n");   
+    land_free(vtable);
+}

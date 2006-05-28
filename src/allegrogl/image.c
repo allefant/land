@@ -5,6 +5,8 @@
 #include <alleggl.h>
 #include "display.h"
 #include "allegrogl/image.h"
+#include "memory.h"
+#include "log.h"
 
 static LandImageInterface *vtable;
 static LandList *images;
@@ -63,7 +65,8 @@ void land_image_allegrogl_reupload(void)
 
 LandImage *land_image_allegrogl_new(LandDisplay *super)
 {
-    LandImageOpenGL *self = calloc(1, sizeof *self);
+    LandImageOpenGL *self;
+    land_alloc(self);
     self->super.vt = vtable;
     land_add_list_data(&images, self);
     return &self->super;
@@ -228,7 +231,7 @@ void land_image_allegrogl_cache(LandImage *super)
     GLint w, h;
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-    char *pixels = land_allocate(w * h * 4);
+    char *pixels = land_malloc(w * h * 4);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV,
         pixels);
     int x, y;
@@ -251,6 +254,15 @@ void land_image_allegrogl_init(void)
     vtable->grab = land_image_allegrogl_grab;
     vtable->grab_into = land_image_allegrogl_grab_into;
     vtable->sub = land_image_allegrogl_sub;
+    images = land_list_new();
+}
+
+void land_image_allegrogl_exit(void)
+{
+    if (images->count)
+        land_log_msg("Error: %d OpenGL images not destroyed.\n", images->count);
+    land_list_destroy(images);
+    land_free(vtable);
 }
 
 void land_image_allegrogl_prepare(LandImage *self)

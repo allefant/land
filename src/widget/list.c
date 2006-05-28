@@ -89,7 +89,8 @@ void land_widget_list_initialize(LandWidgetList *self, LandWidget *parent,
  */
 LandWidget *land_widget_list_new(LandWidget *parent, int x, int y, int w, int h)
 {
-    LandWidgetList *self = calloc(1, sizeof *self);
+    LandWidgetList *self;
+    land_alloc(self);
     land_widget_list_initialize(self, parent, x, y, w, h);
 
     return LAND_WIDGET(self);

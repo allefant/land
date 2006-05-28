@@ -16,6 +16,7 @@ struct LandTileGrid
 #include "view.h"
 #include "display.h"
 #include "log.h"
+#include "memory.h"
 
 #define LAND_TILE_GRID(_) ((LandTileGrid *)(_))
 
@@ -23,11 +24,12 @@ LandGridInterface *land_grid_vtable_tilegrid;
 
 LandGrid *land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells)
 {
-    LandTileGrid *self = calloc(1, sizeof *self);
+    LandTileGrid *self;
+    land_alloc(self);
     land_grid_initialize(&self->super, cell_w, cell_h, x_cells, y_cells);
     self->super.vt = land_grid_vtable_tilegrid;
     
-    self->tiles = calloc(x_cells * y_cells, sizeof *self->tiles);
+    self->tiles = land_calloc(x_cells * y_cells * sizeof *self->tiles);
     return &self->super;
 }
 
@@ -163,4 +165,10 @@ void land_tilemap_init(void)
     land_grid_vtable_tilegrid->draw = land_grid_draw_normal;
     land_grid_vtable_tilegrid->draw_cell = land_tilegrid_draw_cell;
     land_grid_vtable_tilegrid->del = land_tilegrid_del;
+}
+
+void land_tilemap_exit(void)
+{
+    land_log_msg("land_tilemap_exit\n");
+    land_free(land_grid_vtable_tilegrid);
 }

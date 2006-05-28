@@ -52,7 +52,8 @@ LandWidget *land_widget_menu_new(LandWidget *parent, float x, float y,
     float w, float h)
 {
     land_widget_menu_interface_initialize();
-    LandWidgetMenu *self = calloc(1, sizeof *self);
+    LandWidgetMenu *self;
+    land_alloc(self);
     LandWidget *base = (LandWidget *)self;
     land_widget_container_initialize(&self->super, parent, x, y, w, h);
     base->vt = land_widget_menu_interface;
@@ -134,7 +135,8 @@ LandWidget *land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *submenu, float x, float y, float w, float h)
 {
     land_widget_menubutton_interface_initialize();
-    LandWidgetMenuButton *self = calloc(1, sizeof *self);
+    LandWidgetMenuButton *self;
+    land_alloc(self);
     land_widget_reference(submenu);
     self->submenu = submenu;
     self->menu = parent;
@@ -153,6 +155,7 @@ void land_widget_menu_add(LandWidget *base, LandWidget *item)
     int n = container->children->count;
     land_widget_layout_set_grid(base, 1, n, 0);
     land_widget_layout_set_grid_position(item, 0, n - 1, 0);
+    land_widget_layout_set_shrinking(item, 1, 1);
     land_widget_layout_add(base, item, 0);
     // FIXME: since the add method is called from the constructor, the layout
     // is not ready yet, e.g. min-size is not calculated yet
@@ -166,6 +169,7 @@ void land_widget_menubar_add(LandWidget *base, LandWidget *item)
     int n = container->children->count;
     land_widget_layout_set_grid(base, n, 1, 0);
     land_widget_layout_set_grid_position(item, n - 1, 0, 0);
+    land_widget_layout_set_shrinking(item, 1, 1);
     land_widget_layout_add(base, item, 0);
     // FIXME: since the add method is called from the constructor, the layout
     // is not ready yet, e.g. min-size is not calculated yet
@@ -212,6 +216,18 @@ LandWidget *land_widget_submenuitem_new(LandWidget *parent, char const *name,
     land_widget_layout_adjust(parent, 1, 1, 1);
     return button;
 }
+
+LandWidget *land_widget_menu_spacer_new(LandWidget *parent)
+{
+    LandWidget *button = land_widget_box_new(parent, 0, 0, 0, 0);
+    land_widget_theme_layout_border(button);
+
+    // FIXME: this is wrong, since we could be added to anything, or even
+    // have no parent - but see the FIXME above in land_widget_menu_add
+    land_widget_layout_adjust(parent, 1, 1, 1);
+    return button;
+}
+
 
 void land_widget_menu_mouse_enter(LandWidget *self, LandWidget *focus)
 {

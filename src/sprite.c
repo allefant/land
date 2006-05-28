@@ -124,7 +124,7 @@ LandGrid *land_sprites_grid_new(int cell_w, int cell_h, int x_cells, int y_cells
     land_grid_initialize(&self->super, cell_w, cell_h, x_cells, y_cells);
     self->super.vt = land_grid_vtable_sprites;
 
-    self->sprites = calloc(x_cells * y_cells, sizeof *self->sprites);
+    self->sprites = land_calloc(x_cells * y_cells * sizeof *self->sprites);
 
     return &self->super;
 }
@@ -515,6 +515,12 @@ void land_sprites_init(void)
     land_grid_vtable_sprites->draw = land_sprites_grid_draw;
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell;
     land_grid_vtable_sprites->del = land_sprites_grid_del;
+}
+
+void land_sprites_exit(void)
+{
+    land_log_msg("land_sprites_exit\n");
+    land_free(land_grid_vtable_sprites);
 }
 
 LandSpriteType *land_spritetype_new(void)

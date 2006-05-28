@@ -55,6 +55,12 @@ void land_image_allegro_init(void)
     vtable->grab = land_image_allegro_grab;
 }
 
+void land_image_allegro_exit(void)
+{
+    land_log_msg("land_image_allegro_exit\n");
+    land_free(vtable);
+}
+
 void land_image_allegro_prepare(LandImage *self)
 {
     if (bitmap_color_depth(self->bitmap) != bitmap_color_depth(screen))

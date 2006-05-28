@@ -10,6 +10,7 @@
 #include <sys/time.h>
 
 #include "log.h"
+#include "memory.h"
 
 static char *logname = NULL;
 
@@ -18,8 +19,8 @@ land_log_overwrite(char const *name)
 {
     FILE *f;
     if (logname)
-        free(logname);
-    logname = strdup(name);
+        land_free(logname);
+    logname = land_strdup(name);
     f = fopen(logname, "w");
     if (f)
     {
@@ -31,19 +32,26 @@ void
 land_log_set(char const *name)
 {
     if (logname)
-        free(logname);
-    logname = strdup(name);
+        land_free(logname);
+    logname = land_strdup(name);
 }
 
-void
-land_log_new(char const *base, int unique)
+void land_log_del(void)
+{
+    if (logname) land_free(logname);
+}
+
+void land_log_new(char const *base, int unique)
 {
     FILE *f;
     int i = 0;
     if (logname)
-        free(logname);
+        land_free(logname);
 
-    logname = malloc(strlen(base) + 10);
+    logname = land_malloc(strlen(base) + 10);
+
+    atexit(land_log_del);
+
     if (unique)
     {
         do

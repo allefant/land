@@ -10,7 +10,8 @@
 #include "fudgefont.h"
 #include "land.h"
 
-land_type(LandParameters)
+typedef struct LandParameters LandParameters;
+struct LandParameters
 {
     int w, h, bpp, hz;
     int frequency;
@@ -39,7 +40,7 @@ static void closebutton(void)
 void land_init(void)
 {
     land_log_msg("land_init\n");
-    parameters = calloc(1, sizeof *parameters);
+    land_alloc(parameters);
     parameters->w = 640;
     parameters->h = 480;
     parameters->frequency = 60;
@@ -59,6 +60,13 @@ void land_init(void)
     install_fudgefont();
 }
 
+static void land_exit(void)
+{
+    land_free(parameters);
+    land_log_msg("land_exit\n");
+}
+
+
 static void land_tick(void)
 {
     land_mouse_tick();
@@ -70,11 +78,6 @@ static void land_draw(void)
 {
     land_runner_draw_active();
     land_flip();
-}
-
-static void land_exit(void)
-{
-    land_log_msg("land_exit\n");
 }
 
 void land_quit(void)
@@ -161,7 +164,7 @@ int land_main(void)
     land_image_init();
     land_grid_init();
 
-    land_display_new(parameters->w, parameters->h,
+    LandDisplay *display = land_display_new(parameters->w, parameters->h,
         parameters->bpp, parameters->hz, parameters->flags);
 
     land_display_set();
@@ -215,6 +218,14 @@ int land_main(void)
     }
     land_runner_switch_active(NULL);
     land_runner_destroy_all();
+    
+    land_display_destroy(display);
+    
+    land_grid_exit();
+    land_font_exit();
+    land_image_exit();
+    land_display_exit();
+
     land_exit();
     return 0;
 }

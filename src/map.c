@@ -3,7 +3,8 @@
 #include "array.h"
 #include "layer.h"
 
-land_type(LandMap)
+typedef struct LandMap LandMap;
+struct LandMap
 {
     LandLayer *first_layer;
 };
@@ -11,8 +12,6 @@ land_type(LandMap)
 #endif /* _PROTOTYPE_ */
 
 #include "map.h"
-
-land_array(LandMap);
 
 void land_map_draw(LandMap *self, LandView *view)
 {
@@ -39,7 +38,8 @@ void land_map_add_layer(LandMap *map, LandLayer *layer)
 
 LandMap *land_map_new(void)
 {
-    land_new(LandMap, self);
+    LandMap *self;
+    land_alloc(self)
     return self;
 }
 

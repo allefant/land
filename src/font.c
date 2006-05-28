@@ -11,6 +11,7 @@ struct LandFontInterface
 {
     land_method(void, print, (LandFontState *state, LandDisplay *display, char const *text,
         int alignement));
+    land_method(void, destroy, (LandFont *self));
 };
 
 struct LandFont
@@ -42,9 +43,16 @@ static LandFontState *land_font_state;
 
 void land_font_init(void)
 {
-    land_font_state = calloc(1, sizeof *land_font_state);
+    land_alloc(land_font_state);
     land_font_allegrogl_init();
     land_font_allegro_init();
+}
+
+void land_font_exit(void)
+{
+    land_free(land_font_state);
+    land_font_allegro_exit();
+    land_font_allegrogl_exit();
 }
 
 LandFont *land_font_load(char const *filename, float size)
@@ -59,6 +67,11 @@ LandFont *land_font_load(char const *filename, float size)
 
     land_font_state->font = self;
     return self;
+}
+
+void land_font_destroy(LandFont *self)
+{
+    self->vt->destroy(self);
 }
 
 void land_font_set(LandFont *self)

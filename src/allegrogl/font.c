@@ -6,7 +6,9 @@
 #include "../font.h"
 #include "../log.h"
 
-land_type(LandFontAllegrogl)
+typedef struct LandFontAllegrogl LandFontAllegrogl;
+
+struct LandFontAllegrogl
 {
     struct LandFont super;
     FONT *font;
@@ -80,7 +82,8 @@ static LandFontInterface *vtable;
 //LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
     land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
-    LandFontAllegrogl *self = calloc(1, sizeof *self);
+    LandFontAllegrogl *self;
+    land_alloc(self);
 
     self->image = land_image_load(filename);
     
@@ -150,7 +153,8 @@ static LandFontInterface *vtable;
 LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
     land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
-    LandFontAllegrogl *self = calloc(1, sizeof *self);
+    LandFontAllegrogl *self;
+    land_alloc(self);
     PALETTE pal;
     int data = size;
     FONT *temp = load_font(filename, pal, &data);
@@ -239,10 +243,24 @@ void land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     state->h = h;
 }
 
+void land_font_allegrogl_destroy(LandFont *self)
+{
+    LandFontAllegrogl *a = (LandFontAllegrogl *)self;
+    destroy_font(a->font);
+    land_free(a);
+}
+
 void land_font_allegrogl_init(void)
 {
     land_log_msg("land_font_allegrogl_init\n");
     land_alloc(vtable);
     vtable->print = land_font_allegrogl_print;
+    vtable->destroy = land_font_allegrogl_destroy;
+}
+
+void land_font_allegrogl_exit(void)
+{
+    land_log_msg("land_font_allegrogl_exit\n");
+    land_free(vtable);
 }
 

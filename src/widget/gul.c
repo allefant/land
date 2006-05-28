@@ -77,6 +77,7 @@ struct GUL_BOX
 #include <allegro.h>
 
 #include "log.h"
+#include "memory.h"
 
 #include "widget/gul.h"
 
@@ -106,7 +107,7 @@ void gul_box_initialize(GUL_BOX *self)
 
 GUL_BOX *gul_box_new(void)
 {
-    GUL_BOX *self = malloc(sizeof *self);
+    GUL_BOX *self = land_malloc(sizeof *self);
 
     gul_box_initialize(self);
     return self;
@@ -114,7 +115,7 @@ GUL_BOX *gul_box_new(void)
 
 void gul_box_del(GUL_BOX * self)
 {
-    free(self);
+    land_free(self);
 }
 
 /* Find box which contains the specified grid position. */
@@ -144,8 +145,8 @@ static GUL_BOX *lookup_box_in_grid(GUL_BOX *self, int col, int row)
 
 static void update_lookup_grid(GUL_BOX *self)
 {
-    if (self->lookup_grid) free(self->lookup_grid);
-    self->lookup_grid = calloc(self->cols * self->rows, sizeof *self->lookup_grid);
+    if (self->lookup_grid) land_free(self->lookup_grid);
+    self->lookup_grid = land_calloc(self->cols * self->rows * sizeof *self->lookup_grid);
     
     GUL_BOX *c = self->children;
     while (c)

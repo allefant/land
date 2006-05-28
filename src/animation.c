@@ -12,6 +12,7 @@ struct LandAnimation
 #endif /* _PROTOTYPE_ */
 
 #include "animation.h"
+#include "memory.h"
 
 LandAnimation *land_animation_new(LandArray *frames)
 {

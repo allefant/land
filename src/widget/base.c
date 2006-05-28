@@ -183,7 +183,8 @@ void land_widget_set_property(LandWidget *self, char const *property,
     void *data, void (*destroy)(void *data))
 {
     if (!self->properties) self->properties = land_hash_new();
-    LandWidgetProperty *prop = calloc(1, sizeof *prop);
+    LandWidgetProperty *prop;
+    land_alloc(prop);
     prop->data = data;
     prop->destroy = destroy;
     land_hash_insert(self->properties, property, prop);
@@ -268,7 +269,7 @@ LandWidget *land_widget_new(LandWidget *parent, int x, int y, int w, int h)
 void land_widget_base_destroy(LandWidget *self)
 {
     land_widget_remove_all_properties(self);
-    free(self);
+    land_free(self);
 }
 
 static void land_widget_really_destroy(LandWidget *self)
@@ -380,9 +381,17 @@ void land_widget_draw(LandWidget *self)
     }
 }
 
+void land_widget_done(void)
+{
+    if (land_widget_base_interface) land_free(land_widget_base_interface);
+    if (land_widget_container_interface) land_free(land_widget_container_interface);
+}
+
 void land_widget_base_interface_initialize(void)
 {
     if (land_widget_base_interface) return;
+    
+    atexit(land_widget_done);
 
     land_alloc(land_widget_base_interface);
     land_widget_base_interface->id = LAND_WIDGET_ID_BASE;

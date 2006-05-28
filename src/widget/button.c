@@ -65,7 +65,7 @@ void land_widget_button_mouse_tick(LandWidget *base)
 void land_widget_button_destroy(LandWidget *base)
 {
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base);
-    free(button->text);
+    land_free(button->text);
     land_widget_base_destroy(base);
 }
 
@@ -77,7 +77,7 @@ void land_widget_button_initialize(LandWidget *base,
     land_widget_button_interface_initialize();
     base->vt = land_widget_button_interface;
     LandWidgetButton *self = LAND_WIDGET_BUTTON(base);
-    self->text = strdup(text);
+    self->text = land_strdup(text);
     self->clicked = clicked;
     }
 

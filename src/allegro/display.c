@@ -6,7 +6,9 @@
 #include "../log.h"
 #include "../image/display.h"
 
-land_type(LandDisplayAllegro)
+typedef struct LandDisplayAllegro LandDisplayAllegro;
+
+struct LandDisplayAllegro
 {
     struct LandDisplayImage super;
     BITMAP *screen;
@@ -26,7 +28,8 @@ static LandDisplayInterface *vtable;
 LandDisplayAllegro *land_display_allegro_new(int w, int h, int bpp, int hz,
     int flags)
 {
-    LandDisplayAllegro *self = calloc(1, sizeof *self);
+    LandDisplayAllegro *self;
+    land_alloc(self);
     LandDisplay *super = &self->super.super;
     super->w = w;
     super->h = h;
@@ -123,3 +126,9 @@ void land_display_allegro_init(void)
     vtable->del_image = land_image_allegro_del;
     vtable->new_image = land_image_allegro_new;
 };
+
+void land_display_allegro_exit(void)
+{
+    land_log_msg("land_display_allegro_exit\n");
+    land_free(vtable);
+}

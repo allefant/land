@@ -23,7 +23,7 @@ enum LandWidgetThemeFlags
 /* data for a single GUI bitmap */
 struct LandWidgetThemeElement
 {
-    char const *name;
+    char *name;
     LandImage *bmp;
     LandWidgetThemeFlags flags;
     int bl, bt, br, bb; /* border to cut out of the image */
@@ -37,9 +37,9 @@ struct LandWidgetThemeElement
 
 struct LandWidgetTheme
 {
-    char const *name;
-    char const *prefix;
-    char const *suffix;
+    char *name;
+    char *prefix;
+    char *suffix;
     /* TODO: instead of a list, use a mapping from the widget names. */
     LandList *elements;
 };
@@ -299,7 +299,7 @@ LandWidgetThemeElement *land_widget_theme_element_new(
 {
     LandWidgetThemeElement *self;
     land_alloc(self);
-    self->name = strdup(element);
+    self->name = land_strdup(element);
     self->a = 1;
     self->minw = 4;
     self->minh = 4;
@@ -367,7 +367,7 @@ LandWidgetThemeElement *land_widget_theme_element_new(
             land_log_msg("element: Error: %s not found!\n", name);
     }
     
-    //FIXME ASAP XXX: img is leaked!!!
+    if (img) land_image_destroy(img);
 
     return self;
 }
@@ -380,9 +380,9 @@ LandWidgetTheme *land_widget_theme_new(char const *filename)
     push_config_state();
     set_config_file(filename);
 
-    self->name = strdup(get_config_string("agup.cfg", "name", ""));
-    self->prefix = strdup(get_config_string("agup.cfg", "prefix", ""));
-    self->suffix = strdup(get_config_string("agup.cfg", "suffix", ""));
+    self->name = land_strdup(get_config_string("agup.cfg", "name", ""));
+    self->prefix = land_strdup(get_config_string("agup.cfg", "prefix", ""));
+    self->suffix = land_strdup(get_config_string("agup.cfg", "suffix", ""));
 
     char const **entries = NULL;
     int n = list_config_entries("agup.cfg/elements", &entries);
@@ -399,6 +399,23 @@ LandWidgetTheme *land_widget_theme_new(char const *filename)
     pop_config_state();
 
     return self;
+}
+
+void land_widget_theme_destroy(LandWidgetTheme *self)
+{
+    LandListItem *item;
+    for (item = self->elements->first; item; item = item->next)
+    {
+        LandWidgetThemeElement *elem = item->data;
+        land_free(elem->name);
+        land_image_destroy(elem->bmp);
+        land_free(elem);
+    }
+    land_list_destroy(self->elements);
+    land_free(self->name);
+    land_free(self->prefix);
+    land_free(self->suffix);
+    land_free(self);
 }
 
 static LandWidgetThemeElement *find_element(LandList *list, char const *name)

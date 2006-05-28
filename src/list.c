@@ -2,21 +2,36 @@
 
 #include "array.h"
 
-land_type(LandListItem)
+typedef struct LandListItem LandListItem;
+struct LandListItem
 {
     void *data;
     LandListItem *next, *prev;
 };
 
-land_type(LandList)
+typedef struct LandList LandList;
+struct LandList
 {
     int count;
     LandListItem *first, *last;
 };
 
+ LandList *land_list_new(void);
+ void land_list_destroy(LandList *self);
+ void land_add_list_data(LandList **list, void *data);
+
+#ifdef LAND_MEMLOG
+
+#define land_list_new() land_list_new_memlog(__FILE__, __LINE__)
+#define land_list_destroy(x) land_list_destroy_memlog(x, __FILE__, __LINE__)
+#define land_add_list_data(x, y) land_add_list_data_memlog(x, y, __FILE__, __LINE__)
+ 
+#endif
+
 #endif /* _PROTOTYPE_ */
 
 #include "list.h"
+#include "memory.h"
 
 /* Inserts a new item to the end of the list. */
 void land_list_insert_item(LandList *list, LandListItem *item)
@@ -83,24 +98,68 @@ void land_list_remove_item(LandList *list, LandListItem *item)
     list->count--;
 }
 
-LandList *land_list_new(void)
+#ifdef LAND_MEMLOG
+
+#undef land_list_new
+#undef land_list_destroy
+#undef land_add_list_data
+
+LandList *land_list_new_memlog(char const *f, int l)
+{
+    LandList *list = land_list_new();
+    land_memory_add(list, "list", 1, f, l);
+    return list;
+}
+
+void land_list_destroy_memlog(LandList *self, char const *f, int l)
+{
+    land_list_destroy(self);
+    land_memory_remove(self, 1, f, l);
+}
+
+void land_add_list_data_memlog(LandList **list, void *data, char const *f, int l)
+{
+    land_memory_remove(*list, 1, f, l);
+    land_add_list_data(list, data);
+    land_memory_add(*list, "list", 1, f, l);
+}
+
+#endif
+
+ LandList *land_list_new(void)
 {
     LandList *self;
     land_alloc(self);
     return self;
 }
 
+/* Destroys a list and all iterators, but not the data. If you want to destroy
+ * the data, first loop through the list and destroy them all.
+ */
+ void land_list_destroy(LandList *list)
+{
+    LandListItem *item = list->first;
+    while (item)
+    {
+        LandListItem *next = item->next;
+        land_free(item);
+        item = next;
+    }
+    land_free(list);
+}
+
+
 /* Given a pointer to a (possibly NULL valued) list pointer, create a new node
  * with the given data, and add to the (possibly newly created) list.
  */
-void land_add_list_data(LandList **list, void *data)
+ void land_add_list_data(LandList **list, void *data)
 {
     LandListItem *item;
     land_alloc(item);
     item->data = data;
     if (!*list)
     {
-        land_alloc(*list)
+        *list = land_list_new();
     }
     land_list_insert_item(*list, item);
 }
@@ -123,19 +182,4 @@ void land_remove_list_data(LandList **list, void *data)
         }
         item = next;
     }
-}
-
-/* Destroys a list and all iterators, but not the data. If you want to destroy
- * the data, first loop through the list and destroy them all.
- */
-void land_list_destroy(LandList *list)
-{
-    LandListItem *item = list->first;
-    while (item)
-    {
-        LandListItem *next = item->next;
-        land_free(item);
-        item = next;
-    }
-    land_free(list);
 }

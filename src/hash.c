@@ -25,6 +25,7 @@ struct LandHash
 #endif /* _PROTOTYPE_ */
 
 #include "hash.h"
+#include "memory.h"
 
 /*
  * FIXME: This is the worst possible hash function.
@@ -45,7 +46,7 @@ static unsigned int hash_function(LandHash *self, char const *thekey)
 LandHash *land_hash_new(void)
 {
     LandHash *self;
-    self = calloc(1, sizeof *self);
+    land_alloc(self);
     self->hash_function = hash_function;
     return self;
 }
@@ -61,12 +62,12 @@ void land_hash_destroy(LandHash *self)
             int j;
             for (j = 0; j < entry->n; j++)
             {
-                free(entry[j].thekey);
+                land_free(entry[j].thekey);
             }
-            free(entry);
+            land_free(entry);
         }
     }
-    free(self);
+    land_free(self);
 }
 
 void *land_hash_insert(LandHash *self, char const *thekey, void *data)
@@ -81,7 +82,7 @@ void *land_hash_insert(LandHash *self, char const *thekey, void *data)
             self->size = 1;
         else
             self->size *= 2;
-        self->entries = calloc(self->size, sizeof *self->entries);
+        self->entries = land_calloc(self->size * sizeof *self->entries);
         self->count = 0;
         for (i = 0; i < oldsize; i++)
         {
@@ -92,18 +93,18 @@ void *land_hash_insert(LandHash *self, char const *thekey, void *data)
                 for (j = 0; j < entry->n; j++)
                 {
                     land_hash_insert(self, entry[j].thekey, entry[j].data);
-                    free(entry[j].thekey);
+                    land_free(entry[j].thekey);
                 }
-                free(entry);
+                land_free(entry);
             }
         }
-        free(oldentries);
+        land_free(oldentries);
     }
     i = self->hash_function(self, thekey);
     LandHashEntry *entry = self->entries[i];
     int n = entry ? entry->n + 1 : 1;
-    self->entries[i] = realloc(entry, n * sizeof *entry);
-    self->entries[i][n - 1].thekey = ustrdup(thekey);
+    self->entries[i] = land_realloc(entry, n * sizeof *entry);
+    self->entries[i][n - 1].thekey = land_strdup(thekey);
     self->entries[i][n - 1].data = data;
     self->entries[i]->n = n;
     return data;
@@ -120,10 +121,10 @@ void *land_hash_remove(LandHash *self, char const *thekey)
         if (!ustrcmp(self->entries[i][j].thekey, thekey))
         {
             void *data = self->entries[i][j].data;
-            free(self->entries[i][j].thekey);
+            land_free(self->entries[i][j].thekey);
             self->entries[i]->n--;
             self->entries[i][j] = self->entries[i][n - 1];
-            self->entries[i] = realloc(self->entries[i],
+            self->entries[i] = land_realloc(self->entries[i],
                 self->entries[i]->n * sizeof *self->entries[i]);
             self->count--;
             return data;

@@ -14,12 +14,12 @@ struct LandView
 #endif /* _PROTOTYPE_ */
 
 #include "view.h"
-
-land_array(LandView);
+#include "memory.h"
 
 LandView *land_view_new(int x, int y, int w, int h)
 {
-    land_new(LandView, self);
+    LandView *self;
+    land_alloc(self);
     self->x = x;
     self->y = y;
     self->w = w;

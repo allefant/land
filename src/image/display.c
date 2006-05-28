@@ -5,7 +5,9 @@
 #include "../display.h"
 #include "../log.h"
 
-land_type(LandDisplayImage)
+typedef struct LandDisplayImage LandDisplayImage;
+
+struct LandDisplayImage
 {
     struct LandDisplay super;
     BITMAP *bitmap;
@@ -28,7 +30,8 @@ static inline int color(LandDisplay *display)
 
 LandDisplay *land_display_image_new(LandImage *target, int flags)
 {
-    LandDisplayImage *self = calloc(1, sizeof *self);
+    LandDisplayImage *self;
+    land_alloc(self);
     LandDisplay *super = &self->super;
     BITMAP *bitmap = target->memory_cache;
     super->w = land_image_width(target);
@@ -130,3 +133,9 @@ void land_display_image_init(void)
     vtable->del_image = land_image_allegro_del;
     vtable->new_image = land_image_allegro_new;
 };
+
+void land_display_image_exit(void)
+{
+    land_log_msg("land_display_image_exit\n");
+    land_free(vtable);
+}

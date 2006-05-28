@@ -25,6 +25,15 @@ void land_widget_layout_set_grid_position(LandWidget *self, int column, int row,
         gul_layout_changed(&self->parent->box);
 }
 
+void land_widget_layout_set_grid_extra(LandWidget *self, int columns, int rows,
+    int update)
+{
+    self->box.extra_cols = columns;
+    self->box.extra_rows = rows;
+    if (self->parent && update)
+        gul_layout_changed(&self->parent->box);
+}
+
 void land_widget_layout_set_minimum_size(LandWidget *self, int w, int h)
 {
     self->box.min_width = w;

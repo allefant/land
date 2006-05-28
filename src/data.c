@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "array.h"
 #include "log.h"
+#include "memory.h"
 
 typedef struct LandDataFile LandDataFile;
 typedef struct LandDataEntry LandDataEntry;
@@ -58,7 +59,7 @@ LandDataFile *land_read_datafile(FILE *file)
         }
         LandDataEntry *entry;
         land_alloc(entry);
-        entry->name = ustrdup(name);
+        entry->name = land_strdup(name);
         entry->offset = read32(self->file);
         entry->size = read32(self->file);
         land_array_add_data(&self->entries, entry);
@@ -115,7 +116,7 @@ void *land_datafile_read_entry(LandDataFile *self, char const *filename,
         if (!ustrcmp(entry->name, filename))
         {
             fseek(self->file, entry->offset, 0);
-            unsigned char *buffer = calloc(1, entry->size);
+            unsigned char *buffer = land_calloc(entry->size);
             fread(buffer, entry->size, 1, self->file);
             if (size) *size = entry->size;
             return buffer;

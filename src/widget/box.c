@@ -4,7 +4,7 @@
 
 #include "land.h"
 
-LandWidgetInterface *land_widget_box_interface = NULL;
+LandWidgetInterface *land_widget_box_interface ;
 
 void land_widget_box_draw(LandWidget *self)
 {
@@ -14,16 +14,19 @@ void land_widget_box_draw(LandWidget *self)
 LandWidget *land_widget_box_new(LandWidget *parent, int x, int y, int w, int h)
 {
     LandWidget *self = land_widget_new(parent, x, y, w, h);
-    if (!land_widget_box_interface)
-        land_widget_box_interface_initialize();
+    
+    land_widget_box_interface_initialize();
+
     self->vt = land_widget_box_interface;
     return self;
 }
 
 void land_widget_box_interface_initialize(void)
 {
+    if (land_widget_box_interface) return;
     land_alloc(land_widget_box_interface);
     land_widget_box_interface->name = "box";
+    land_widget_box_interface->id = LAND_WIDGET_ID_BASE;
     land_widget_box_interface->draw = land_widget_box_draw;
 }
 

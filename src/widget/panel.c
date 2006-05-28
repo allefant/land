@@ -28,7 +28,8 @@ void land_widget_panel_initialize(LandWidgetPanel *self,
 
 LandWidget *land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h)
 {
-    LandWidgetPanel *self = calloc(1, sizeof *self);
+    LandWidgetPanel *self;
+    land_alloc(self);
     land_widget_panel_initialize(self, parent, x, y, w, h);
     return LAND_WIDGET(self);
 }
