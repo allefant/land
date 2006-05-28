@@ -93,7 +93,8 @@ enum COLUMN_TYPE
 };
 /* Draw a column of pattern pat (at bx, width bw) into the given rectangle.
  */
-static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int x, int y, int w, int h)
+static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw,
+    int x, int y, int w, int h, int skip_middle)
 {
     int oy;
     int j;
@@ -158,7 +159,7 @@ static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int 
             land_clip_pop();
         }
         /* middle */
-        if (h - pat->bt - pat->bb > 0)
+        if (h - pat->bt - pat->bb > 0 && !skip_middle)
         {
             land_clip_push();
             land_clip_intersect(0, MIN(y + h, y + pat->bt), land_display_width(), MAX(y, y + h - pat->bb));
@@ -196,7 +197,8 @@ static inline void blit_column(LandWidgetThemeElement *pat, int bx, int bw, int 
  * align flag is set. In this case, it will be aligned NW to the anchor.
  *
  */
-static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
+static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
+    int skip_middle)
 {
     int i;
 
@@ -211,11 +213,11 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
 
     if (pat->flags & CENTER_H)
     {
-        blit_column(pat, 0, bw, x + w / 2 - bw / 2, y, bw, h);
+        blit_column(pat, 0, bw, x + w / 2 - bw / 2, y, bw, h, 0);
     }
     else if (pat->flags & STRETCH_H)
     {
-        blit_column(pat, 0, bw, x, y, w, h);
+        blit_column(pat, 0, bw, x, y, w, h, 0);
     }
     else /* pattern */
     {
@@ -254,7 +256,7 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
         {
             land_clip_push();
             land_clip_intersect(x, 0, MIN(x + w, x + bl), land_display_height());
-            blit_column(pat, 0, bl, x, y, bl, h);
+            blit_column(pat, 0, bl, x, y, bl, h, 0);
             land_clip_pop();
         }
         /* middle */
@@ -268,7 +270,7 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
             int end = MIN(_land_active_display->clip_x2, x + w - pat->br);
             for (i = start; i < end; i += bm)
             {
-                blit_column(pat, pat->bl, bm, i, y, bm, h);
+                blit_column(pat, pat->bl, bm, i, y, bm, h, skip_middle);
             }
             land_clip_pop();
         }
@@ -277,7 +279,7 @@ static void draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h)
         {
             land_clip_push();
             land_clip_intersect(MAX(x, x + w - br), 0, x + w, land_display_height());
-            blit_column(pat, bw - br, br, x + w - br, y, br, h);
+            blit_column(pat, bw - br, br, x + w - br, y, br, h, 0);
             land_clip_pop();
         }
     }
@@ -450,7 +452,8 @@ void land_widget_theme_draw(LandWidget *self)
 
     if (element->transparent) return;
 
-    draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h);
+    draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h,
+        self->only_border);
 }
 
 void land_widget_theme_color(LandWidget *self)

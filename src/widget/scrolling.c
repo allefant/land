@@ -128,6 +128,7 @@ LandWidget *land_widget_scrolling_new(LandWidget *parent, int x, int y, int w, i
 
     /* child 1: container */
     LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0);
+    contents->only_border = 1;
     contents->vt = land_widget_scrolling_contents_container_interface;
     land_widget_theme_layout_border(contents);
 

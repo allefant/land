@@ -144,6 +144,7 @@ struct LandWidget
     unsigned int send_to_top : 1;
     unsigned int dont_clip : 1;
     unsigned int no_decoration : 1;
+    unsigned int only_border : 1;
     unsigned int hidden : 1;
     int reference;
     LandHash *properties;

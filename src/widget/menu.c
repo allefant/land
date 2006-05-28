@@ -23,6 +23,14 @@ struct LandWidgetMenuButton
     unsigned int below : 1; /* If yes, open menu below, else to the right. */
 };
 
+/* A button inside a menu. */
+struct LandWidgetMenuItem
+{
+    LandWidgetButton super;
+    void (*callback)(LandWidget *self);
+    LandWidget *menu; /* Menu we are part of, if any. Usually parent. */
+};
+
 #endif /* _PROTOTYPE_ */
 
 #include "widget/theme.h"
@@ -38,6 +46,9 @@ LandWidgetInterface *land_widget_menuitem_interface;
 
 #define LAND_WIDGET_MENUBUTTON(widget) ((LandWidgetMenuButton *) \
     land_widget_check(widget, LAND_WIDGET_ID_MENUBUTTON, __FILE__, __LINE__))
+
+#define LAND_WIDGET_MENUITEM(widget) ((LandWidgetMenuItem *) \
+    land_widget_check(widget, LAND_WIDGET_ID_MENUITEM, __FILE__, __LINE__))
 
 LandWidget *land_widget_menubar_new(LandWidget *parent, float x, float y,
     float w, float h)
@@ -131,6 +142,17 @@ static void menubutton_clicked(LandWidget *base)
     land_widget_unhide(self->submenu);
 }
 
+static void menuitem_clicked(LandWidget *base)
+{
+    LandWidgetMenuItem *self = LAND_WIDGET_MENUITEM(base);
+
+    if (self->menu && (self->menu->vt->id & LAND_WIDGET_ID_MENU))
+    {
+        land_widget_menu_hide_complete(self->menu);
+    }
+    if (self->callback) self->callback(LAND_WIDGET(self));
+}
+
 LandWidget *land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *submenu, float x, float y, float w, float h)
 {
@@ -181,21 +203,28 @@ LandWidget *land_widget_menuitem_new(LandWidget *parent, char const *name,
 {
     int tw = land_text_get_width(name);
     int th = land_font_height(land_font_current());
-    LandWidget *button = land_widget_button_new(parent, name, callback,
-        0, 0, 0, 0);
-
+    LandWidgetMenuItem *menuitem;
+    land_alloc(menuitem);
+       
     land_widget_menubutton_interface_initialize();
-    button->vt = land_widget_menuitem_interface;
+    menuitem->menu = parent;
+    menuitem->callback = callback;
+    land_widget_button_initialize((LandWidget *)menuitem, parent, name,
+        menuitem_clicked, 0, 0, 10, 10);
 
-    land_widget_theme_layout_border(button);
-    land_widget_layout_set_minimum_size(button,
-        button->box.il + button->box.ir + tw,
-        button->box.it + button->box.ib + th);
+    LandWidget *self = LAND_WIDGET(menuitem);
+    self->vt = land_widget_menuitem_interface;
+
+    land_widget_theme_layout_border(self);
+    land_widget_layout_set_minimum_size(self,
+        self->box.il + self->box.ir + tw,
+        self->box.it + self->box.ib + th);
         
     // FIXME: this is wrong, since we could be added to anything, or even
     // have no parent - but see the FIXME above in land_widget_menu_add
     land_widget_layout_adjust(parent, 1, 1, 1);
-    return button;
+
+    return self;
 }
 
 LandWidget *land_widget_submenuitem_new(LandWidget *parent, char const *name,
