@@ -345,7 +345,7 @@ LandWidgetThemeElement *land_widget_theme_element_new(
                 }
                 else if (!ustrcmp(argv[a], "color"))
                 {
-                    int c;
+                    int c = 0;
                     read_int_arg(argc, argv, &a, &c);
                     self->a = (c & 255) / 255.0; c >>= 8;
                     self->b = (c & 255) / 255.0; c >>= 8;
@@ -439,9 +439,17 @@ static LandWidgetThemeElement *get_element(LandWidget *self)
     if (!theme)
         return NULL;
     LandWidgetThemeElement *element;
-    element = find_element(theme->elements, self->vt->name);
+    char name[1024];
+    ustrzcpy(name, sizeof name, self->vt->name);
+    if (self->selected)
+        ustrzcat(name, sizeof name, ".selected");
+    element = find_element(theme->elements, name);
     if (!element)
-        element = find_element(theme->elements, "base");
+    {
+        element = find_element(theme->elements, self->vt->name);
+        if (!element)
+            element = find_element(theme->elements, "base");
+    }
     return element;
 }
 
@@ -477,3 +485,26 @@ void land_widget_theme_set_minimum_size(LandWidget *self)
     if (!element) return;
     land_widget_layout_set_minimum_size(self, element->minw, element->minh);
 }
+
+void land_widget_theme_set_minimum_size_for_text(LandWidget *self,
+    char const *text)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
+    int w = land_text_get_width(text);
+    int h = land_font_height(land_font_current());
+    land_widget_layout_set_minimum_size(self, element->bl + element->br + w,
+        element->bt + element->bb + h);
+}
+
+void land_widget_theme_set_minimum_size_for_image(LandWidget *self,
+    LandImage *image)
+{
+    LandWidgetThemeElement *element = get_element(self);
+    if (!element) return;
+    int w = land_image_width(image);
+    int h = land_image_height(image);
+    land_widget_layout_set_minimum_size(self, element->bl + element->br + w,
+        element->bt + element->bb + h);
+}
+
