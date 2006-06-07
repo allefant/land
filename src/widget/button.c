@@ -8,6 +8,7 @@ struct LandWidgetButton
 {
     LandWidget super;
     unsigned int align : 2; /* 0 = left, 1 = right, 2 = center */
+    LandImage *image;
     char *text;
     void (*clicked)(LandWidget *self);
 };
@@ -28,6 +29,20 @@ void land_widget_button_draw(LandWidget *base)
     LandWidgetButton *self = LAND_WIDGET_BUTTON(base);
     if (!base->no_decoration)
         land_widget_box_draw(base);
+
+    if (!base->dont_clip)
+    {
+        int l = base->box.x + base->box.il;
+        int t = base->box.y + base->box.it;
+        int r = base->box.x + base->box.w - base->box.ir;
+        int b = base->box.y + base->box.h - base->box.ib;
+        land_clip_push();
+        land_clip_intersect(l, t, r, b);
+    }
+
+    if (self->image)
+        land_image_draw(self->image, base->box.x + base->box.il,
+        base->box.y + base->box.it);
     if (self->text)
     {
         int x, y = base->box.y + base->box.it;
@@ -51,6 +66,11 @@ void land_widget_button_draw(LandWidget *base)
                 break;
         }
     }
+    
+    if (!base->dont_clip)
+    {
+        land_clip_pop();
+    }
 }
 
 void land_widget_button_mouse_tick(LandWidget *base)
@@ -71,26 +91,59 @@ void land_widget_button_destroy(LandWidget *base)
 
 void land_widget_button_initialize(LandWidget *base,
     LandWidget *parent, char const *text,
+    LandImage *image,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h)
 {
     land_widget_base_initialize(base, parent, x, y, w, h);
     land_widget_button_interface_initialize();
     base->vt = land_widget_button_interface;
     LandWidgetButton *self = LAND_WIDGET_BUTTON(base);
-    self->text = land_strdup(text);
-    self->clicked = clicked;
+    if (text) {
+        self->text = land_strdup(text);
+        land_widget_theme_set_minimum_size_for_text(base, text);
     }
+    if (image) {
+        self->image = image;
+        land_widget_theme_set_minimum_size_for_image(base, image);
+    }
+    self->clicked = clicked;
+}
 
 LandWidget *land_widget_button_new(LandWidget *parent, char const *text,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h)
 {
-    LandWidgetButton *self;
-    land_alloc(self);
+    LandWidgetButton *button;
+    land_alloc(button);
+    LandWidget *self = (LandWidget *)button;
 
-    land_widget_button_initialize(&self->super,
-        parent, text, clicked, x, y, w, h);
+    land_widget_button_initialize(self,
+        parent, text, NULL, clicked, x, y, w, h);
 
-    return LAND_WIDGET(self);
+    land_widget_theme_layout_border(self);
+    land_widget_layout(parent);
+
+    return self;
+}
+
+LandWidget *land_widget_button_new_with_image(LandWidget *parent,
+    char const *text, LandImage *image,
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h)
+{
+    LandWidgetButton *button;
+    land_alloc(button);
+    LandWidget *self = (LandWidget *)button;
+
+    land_widget_button_initialize(self,
+        parent, text, image, clicked, x, y, w, h);
+
+    land_widget_theme_layout_border(self);
+    land_widget_layout(parent);
+
+    return self;
+}
+
+void land_widget_button_get_inner_size(LandWidget *self, float *w, float *h)
+{
 }
 
 void land_widget_button_interface_initialize(void)
@@ -103,4 +156,5 @@ void land_widget_button_interface_initialize(void)
     land_widget_button_interface->destroy = land_widget_button_destroy;
     land_widget_button_interface->draw = land_widget_button_draw;
     land_widget_button_interface->mouse_tick = land_widget_button_mouse_tick;
+    land_widget_button_interface->get_inner_size = land_widget_button_get_inner_size;
 }
