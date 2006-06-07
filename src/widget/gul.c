@@ -4,6 +4,8 @@ typedef struct GUL_BOX GUL_BOX;
 typedef enum GUL_GROW_TYPE GUL_GROW_TYPE;
 typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE;
 
+// 0000YYXX
+
 //GUL_EXPAND_X 0
 #define GUL_SHRINK_X 1
 //GUL_LEFT 0
@@ -20,7 +22,7 @@ typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE;
 #define GUL_BOTTOM   1024
 #define GUL_EQUAL_Y  2048
 
-#define GUL_LEAVE_y  4096
+#define GUL_LEAVE_Y  4096
 
 /* EQUAL_X:
  * bottom-up: Try to use width of largest column, until parent->max_width / n
@@ -30,6 +32,8 @@ typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE;
  * LEAVE_X:
  * top-down: never modify, no matter what
  */
+
+#define GUL_HIDDEN 65536
 
 struct GUL_BOX
 {
@@ -153,8 +157,15 @@ static void update_lookup_grid(GUL_BOX *self)
     {
         int i, j;
         for (i = c->col; i <= c->col + c->extra_cols; i++)
+        {
             for (j = c->row; j <= c->row + c->extra_rows; j++)
-                self->lookup_grid[i + j * self->cols] = c;
+            {
+                if (!(c->flags & GUL_HIDDEN))
+                    self->lookup_grid[i + j * self->cols] = c;
+                else
+                    self->lookup_grid[i + j * self->cols] = NULL;
+            }
+        }
         c = c->next;
     }
 }
@@ -192,7 +203,7 @@ static int column_min_width(GUL_BOX * self, int col)
     for (i = 0; i < self->rows; i++)
     {
         GUL_BOX *c = lookup_box_in_grid(self, col, i);
-
+    
         if (c && c->current_min_width > v)
             v = c->current_min_width;
     }
@@ -348,6 +359,7 @@ void gul_box_replace_child(GUL_BOX * self, GUL_BOX * child, GUL_BOX * with)
 static void gul_box_bottom_up(GUL_BOX * self)
 {
     GUL_BOX *c;
+    if (self->flags & GUL_HIDDEN) return;
 
     for (c = self->children; c; c = c->next)
     {
@@ -375,6 +387,7 @@ static void gul_box_bottom_up(GUL_BOX * self)
  */
 static int gul_box_top_down(GUL_BOX * self)
 {
+    if (self->flags & GUL_HIDDEN) return 0;
     int r = 0;
     D(printf("Box: %d x %d\n", self->w, self->h);)
     if (self->cols == 0 || self->rows == 0)

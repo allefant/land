@@ -12,7 +12,8 @@ struct LandWidgetScrollbar
     LandWidget *target;
     int dragged;
     int drag_x, drag_y;
-    int vertical;
+    int vertical : 1;
+    int autohide : 1;
     void (*callback)(LandWidget *self, int set, int *min, int *max, int *range, int *pos);
 };
 
@@ -121,9 +122,15 @@ void land_widget_scrollbar_update(LandWidget *super, int set)
         maxpos -= posrange - 1;
         maxval -= valrange - 1;
         if (maxval == minval)
+        {
             pos = minpos;
+            land_widget_hide(super->parent);
+        }
         else
+        {
             pos = minpos + (val - minval) * (maxpos - minpos) / (maxval - minval);
+            land_widget_unhide(super->parent);
+        }
         if (self->vertical)
         {
             super->box.h = posrange;
@@ -204,13 +211,18 @@ LandWidget *land_widget_scrollbar_new(LandWidget *parent, LandWidget *target, in
     return super;
 }
 
+void land_widget_scrollbar_autohide(LandWidget *self, int autohide)
+{
+    LAND_WIDGET_SCROLLBAR(self)->autohide = autohide;
+}
+
 void land_widget_scrollbar_interface_initialize(void)
 {
     if (!land_widget_scrollbar_vertical_interface)
     {
-        LandWidgetInterface *i;
-        land_alloc(i);
-        i->name = "scrollbar.vertical";
+        LandWidgetInterface *i = land_widget_copy_interface(
+            land_widget_base_interface, "scrollbar.vertical");
+        i->id = LAND_WIDGET_ID_SCROLLBAR;
         i->draw = land_widget_scrollbar_draw;
         i->move = land_widget_base_move;
         i->mouse_tick = land_widget_scrollbar_mouse_tick;
@@ -219,9 +231,9 @@ void land_widget_scrollbar_interface_initialize(void)
     
     if (!land_widget_scrollbar_horizontal_interface)
     {
-        LandWidgetInterface *i;
-        land_alloc(i);
-        i->name = "scrollbar.horizontal";
+        LandWidgetInterface *i = land_widget_copy_interface(
+            land_widget_base_interface, "scrollbar.horizontal");
+        i->id = LAND_WIDGET_ID_SCROLLBAR;
         i->draw = land_widget_scrollbar_draw;
         i->move = land_widget_base_move;
         i->mouse_tick = land_widget_scrollbar_mouse_tick;

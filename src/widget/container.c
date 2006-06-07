@@ -143,6 +143,21 @@ void land_widget_container_move(LandWidget *super, float dx, float dy)
     }
 }
 
+void land_widget_container_size(LandWidget *super)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    if (!self->children)
+        return;
+    LandListItem *item = self->children->first;
+    while (item)
+    {
+        LandWidget *child = item->data;
+        land_call_method(child, size, (child));
+        item = item->next;
+    }
+    land_widget_base_size(super);
+}
+
 LandWidget *land_widget_container_get_at_pos(LandWidget *super, int x, int y)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
@@ -249,11 +264,11 @@ void land_widget_container_remove(LandWidget *base, LandWidget *rem)
     land_widget_unreference(rem);
 }
 
-void land_widget_container_initialize(LandWidgetContainer *self, LandWidget *parent, int x, int y, int w, int h)
+void land_widget_container_initialize(LandWidget *super, LandWidget *parent, int x, int y, int w, int h)
 {
    land_widget_container_interface_initialize();
 
-   LandWidget *super = &self->super;
+   LandWidgetContainer *self = (LandWidgetContainer *)super;
    land_widget_base_initialize(super, parent, x, y, w, h);
    super->vt = land_widget_container_interface;
    self->children = NULL;
@@ -263,7 +278,7 @@ LandWidget *land_widget_container_new(LandWidget *parent, int x, int y, int w, i
 {
     LandWidgetContainer *self;
     land_alloc(self);
-    land_widget_container_initialize(self, parent, x, y, w, h);
+    land_widget_container_initialize(&self->super, parent, x, y, w, h);
     return &self->super;
 }
 
@@ -280,6 +295,7 @@ void land_widget_container_interface_initialize(void)
     land_widget_container_interface->tick = land_widget_container_tick;
     land_widget_container_interface->add = land_widget_container_add;
     land_widget_container_interface->move = land_widget_container_move;
+    land_widget_container_interface->size = land_widget_container_size;
     land_widget_container_interface->mouse_tick = land_widget_container_mouse_tick;
     land_widget_container_interface->mouse_enter = land_widget_container_mouse_enter;
     land_widget_container_interface->mouse_leave = land_widget_container_mouse_leave;

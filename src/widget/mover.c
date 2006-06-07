@@ -61,6 +61,11 @@ LandWidget *land_widget_mover_new(LandWidget *parent, int x, int y, int w, int h
     return super;
 }
 
+void land_widget_mover_set_target(LandWidget *self, LandWidget *target)
+{
+    LAND_WIDGET_MOVER(self)->target = target;
+}
+
 void land_widget_mover_interface_initialize(void)
 {
     if (land_widget_mover_interface) return;

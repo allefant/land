@@ -17,26 +17,28 @@ struct LandWidgetPanel
 
 LandWidgetInterface *land_widget_panel_interface;
 
-void land_widget_panel_initialize(LandWidgetPanel *self,
+void land_widget_panel_initialize(LandWidget *base,
     LandWidget *parent, int x, int y, int w, int h)
 {
-   land_widget_panel_interface_initialize();
-   LandWidgetContainer *super = &self->super;
-   land_widget_container_initialize(super, parent, x, y, w, h);
-   LAND_WIDGET(self)->vt = land_widget_panel_interface;
+    LandWidgetPanel *self = (LandWidgetPanel *)base;
+    land_widget_panel_interface_initialize();
+    LandWidgetContainer *super = &self->super;
+    land_widget_container_initialize(&super->super, parent, x, y, w, h);
+    base->vt = land_widget_panel_interface;
 }
 
 LandWidget *land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h)
 {
     LandWidgetPanel *self;
     land_alloc(self);
-    land_widget_panel_initialize(self, parent, x, y, w, h);
+    land_widget_panel_initialize((LandWidget *)self, parent, x, y, w, h);
     return LAND_WIDGET(self);
 }
 
 void land_widget_panel_interface_initialize(void)
 {
     if (land_widget_panel_interface) return;
+    land_widget_container_interface_initialize();
     land_widget_panel_interface = land_widget_copy_interface(
         land_widget_container_interface, "panel");
     land_widget_panel_interface->id |= LAND_WIDGET_ID_PANEL;

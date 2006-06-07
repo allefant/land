@@ -98,16 +98,19 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 #include "../hash.h"
 #include "gul.h"
 
-#define LAND_WIDGET_ID_BASE 1
-#define LAND_WIDGET_ID_CONTAINER 2
-#define LAND_WIDGET_ID_SCROLLING 4
-#define LAND_WIDGET_ID_BUTTON 8
-#define LAND_WIDGET_ID_LIST 16
-#define LAND_WIDGET_ID_PANEL 32
-#define LAND_WIDGET_ID_MENU 64
-#define LAND_WIDGET_ID_MENUBUTTON 128
-#define LAND_WIDGET_ID_MENUBAR 256
-#define LAND_WIDGET_ID_MENUITEM 512
+#define LAND_WIDGET_ID_BASE         0x00000001
+#define LAND_WIDGET_ID_CONTAINER    0x00000011
+#define LAND_WIDGET_ID_SCROLLING    0x00000111
+#define LAND_WIDGET_ID_VBOX         0x00000211
+#define LAND_WIDGET_ID_LIST         0x00001211
+#define LAND_WIDGET_ID_PANEL        0x00000311
+#define LAND_WIDGET_ID_MENU         0x00000411
+#define LAND_WIDGET_ID_MENUBAR      0x00001411
+#define LAND_WIDGET_ID_BUTTON       0x00000021
+#define LAND_WIDGET_ID_MENUBUTTON   0x00000121
+#define LAND_WIDGET_ID_MENUITEM     0x00000221
+#define LAND_WIDGET_ID_LISTITEM     0x00000321
+#define LAND_WIDGET_ID_SCROLLBAR    0x00000031
 
 struct LandWidgetInterface
 {
@@ -128,7 +131,9 @@ struct LandWidgetInterface
 
     void (*add)(LandWidget *self, LandWidget *add);
     void (*move)(LandWidget *self, float dx, float dy);
-    void (*size)(LandWidget *self, float dx, float dy);
+    void (*size)(LandWidget *self);
+
+    void (*get_inner_size)(LandWidget *self, float *w, float *h);
 
     void (*draw)(LandWidget *self);
     void (*leave)(LandWidget *self);
@@ -140,12 +145,21 @@ struct LandWidget
     LandWidgetInterface *vt;
     LandWidget *parent;
     GUL_BOX box;
-    unsigned int got_mouse : 1;
-    unsigned int send_to_top : 1;
-    unsigned int dont_clip : 1;
-    unsigned int no_decoration : 1;
-    unsigned int only_border : 1;
-    unsigned int hidden : 1;
+
+    /* internal state */
+    unsigned int got_mouse : 1; /* this widget has the mouse focus */
+    unsigned int send_to_top : 1; /* move this widget to top in next tick */
+    unsigned int dont_clip : 1; /* children can draw outside this widget */
+    unsigned int no_decoration : 1; /* draw nothing except contents */
+    unsigned int only_border : 1; /* draw only a border, for performance reasons */
+    unsigned int hidden : 1; /* this is not displayed at all, e.g. hidden scrollbar */
+    unsigned int no_layout : 1; /* inhibit layout updates, for performance reasons */
+
+    /* user state */
+    unsigned int selected : 1; /* e.g. checked checkbox or pressed button */
+    unsigned int highlighted : 1; /* item with mouse hovering over it */
+    unsigned int disabled : 1; /* e.g. button who cannot currently be pressed */
+
     int reference;
     LandHash *properties;
 
@@ -167,6 +181,7 @@ extern LandWidgetInterface *land_widget_base_interface;
 
 #include "widget/base.h"
 #include "widget/layout.h"
+#include "util.h"
 
 LandWidgetInterface *land_widget_base_interface = NULL;
 
@@ -174,7 +189,7 @@ void *land_widget_check(void const *ptr, int id, char const *file,
     int linenum)
 {
     LandWidget const *widget = ptr;
-    if (widget->vt->id & id)
+    if ((widget->vt->id & id) == id)
         return (void *)ptr; /* should provide a const version of the whole function isntead */
     land_exception("%s: %d: Widget cannot be converted.", file, linenum);
     return NULL;
@@ -301,16 +316,6 @@ void land_widget_base_mouse_leave(LandWidget *self, LandWidget *focus)
 {
 }
 
-void land_widget_hide(LandWidget *self)
-{
-    self->hidden = 1;
-}
-
-void land_widget_unhide(LandWidget *self)
-{
-    self->hidden = 0;
-}
-
 void land_widget_base_move(LandWidget *self, float dx, float dy)
 {
     self->box.x += dx;
@@ -327,25 +332,22 @@ void land_widget_move(LandWidget *self, float dx, float dy)
     }
 }
 
-void land_widget_base_size(LandWidget *self, float dx, float dy)
+void land_widget_base_size(LandWidget *self)
 {
-    self->box.w += dx;
-    self->box.h += dy;
-    int r = land_widget_layout(self, 0);
+    land_widget_layout_inhibit(self);
+    int r = land_widget_layout(self);
     if (r)
     {
-        land_widget_layout_adjust(self, r & 1, r & 2, 0);
+        land_widget_layout_adjust(self, r & 1, r & 2);
     }
+    land_widget_layout_enable(self);
 }
 
 void land_widget_size(LandWidget *self, float dx, float dy)
 {
-    if (self->vt->size)
-        self->vt->size(self, dx, dy);
-    else
-    {
-        land_widget_base_size(self, dx, dy);
-    }
+    self->box.w += dx;
+    self->box.h += dy;
+    land_call_method(self, size, (self));
 }
 
 void land_widget_retain_mouse_focus(LandWidget *self)
@@ -388,6 +390,22 @@ void land_widget_done(void)
     if (land_widget_container_interface) land_free(land_widget_container_interface);
 }
 
+void land_widget_hide(LandWidget *self)
+{
+    if (self->hidden) return;
+    self->hidden = 1;
+    self->box.flags |= GUL_HIDDEN;
+    land_widget_layout(self->parent);
+}
+
+void land_widget_unhide(LandWidget *self)
+{
+    if (!self->hidden) return;
+    self->hidden = 0;
+    self->box.flags &= ~GUL_HIDDEN;
+    land_widget_layout(self->parent);
+}
+
 void land_widget_base_interface_initialize(void)
 {
     if (land_widget_base_interface) return;
@@ -397,4 +415,5 @@ void land_widget_base_interface_initialize(void)
     land_alloc(land_widget_base_interface);
     land_widget_base_interface->id = LAND_WIDGET_ID_BASE;
     land_widget_base_interface->name = "base";
+    land_widget_base_interface->size = land_widget_base_size;
 }

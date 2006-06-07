@@ -66,7 +66,7 @@ LandWidget *land_widget_menu_new(LandWidget *parent, float x, float y,
     LandWidgetMenu *self;
     land_alloc(self);
     LandWidget *base = (LandWidget *)self;
-    land_widget_container_initialize(&self->super, parent, x, y, w, h);
+    land_widget_container_initialize(base, parent, x, y, w, h);
     base->vt = land_widget_menu_interface;
     land_widget_theme_layout_border(base);
     return base;
@@ -103,7 +103,7 @@ void land_widget_menu_hide_complete(LandWidget *base)
             break;
     }
 
-    if (base->vt->id & LAND_WIDGET_ID_MENUBAR)
+    if ((base->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR)
     {
         LandWidgetMenu *menu = LAND_WIDGET_MENU(base);
         base = menu->submenu;
@@ -130,7 +130,8 @@ static void menubutton_clicked(LandWidget *base)
             base->box.x + base->box.w - self->submenu->box.x,
             base->box.y - self->submenu->box.y);
     }
-    if (self->menu && (self->menu->vt->id & LAND_WIDGET_ID_MENU))
+    if (self->menu &&
+        (self->menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU)
     {
         LandWidgetMenu *menu = LAND_WIDGET_MENU(self->menu);
         if (menu->submenu)
@@ -146,7 +147,8 @@ static void menuitem_clicked(LandWidget *base)
 {
     LandWidgetMenuItem *self = LAND_WIDGET_MENUITEM(base);
 
-    if (self->menu && (self->menu->vt->id & LAND_WIDGET_ID_MENU))
+    if (self->menu &&
+        (self->menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU)
     {
         land_widget_menu_hide_complete(self->menu);
     }
@@ -162,9 +164,9 @@ LandWidget *land_widget_menubutton_new(LandWidget *parent, char const *name,
     land_widget_reference(submenu);
     self->submenu = submenu;
     self->menu = parent;
-    if (parent->vt->id & LAND_WIDGET_ID_MENUBAR)
+    if ((parent->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR)
         self->below = 1;
-    land_widget_button_initialize((LandWidget *)self, parent, name,
+    land_widget_button_initialize((LandWidget *)self, parent, name, NULL,
         menubutton_clicked, x, y, w, h);
     LAND_WIDGET(self)->vt = land_widget_menubutton_interface;
     return LAND_WIDGET(self);
@@ -175,10 +177,15 @@ void land_widget_menu_add(LandWidget *base, LandWidget *item)
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
     land_widget_container_add(base, item);
     int n = container->children->count;
-    land_widget_layout_set_grid(base, 1, n, 0);
-    land_widget_layout_set_grid_position(item, 0, n - 1, 0);
+    
+    land_widget_layout_inhibit(base);
+
+    land_widget_layout_set_grid(base, 1, n);
+    land_widget_layout_set_grid_position(item, 0, n - 1);
     land_widget_layout_set_shrinking(item, 1, 1);
-    land_widget_layout_add(base, item, 0);
+    land_widget_layout_add(base, item);
+    
+    land_widget_layout_enable(base);
     // FIXME: since the add method is called from the constructor, the layout
     // is not ready yet, e.g. min-size is not calculated yet
     //land_widget_layout_adjust(base, 1, 1, 1);
@@ -189,10 +196,15 @@ void land_widget_menubar_add(LandWidget *base, LandWidget *item)
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
     land_widget_container_add(base, item);
     int n = container->children->count;
-    land_widget_layout_set_grid(base, n, 1, 0);
-    land_widget_layout_set_grid_position(item, n - 1, 0, 0);
+    
+    land_widget_layout_inhibit(base);
+
+    land_widget_layout_set_grid(base, n, 1);
+    land_widget_layout_set_grid_position(item, n - 1, 0);
     land_widget_layout_set_shrinking(item, 1, 1);
-    land_widget_layout_add(base, item, 0);
+    land_widget_layout_add(base, item);
+    
+    land_widget_layout_enable(base);
     // FIXME: since the add method is called from the constructor, the layout
     // is not ready yet, e.g. min-size is not calculated yet
     //land_widget_layout_adjust(base, 1, 1, 1);
@@ -209,7 +221,7 @@ LandWidget *land_widget_menuitem_new(LandWidget *parent, char const *name,
     land_widget_menubutton_interface_initialize();
     menuitem->menu = parent;
     menuitem->callback = callback;
-    land_widget_button_initialize((LandWidget *)menuitem, parent, name,
+    land_widget_button_initialize((LandWidget *)menuitem, parent, name, NULL,
         menuitem_clicked, 0, 0, 10, 10);
 
     LandWidget *self = LAND_WIDGET(menuitem);
@@ -222,7 +234,7 @@ LandWidget *land_widget_menuitem_new(LandWidget *parent, char const *name,
         
     // FIXME: this is wrong, since we could be added to anything, or even
     // have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1, 1);
+    land_widget_layout_adjust(parent, 1, 1);
 
     return self;
 }
@@ -242,7 +254,7 @@ LandWidget *land_widget_submenuitem_new(LandWidget *parent, char const *name,
 
     // FIXME: this is wrong, since we could be added to anything, or even
     // have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1, 1);
+    land_widget_layout_adjust(parent, 1, 1);
     return button;
 }
 
@@ -253,7 +265,7 @@ LandWidget *land_widget_menu_spacer_new(LandWidget *parent)
 
     // FIXME: this is wrong, since we could be added to anything, or even
     // have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1, 1);
+    land_widget_layout_adjust(parent, 1, 1);
     return button;
 }
 
@@ -265,7 +277,7 @@ void land_widget_menu_mouse_enter(LandWidget *self, LandWidget *focus)
 void land_widget_menu_mouse_leave(LandWidget *self, LandWidget *focus)
 {
     // FIXME: check that this is indeed part of the same menu?
-    if (focus && (focus->vt->id & LAND_WIDGET_ID_MENU))
+    if (focus && (focus->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU)
     {
         return;
     }
@@ -289,7 +301,7 @@ void land_widget_menubutton_mouse_leave(LandWidget *self, LandWidget *focus)
 void land_widget_menubar_mouse_leave(LandWidget *self, LandWidget *focus)
 {
     // FIXME: check that this is indeed part of the same menu?
-    if (focus && (focus->vt->id & LAND_WIDGET_ID_MENU))
+    if (focus && (focus->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU)
     {
         return;
     }

@@ -2,14 +2,15 @@
 
 #include "base.h"
 #include "scrolling.h"
+#include "vbox.h"
 
 typedef struct LandWidgetList LandWidgetList;
 
 struct LandWidgetList
 {
-    LandWidgetContainer super;
-    int columns;
-    int disable_updates : 1;
+    LandWidgetVBox super;
+    /* If set, multiple items can get selected. */
+    unsigned int multi_select;
 };
 
 #define LAND_WIDGET_LIST(widget) ((LandWidgetList *) \
@@ -20,7 +21,8 @@ struct LandWidgetList
 #include "land.h"
 #include "list.h"
 
-LandWidgetInterface *land_widget_list_interface = NULL;
+LandWidgetInterface *land_widget_list_interface;
+LandWidgetInterface *land_widget_listitem_interface;
 
 /* Call this before adding *many* items to the list, then call
  * land_widget_list_update when done. This can speed things up, since there is
@@ -29,57 +31,27 @@ LandWidgetInterface *land_widget_list_interface = NULL;
 
 void land_widget_list_disable_updates(LandWidget *base)
 {
-    LAND_WIDGET_LIST(base)->disable_updates = 1;
+    land_widget_vbox_disable_updates(base);
 }
 
 void land_widget_list_update(LandWidget *base)
 {
-    LAND_WIDGET_LIST(base)->disable_updates = 0;
-    land_widget_layout_adjust(base, 1, 1, 1);
+    land_widget_vbox_update(base);
 }
-
-void land_widget_list_add(LandWidget *base, LandWidget *add)
-{
-    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
-    LandWidgetList *list = LAND_WIDGET_LIST(base);
-
-    land_widget_container_add(base, add);
-    
-    int n = container->children->count;
-    int rows = (n + list->columns - 1) / list->columns;
-    int row = rows - 1;
-    int column = n - row * list->columns - 1;
-
-    land_widget_layout_set_grid_position(add, column, row, 0);
-    land_widget_layout_set_grid(base, list->columns, n, 0);
-    
-    land_widget_layout_set_shrinking(add, 0, 1);
-    land_widget_layout_add(base, add, 0);
-
-    if (!list->disable_updates)
-    {
-        land_widget_list_update(base);
-    }
-}
-
-
 
 void land_widget_list_set_columns(LandWidget *base, int n)
 {
-    LAND_WIDGET_LIST(base)->columns = n;
+    land_widget_vbox_set_columns(base, n);
 }
 
-void land_widget_list_initialize(LandWidgetList *self, LandWidget *parent,
+void land_widget_list_initialize(LandWidget *base, LandWidget *parent,
     int x, int y, int w, int h)
 {
     land_widget_list_interface_initialize();
 
-    LandWidgetContainer *super = &self->super;
-    land_widget_container_initialize(super, parent, x, y, w, h);
-    LandWidget *base = &super->super;
+    land_widget_vbox_initialize(base, parent, x, y, w, h);
     base->vt = land_widget_list_interface;
-    self->columns = 1;
-   
+
     land_widget_theme_layout_border(base);
 }
 
@@ -91,17 +63,59 @@ LandWidget *land_widget_list_new(LandWidget *parent, int x, int y, int w, int h)
 {
     LandWidgetList *self;
     land_alloc(self);
-    land_widget_list_initialize(self, parent, x, y, w, h);
+    LandWidget *widget = (LandWidget *)self;
+    land_widget_list_initialize(widget, parent, x, y, w, h);
 
-    return LAND_WIDGET(self);
+    return widget;
+}
+
+LandWidget *land_widget_listitem_new(LandWidget *parent,
+    char const *text, void (*clicked)(LandWidget *self),
+    int x, int y, int w, int h)
+{
+    LandWidget *self = land_widget_button_new(parent, text, clicked,
+        x, y, w, h);
+    land_widget_listitem_interface_initialize();
+    self->vt = land_widget_listitem_interface;
+    land_widget_theme_layout_border(self);
+    land_widget_layout_adjust(parent, 1, 1);
+    return self;
 }
 
 void land_widget_list_interface_initialize(void)
 {
     if (land_widget_list_interface) return;
 
+    land_widget_vbox_interface_initialize();
     land_widget_list_interface = land_widget_copy_interface(
-        land_widget_container_interface, "list");
+        land_widget_vbox_interface, "list");
     land_widget_list_interface->id |= LAND_WIDGET_ID_LIST;
-    land_widget_list_interface->add = land_widget_list_add;
+}
+
+void land_widget_listitem_interface_initialize(void)
+{
+    if (land_widget_listitem_interface) return;
+    land_widget_vbox_interface_initialize();
+
+    land_widget_listitem_interface = land_widget_copy_interface(
+        land_widget_button_interface, "listitem");
+    land_widget_listitem_interface->id |= LAND_WIDGET_ID_LISTITEM;
+}
+
+/* Given a list, this returns an array of all the selected children. The caller
+ * takes ownership of the array and is responsible for destroying it with
+ * land_array_destroy after use.
+ */
+LandArray *land_widget_list_get_selected_items(LandWidget *self)
+{
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self);
+    LandArray *array = land_array_new();
+    LandListItem *item;
+    for (item = container->children->first; item; item = item->next)
+    {
+        LandWidget *child = item->data;
+        if (child->selected)
+            land_array_add_data(&array, child);
+    }
+    return array;
 }

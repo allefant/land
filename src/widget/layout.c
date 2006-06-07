@@ -7,30 +7,37 @@
 
 #include "widget/layout.h"
 
-void land_widget_layout_set_grid(LandWidget *self, int columns, int rows,
-    int update)
+void land_widget_layout_inhibit(LandWidget *self)
+{
+    self->no_layout = 1;
+}
+
+void land_widget_layout_enable(LandWidget *self)
+{
+    self->no_layout = 0;
+}
+
+void land_widget_layout_set_grid(LandWidget *self, int columns, int rows)
 {
     self->box.rows = rows;
     self->box.cols = columns;
-    if (update)
+    if (!self->no_layout)
         gul_layout_changed(&self->box);
 }
 
-void land_widget_layout_set_grid_position(LandWidget *self, int column, int row,
-    int update)
+void land_widget_layout_set_grid_position(LandWidget *self, int column, int row)
 {
     self->box.col = column;
     self->box.row = row;
-    if (self->parent && update)
+    if (self->parent && !self->parent->no_layout)
         gul_layout_changed(&self->parent->box);
 }
 
-void land_widget_layout_set_grid_extra(LandWidget *self, int columns, int rows,
-    int update)
+void land_widget_layout_set_grid_extra(LandWidget *self, int columns, int rows)
 {
     self->box.extra_cols = columns;
     self->box.extra_rows = rows;
-    if (self->parent && update)
+    if (self->parent && !self->parent->no_layout)
         gul_layout_changed(&self->parent->box);
 }
 
@@ -38,6 +45,14 @@ void land_widget_layout_set_minimum_size(LandWidget *self, int w, int h)
 {
     self->box.min_width = w;
     self->box.min_height = h;
+    if (self->box.current_min_width < w)
+        self->box.current_min_width = w;
+    if (self->box.current_min_height < 0)
+        self->box.current_min_height = h;
+    if (self->box.w < w)
+        self->box.w = w;
+    if (self->box.h < h)
+        self->box.h = h;
 }
 
 void land_widget_layout_set_shrinking(LandWidget *self, int x, int y)
@@ -66,22 +81,22 @@ void land_widget_layout_set_border(LandWidget *self, int l, int t, int r, int b,
     self->box.vgap = vgap;
 }
 
-void land_widget_layout_add(LandWidget *parent, LandWidget *child, int update)
+void land_widget_layout_add(LandWidget *parent, LandWidget *child)
 {
-    gul_remove_child(&parent->box, &child->box, update);
-    gul_attach_child(&parent->box, &child->box, update);
+    gul_remove_child(&parent->box, &child->box, !parent->no_layout);
+    gul_attach_child(&parent->box, &child->box, !parent->no_layout);
 }
 
-int land_widget_layout(LandWidget *self, int update)
+int land_widget_layout(LandWidget *self)
 {
-    if (update)
+    if (!self->no_layout)
         gul_layout_changed(&self->box);
     return gul_box_fit_children(&self->box, 0, 0);
 }
 
-int land_widget_layout_adjust(LandWidget *self, int x, int y, int update)
+int land_widget_layout_adjust(LandWidget *self, int x, int y)
 {
-    if (update)
+    if (!self->no_layout)
         gul_layout_changed(&self->box);
     return gul_box_fit_children(&self->box, x, y);
 }
