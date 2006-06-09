@@ -24,6 +24,7 @@
 #include "log.h"
 #include "color.h"
 #include "data.h"
+#include "memory.h"
 
 #include "widget.h"
 

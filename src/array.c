@@ -2,9 +2,6 @@
 
 #include <stdlib.h>
 
-#define land_method(_returntype, _name, _params) _returntype (*_name)_params
-#define land_call_method(self, method, params) if (self->vt->method) self->vt->method params
-
 typedef struct LandArray LandArray;
 struct LandArray
 {
@@ -17,6 +14,13 @@ struct LandArray
 #include "array.h"
 #include "memory.h"
 
+LandArray *land_array_new(void)
+{
+    LandArray *self;
+    land_alloc(self);
+    return self;
+}
+
 /* Given a pointer to a (possibly NULL valued) array pointer, create a new node
  * with the given data, and add to the (possibly modified) array.
  */
@@ -25,7 +29,7 @@ void land_array_add_data(LandArray **array, void *data)
     LandArray *self = *array;
     if (!self)
     {
-        land_alloc(self)
+        self = land_array_new();
     }
     self->data = land_realloc(self->data, (self->count + 1) * sizeof *self->data);
     self->data[self->count] = data;

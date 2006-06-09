@@ -27,6 +27,11 @@ LandView *land_view_new(int x, int y, int w, int h)
     return self;
 }
 
+void land_view_destroy(LandView *self)
+{
+    land_free(self);
+}
+
 void land_view_scroll_to(LandView *self, float x, float y)
 {
     self->scroll_x = x;

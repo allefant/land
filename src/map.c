@@ -56,3 +56,9 @@ void land_map_del(LandMap *self)
     }
     land_free(self);
 }
+
+void land_map_destroy(LandMap *self)
+{
+    land_map_del(self);
+}
+

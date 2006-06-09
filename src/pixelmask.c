@@ -150,6 +150,16 @@ static LandPixelMask *pixelmask_create(BITMAP *bmp, int n, int threshold)
     return mask;
 }
 
+static void pixelmask_destroy(LandPixelMask *mask)
+{
+    int j;
+    for (j = 0; j < mask->n; j++)
+    {
+        land_free(mask->rotation[j]);
+    }
+    land_free(mask);
+}
+
 static int mask_get_rotation_frame(LandPixelMask *mask, float angle)
 {
     float r = mask->n * angle / (2 * AL_PI);
@@ -303,6 +313,12 @@ void land_image_create_pixelmasks(LandImage *self, int n, int threshold)
     self->mask->x = self->l;
     self->mask->y = self->t;
     destroy_bitmap(tmp);
+}
+
+void land_image_destroy_pixelmasks(LandImage *self)
+{
+    if (self->mask)
+        pixelmask_destroy(self->mask);
 }
 
 /* Returns 1 if non-transparent pixels overlap, 0 otherwise. */

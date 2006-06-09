@@ -10,6 +10,7 @@ typedef struct LandImage LandImage;
 typedef struct LandImageInterface LandImageInterface;
 
 #include "pixelmask.h"
+#include "util.h"
 
 #define LAND_SUBIMAGE 1
 
@@ -133,8 +134,10 @@ LandImage *land_image_new(int w, int h)
 
 void land_image_del(LandImage *self)
 {
-    if (self->bitmap != self->memory_cache)
-        destroy_bitmap(self->bitmap);
+    //FIXME!
+    //if (self->bitmap != self->memory_cache)
+    //    destroy_bitmap(self->bitmap);
+    land_image_destroy_pixelmasks(self);
     destroy_bitmap(self->memory_cache);
     if (self->name) land_free(self->name);
     if (self->filename && self->filename != self->name) land_free(self->filename);

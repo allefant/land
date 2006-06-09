@@ -15,5 +15,8 @@
 #include "widget/button.h"
 #include "widget/panel.h"
 #include "widget/menu.h"
+#include "widget/vbox.h"
+#include "widget/hbox.h"
+#include "widget/book.h"
 
 #endif /* _PROTOTYPE_ */

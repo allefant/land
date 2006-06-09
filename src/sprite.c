@@ -42,6 +42,11 @@ struct LandSpriteType
     void (*draw)(LandSprite *self, LandView *view);
     /* Sprite-sprite collision detection. */
     int (*overlap)(LandSprite *self, LandSprite *with);
+    /* How to destroy sprites of this type. */
+    void (*destroy)(LandSprite *self);
+    
+    /* How to destroy the type. */
+    void (*destroy_type)(LandSpriteType *self);
 
     /* Identification of this sprite type. */
     char const *name;
@@ -215,6 +220,12 @@ LandSprite *land_sprite_with_image_new(LandSpriteType *type, LandImage *image)
     return LAND_SPRITE(self);
 }
 
+
+void land_sprite_image_destroy(LandSprite *self)
+{
+    
+}
+
 void land_sprite_animated_initialize(LandSpriteAnimated *self,
     LandSpriteType *type)
 {
@@ -235,11 +246,17 @@ LandSprite *land_sprite_animated_new(LandSpriteType *type)
     return LAND_SPRITE(self);
 }
 
+void land_sprite_animated_destroy(LandSprite *sprite)
+{
+
+}
+
 /* Destroys a sprite. This will not remove its reference from a grid in case it
  * is inside one - so only use this if you know what you are doing.
  */
 void land_sprite_del(LandSprite *self)
 {
+    if (self->type->destroy) self->type->destroy(self);
     land_free(self);
 }
 
@@ -531,6 +548,12 @@ LandSpriteType *land_spritetype_new(void)
     return self;
 }
 
+void land_spritetype_destroy(LandSpriteType *self)
+{
+    if (self->destroy_type) self->destroy_type(self);
+    land_free(self);
+}
+
 LandSpriteTypeWithImage *land_spritetype_with_image_new(void)
 {
     //FIXME TODO XXX
@@ -542,6 +565,7 @@ void land_spritetype_image_initialize(LandSpriteTypeImage *self,
 {
     LAND_SPRITE_TYPE(self)->draw = dummy_image;
     LAND_SPRITE_TYPE(self)->overlap = land_sprite_overlap_pixelperfect;
+    LAND_SPRITE_TYPE(self)->destroy = land_sprite_image_destroy;
     LAND_SPRITE_TYPE(self)->x = image->x - image->l;
     LAND_SPRITE_TYPE(self)->y = image->y - image->t;
     LAND_SPRITE_TYPE(self)->w = image->bitmap->w - image->l - image->r;
@@ -578,7 +602,15 @@ LandSpriteType *land_spritetype_animation_new(LandAnimation *animation,
 
     land_spritetype_image_initialize(LAND_SPRITE_TYPE_IMAGE(self), image);
     LAND_SPRITE_TYPE(self)->draw = dummy_animation;
+    LAND_SPRITE_TYPE(self)->destroy = land_sprite_animated_destroy;
+    LAND_SPRITE_TYPE(self)->destroy_type = land_spritetype_animation_destroy;
     self->animation = animation;
     self->super.super.name = "animation";
     return LAND_SPRITE_TYPE(self);
+}
+
+void land_spritetype_animation_destroy(LandSpriteType *base)
+{
+    LandSpriteTypeAnimation *self = LAND_SPRITE_TYPE_ANIMATION(base);
+    land_animation_destroy(self->animation);
 }

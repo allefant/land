@@ -76,3 +76,8 @@ void land_layer_set_position(LandLayer *self, float x, float y)
     self->x = x;
     self->y = y;
 }
+
+void land_layer_set_grid(LandLayer *self, LandGrid *grid)
+{
+    self->grid = grid;
+}
