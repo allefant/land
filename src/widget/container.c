@@ -9,8 +9,8 @@ typedef struct LandWidgetContainer LandWidgetContainer;
 struct LandWidgetContainer
 {
     LandWidget super;
-    LandList *children;
-    LandWidget *mouse;
+    LandList *children; /* we keep a reference to each child. */
+    LandWidget *mouse; /* we keep a reference to the focus object. */
     LandWidget *keyboard;
 };
 
@@ -29,6 +29,10 @@ LandWidgetInterface *land_widget_container_interface = NULL;
 void land_widget_container_destroy(LandWidget *base)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
+    if (self->mouse)
+    {
+        land_widget_unreference(self->mouse);
+    }
     if (self->children)
     {
         LandListItem *item = self->children->first;
@@ -40,7 +44,7 @@ void land_widget_container_destroy(LandWidget *base)
              * references to it.
              */
             child->parent = NULL;
-            land_widget_unreference(item->data);
+            land_widget_unreference(child);
             item = next;
         }
         land_list_destroy(self->children);
@@ -63,6 +67,7 @@ void land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus)
     }
 }
 
+/* Returns the item/iterator for the given child of the container. */
 LandListItem *land_widget_container_child_item(LandWidget *super, LandWidget *child)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
@@ -192,7 +197,7 @@ void land_widget_container_mouse_tick(LandWidget *super)
             land_widget_reference(mouse);
             mouse->got_mouse = 1;
             land_call_method(mouse, mouse_enter, (mouse, self->mouse));
-            if (!mouse->got_mouse) // refuses docus
+            if (!mouse->got_mouse) // refuses focus
             {
                 land_widget_unreference(mouse);
                 goto focus_done;
@@ -287,6 +292,7 @@ void land_widget_container_interface_initialize(void)
     if (land_widget_container_interface) return;
 
     land_alloc(land_widget_container_interface);
+    land_widget_interface_register(land_widget_container_interface);
     land_widget_container_interface->id = LAND_WIDGET_ID_BASE |
         LAND_WIDGET_ID_CONTAINER;
     land_widget_container_interface->name = "container";

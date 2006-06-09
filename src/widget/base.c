@@ -98,6 +98,8 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 #include "../hash.h"
 #include "gul.h"
 
+/* A widget ID must contain the bit-pattern of its parent's ID. */
+
 #define LAND_WIDGET_ID_BASE         0x00000001
 #define LAND_WIDGET_ID_CONTAINER    0x00000011
 #define LAND_WIDGET_ID_SCROLLING    0x00000111
@@ -106,11 +108,15 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 #define LAND_WIDGET_ID_PANEL        0x00000311
 #define LAND_WIDGET_ID_MENU         0x00000411
 #define LAND_WIDGET_ID_MENUBAR      0x00001411
+#define LAND_WIDGET_ID_BOOK         0x00000511
+#define LAND_WIDGET_ID_HBOX         0x00000611
 #define LAND_WIDGET_ID_BUTTON       0x00000021
 #define LAND_WIDGET_ID_MENUBUTTON   0x00000121
 #define LAND_WIDGET_ID_MENUITEM     0x00000221
 #define LAND_WIDGET_ID_LISTITEM     0x00000321
 #define LAND_WIDGET_ID_SCROLLBAR    0x00000031
+
+#define LAND_WIDGET_ID_USER         0x80000000
 
 struct LandWidgetInterface
 {
@@ -183,7 +189,8 @@ extern LandWidgetInterface *land_widget_base_interface;
 #include "widget/layout.h"
 #include "util.h"
 
-LandWidgetInterface *land_widget_base_interface = NULL;
+LandWidgetInterface *land_widget_base_interface;
+LandArray *land_widget_interfaces;
 
 void *land_widget_check(void const *ptr, int id, char const *file,
     int linenum)
@@ -234,7 +241,8 @@ void land_widget_remove_all_properties(LandWidget *self)
             for (j = 0; j < hash->entries[i]->n; j++)
             {
                 LandWidgetProperty *prop = hash->entries[i][j].data;
-                if (prop->destroy) prop->destroy(prop);
+                if (prop->destroy) prop->destroy(prop->data);
+                land_free(prop);
             }
         }
     }
@@ -259,6 +267,33 @@ void land_widget_base_initialize(LandWidget *self, LandWidget *parent, int x, in
     }
 }
 
+LandWidget *land_widget_base_new(LandWidget *parent, int x, int y, int w, int h)
+{
+    LandWidget *self;
+    land_alloc(self);
+    land_widget_base_initialize(self, parent, x, y, w, h);
+    return self;
+}
+
+void land_widget_interfaces_destroy_all(void)
+{
+    int i;
+    for (i = 0; i < land_widget_interfaces->count; i++)
+    {
+        land_free(land_array_get_nth(land_widget_interfaces, i));
+    }
+    land_array_destroy(land_widget_interfaces);
+}
+
+void land_widget_interface_register(LandWidgetInterface *vt)
+{
+    if (!land_widget_interfaces)
+    {
+        atexit(land_widget_interfaces_destroy_all);
+    }
+    land_array_add_data(&land_widget_interfaces, vt);
+}
+
 LandWidgetInterface *land_widget_copy_interface(LandWidgetInterface *basevt,
     char const *name)
 {
@@ -266,6 +301,9 @@ LandWidgetInterface *land_widget_copy_interface(LandWidgetInterface *basevt,
     land_alloc(vt);
     memcpy(vt, basevt, sizeof *vt);
     vt->name = name;
+
+    land_widget_interface_register(vt);
+
     return vt;
 }
 
@@ -285,6 +323,7 @@ LandWidget *land_widget_new(LandWidget *parent, int x, int y, int w, int h)
 void land_widget_base_destroy(LandWidget *self)
 {
     land_widget_remove_all_properties(self);
+    gul_box_deinitialize(&self->box);
     land_free(self);
 }
 
@@ -293,7 +332,10 @@ static void land_widget_really_destroy(LandWidget *self)
     if (self->vt->destroy)
         self->vt->destroy(self);
     else
+    {
+        land_log_msg("*** widget without destructor?\n");
         land_widget_base_destroy(self);
+    }
 }
 
 void land_widget_unreference(LandWidget *self)
@@ -384,12 +426,6 @@ void land_widget_draw(LandWidget *self)
     }
 }
 
-void land_widget_done(void)
-{
-    if (land_widget_base_interface) land_free(land_widget_base_interface);
-    if (land_widget_container_interface) land_free(land_widget_container_interface);
-}
-
 void land_widget_hide(LandWidget *self)
 {
     if (self->hidden) return;
@@ -409,11 +445,11 @@ void land_widget_unhide(LandWidget *self)
 void land_widget_base_interface_initialize(void)
 {
     if (land_widget_base_interface) return;
-    
-    atexit(land_widget_done);
 
     land_alloc(land_widget_base_interface);
+    land_widget_interface_register(land_widget_base_interface);
     land_widget_base_interface->id = LAND_WIDGET_ID_BASE;
     land_widget_base_interface->name = "base";
     land_widget_base_interface->size = land_widget_base_size;
+    land_widget_base_interface->destroy = land_widget_base_destroy;
 }

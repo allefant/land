@@ -117,8 +117,14 @@ GUL_BOX *gul_box_new(void)
     return self;
 }
 
+void gul_box_deinitialize(GUL_BOX *self)
+{
+    if (self->lookup_grid) land_free(self->lookup_grid);
+}
+
 void gul_box_del(GUL_BOX * self)
 {
+    gul_box_deinitialize(self);
     land_free(self);
 }
 
@@ -152,21 +158,21 @@ static void update_lookup_grid(GUL_BOX *self)
     if (self->lookup_grid) land_free(self->lookup_grid);
     self->lookup_grid = land_calloc(self->cols * self->rows * sizeof *self->lookup_grid);
     
+    /* The lookup grid initially is filled with 0. Now all non-hidden boxes
+     * fill in which grid cells they occupy.
+     */
     GUL_BOX *c = self->children;
-    while (c)
+    for (; c; c = c->next)
     {
         int i, j;
+        if (c->flags & GUL_HIDDEN) continue;
         for (i = c->col; i <= c->col + c->extra_cols; i++)
         {
             for (j = c->row; j <= c->row + c->extra_rows; j++)
             {
-                if (!(c->flags & GUL_HIDDEN))
-                    self->lookup_grid[i + j * self->cols] = c;
-                else
-                    self->lookup_grid[i + j * self->cols] = NULL;
+                self->lookup_grid[i + j * self->cols] = c;
             }
         }
-        c = c->next;
     }
 }
 

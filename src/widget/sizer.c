@@ -70,8 +70,8 @@ void land_widget_sizer_interface_initialize(void)
 {
     if (land_widget_sizer_interface) return;
 
-    land_alloc(land_widget_sizer_interface);
-    land_widget_sizer_interface->name = "sizer";
+    land_widget_sizer_interface = land_widget_copy_interface(
+        land_widget_base_interface, "sizer");
     land_widget_sizer_interface->draw = land_widget_sizer_draw;
     land_widget_sizer_interface->mouse_tick = land_widget_sizer_mouse_tick;
 }
