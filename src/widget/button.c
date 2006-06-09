@@ -142,6 +142,14 @@ LandWidget *land_widget_button_new_with_image(LandWidget *parent,
     return self;
 }
 
+void land_widget_button_set_text(LandWidget *base, char const *text)
+{
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base);
+    land_free(button->text);
+    button->text = land_strdup(text);
+    land_widget_theme_set_minimum_size_for_text(base, text);
+}
+
 void land_widget_button_get_inner_size(LandWidget *self, float *w, float *h)
 {
 }
