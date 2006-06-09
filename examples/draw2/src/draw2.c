@@ -10,7 +10,7 @@ Game *game;
 
 static void game_init(LandRunner *self)
 {
-    game = calloc(1, sizeof *game);
+    land_alloc(game);
 }
 
 static void game_tick(LandRunner *self)
