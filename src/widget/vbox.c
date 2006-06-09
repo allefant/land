@@ -55,7 +55,7 @@ void land_widget_vbox_add(LandWidget *base, LandWidget *add)
     land_widget_layout_inhibit(base);
 
     land_widget_layout_set_grid_position(add, column, row);
-    land_widget_layout_set_grid(base, vbox->columns, n);
+    land_widget_layout_set_grid(base, vbox->columns, rows);
 
     land_widget_layout_set_shrinking(add, 0, 1);
     land_widget_layout_add(base, add);
