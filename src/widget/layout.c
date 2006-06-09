@@ -83,7 +83,10 @@ void land_widget_layout_set_border(LandWidget *self, int l, int t, int r, int b,
 
 void land_widget_layout_add(LandWidget *parent, LandWidget *child)
 {
-    gul_remove_child(&parent->box, &child->box, !parent->no_layout);
+    //gul_remove_child(&parent->box, &child->box, !parent->no_layout);
+    //TODO: Clarify that having multiple children on the same spot is
+    //allowed. E.g. LandBook does this for its pages.
+
     gul_attach_child(&parent->box, &child->box, !parent->no_layout);
 }
 
