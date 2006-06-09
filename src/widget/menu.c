@@ -172,6 +172,14 @@ LandWidget *land_widget_menubutton_new(LandWidget *parent, char const *name,
     return LAND_WIDGET(self);
 }
 
+void land_widget_menubutton_destroy(LandWidget *self)
+{
+    LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self);
+    if (menubutton->submenu)
+        land_widget_unreference(menubutton->submenu);
+    land_widget_button_destroy(self);
+}
+
 void land_widget_menu_add(LandWidget *base, LandWidget *item)
 {
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base);
@@ -354,6 +362,7 @@ void land_widget_menubutton_interface_initialize(void)
     land_widget_menubutton_interface->id |= LAND_WIDGET_ID_MENUBUTTON;
     land_widget_menubutton_interface->mouse_enter = land_widget_menubutton_mouse_enter;
     land_widget_menubutton_interface->mouse_leave = land_widget_menubutton_mouse_leave;
+    land_widget_menubutton_interface->destroy = land_widget_menubutton_destroy;
     
     land_widget_menuitem_interface = land_widget_copy_interface(
         land_widget_button_interface, "menuitem");
