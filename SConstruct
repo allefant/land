@@ -101,11 +101,11 @@ env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 
 if debug:
-    env.Append(CCFLAGS = "-g")
+    env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
 elif profile:
-    env.Append(CCFLAGS = "-g -pg -fprofile-arcs -ftest-coverage")
+    env.Append(CCFLAGS = "-g -pg -fprofile-arcs")
     env.Append(LINKFLAGS = "-pg")
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
