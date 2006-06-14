@@ -487,6 +487,7 @@ static BITMAP *optimize_bitmap(BITMAP *bmp, int *x, int *y)
 
 void land_image_optimize(LandImage *self)
 {
+    printf("FIXME: land_image_optimize\n");
     int offx = 0, offy = 0;
     BITMAP *opt = optimize_bitmap(self->memory_cache, &offx, &offy);
     // FIXME: self->bitmap
