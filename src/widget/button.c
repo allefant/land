@@ -7,7 +7,8 @@ typedef struct LandWidgetButton LandWidgetButton;
 struct LandWidgetButton
 {
     LandWidget super;
-    unsigned int align : 2; /* 0 = left, 1 = right, 2 = center */
+    unsigned int xalign : 2; /* 0 = left, 1 = right, 2 = center */
+    unsigned int yalign : 2; /* 0 = top, 1 = bottom, 2 = center */
     LandImage *image;
     char *text;
     void (*clicked)(LandWidget *self);
@@ -41,13 +42,34 @@ void land_widget_button_draw(LandWidget *base)
     }
 
     if (self->image)
-        land_image_draw(self->image, base->box.x + base->box.il,
-        base->box.y + base->box.it);
+    {
+        float x = base->box.x + base->box.il;
+        switch(self->xalign)
+        {
+            case 1: x = base->box.x + base->box.w - base->box.ir; break;
+            case 2: x = base->box.x +
+                (base->box.w - base->box.il - base->box.ir) * 0.5; break;
+        }
+        float y = base->box.y + base->box.it;
+        switch(self->yalign)
+        {
+            case 1: y = base->box.y + base->box.h - base->box.ib; break;
+            case 2: y = base->box.y +
+                (base->box.h - base->box.it - base->box.ib) * 0.5; break;
+        }
+        land_image_draw(self->image, x, y);
+    }
     if (self->text)
     {
         int x, y = base->box.y + base->box.it;
         land_widget_theme_color(base);
-        switch (self->align)
+        int th = land_font_height(land_font_current());
+        switch (self->yalign)
+        {
+            case 1: y -= th; break;
+            case 2: y -= th / 2; break;
+        }
+        switch (self->xalign)
         {
             case 0:
                 x = base->box.x + base->box.il;
@@ -148,6 +170,13 @@ void land_widget_button_set_text(LandWidget *base, char const *text)
     land_free(button->text);
     button->text = land_strdup(text);
     land_widget_theme_set_minimum_size_for_text(base, text);
+}
+
+void land_widget_button_align(LandWidget *self, int x, int y)
+{
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(self);
+    button->xalign = x;
+    button->yalign = y;
 }
 
 void land_widget_button_get_inner_size(LandWidget *self, float *w, float *h)
