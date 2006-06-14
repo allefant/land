@@ -72,12 +72,18 @@ LandWidget *land_widget_scrolling_get_at_pos(LandWidget *super, int x, int y)
 
 void land_widget_scrolling_mouse_tick(LandWidget *super)
 {
+    if (land_mouse_delta_z())
+    {
+        LandWidget *child = land_widget_scrolling_get_child(super);
+        if (!child) return;
+        land_widget_move(child, 0, land_mouse_delta_z() * 64);
+    }
     land_widget_container_mouse_tick(super);
 }
 
 void land_widget_scrolling_tick(LandWidget *super)
 {
-
+    
 }
 
 void land_widget_scrolling_add(LandWidget *widget, LandWidget *add)
