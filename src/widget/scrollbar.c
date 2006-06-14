@@ -27,6 +27,10 @@ struct LandWidgetScrollbar
 LandWidgetInterface *land_widget_scrollbar_vertical_interface = NULL;
 LandWidgetInterface *land_widget_scrollbar_horizontal_interface = NULL;
 
+/* If set is not 0, then the target window is scrolle according to the scrollbar
+ * position.
+ * If set is 0, then the min/max/range/pos parameters are updated.
+ */
 static void scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, int *range, int *pos)
 {
     LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self);
@@ -36,8 +40,10 @@ static void scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, in
         LandWidget *viewport = target->parent;
         if (set)
         {
-                int ty = viewport->box.y + viewport->box.it - *pos;
-                land_widget_move(target, 0, ty - target->box.y);
+            int ty = viewport->box.y + viewport->box.it;
+            if (target->box.y > ty) ty = target->box.y;
+            ty -= *pos;
+            land_widget_move(target, 0, ty - target->box.y);
         }
         else
         {
@@ -45,8 +51,8 @@ static void scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, in
             *max = target->box.h - 1;
             *range = viewport->box.h - viewport->box.it - viewport->box.ib;
             *pos = viewport->box.y + viewport->box.it - target->box.y;
-            if (*pos + *range - 1 > *max)
-                *max = *pos + *range - 1;
+            if (*pos < *min) *min = *pos;
+            if (*pos + *range - 1 > *max) *max = *pos + *range - 1;
         }
     }
 }
@@ -60,8 +66,10 @@ static void scroll_horizontal_cb(LandWidget *self, int set, int *min, int *max, 
         LandWidget *viewport = target->parent;
         if (set)
         {
-                int tx = viewport->box.x + viewport->box.il - *pos;
-                land_widget_move(target, tx - target->box.x, 0);
+            int tx = viewport->box.x + viewport->box.il;
+            if (target->box.x > tx) tx = target->box.x;
+            tx -= *pos;
+            land_widget_move(target, tx - target->box.x, 0);
         }
         else
         {
@@ -69,12 +77,28 @@ static void scroll_horizontal_cb(LandWidget *self, int set, int *min, int *max, 
             *max = target->box.w - 1;
             *range = viewport->box.w - viewport->box.il - viewport->box.ir;
             *pos = viewport->box.x + viewport->box.il - target->box.x;
-            if (*pos + *range - 1 > *max)
-                *max = *pos + *range - 1;
+            if (*pos < *min) *min = *pos;
+            if (*pos + *range - 1 > *max) *max = *pos + *range - 1;
         }
     }
 }
 
+static int get_size(LandWidget *super)
+{
+    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super);
+    if (self->vertical)
+    {
+        return super->box.h;
+    }
+    else
+    {
+        return super->box.w;
+    }
+}
+
+/* If set is not 0, then the target is updated from the scrollbar. Else the
+ * scrollbar adjusts to the target's scrolled position.
+ */
 void land_widget_scrollbar_update(LandWidget *super, int set)
 {
     LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super);
@@ -181,8 +205,21 @@ void land_widget_scrollbar_mouse_tick(LandWidget *super)
             newx = l;
         if (newy < t)
             newy = t;
-        land_widget_move(super, newx - super->box.x, newy - super->box.y);
+        int dx = newx - super->box.x;
+        int dy = newy - super->box.y;
+        land_widget_move(super, dx, dy);
+        int old_size = get_size(super);
         land_widget_scrollbar_update(super, 1);
+
+        /* layout of target may change by scrolling (e.g. when scrolled outside normal range) */
+        land_widget_scrollbar_update(super, 0);
+        int new_size = get_size(super);
+        /* If we scroll down, and layout changed, anchor to bottom. */
+        if (new_size > old_size)
+        {
+            if (self->vertical && dy > 0) self->drag_y += new_size - old_size;
+            if (!self->vertical && dx > 0) self->drag_x += new_size - old_size;
+        }
     }
 }
 
