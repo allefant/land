@@ -1,6 +1,6 @@
 #ifdef _PROTOTYPE_
 
-typedef struct GUL_BOX GUL_BOX;
+typedef struct LandLayoutBox LandLayoutBox;
 typedef enum GUL_GROW_TYPE GUL_GROW_TYPE;
 typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE;
 
@@ -35,22 +35,22 @@ typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE;
 
 #define GUL_HIDDEN 65536
 
-struct GUL_BOX
+struct LandLayoutBox
 {
     int x, y, w, h; /* outer box */
 
     int il, it, ir, ib; /* offsets to inner box */
     int hgap, vgap; /* space between children */
 
-    GUL_BOX *parent;            /* Our parent. */
+    LandLayoutBox *parent;            /* Our parent. */
 
-    GUL_BOX *sibling;           /* Sibling using the same space in front of us, like a layer. */
+    LandLayoutBox *sibling;           /* Sibling using the same space in front of us, like a layer. */
 
     /* Child boxes. */
-    GUL_BOX *children;          /* Linked list head. */
-    GUL_BOX *next;              /* Linked list pointer. */
+    LandLayoutBox *children;          /* Linked list head. */
+    LandLayoutBox *next;              /* Linked list pointer. */
 
-    GUL_BOX **lookup_grid; /* to speed up locating a child. */
+    LandLayoutBox **lookup_grid; /* to speed up locating a child. */
 
     int cols, rows;             /* How many children? */
 
@@ -102,37 +102,37 @@ void ERR(char const *format, ...)
     //printf("\n");
 }
 
-void gul_box_initialize(GUL_BOX *self)
+void gul_box_initialize(LandLayoutBox *self)
 {
     memset(self, 0, sizeof *self);
     self->min_width = 3;
     self->min_height = 3;
 }
 
-GUL_BOX *gul_box_new(void)
+LandLayoutBox *gul_box_new(void)
 {
-    GUL_BOX *self = land_malloc(sizeof *self);
+    LandLayoutBox *self = land_malloc(sizeof *self);
 
     gul_box_initialize(self);
     return self;
 }
 
-void gul_box_deinitialize(GUL_BOX *self)
+void gul_box_deinitialize(LandLayoutBox *self)
 {
     if (self->lookup_grid) land_free(self->lookup_grid);
 }
 
-void gul_box_del(GUL_BOX * self)
+void gul_box_del(LandLayoutBox * self)
 {
     gul_box_deinitialize(self);
     land_free(self);
 }
 
 /* Find box which contains the specified grid position. */
-/*static GUL_BOX *find_box_in_grid(GUL_BOX *self, int col, int row)
+/*static LandLayoutBox *find_box_in_grid(LandLayoutBox *self, int col, int row)
 {
     assert(col < self->cols && row < self->rows);
-    GUL_BOX *c = self->children;
+    LandLayoutBox *c = self->children;
 
     while (c)
     {
@@ -146,14 +146,14 @@ void gul_box_del(GUL_BOX * self)
 }*/
 
 /* Same as find_box_in_grid, but O(c) instead of O(n). */
-static GUL_BOX *lookup_box_in_grid(GUL_BOX *self, int col, int row)
+static LandLayoutBox *lookup_box_in_grid(LandLayoutBox *self, int col, int row)
 {
     assert(col < self->cols && row < self->rows);
 
     return self->lookup_grid[row * self->cols + col];
 }
 
-static void update_lookup_grid(GUL_BOX *self)
+static void update_lookup_grid(LandLayoutBox *self)
 {
     if (self->lookup_grid) land_free(self->lookup_grid);
     self->lookup_grid = land_calloc(self->cols * self->rows * sizeof *self->lookup_grid);
@@ -161,7 +161,7 @@ static void update_lookup_grid(GUL_BOX *self)
     /* The lookup grid initially is filled with 0. Now all non-hidden boxes
      * fill in which grid cells they occupy.
      */
-    GUL_BOX *c = self->children;
+    LandLayoutBox *c = self->children;
     for (; c; c = c->next)
     {
         int i, j;
@@ -179,20 +179,20 @@ static void update_lookup_grid(GUL_BOX *self)
 /* TODO: provide functions for changing grid-size and cell-position, and to
  * optimized lookup of the lookup table in all cases.
  */
-void gul_layout_changed(GUL_BOX *self)
+void gul_layout_changed(LandLayoutBox *self)
 {
     update_lookup_grid(self);
 }
 
 /* Get minimum height of the specified row. */
-static int row_min_height(GUL_BOX * self, int row)
+static int row_min_height(LandLayoutBox * self, int row)
 {
     int i;
     int v = 0;
 
     for (i = 0; i < self->cols; i++)
     {
-        GUL_BOX *c = lookup_box_in_grid(self, i, row);
+        LandLayoutBox *c = lookup_box_in_grid(self, i, row);
 
         if (c && c->current_min_height > v)
             v = c->current_min_height;
@@ -201,14 +201,14 @@ static int row_min_height(GUL_BOX * self, int row)
 }
 
 /* Get minimum width of the specified column. */
-static int column_min_width(GUL_BOX * self, int col)
+static int column_min_width(LandLayoutBox * self, int col)
 {
     int i;
     int v = 0;
 
     for (i = 0; i < self->rows; i++)
     {
-        GUL_BOX *c = lookup_box_in_grid(self, col, i);
+        LandLayoutBox *c = lookup_box_in_grid(self, col, i);
     
         if (c && c->current_min_width > v)
             v = c->current_min_width;
@@ -217,13 +217,13 @@ static int column_min_width(GUL_BOX * self, int col)
 }
 
 /* Check if a column is expanding (at least one cell). */
-static int is_column_expanding(GUL_BOX * self, int col)
+static int is_column_expanding(LandLayoutBox * self, int col)
 {
     int i;
 
     for (i = 0; i < self->rows; i++)
     {
-        GUL_BOX *c = lookup_box_in_grid(self, col, i);
+        LandLayoutBox *c = lookup_box_in_grid(self, col, i);
 
         if (c && !(c->flags & GUL_SHRINK_X))
             return 1;
@@ -232,13 +232,13 @@ static int is_column_expanding(GUL_BOX * self, int col)
 }
 
 /* Check if a row is expanding (at least one cell). */
-static int is_row_expanding(GUL_BOX * self, int row)
+static int is_row_expanding(LandLayoutBox * self, int row)
 {
     int i;
 
     for (i = 0; i < self->cols; i++)
     {
-        GUL_BOX *c = lookup_box_in_grid(self, i, row);
+        LandLayoutBox *c = lookup_box_in_grid(self, i, row);
 
         if (c && !(c->flags & GUL_SHRINK_Y))
             return 1;
@@ -247,7 +247,7 @@ static int is_row_expanding(GUL_BOX * self, int row)
 }
 
 /* Count number of expanding columns. */
-static int expanding_columns(GUL_BOX * self)
+static int expanding_columns(LandLayoutBox * self)
 {
     int i;
     int v = 0;
@@ -261,7 +261,7 @@ static int expanding_columns(GUL_BOX * self)
 }
 
 /* Count number of expanding rows. */
-static int expanding_rows(GUL_BOX * self)
+static int expanding_rows(LandLayoutBox * self)
 {
     int i;
     int v = 0;
@@ -275,7 +275,7 @@ static int expanding_rows(GUL_BOX * self)
 }
 
 /* Get minimum (outer) height so all children can possibly fit. */
-static int min_height(GUL_BOX * self)
+static int min_height(LandLayoutBox * self)
 {
     int i;
     int v = 0;
@@ -291,7 +291,7 @@ static int min_height(GUL_BOX * self)
 }
 
 /* Get minimum (outer) width so all children can possibly fit. */
-static int min_width(GUL_BOX * self)
+static int min_width(LandLayoutBox * self)
 {
     int i;
     int v = 0;
@@ -306,9 +306,9 @@ static int min_width(GUL_BOX * self)
     return v;
 }
 
-void gul_attach_child(GUL_BOX *self, GUL_BOX *att, int update)
+void gul_attach_child(LandLayoutBox *self, LandLayoutBox *att, int update)
 {
-    GUL_BOX *c;
+    LandLayoutBox *c;
 
     for (c = self->children; c && c->next; c = c->next);
     if (c)
@@ -321,9 +321,9 @@ void gul_attach_child(GUL_BOX *self, GUL_BOX *att, int update)
         update_lookup_grid(self);
 }
 
-void gul_remove_child(GUL_BOX * self, GUL_BOX * rem, int update)
+void gul_remove_child(LandLayoutBox * self, LandLayoutBox * rem, int update)
 {
-    GUL_BOX *c, *p = NULL;
+    LandLayoutBox *c, *p = NULL;
 
     for (c = self->children; c; c = c->next)
     {
@@ -345,7 +345,7 @@ void gul_remove_child(GUL_BOX * self, GUL_BOX * rem, int update)
     }
 }
 
-void gul_box_replace_child(GUL_BOX * self, GUL_BOX * child, GUL_BOX * with)
+void gul_box_replace_child(LandLayoutBox * self, LandLayoutBox * child, LandLayoutBox * with)
 {
     gul_remove_child(self, child, 0);
     with->col = child->col;
@@ -362,9 +362,9 @@ void gul_box_replace_child(GUL_BOX * self, GUL_BOX * child, GUL_BOX * with)
 /*
  *
  */
-static void gul_box_bottom_up(GUL_BOX * self)
+static void gul_box_bottom_up(LandLayoutBox * self)
 {
-    GUL_BOX *c;
+    LandLayoutBox *c;
     if (self->flags & GUL_HIDDEN) return;
 
     for (c = self->children; c; c = c->next)
@@ -391,7 +391,7 @@ static void gul_box_bottom_up(GUL_BOX * self)
  * 2 - too small height
  * 3 - too small width as well as height
  */
-static int gul_box_top_down(GUL_BOX * self)
+static int gul_box_top_down(LandLayoutBox * self)
 {
     if (self->flags & GUL_HIDDEN) return 0;
     int r = 0;
@@ -465,7 +465,7 @@ static int gul_box_top_down(GUL_BOX * self)
         /* Place all rows in the column accordingly */
         for (j = 0; j < self->rows; j++)
         {
-            GUL_BOX *c = lookup_box_in_grid(self, i, j);
+            LandLayoutBox *c = lookup_box_in_grid(self, i, j);
 
             if (c && c->row == j)
                 /* Multi-row cells already were handled. */
@@ -516,7 +516,7 @@ static int gul_box_top_down(GUL_BOX * self)
         /* Place all columns in the row accordingly. */
         for (i = 0; i < self->cols; i++)
         {
-            GUL_BOX *c = lookup_box_in_grid(self, i, j);
+            LandLayoutBox *c = lookup_box_in_grid(self, i, j);
 
             if (c && c->col == i)
                 /* Multi-column cells already were handled. */
@@ -535,7 +535,7 @@ static int gul_box_top_down(GUL_BOX * self)
     }
     D(printf("\n");)
 
-    GUL_BOX *c;
+    LandLayoutBox *c;
 
     for (c = self->children; c; c = c->next)
     {
@@ -547,7 +547,7 @@ static int gul_box_top_down(GUL_BOX * self)
 /* Given a box, (recursively) fit its children into it. If adjust is 1, then
  * the box changes its size to the minimum size for the children to fit.
  */
-int gul_box_fit_children(GUL_BOX * self, int adjustx, int adjusty)
+int gul_box_fit_children(LandLayoutBox * self, int adjustx, int adjusty)
 {
     int r = 0;
     D(printf("gul_box_bottom_up\n");)
@@ -561,15 +561,15 @@ int gul_box_fit_children(GUL_BOX * self, int adjustx, int adjusty)
 }
 
 /* Returns the box at a given location. */
-GUL_BOX *gul_child_at(GUL_BOX * self, int x, int y)
+LandLayoutBox *gul_child_at(LandLayoutBox * self, int x, int y)
 {
-    GUL_BOX *c = self->children;
+    LandLayoutBox *c = self->children;
 
     while (c)
     {
         if (x >= c->x && y >= c->y && x < c->x + c->w && y < c->y + c->h)
         {
-            GUL_BOX *cc = gul_child_at(c, x, y);
+            LandLayoutBox *cc = gul_child_at(c, x, y);
 
             if (cc)
                 return cc;
@@ -582,9 +582,9 @@ GUL_BOX *gul_child_at(GUL_BOX * self, int x, int y)
 
 /* Calls a callback for a box and all its siblings. */
 void
-gul_cb(GUL_BOX * self, void (*cb) (GUL_BOX * self, void *data), void *data)
+gul_cb(LandLayoutBox * self, void (*cb) (LandLayoutBox * self, void *data), void *data)
 {
-    GUL_BOX *c = self;
+    LandLayoutBox *c = self;
 
     while (c)
     {

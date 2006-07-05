@@ -110,11 +110,16 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 #define LAND_WIDGET_ID_MENUBAR      0x00001411
 #define LAND_WIDGET_ID_BOOK         0x00000511
 #define LAND_WIDGET_ID_HBOX         0x00000611
+#define LAND_WIDGET_ID_TABBAR       0x00001611
+#define LAND_WIDGET_ID_SPIN         0x00002611
 #define LAND_WIDGET_ID_BUTTON       0x00000021
 #define LAND_WIDGET_ID_MENUBUTTON   0x00000121
 #define LAND_WIDGET_ID_MENUITEM     0x00000221
 #define LAND_WIDGET_ID_LISTITEM     0x00000321
+#define LAND_WIDGET_ID_TAB          0x00000421
+#define LAND_WIDGET_ID_SPINBUTTON   0x00000521
 #define LAND_WIDGET_ID_SCROLLBAR    0x00000031
+#define LAND_WIDGET_ID_EDIT         0x00000041
 
 #define LAND_WIDGET_ID_USER         0x80000000
 
@@ -146,15 +151,23 @@ struct LandWidgetInterface
     void (*destroy)(LandWidget *self);
 };
 
+/* A Land widget.
+ *
+ * Event the most basic widget already is a quite heavy object:
+ * - A widget can have arbitrary string-keyed properties attached to it.
+ * - A widget is reference counted.
+ * - A widget has a theme.
+ */
 struct LandWidget
 {
     LandWidgetInterface *vt;
     LandWidget *parent;
-    GUL_BOX box;
+    LandLayoutBox box;
 
     /* internal state */
     unsigned int got_mouse : 1; /* this widget has the mouse focus */
     unsigned int send_to_top : 1; /* move this widget to top in next tick */
+    unsigned int want_focus : 1; /* give keyboard focus to this widget */
     unsigned int dont_clip : 1; /* children can draw outside this widget */
     unsigned int no_decoration : 1; /* draw nothing except contents */
     unsigned int only_border : 1; /* draw only a border, for performance reasons */
@@ -166,10 +179,11 @@ struct LandWidget
     unsigned int highlighted : 1; /* item with mouse hovering over it */
     unsigned int disabled : 1; /* e.g. button who cannot currently be pressed */
 
-    int reference;
-    LandHash *properties;
+    int reference; /* reference counting */
 
-   struct LandWidgetTheme *theme;
+    LandHash *properties; /* arbitrary string-keyed properties */
+
+    struct LandWidgetTheme *theme; /* this widget's theme */
 };
 
 struct LandWidgetProperty

@@ -120,7 +120,7 @@ void land_widget_container_draw(LandWidget *base)
         {
             if (child->box.x <= cr && child->box.x + child->box.w >= cl &&
                 child->box.y <= cb && child->box.y + child->box.h >= ct)
-            land_widget_draw(child);
+                land_widget_draw(child);
         }
         else
             land_widget_draw(child);
@@ -235,15 +235,34 @@ focus_done: ;
                 child->send_to_top = 0;
                 f = 1;
             }
+            if (child->want_focus)
+            {
+                self->keyboard = child; // TODO: hold a reference to it?
+                super->want_focus = 1;
+                child->want_focus = 0;
+            }
             if (item == last)
                 break;
         }
     }
 }
 
+void land_widget_container_keyboard_tick(LandWidget *super)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    if (self->keyboard)
+        land_call_method(self->keyboard, keyboard_tick, (self->keyboard));
+}
+
 void land_widget_container_tick(LandWidget *super)
 {
     land_widget_container_mouse_tick(super);
+    land_widget_container_keyboard_tick(super);
+    if (super->want_focus)
+    {
+        /* This just means, some child requested the keyboard focus. */
+        super->want_focus = 0;
+    }
 }
 
 void land_widget_container_add(LandWidget *super, LandWidget *add)
@@ -305,5 +324,6 @@ void land_widget_container_interface_initialize(void)
     land_widget_container_interface->mouse_tick = land_widget_container_mouse_tick;
     land_widget_container_interface->mouse_enter = land_widget_container_mouse_enter;
     land_widget_container_interface->mouse_leave = land_widget_container_mouse_leave;
+    land_widget_container_interface->keyboard_tick = land_widget_container_keyboard_tick;
 }
 

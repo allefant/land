@@ -66,8 +66,8 @@ void land_widget_button_draw(LandWidget *base)
         int th = land_font_height(land_font_current());
         switch (self->yalign)
         {
-            case 1: y -= th; break;
-            case 2: y -= th / 2; break;
+            case 1: y = base->box.y + base->box.h - base->box.ib - th; break;
+            case 2: y = base->box.y + (base->box.h - base->box.it + base->box.ib - th) / 2; break;
         }
         switch (self->xalign)
         {
@@ -158,6 +158,22 @@ LandWidget *land_widget_button_new_with_image(LandWidget *parent,
     land_widget_button_initialize(self,
         parent, text, image, clicked, x, y, w, h);
 
+    land_widget_theme_layout_border(self);
+    land_widget_layout(parent);
+
+    return self;
+}
+
+LandWidget *land_widget_text_new(LandWidget *parent, char const *text,
+    int x, int y, int w, int h)
+{
+    LandWidgetButton *button;
+    land_alloc(button);
+    LandWidget *self = (LandWidget *)button;
+
+    land_widget_button_initialize(self,
+        parent, text, NULL, NULL, x, y, w, h);
+    self->no_decoration = 1;
     land_widget_theme_layout_border(self);
     land_widget_layout(parent);
 
