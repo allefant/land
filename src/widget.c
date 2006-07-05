@@ -18,5 +18,7 @@
 #include "widget/vbox.h"
 #include "widget/hbox.h"
 #include "widget/book.h"
+#include "widget/edit.h"
+#include "widget/spin.h"
 
 #endif /* _PROTOTYPE_ */
