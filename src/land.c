@@ -29,16 +29,20 @@
 #include "widget.h"
 
 extern LandRunner *shortcut_runner;
+extern int land_argc;
+extern char **land_argv;
 
 #define land_begin() \
     static void _land_main(void); \
-    int main(void) {_land_main(); return 0;} END_OF_MAIN() \
+    int main(int argc, char **argv) {land_argc = argc; land_argv = argv; \
+        _land_main(); return 0;} END_OF_MAIN() \
     static void _land_main(void)
 
 #define land_begin_shortcut(w, h, bpp, hz, flags, \
     init, enter, tick, draw, leave, destroy) \
-    int main(void) \
+    int main(int argc, char **argv) \
     { \
+        land_argc = argc; land_argv = argv; \
         land_init(); \
         shortcut_runner = land_runner_new("shortcut", \
             init, enter, tick, draw, leave, destroy); \
@@ -58,6 +62,9 @@ extern LandRunner *shortcut_runner;
 static LandDisplay *_global_image_shortcut_display = NULL;
 static LandImage *_global_image = NULL;
 static int nested = 0;
+
+int land_argc;
+char **land_argv;
 
 LandRunner *shortcut_runner;
 
