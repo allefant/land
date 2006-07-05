@@ -370,7 +370,7 @@ void land_display_select(LandDisplay *display)
 
 void land_display_unselect(void)
 {
-    if (_previous)
+    if (_previous && _previous->count)
     {
         LandListItem *last = _previous->last;
         _land_active_display = last->data;
