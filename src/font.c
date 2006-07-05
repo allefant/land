@@ -168,6 +168,35 @@ int land_text_get_width(char const *str)
     return land_font_state->w;
 }
 
+/* Get the position at which the nth character is drawn. */
+int land_text_get_char_offset(char const *str, int nth)
+{
+    int l = ustrlen(str);
+    if (nth > l) nth = l;
+    char *s = land_strdup(str);
+    usetat(s, nth, '\0');
+    int x = land_text_get_width(s);
+    land_free(s);
+    return x;
+}
+
+/* Get the character index which is under the given pixel position, so that
+ * the following j always is i:
+ * x = land_text_get_char_offset(str, i);
+ * j = land_text_get_char_index(x);
+ */
+int land_text_get_char_index(char const *str, int x)
+{
+    if (x < 0) return 0;
+    int l = ustrlen(str);
+    int i;
+    for (i = 0; i <= l; i++)
+    {
+        if (land_text_get_char_offset(str, i) > x) return i - 1;
+    }
+    return l;
+}
+
 #define VPRINT \
     char str[1024]; \
     va_list args; \

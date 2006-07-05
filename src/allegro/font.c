@@ -1,6 +1,7 @@
 #ifdef _PROTOTYPE_
 
 #include <allegro.h>
+#include <fudgefont.h>
 #include "../array.h"
 #include "../font.h"
 #include "../log.h"
@@ -26,7 +27,16 @@ LandFont *land_font_allegro_load(char const *filename, int size)
     land_log_msg("land_font_allegr_load %s %d..", filename, size);
     LandFontAllegro *self;
     land_alloc(self);
-    self->font = load_font(filename, NULL, NULL);
+    PALETTE pal;
+    self->font = load_font(filename, pal, &size);
+    select_palette(pal);
+    
+    /* There are 3 possibilities:
+     * It was a normal, paletted Allegro font, from an 8-bit bitmap.
+     * It was an alpha font from a 32-bit bitmap.
+     * It was a TTF and now is 8-bit.
+     */
+
     self->super.size = text_height(self->font);
     self->super.vt = vtable;
     land_log_msg_nostamp(self->font ? "success\n" : "failure\n"); 
@@ -50,7 +60,38 @@ void land_font_allegro_print(LandFontState *state, LandDisplay *display,
     else if (alignement == 2) /* center */
         x -= w / 2;
     if (!state->off)
-        textout_ex(LAND_DISPLAY_ALLEGRO(display)->back, self->font, text, x, y, -1, -1);
+    {
+        int r = display->color_r * 255;
+        int g = display->color_g * 255;
+        int b = display->color_b * 255;
+        // FIXME: This makes only sense for paletted fonts on black background..
+        // TODO: properly support different kinds of fonts, ideally with
+        // anti aliasing
+        // If FudgeFont would output 32-bit glyphs, we couldn't recolor the
+        // palette. So there certainly is no easy solution.
+        fudgefont_color_range(0, 0, 0, r, g, b);
+        textout_ex(LAND_DISPLAY_IMAGE(display)->bitmap, self->font, text, x, y,
+            -1, -1);
+        if (bitmap_color_depth(LAND_DISPLAY_IMAGE(display)->bitmap) == 32)
+        {
+            // FIXME: This is really hackish.. but if the target is 32bit,
+            // textout will kill the alpha channel, so we patch it back to
+            // one here.
+            int i, j;
+            for (j = 0; j < h; j++)
+            {
+                for (i = 0; i < w; i++)
+                {
+                    int c = getpixel(LAND_DISPLAY_IMAGE(display)->bitmap, x + i, y + j);
+                    int red = getr(c);
+                    int green = getg(c);
+                    int blue = getb(c);
+                    c = makeacol(red, green, blue, 255);
+                    putpixel(LAND_DISPLAY_IMAGE(display)->bitmap, x + i, y + j, c);
+                }
+            }
+        }
+    }
     state->x = x;
     state->y = y;
     state->w = w;
