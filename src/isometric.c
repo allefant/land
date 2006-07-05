@@ -1,6 +1,9 @@
-#ifndef _PROTOTYPE_
+#ifdef _PROTOTYPE_
 
 #include "grid.h"
+
+extern LandGridInterface *land_grid_vtable_isometric;
+extern LandGridInterface *land_grid_vtable_isometric_wrap;
 
 #endif /* _PROTOTYPE_ */
 
