@@ -35,6 +35,22 @@ LandWidget *land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h
     return LAND_WIDGET(self);
 }
 
+void land_widget_panel_add(LandWidget *base, LandWidget *add)
+{
+    land_widget_container_add(base, add);
+
+    land_widget_layout_inhibit(base);
+
+    land_widget_layout_set_grid_position(add, 0, 0);
+    land_widget_layout_set_grid(base, 1, 1);
+
+    land_widget_layout_add(base, add);
+
+    land_widget_layout_enable(base);
+
+    land_widget_layout_adjust(base, 1, 1);
+}
+
 void land_widget_panel_interface_initialize(void)
 {
     if (land_widget_panel_interface) return;
@@ -42,4 +58,5 @@ void land_widget_panel_interface_initialize(void)
     land_widget_panel_interface = land_widget_copy_interface(
         land_widget_container_interface, "panel");
     land_widget_panel_interface->id |= LAND_WIDGET_ID_PANEL;
+    land_widget_panel_interface->add = land_widget_panel_add;
 }
