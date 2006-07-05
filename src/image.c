@@ -132,6 +132,20 @@ LandImage *land_image_new(int w, int h)
     return self;
 }
 
+LandImage *land_image_create(int w, int h)
+{
+    BITMAP *bmp = create_bitmap(w, h);
+    clear_to_color(bmp, 0);
+    LandImage *self = land_display_new_image();
+    self->filename = NULL;
+    self->name = NULL;
+    self->bitmap = bmp;
+    self->memory_cache = bmp;
+    land_log_msg("land_image_create %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+    land_image_prepare(self);
+    return self;
+}
+
 void land_image_del(LandImage *self)
 {
     //FIXME!
