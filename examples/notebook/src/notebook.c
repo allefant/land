@@ -24,7 +24,7 @@ static void game_init(LandRunner *self)
 {
     land_font_load("../../data/galaxy.ttf", 12);
 
-    desktop = land_widget_container_new(NULL, 0, 0, 640, 480);
+    desktop = land_widget_panel_new(NULL, 0, 0, 640, 480);
     desktop->theme = land_widget_theme_new("../../data/classic.cfg");
 
     LandWidget *notebook = land_widget_book_new(desktop, 50, 50, 200, 200);
