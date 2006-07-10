@@ -227,6 +227,8 @@ int land_main(void)
     land_display_exit();
 
     land_exit();
+
+    land_log_msg("exit");
     return 0;
 }
 

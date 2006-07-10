@@ -74,6 +74,7 @@ static void install(void)
 static void done(void)
 {
     int n;
+    land_log_message("memlog\n");
     FILE *lf = fopen(LOGFILE, "a");
     {
         fprintf(lf, "Memory statistics:\n");
