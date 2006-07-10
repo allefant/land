@@ -97,6 +97,8 @@ void land_widget_spin_initialize(LandWidget *base,
     buttondown->spin = base;
     buttondown->dir = -1;
 
+    land_widget_layout_set_expanding(LAND_WIDGET(buttonup), 0, 1);
+    land_widget_layout_set_expanding(LAND_WIDGET(buttondown), 0, 1);
     land_widget_layout_set_expanding(edit, 1, 1);
     land_widget_spin_set_value(base, val);
 }

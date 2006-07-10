@@ -123,6 +123,9 @@ void land_widget_button_initialize(LandWidget *base,
     if (text) {
         self->text = land_strdup(text);
         land_widget_theme_set_minimum_size_for_text(base, text);
+        w = MAX(w, base->box.min_width);
+        h = MAX(h, base->box.min_height);
+        land_widget_layout_set_minimum_size(base, w, h);
     }
     if (image) {
         self->image = image;

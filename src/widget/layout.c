@@ -47,7 +47,7 @@ void land_widget_layout_set_minimum_size(LandWidget *self, int w, int h)
     self->box.min_height = h;
     if (self->box.current_min_width < w)
         self->box.current_min_width = w;
-    if (self->box.current_min_height < 0)
+    if (self->box.current_min_height < h)
         self->box.current_min_height = h;
     if (self->box.w < w)
         self->box.w = w;
