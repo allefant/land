@@ -20,5 +20,6 @@
 #include "widget/book.h"
 #include "widget/edit.h"
 #include "widget/spin.h"
+#include "widget/board.h"
 
 #endif /* _PROTOTYPE_ */

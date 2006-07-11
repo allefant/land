@@ -100,18 +100,19 @@ typedef struct LandWidgetProperty LandWidgetProperty;
 
 /* A widget ID must contain the bit-pattern of its parent's ID. */
 
-#define LAND_WIDGET_ID_BASE         0x00000001
-#define LAND_WIDGET_ID_CONTAINER    0x00000011
-#define LAND_WIDGET_ID_SCROLLING    0x00000111
-#define LAND_WIDGET_ID_VBOX         0x00000211
-#define LAND_WIDGET_ID_LIST         0x00001211
-#define LAND_WIDGET_ID_PANEL        0x00000311
-#define LAND_WIDGET_ID_MENU         0x00000411
-#define LAND_WIDGET_ID_MENUBAR      0x00001411
-#define LAND_WIDGET_ID_BOOK         0x00000511
-#define LAND_WIDGET_ID_HBOX         0x00000611
-#define LAND_WIDGET_ID_TABBAR       0x00001611
-#define LAND_WIDGET_ID_SPIN         0x00002611
+#define LAND_WIDGET_ID_BASE         0x00000001 /* no visual, no layout */
+#define LAND_WIDGET_ID_CONTAINER    0x00000011 /* no visual, no layout */
+#define LAND_WIDGET_ID_SCROLLING    0x00000111 /* visual, layout */
+#define LAND_WIDGET_ID_VBOX         0x00000211 /* no visual, layout */
+#define LAND_WIDGET_ID_LIST         0x00001211 /* visual, layout */
+#define LAND_WIDGET_ID_HBOX         0x00000311 /* no visual, layout */
+#define LAND_WIDGET_ID_TABBAR       0x00001311 /* visual, layout */
+#define LAND_WIDGET_ID_SPIN         0x00002311 /* visual, layout */
+#define LAND_WIDGET_ID_PANEL        0x00000411 /* visual, layout */
+#define LAND_WIDGET_ID_BOARD        0x00000511 /* visual, no layout */
+#define LAND_WIDGET_ID_MENU         0x00000611
+#define LAND_WIDGET_ID_MENUBAR      0x00001611
+#define LAND_WIDGET_ID_BOOK         0x00000711
 #define LAND_WIDGET_ID_BUTTON       0x00000021
 #define LAND_WIDGET_ID_MENUBUTTON   0x00000121
 #define LAND_WIDGET_ID_MENUITEM     0x00000221
@@ -418,14 +419,32 @@ void land_widget_size(LandWidget *self, float dx, float dy)
     land_call_method(self, size, (self));
 }
 
+/* Called inside mouse_leave, will keep the mouse focus, and no other widget
+ * can get highlighted.
+ */
 void land_widget_retain_mouse_focus(LandWidget *self)
 {
     self->got_mouse = 1;
 }
 
+/* Called inside mouse_enter, inhibits highlighting of he widget. */
 void land_widget_refuse_mouse_focus(LandWidget *self)
 {
     self->got_mouse = 0;
+}
+
+/* Called in mouse_tick (or elsewhere), will cause the widget to receive the
+ * keyboard focus.
+ */
+void land_widget_request_keyboard_focus(LandWidget *self)
+{
+    self->want_focus = 1;
+}
+
+/* Called in keyboard_leave to keep the focus. Doesn't usually make sense. */
+void land_widget_retain_keyboard_focus(LandWidget *self)
+{
+    self->got_keyboard = 1;
 }
 
 void land_widget_tick(LandWidget *self)

@@ -394,6 +394,15 @@ void land_widget_container_mouse_tick(LandWidget *super)
     }
 }
 
+void land_widget_container_set_mouse(LandWidget *super, LandWidget *mouse)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    if (mouse != self->mouse)
+    {
+        transfer_mouse_focus(super, mouse);
+    }
+}
+
 void land_widget_container_keyboard_tick(LandWidget *super)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
@@ -409,8 +418,8 @@ void land_widget_container_keyboard_tick(LandWidget *super)
 
 void land_widget_container_tick(LandWidget *super)
 {
-    land_widget_container_mouse_tick(super);
-    land_widget_container_keyboard_tick(super);
+    land_call_method(super, mouse_tick, (super));
+    land_call_method(super, keyboard_tick, (super));
 }
 
 void land_widget_container_add(LandWidget *super, LandWidget *add)

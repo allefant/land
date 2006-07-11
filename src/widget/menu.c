@@ -321,13 +321,15 @@ void land_widget_menubar_mouse_leave(LandWidget *self, LandWidget *focus)
 void land_widget_menu_mouse_tick(LandWidget *self)
 {
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self);
+
+    land_widget_container_mouse_tick(self);
+
     if (!container->mouse && land_mouse_delta_b() && land_mouse_b())
     {
         /* outside click */
         land_widget_menu_hide_complete(self);
         return;
     }
-    land_widget_container_mouse_tick(self);
 }
 
 void land_widget_menu_interface_initialize(void)
