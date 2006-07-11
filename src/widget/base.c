@@ -132,13 +132,24 @@ struct LandWidgetInterface
     void (*enter)(LandWidget *self);
     void (*tick)(LandWidget *self);
 
+    /* Called when the mouse focus is transferred to the widget. The got_mouse
+     * flag can be used to decline focus.
+     */
     void (*mouse_enter)(LandWidget *self, LandWidget *focus);
     void (*mouse_tick)(LandWidget *self);
+    /* This is called for the widget losing the mouse focus. It has the
+     * possibility to retain focus with the got_mouse flag.
+     * 
+     */
     void (*mouse_leave)(LandWidget *self, LandWidget *focus);
 
-    void (*keyboard_enter)(LandWidget *self, LandWidget *focus);
+    /* Called when the keyboard focus is transferred to the widget. This will
+     * only happen if the want_focus flag is set, and focus can be declined
+     * with the got_keyboard flag.
+     */
+    void (*keyboard_enter)(LandWidget *self);
     void (*keyboard_tick)(LandWidget *self);
-    void (*keyboard_leave)(LandWidget *self, LandWidget *focus);
+    void (*keyboard_leave)(LandWidget *self);
 
     void (*add)(LandWidget *self, LandWidget *add);
     void (*move)(LandWidget *self, float dx, float dy);
@@ -166,6 +177,7 @@ struct LandWidget
 
     /* internal state */
     unsigned int got_mouse : 1; /* this widget has the mouse focus */
+    unsigned int got_keyboard : 1; /* this widget has the keyboard focus */
     unsigned int send_to_top : 1; /* move this widget to top in next tick */
     unsigned int want_focus : 1; /* give keyboard focus to this widget */
     unsigned int dont_clip : 1; /* children can draw outside this widget */

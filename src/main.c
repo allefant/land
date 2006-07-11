@@ -123,6 +123,7 @@ int land_get_ticks(void)
     return ticks;
 }
 
+/* Get the time in seconds. */
 double land_get_time(void)
 {
 #ifndef ALLEGRO_WINDOWS

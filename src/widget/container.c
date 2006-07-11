@@ -61,9 +61,60 @@ void land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus)
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
     if (self->mouse)
     {
+        self->mouse->got_mouse = 0;
         land_call_method(self->mouse, mouse_leave, (self->mouse, focus));
-        land_widget_unreference(self->mouse);
-        self->mouse = NULL;
+        if (self->mouse->got_mouse)
+            super->got_mouse = 1;
+        else
+        {
+            land_widget_unreference(self->mouse);
+            self->mouse = NULL;
+        }
+    }
+}
+
+/* Give keyboard focus to the container, and to children who requested focus. */
+void land_widget_container_keyboard_enter(LandWidget *super)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    if (self->children)
+    {
+        LandListItem *item, *next;
+        item = self->children->first;
+        for (; item; item = next)
+        {
+            next = item->next;
+            LandWidget *child = item->data;
+
+            if (child->want_focus)
+            {
+                child->want_focus = 0;
+                child->got_keyboard = 1;
+                land_call_method(child, keyboard_enter, (child));
+                self->keyboard = child;
+                land_widget_reference(self->keyboard);
+                break;
+            }
+        }
+    }
+}
+
+/* Remove keyboard focus from the container and its children. */
+void land_widget_container_keyboard_leave(LandWidget *super)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+
+    if (self->keyboard)
+    {
+        self->keyboard->got_keyboard = 0;
+        land_call_method(self->keyboard, keyboard_leave, (self->keyboard));
+        if (self->keyboard->got_keyboard)
+        {
+            super->got_keyboard = 1;
+            return;
+        }
+        land_widget_unreference(self->keyboard);
+        self->keyboard = NULL;
     }
 }
 
@@ -180,6 +231,131 @@ LandWidget *land_widget_container_get_at_pos(LandWidget *super, int x, int y)
     return NULL;
 }
 
+/* Transfer the mouse focus inside base to child. If child is NULL, remove any
+ * mouse focus.
+ */
+static void transfer_mouse_focus(LandWidget *base, LandWidget *child)
+{
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
+    
+    /* We can't have this deleted inside any method call or we get a
+     * dangling pointer. In case it receives the focus, the reference will
+     * be hold until the focus is lost again.
+     */
+    if (child) land_widget_reference(child);
+
+    /* Take focus away? */
+    if (self->mouse)
+    {
+        self->mouse->got_mouse = 0;
+        land_call_method(self->mouse, mouse_leave, (self->mouse, child));
+        /* Retain focus? */
+        if (self->mouse->got_mouse)
+        {
+            if (child) land_widget_unreference(child);
+            return;
+        }
+        land_widget_unreference(self->mouse);
+        self->mouse = NULL;
+    }
+
+    if (child)
+    {
+        child->got_mouse = 1;
+        land_call_method(child, mouse_enter, (child, self->mouse));
+        if (!child->got_mouse) // refuses focus
+        {
+            land_widget_unreference(child);
+            return;
+        }
+    }
+
+    self->mouse = child;
+}
+
+static void transfer_keyboard_focus(LandWidget *base)
+{
+    /* Need to take focus away first? */
+    
+    base->got_keyboard = 0;
+    land_widget_container_keyboard_leave(base);
+    /* Retain focus? */
+    if (base->got_keyboard)
+    {
+        return;
+    }
+
+    /* At this point, no childs have focus anymore. Next we give focus to
+     * those who want it.
+     */
+    base->want_focus = 0;
+    base->got_keyboard = 1;
+    land_widget_container_keyboard_enter(base);
+}
+
+/* Focus handling works like this:
+ * The mouse focus is the widget the mouse is over. The widget with mouse
+ * focus can set the want_focus flag to additionally receive keyboard focus.
+ * In this case, the flag will be propagated up to the parents by the mouse
+ * handler. The keyboard handler then will react to the flags and shift focus,
+ * starting with the parent and going down.
+ *
+ * 1. C, B and A currently have focus. E requests focus.
+ *  _________
+ * |A        |
+ * |________f|
+ *  _|_   _|_
+ * |B  | |D  |
+ * |__f| |___|
+ *  _|_   _|_
+ * |C  | |E  |
+ * |__f| |_*_|
+ *
+ * 2. Request propagated up to D and A.
+ *  _________
+ * |A        |
+ * |____*___f|
+ *  _|_   _|_
+ * |B  | |D  |
+ * |__f| |_*_|
+ *  _|_   _|_
+ * |C  | |E  |
+ * |__f| |_*_|
+ *
+ * 3. Focus is taken from A. This recurses down to children who also lose focus.
+ *    If any child refuses, focus is kept at A.
+ *  _________
+ * |A        |
+ * |____*____|
+ *  _|_   _|_
+ * |B  | |D  |
+ * |___| |_*_|
+ *  _|_   _|_
+ * |C  | |E  |
+ * |___| |_*_|
+ *
+ * 4. Focus is transferred to A.
+ *  _________
+ * |A        |
+ * |________f|
+ *  _|_   _|_
+ * |B  | |D  |
+ * |___| |_*_|
+ *  _|_   _|_
+ * |C  | |E  |
+ * |___| |_*_|
+ *
+ * 5. Focus is transferred recusivley to D and E.
+ *  _________
+ * |A        |
+ * |________f|
+ *  _|_   _|_
+ * |B  | |D  |
+ * |___| |__f|
+ *  _|_   _|_
+ * |C  | |E  |
+ * |___| |__f|
+ */
 void land_widget_container_mouse_tick(LandWidget *super)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
@@ -189,35 +365,7 @@ void land_widget_container_mouse_tick(LandWidget *super)
         land_mouse_y());
     if (mouse != self->mouse && !(land_mouse_b() & 1))
     {
-        /* We obtain a reference to mouse (which below gets self->mouse). This
-         * reference is hold as long as this is the mouse focus widget.
-         */
-        if (mouse)
-        {
-            land_widget_reference(mouse);
-            mouse->got_mouse = 1;
-            land_call_method(mouse, mouse_enter, (mouse, self->mouse));
-            if (!mouse->got_mouse) // refuses focus
-            {
-                land_widget_unreference(mouse);
-                goto focus_done;
-            }
-        }
-        if (self->mouse)
-        {
-            self->mouse->got_mouse = 0;
-            land_call_method(self->mouse, mouse_leave, (self->mouse, mouse));
-            /* retains focus despite outside mouse? */
-            if (self->mouse->got_mouse)
-            {
-                if (mouse)
-                    land_widget_unreference(mouse);
-                goto focus_done;
-            }
-            land_widget_unreference(self->mouse);
-        }
-        self->mouse = mouse;
-focus_done: ;
+        transfer_mouse_focus(super, mouse);
     }
     int f = 0;
     if (self->children)
@@ -229,17 +377,16 @@ focus_done: ;
         {
             next = item->next;
             LandWidget *child = item->data;
+
+            /* Propagate up focus request. */
+            if (child->want_focus)
+                super->want_focus = 1;
+
             if (child->send_to_top)
             {
                 land_widget_container_to_top(super, child);
                 child->send_to_top = 0;
                 f = 1;
-            }
-            if (child->want_focus)
-            {
-                self->keyboard = child; // TODO: hold a reference to it?
-                super->want_focus = 1;
-                child->want_focus = 0;
             }
             if (item == last)
                 break;
@@ -250,6 +397,12 @@ focus_done: ;
 void land_widget_container_keyboard_tick(LandWidget *super)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super);
+    
+    if (super->want_focus)
+    {
+        transfer_keyboard_focus(super);
+    }
+
     if (self->keyboard)
         land_call_method(self->keyboard, keyboard_tick, (self->keyboard));
 }
@@ -258,11 +411,6 @@ void land_widget_container_tick(LandWidget *super)
 {
     land_widget_container_mouse_tick(super);
     land_widget_container_keyboard_tick(super);
-    if (super->want_focus)
-    {
-        /* This just means, some child requested the keyboard focus. */
-        super->want_focus = 0;
-    }
 }
 
 void land_widget_container_add(LandWidget *super, LandWidget *add)
@@ -325,5 +473,7 @@ void land_widget_container_interface_initialize(void)
     land_widget_container_interface->mouse_enter = land_widget_container_mouse_enter;
     land_widget_container_interface->mouse_leave = land_widget_container_mouse_leave;
     land_widget_container_interface->keyboard_tick = land_widget_container_keyboard_tick;
+    land_widget_container_interface->keyboard_enter = land_widget_container_keyboard_enter;
+    land_widget_container_interface->keyboard_leave = land_widget_container_keyboard_leave;
 }
 

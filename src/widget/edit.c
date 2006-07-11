@@ -26,6 +26,14 @@ extern LandWidgetInterface *land_widget_edit_interface;
 
 #include "land.h"
 
+// FIXME: should come from theme
+/* How fast the cursor changes between visible and invisible.
+ * 0 = blink never
+ * 1 = blink every second
+ * 2 = blink twice a second
+ */
+static double land_widget_cursor_blink_rate = 2;
+
 LandWidgetInterface *land_widget_edit_interface;
 
 void land_widget_edit_draw(LandWidget *base)
@@ -52,8 +60,16 @@ void land_widget_edit_draw(LandWidget *base)
         land_text_pos(x, y);
         land_print(self->text);
 
-        int cx = land_text_get_char_offset(self->text, self->cursor);
-        land_line(x + cx, y, x + cx, base->box.y + base->box.h - base->box.ib);
+        if (base->got_keyboard)
+        {
+            double pos = land_get_time() * land_widget_cursor_blink_rate;
+            pos -= floor(pos);
+            if (pos < 0.5)
+            {
+                int cx = land_text_get_char_offset(self->text, self->cursor);
+                land_line(x + cx, y, x + cx, base->box.y + base->box.h - base->box.ib);
+            }
+        }
     }
 
     if (!base->dont_clip)
