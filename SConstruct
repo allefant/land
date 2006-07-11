@@ -96,12 +96,12 @@ env.Append(CCFLAGS = "-Wwrite-strings -Wsign-compare")
 env.Append(CCFLAGS = "-Wmissing-noreturn -Wredundant-decls")
 env.Append(CCFLAGS = "-Wpacked")
 env.Append(CCFLAGS = "-Wdisabled-optimization")
-env.Append(CCFLAGS = "-Wunreachable-code")
+#env.Append(CCFLAGS = "-Wunreachable-code")
 env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 
 if debug:
-    env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
+    env.Append(CCFLAGS = "-O2 -g -DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
 elif profile:
