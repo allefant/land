@@ -61,6 +61,10 @@ extern LandDisplay *_land_active_display;
 static LandList *_previous = NULL;
 LandDisplay *_land_active_display = NULL;
 
+static LandDisplay *_global_image_shortcut_display = NULL;
+static LandImage *_global_image = NULL;
+static int nested = 0;
+
 LandDisplay *land_display_new(int w, int h, int bpp, int hz, int flags)
 {
     LandDisplay *self;
@@ -96,16 +100,44 @@ void land_display_destroy(LandDisplay *self)
     if (self->clip_stack)
     {
         if (self->clip_stack->count)
-            land_log_msg("Error: non-empty clip stack in display.\n");
+            land_log_message("Error: non-empty clip stack in display.\n");
         land_list_destroy(self->clip_stack);
     }
     land_free(self);
 }
 
-
 void land_display_del(LandDisplay *self)
 {
     land_display_destroy(self);
+}
+
+void land_set_image_display(LandImage *image)
+{
+    LandDisplayImage *self = LAND_DISPLAY_IMAGE(_global_image_shortcut_display);
+    if (nested)
+    {
+        land_exception("land_set_image_display cannot be nested");
+    }
+    if (!_global_image_shortcut_display)
+    {
+        _global_image_shortcut_display = land_display_image_new(image, 0);
+    }
+    else
+    {
+        self->bitmap = image->memory_cache;
+        self->super.w = land_image_width(image);
+        self->super.h = land_image_height(image);
+        self->super.bpp = bitmap_color_depth(image->memory_cache);
+    }
+    _global_image = image;
+    land_display_select(_global_image_shortcut_display);
+}
+
+void land_unset_image_display(void)
+{
+    land_display_unselect();
+    land_image_prepare(_global_image);
+    _global_image = NULL;
 }
 
 void land_display_set(void)
@@ -130,7 +162,8 @@ void land_display_unset(void)
 
 void land_display_init(void)
 {
-    land_log_msg("land_display_init\n");
+    land_log_message("land_display_init\n");
+    _previous = land_list_new();
     land_display_allegro_init();
     land_display_allegrogl_init();
     land_display_image_init();
@@ -138,7 +171,10 @@ void land_display_init(void)
 
 void land_display_exit(void)
 {
-    land_log_msg("land_display_exit\n");
+    land_log_message("land_display_exit\n");
+    land_list_destroy(_previous);
+    if (_global_image_shortcut_display)
+        land_display_destroy(_global_image_shortcut_display);
     land_display_image_exit();
     land_display_allegrogl_exit();
     land_display_allegro_exit();
@@ -364,7 +400,9 @@ void land_display_del_image(LandImage *image)
 void land_display_select(LandDisplay *display)
 {
     if (_land_active_display)
+    {
         land_add_list_data(&_previous, _land_active_display);
+    }
     _land_active_display = display;
 }
 
@@ -374,7 +412,8 @@ void land_display_unselect(void)
     {
         LandListItem *last = _previous->last;
         _land_active_display = last->data;
-        land_list_remove_item(_previous, _previous->last);
+        land_list_remove_item(_previous, last);
+        land_listitem_destroy(last);
     }
     else
         _land_active_display = NULL;
