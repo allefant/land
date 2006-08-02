@@ -47,7 +47,7 @@ LandDataFile *land_read_datafile(FILE *file)
     int count = read32(self->file);
     int i;
     char name[1024];
-    land_log_msg("Data listing:\n");
+    land_log_message("Data listing:\n");
     for (i = 0; i < count; i++)
     {
         int s = 0;
@@ -63,7 +63,7 @@ LandDataFile *land_read_datafile(FILE *file)
         entry->offset = read32(self->file);
         entry->size = read32(self->file);
         land_array_add_data(&self->entries, entry);
-        land_log_msg(" %8d %8d %s\n", entry->offset, entry->size, entry->name);
+        land_log_message(" %8d %8d %s\n", entry->offset, entry->size, entry->name);
     }
     return self;
 }
@@ -82,7 +82,7 @@ LandDataFile *land_open_appended_datafile(char const *filename,
     if (!file) return NULL;
     fseek(file, -4, SEEK_END);
     int size = read32(file);
-    land_log_msg("Embedded data size: %d\n", size);
+    land_log_message("Embedded data size: %d\n", size);
     fseek(file, -size - strlen(marker), SEEK_END);
     int i;
     for (i = 0; i < (int)strlen(marker); i++)

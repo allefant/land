@@ -39,7 +39,7 @@ static void closebutton(void)
 
 void land_init(void)
 {
-    land_log_msg("land_init\n");
+    land_log_message("land_init\n");
     land_alloc(parameters);
     parameters->w = 640;
     parameters->h = 480;
@@ -63,7 +63,7 @@ void land_init(void)
 static void land_exit(void)
 {
     land_free(parameters);
-    land_log_msg("land_exit\n");
+    land_log_message("land_exit\n");
 }
 
 
@@ -94,7 +94,7 @@ int land_closebutton(void)
 
 void land_set_frequency(int f)
 {
-    land_log_msg("land_set_frequency %d\n", f);
+    land_log_message("land_set_frequency %d\n", f);
     parameters->frequency = f;
 }
 
@@ -158,7 +158,7 @@ void land_skip_frames(void)
 
 int land_main(void)
 {
-    land_log_msg("land_main\n");
+    land_log_message("land_main\n");
 
     land_display_init();
     land_font_init();
@@ -229,7 +229,7 @@ int land_main(void)
 
     land_exit();
 
-    land_log_msg("exit");
+    land_log_message("exit");
     return 0;
 }
 

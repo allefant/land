@@ -1,4 +1,5 @@
 #ifdef _PROTOTYPE_
+
 #endif /* _PROTOTYPE_ */
 
 #include <stdio.h>
@@ -14,8 +15,7 @@
 
 static char *logname = NULL;
 
-void
-land_log_overwrite(char const *name)
+void land_log_overwrite(char const *name)
 {
     FILE *f;
     if (logname)
@@ -28,8 +28,7 @@ land_log_overwrite(char const *name)
     }
 }
 
-void
-land_log_set(char const *name)
+void land_log_set(char const *name)
 {
     if (logname)
         land_free(logname);
@@ -76,8 +75,7 @@ void land_log_new(char const *base, int unique)
     }
 }
 
-void
-land_log_msg_nostamp (char const *template, ...)
+void land_log_message_nostamp (char const *template, ...)
 {
      if (!logname)
         land_log_new("land", 0);
@@ -91,8 +89,7 @@ land_log_msg_nostamp (char const *template, ...)
     va_end(va_args);
 }
 
-void
-land_log_msg (char const *template, ...)
+void land_log_message(char const *template, ...)
 {
     if (!logname)
         land_log_new("land", 0);

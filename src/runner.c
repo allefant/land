@@ -30,7 +30,7 @@ static LandRunner *active_runner;
 
 void land_runner_register(LandRunner *self)
 {
-    land_log_msg("land_runner_register \"%s\"\n", self->name);
+    land_log_message("land_runner_register \"%s\"\n", self->name);
     land_add_list_data(&runners, self);
 }
 
@@ -97,9 +97,9 @@ void land_runner_leave_active(void)
         self->leave(self);
 }
 
-
 void land_runner_destroy_all(void)
 {
+    land_log_message("land_runner_destroy_all\n");
     LandListItem *i;
     if (!runners)
         return;
@@ -113,4 +113,3 @@ void land_runner_destroy_all(void)
     }
     land_list_destroy(runners);
 }
-

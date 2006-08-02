@@ -48,7 +48,7 @@ void land_image_allegro_grab(LandImage *self, int x, int y)
 
 void land_image_allegro_init(void)
 {
-    land_log_msg("land_image_allegro_init\n");
+    land_log_message("land_image_allegro_init\n");
     land_alloc(vtable);
     vtable->prepare = land_image_allegro_prepare;
     vtable->draw_scaled_rotated_tinted = land_image_allegro_draw_scaled_rotated_tinted;
@@ -57,7 +57,7 @@ void land_image_allegro_init(void)
 
 void land_image_allegro_exit(void)
 {
-    land_log_msg("land_image_allegro_exit\n");
+    land_log_message("land_image_allegro_exit\n");
     land_free(vtable);
 }
 

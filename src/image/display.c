@@ -70,7 +70,7 @@ void land_display_image_color(LandDisplay *super)
 
 void land_display_image_set(LandDisplay *self)
 {
-    land_log_msg("land_display_image_set\n");
+    land_log_message("land_display_image_set\n");
     /* Nothing to set up for a memory bitmap. */
 }
 
@@ -117,7 +117,7 @@ void land_display_image_plot(LandDisplay *display,
 
 void land_display_image_init(void)
 {
-    land_log_msg("land_display_image_init\n");
+    land_log_message("land_display_image_init\n");
     land_alloc(vtable);
     vtable->clear = land_display_image_clear;
     vtable->clip = land_display_image_clip;
@@ -136,6 +136,6 @@ void land_display_image_init(void)
 
 void land_display_image_exit(void)
 {
-    land_log_msg("land_display_image_exit\n");
+    land_log_message("land_display_image_exit\n");
     land_free(vtable);
 }

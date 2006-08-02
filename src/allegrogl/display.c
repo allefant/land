@@ -28,7 +28,7 @@ static LandDisplayInterface *vtable;
 LandDisplayAllegroGL *land_display_allegrogl_new(int w, int h, int bpp, int hz,
     int flags)
 {
-    land_log_msg("land_display_allegrogl_new\n");
+    land_log_message("land_display_allegrogl_new\n");
     LandDisplayAllegroGL *self;
     land_alloc(self);
     LandDisplay *super = &self->super;
@@ -54,7 +54,7 @@ LandDisplayAllegroGL *land_display_allegrogl_new(int w, int h, int bpp, int hz,
 
 void land_display_allegrogl_set(LandDisplay *super)
 {
-    land_log_msg("land_display_allegrogl_set\n");
+    land_log_message("land_display_allegrogl_set\n");
     int mode = GFX_AUTODETECT;
 
     int cd = desktop_color_depth();
@@ -96,12 +96,12 @@ void land_display_allegrogl_set(LandDisplay *super)
     // TODO: seems to have bad effects on some windows machines
     //if (super->hz)
     //    request_refresh_rate(super->hz);
-    land_log_msg(" %s %dx%dx%d %dHz\n",
+    land_log_message(" %s %dx%dx%d %dHz\n",
         super->flags & LAND_FULLSCREEN ? "fullscreen" :
         super->flags & LAND_WINDOWED ? "windowed" : "auto",
         super->w, super->h, cd, super->hz);
     set_gfx_mode(mode, super->w, super->h, 0, 0);
-    land_log_msg(" gfx mode switch successfull.\n");
+    land_log_message(" gfx mode switch successfull.\n");
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -324,7 +324,7 @@ void land_display_allegrogl_clear(LandDisplay *super, float r, float g, float b,
 
 void land_display_allegrogl_init(void)
 {
-    land_log_msg("land_display_allegrogl_init\n");
+    land_log_message("land_display_allegrogl_init\n");
     land_alloc(vtable);
 
     vtable->set = land_display_allegrogl_set;
@@ -346,6 +346,6 @@ void land_display_allegrogl_init(void)
 
 void land_display_allegrogl_exit(void)
 {
-    land_log_msg("land_display_allegrogl_exit\n");
+    land_log_message("land_display_allegrogl_exit\n");
     land_free(vtable);
 }

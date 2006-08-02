@@ -61,7 +61,7 @@ static LandFontInterface *vtable;
                 {
                     self->h[i] += 1;
                 }
-                land_log_msg(" %d: %d / %d: %d x %d\n", i,
+                land_log_message(" %d: %d / %d: %d x %d\n", i,
                     self->x[i], self->y[i],
                     self->w[i], self->h[i]);
                 i++;
@@ -81,7 +81,7 @@ static LandFontInterface *vtable;
 
 //LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
-    land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
+    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size);
     LandFontAllegrogl *self;
     land_alloc(self);
 
@@ -93,10 +93,10 @@ static LandFontInterface *vtable;
     self->super.vt = vtable;
     if (self->image)
     {
-        land_log_msg(" %d success\n", self->h[32]);
+        land_log_message(" %d success\n", self->h[32]);
     }
     else
-        land_log_msg(" failure\n");
+        land_log_message(" failure\n");
 
     return &self->super;
 }
@@ -152,7 +152,7 @@ static LandFontInterface *vtable;
 
 LandFont *land_font_allegrogl_load(char const *filename, float size)
 {
-    land_log_msg("land_font_allegrogl_load %s %.1f\n", filename, size);
+    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size);
     LandFontAllegrogl *self;
     land_alloc(self);
     PALETTE pal;
@@ -179,7 +179,7 @@ LandFont *land_font_allegrogl_load(char const *filename, float size)
     
     if (alpha) make_trans_font(temp);
     
-        land_log_msg(" using %salpha, using %spalette\n",
+        land_log_message(" using %salpha, using %spalette\n",
             alpha ? "" : "no ", paletted ? "" : "no ");
 
     self->font = allegro_gl_convert_allegro_font_ex(temp,
@@ -188,7 +188,7 @@ LandFont *land_font_allegrogl_load(char const *filename, float size)
     self->super.vt = vtable;
     if (self->font)
     {
-        land_log_msg_nostamp(" %d success\n", text_height(temp));
+        land_log_message_nostamp(" %d success\n", text_height(temp));
         GLuint ids[10];
         int n = allegro_gl_list_font_textures(self->font, ids, 10);
         int i;
@@ -202,11 +202,11 @@ LandFont *land_font_allegrogl_load(char const *filename, float size)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
-            land_log_msg(" texture %d: %d x %d x (%d%d%d%d)\n", ids[i], w, h, r, g, b, a);
+            land_log_message(" texture %d: %d x %d x (%d%d%d%d)\n", ids[i], w, h, r, g, b, a);
         }
     }
     else
-        land_log_msg_nostamp("failure\n");
+        land_log_message_nostamp("failure\n");
     destroy_font(temp);
     return &self->super;
 }
@@ -252,7 +252,7 @@ void land_font_allegrogl_destroy(LandFont *self)
 
 void land_font_allegrogl_init(void)
 {
-    land_log_msg("land_font_allegrogl_init\n");
+    land_log_message("land_font_allegrogl_init\n");
     land_alloc(vtable);
     vtable->print = land_font_allegrogl_print;
     vtable->destroy = land_font_allegrogl_destroy;
@@ -260,7 +260,7 @@ void land_font_allegrogl_init(void)
 
 void land_font_allegrogl_exit(void)
 {
-    land_log_msg("land_font_allegrogl_exit\n");
+    land_log_message("land_font_allegrogl_exit\n");
     land_free(vtable);
 }
 

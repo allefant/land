@@ -29,7 +29,10 @@
 
 #include <stdio.h>
 
+//#define LOGALL
+
 #include "memory.h"
+#include "log.h"
 
 #ifdef LAND_MEMLOG
 
@@ -73,8 +76,10 @@ static void install(void)
 
 static void done(void)
 {
+    /* This function is called from atexit, so don't rely on Land still being
+     * installed, e.g. logging facility.
+     */
     int n;
-    land_log_message("memlog\n");
     FILE *lf = fopen(LOGFILE, "a");
     {
         fprintf(lf, "Memory statistics:\n");
@@ -101,7 +106,8 @@ void land_memory_add(void *ptr, char const *id, int size, const char *f, int l)
         if (size)
         {
             FILE *lf = fopen(LOGFILE, "a");
-            fprintf(lf, "%s: %d: allocation of %d bytes failed\n", f, l, size);
+            fprintf(lf, "%s: %d: allocation of %d bytes [%s] failed\n", f, l,
+                size, id);
             fclose(lf);
         }
         return;
@@ -120,13 +126,14 @@ void land_memory_add(void *ptr, char const *id, int size, const char *f, int l)
 #ifdef LOGALL
     {
         FILE *lf = fopen(LOGFILE, "a");
-        fprintf(lf, "%s: %d: allocated: %d bytes at %p\n", f, l, size, ptr);
+        fprintf(lf, "%s: %d: allocated: %d bytes [%s] at %p\n",
+            f, l, size, id, ptr);
         fclose(lf);
     }
 #endif
 }
 
-void land_memory_remove(void *ptr, int re, const char *f, int l)
+void land_memory_remove(void *ptr, char const *id, int re, const char *f, int l)
 {
     int n;
     if (!installed)
@@ -138,7 +145,7 @@ void land_memory_remove(void *ptr, int re, const char *f, int l)
 #ifdef LOGALL
             {
                 FILE *lf = fopen(LOGFILE, "a");
-                fprintf(lf, "%s: %d: reallocated: %p\n", f, l, ptr);
+                fprintf(lf, "%s: %d: reallocated: %p [%s]\n", f, l, ptr, id);
                 fclose(lf);
             }
 #endif 
@@ -146,7 +153,7 @@ void land_memory_remove(void *ptr, int re, const char *f, int l)
         }
         {
             FILE *lf = fopen(LOGFILE, "a");
-            fprintf(lf, "%s: %d: freed 0 pointer\n", f, l);
+            fprintf(lf, "%s: %d: freed 0 pointer [%s]\n", f, l, id);
             fclose(lf);
         }
         return;
@@ -158,8 +165,8 @@ void land_memory_remove(void *ptr, int re, const char *f, int l)
 #ifdef LOGALL
             {
                 FILE *lf = fopen(LOGFILE, "a");
-                fprintf(lf, "%s: %d: freed: %d bytes at %p\n",
-                        f, l, not_freed[n].size, ptr);
+                fprintf(lf, "%s: %d: freed: %d bytes [%s] at %p\n",
+                        f, l, not_freed[n].size, id, ptr);
                 fclose(lf);
             }
 #endif
@@ -171,8 +178,8 @@ void land_memory_remove(void *ptr, int re, const char *f, int l)
     }
     {
         FILE *lf = fopen(LOGFILE, "a");
-        fprintf(lf, "%s: %d: double freed or never allocated: %p\n", f,
-                l, ptr);
+        fprintf(lf, "%s: %d: double freed or never allocated: %p [%s]\n", f,
+                l, ptr, id);
         fclose(lf);
     }
 }
@@ -194,7 +201,7 @@ void *land_calloc_memlog(int size, char const *f, int l)
 void *land_realloc_memlog(void *ptr, int size, char const *f, int l)
 {
     void *p = realloc(ptr, size);
-    land_memory_remove(ptr, 1, f, l);
+    land_memory_remove(ptr, "", 1, f, l);
     land_memory_add(p, "", size, f, l);
     return p;
 }
@@ -209,7 +216,7 @@ char *land_strdup_memlog(char const *str, char const *f, int l)
 void land_free_memlog(void *ptr, char const *f, int l)
 {
     free(ptr);
-    land_memory_remove(ptr, 0, f, l);
+    land_memory_remove(ptr, "", 0, f, l);
 }
 
 #else

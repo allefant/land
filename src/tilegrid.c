@@ -160,7 +160,7 @@ void land_grid_draw_normal(LandGrid *self, LandView *view)
 
 void land_tilemap_init(void)
 {
-    land_log_msg("land_tilemap_init\n");
+    land_log_message("land_tilemap_init\n");
     land_alloc(land_grid_vtable_tilegrid);
     land_grid_vtable_tilegrid->draw = land_grid_draw_normal;
     land_grid_vtable_tilegrid->draw_cell = land_tilegrid_draw_cell;
@@ -169,6 +169,6 @@ void land_tilemap_init(void)
 
 void land_tilemap_exit(void)
 {
-    land_log_msg("land_tilemap_exit\n");
+    land_log_message("land_tilemap_exit\n");
     land_free(land_grid_vtable_tilegrid);
 }

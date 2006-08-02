@@ -96,7 +96,7 @@ void ERR(char const *format, ...)
     char str[1024];
     uvszprintf(str, sizeof str, format, args);
     ustrzcat(str, sizeof str, "\n");
-    land_log_msg(str);
+    land_log_message(str);
     va_end(args);
     
     //printf("\n");

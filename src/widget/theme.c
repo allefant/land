@@ -360,13 +360,13 @@ LandWidgetThemeElement *land_widget_theme_element_new(
             if (!self->bmp)
                 self->bmp = land_image_new_from(img, 0, 0,
                     land_image_width(img), land_image_height(img));
-            land_log_msg("element: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
+            land_log_message("element: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
                 land_image_width(self->bmp), land_image_height(self->bmp),
                 self->bl, self->bt, self->br, self->bb,
                 self->r, self->g, self->b, self->a);
         }
         else
-            land_log_msg("element: Error: %s not found!\n", name);
+            land_log_message("element: Error: %s not found!\n", name);
     }
     
     if (img) land_image_destroy(img);

@@ -360,7 +360,7 @@ static void land_widget_really_destroy(LandWidget *self)
         self->vt->destroy(self);
     else
     {
-        land_log_msg("*** widget without destructor?\n");
+        land_log_message("*** widget without destructor?\n");
         land_widget_base_destroy(self);
     }
 }

@@ -43,7 +43,7 @@ LandDisplayAllegro *land_display_allegro_new(int w, int h, int bpp, int hz,
 
 void land_display_allegro_set(LandDisplay *super)
 {
-    land_log_msg("land_display_allegro_set\n");
+    land_log_message("land_display_allegro_set\n");
     LandDisplayAllegro *self = LAND_DISPLAY_ALLEGRO(super);
     int mode = GFX_AUTODETECT;
 
@@ -110,7 +110,7 @@ void land_display_allegro_flip(LandDisplay *self)
 
 void land_display_allegro_init(void)
 {
-    land_log_msg("land_display_allegro_init\n");
+    land_log_message("land_display_allegro_init\n");
     land_alloc(vtable);
     vtable->clear = land_display_image_clear;
     vtable->clip = land_display_image_clip;
@@ -129,6 +129,6 @@ void land_display_allegro_init(void)
 
 void land_display_allegro_exit(void)
 {
-    land_log_msg("land_display_allegro_exit\n");
+    land_log_message("land_display_allegro_exit\n");
     land_free(vtable);
 }

@@ -59,40 +59,7 @@ extern char **land_argv;
 
 #include "land.h"
 
-static LandDisplay *_global_image_shortcut_display = NULL;
-static LandImage *_global_image = NULL;
-static int nested = 0;
-
 int land_argc;
 char **land_argv;
 
 LandRunner *shortcut_runner;
-
-void land_set_image_display(LandImage *image)
-{
-    LandDisplayImage *self = LAND_DISPLAY_IMAGE(_global_image_shortcut_display);
-    if (nested)
-    {
-        land_exception("land_set_image_display cannot be nested");
-    }
-    if (!_global_image_shortcut_display)
-    {
-        _global_image_shortcut_display = land_display_image_new(image, 0);
-    }
-    else
-    {
-        self->bitmap = image->memory_cache;
-        self->super.w = land_image_width(image);
-        self->super.h = land_image_height(image);
-        self->super.bpp = bitmap_color_depth(image->memory_cache);
-    }
-    _global_image = image;
-    land_display_select(_global_image_shortcut_display);
-}
-
-void land_unset_image_display(void)
-{
-    land_display_unselect();
-    land_image_prepare(_global_image);
-    _global_image = NULL;
-}

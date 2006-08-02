@@ -527,7 +527,7 @@ static void land_sprites_grid_draw(LandGrid *super, LandView *view)
 
 void land_sprites_init(void)
 {
-    land_log_msg("land_sprites_init\n");
+    land_log_message("land_sprites_init\n");
     land_alloc(land_grid_vtable_sprites);
     land_grid_vtable_sprites->draw = land_sprites_grid_draw;
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell;
@@ -536,7 +536,7 @@ void land_sprites_init(void)
 
 void land_sprites_exit(void)
 {
-    land_log_msg("land_sprites_exit\n");
+    land_log_message("land_sprites_exit\n");
     land_free(land_grid_vtable_sprites);
 }
 

@@ -54,7 +54,7 @@ void land_grid_initialize(LandGrid *self, int cell_w, int cell_h, int x_cells, i
 
 void land_grid_init(void)
 {
-    land_log_msg("land_grid_init\n");
+    land_log_message("land_grid_init\n");
     land_tilemap_init();
     land_isometric_init();
     land_sprites_init();
@@ -62,7 +62,7 @@ void land_grid_init(void)
 
 void land_grid_exit(void)
 {
-    land_log_msg("land_grid_exit\n");
+    land_log_message("land_grid_exit\n");
     land_tilemap_exit();
     land_isometric_exit();
     land_sprites_exit();

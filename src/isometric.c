@@ -429,7 +429,7 @@ void land_grid_draw_isometric_wrap(LandGrid *self, LandView *view)
 
 void land_isometric_init(void)
 {
-    land_log_msg("land_isometric_init\n");
+    land_log_message("land_isometric_init\n");
 
     land_alloc(land_grid_vtable_isometric);
     land_grid_vtable_isometric->draw = land_grid_draw_isometric;

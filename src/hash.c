@@ -56,7 +56,7 @@ LandHash *land_hash_new_memlog(char const *f, int l)
 void land_hash_destroy_memlog(LandHash *self, char const *f, int l)
 {
     land_hash_destroy(self);
-    land_memory_remove(self, 1, f, l);
+    land_memory_remove(self, "hash", 1, f, l);
 }
 
 #endif

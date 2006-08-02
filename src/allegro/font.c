@@ -24,7 +24,7 @@ static LandFontInterface *vtable;
 
 LandFont *land_font_allegro_load(char const *filename, int size)
 {
-    land_log_msg("land_font_allegr_load %s %d..", filename, size);
+    land_log_message("land_font_allegr_load %s %d..", filename, size);
     LandFontAllegro *self;
     land_alloc(self);
     PALETTE pal;
@@ -39,7 +39,7 @@ LandFont *land_font_allegro_load(char const *filename, int size)
 
     self->super.size = text_height(self->font);
     self->super.vt = vtable;
-    land_log_msg_nostamp(self->font ? "success\n" : "failure\n"); 
+    land_log_message_nostamp(self->font ? "success\n" : "failure\n"); 
     return &self->super;
 }
 
@@ -107,7 +107,7 @@ void land_font_allegro_destroy(LandFont *self)
 
 void land_font_allegro_init(void)
 {
-    land_log_msg("land_font_allegro_init\n");   
+    land_log_message("land_font_allegro_init\n");   
     land_alloc(vtable);
     vtable->print = land_font_allegro_print;
     vtable->destroy = land_font_allegro_destroy;
@@ -115,6 +115,6 @@ void land_font_allegro_init(void)
 
 void land_font_allegro_exit(void)
 {
-    land_log_msg("land_font_allegro_exit\n");   
+    land_log_message("land_font_allegro_exit\n");   
     land_free(vtable);
 }
