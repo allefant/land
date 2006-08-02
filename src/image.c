@@ -37,6 +37,7 @@ struct LandImage
     int flags;
 
     LandPixelMask *mask; /* Bit-mask of the image. */
+    RGB *palette;
 
     float x, y; /* Offset to origin. */
 
@@ -72,9 +73,10 @@ void land_image_set_callback(void (*cb)(char const *path, LandImage *image))
 LandImage *land_image_load(char const *filename)
 {
     LandImage *self = NULL;
-    land_log_msg("land_image_load %s..", filename);
+    land_log_message("land_image_load %s..", filename);
     set_color_conversion(COLORCONV_NONE);
     BITMAP *bmp = NULL;
+    PALETTE pal;
     if (_land_datafile)
     {
         int size;
@@ -82,7 +84,7 @@ LandImage *land_image_load(char const *filename)
             &size);
         if (buffer)
         {
-            land_log_msg_nostamp(" [memory %d] ", size);
+            land_log_message_nostamp(" [memory %d] ", size);
             if (!ustrcmp(get_extension(filename), "jpg"))
             {
                 bmp = load_memory_jpg(buffer, size, NULL);
@@ -95,7 +97,7 @@ LandImage *land_image_load(char const *filename)
         }
     }
     if (!bmp)
-        bmp = load_bitmap(filename, NULL);
+        bmp = load_bitmap(filename, pal);
     if (bmp)
     {
         self = land_display_new_image();
@@ -103,17 +105,22 @@ LandImage *land_image_load(char const *filename)
         self->name = land_strdup(filename);
         self->bitmap = bmp;
         self->memory_cache = bmp;
-        land_log_msg_nostamp("success (%d x %d)\n", bmp->w, bmp->h);
+        if (bitmap_color_depth(bmp) == 8)
+        {
+            self->palette = land_malloc(sizeof(PALETTE));
+            memcpy(self->palette, &pal, sizeof(PALETTE));
+        }
+        land_log_message_nostamp("success (%d x %d)\n", bmp->w, bmp->h);
         land_image_prepare(self);
-
+    
         float red, green, blue, alpha;
         int n;
         n = land_image_color_stats(self, &red, &green, &blue, &alpha);
-        land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
+        land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
     }
     else
     {
-        land_log_msg_nostamp("failure\n");
+        land_log_message_nostamp("failure\n");
     }
     if (_cb) _cb(filename, self);
     return self;
@@ -127,7 +134,7 @@ LandImage *land_image_new(int w, int h)
     self->name = NULL;
     self->bitmap = bmp;
     self->memory_cache = bmp;
-    land_log_msg("land_image_new %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+    land_log_message("land_image_new %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
     land_image_prepare(self);
     return self;
 }
@@ -141,7 +148,7 @@ LandImage *land_image_create(int w, int h)
     self->name = NULL;
     self->bitmap = bmp;
     self->memory_cache = bmp;
-    land_log_msg("land_image_create %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+    land_log_message("land_image_create %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
     land_image_prepare(self);
     return self;
 }
@@ -155,6 +162,7 @@ void land_image_del(LandImage *self)
     destroy_bitmap(self->memory_cache);
     if (self->name) land_free(self->name);
     if (self->filename && self->filename != self->name) land_free(self->filename);
+    if (self->palette) land_free(self->palette);
     land_display_del_image(self);
 }
 
@@ -177,13 +185,13 @@ LandImage *land_image_new_from(LandImage *copy, int x, int y, int w, int h)
     self->name = NULL;
     self->bitmap = bmp;
     self->memory_cache = bmp;
-    land_log_msg("land_image_new_from %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
+    land_log_message("land_image_new_from %d x %d x %d.\n", w, h, bitmap_color_depth(bmp));
 
     blit(copy->memory_cache, self->memory_cache, x, y, 0, 0, w, h);
     float red, green, blue, alpha;
     int n;
     n = land_image_color_stats(self, &red, &green, &blue, &alpha);
-    land_log_msg(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
+    land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n);
     land_image_prepare(self);
     return self;
 }
