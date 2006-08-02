@@ -46,7 +46,7 @@ void land_image_allegrogl_reupload(void)
     if (!images) return;
     int size = 0;
     LandListItem *i;
-    land_log_msg("Re-uploading all textures..\n");
+    land_log_message("Re-uploading all textures..\n");
     for (i = images->first; i; i = i->next)
     {
         LandImageOpenGL *image = i->data;
@@ -60,7 +60,7 @@ void land_image_allegrogl_reupload(void)
         size += image->memory_cache->w * image->memory_cache->h * 4;
     }
 
-    land_log_msg(" %.1f MB of texture data uploaded.\n", size / 1048576.0);
+    land_log_message(" %.1f MB of texture data uploaded.\n", size / 1048576.0);
 }
 
 LandImage *land_image_allegrogl_new(LandDisplay *super)
@@ -247,7 +247,7 @@ void land_image_allegrogl_cache(LandImage *super)
 
 void land_image_allegrogl_init(void)
 {
-    land_log_msg("land_image_allegrogl_init\n");
+    land_log_message("land_image_allegrogl_init\n");
     land_alloc(vtable);
     vtable->prepare = land_image_allegrogl_prepare;
     vtable->draw_scaled_rotated_tinted = land_image_allegrogl_draw_scaled_rotated_tinted;
@@ -260,7 +260,7 @@ void land_image_allegrogl_init(void)
 void land_image_allegrogl_exit(void)
 {
     if (images->count)
-        land_log_msg("Error: %d OpenGL images not destroyed.\n", images->count);
+        land_log_message("Error: %d OpenGL images not destroyed.\n", images->count);
     land_list_destroy(images);
     land_free(vtable);
 }
@@ -288,6 +288,7 @@ void land_image_allegrogl_prepare(LandImage *self)
     pad_pot(w, h, &pad_w, &pad_h);
 
     BITMAP *temp = create_bitmap_ex(32, w + pad_w, h + pad_h);
+    if (self->palette) select_palette(self->palette);
     blit(self->memory_cache, temp, 0, 0, 0, 0, w, h);
     if (bitmap_color_depth(self->memory_cache) != 32)
     {
@@ -313,7 +314,7 @@ void land_image_allegrogl_prepare(LandImage *self)
         blit(self->memory_cache, temp, 0, h - 1, 0, i, w, 1);
     }
     int c = getpixel(self->memory_cache, w - 1, h - 1);
-    rectfill(temp, w, h, w + pad_w - 1, h + pad_h - 1, c);
+    rectfill(temp, w, h, w + pad_w, h + pad_h, c);
 
     sub->gl_texture = allegro_gl_make_texture_ex(AGL_TEXTURE_FLIP, temp, GL_RGBA8);
     destroy_bitmap(temp);
@@ -326,7 +327,7 @@ void land_image_allegrogl_prepare(LandImage *self)
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, GL_RGBA,
         GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
 
-    land_log_msg(" texture %d: %.1fMB %d = %d + %d x %d = %d + %d\n",
+    land_log_message(" texture %d: %.1fMB %d = %d + %d x %d = %d + %d\n",
         sub->gl_texture,
         (w + pad_w) * (h + pad_h) * 4.0 / (1024 * 1024),
         w + pad_w, w, pad_w,
