@@ -17,7 +17,9 @@ struct LandWidgetScrollbar
     void (*callback)(LandWidget *self, int set, int *min, int *max, int *range, int *pos);
 };
 
-#define LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)widget)
+#define LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *) \
+    land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
+
 
 #endif /* _PROTOTYPE_ */
 
