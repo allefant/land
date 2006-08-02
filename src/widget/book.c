@@ -196,3 +196,40 @@ LandWidget *land_widget_book_get_current_page(LandWidget *self)
     }
     return NULL;
 }
+
+/* Return the last active page or NULL. */
+LandWidget *land_widget_book_get_last_page(LandWidget *self)
+{
+    LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self);
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data);
+
+    LandListItem *panelitem = panel->children->last;
+    if (panelitem)
+        return LAND_WIDGET(panelitem->data);
+    return NULL;
+}
+
+/* Return the given page, starting with 0 for the first page. If there is no
+ * such page, NULL is returned.
+ */
+LandWidget *land_widget_book_get_nth_page(LandWidget *self, int n)
+{
+    LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self);
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data);
+
+    LandListItem *panelitem = panel->children->first;
+
+    int i = 0;
+    while(panelitem)
+    {
+        LandWidget *page = LAND_WIDGET(panelitem->data);
+        if (i == n)
+        {
+            return page;
+        }
+        panelitem = panelitem->next;
+    i++;
+    }
+    return NULL;
+}
+
