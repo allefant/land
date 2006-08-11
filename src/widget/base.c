@@ -60,7 +60,7 @@
  * unreference(child);
  *
  * If the focus handler is done, the reference of child will now drop to zero,
- * and it is destroyed again.
+ * and it is destroyed as well.
  *
  * Now, about cyclic references, just either don't use them, or else take care
  * to resolve them before dropping the last reference into the cycle. As an

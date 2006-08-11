@@ -2,6 +2,8 @@
 
 typedef struct LandWidgetPanel LandWidgetPanel;
 
+/* A Panel is a container with exactly one child. Its layout will make it adjust
+ * to the child size. */
 struct LandWidgetPanel
 {
     LandWidgetContainer super;
