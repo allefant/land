@@ -65,20 +65,28 @@ void land_widget_scrolling_scrollto(LandWidget *base, float x, float y)
     land_widget_scrolling_size(base);
 }
 
-LandWidget *land_widget_scrolling_get_at_pos(LandWidget *super, int x, int y)
+LandWidget *land_widget_scrolling_get_at_pos(LandWidget *base, int x, int y)
 {
-    return land_widget_container_get_at_pos(super, x, y);
+    return land_widget_container_get_at_pos(base, x, y);
 }
 
-void land_widget_scrolling_mouse_tick(LandWidget *super)
+void land_widget_scrolling_mouse_tick(LandWidget *base)
 {
     if (land_mouse_delta_z())
     {
-        LandWidget *child = land_widget_scrolling_get_child(super);
-        if (!child) return;
-        land_widget_move(child, 0, land_mouse_delta_z() * 64);
+        LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data;
+        LandList *children = LAND_WIDGET_CONTAINER(contents)->children;
+        if (!children) return;
+        LandWidget *child = children->first->data;
+        int maxy = contents->box.y + contents->box.it;
+        int miny = contents->box.y + contents->box.h -
+            contents->box.ib - child->box.h;
+        int target_y = child->box.y + land_mouse_delta_z() * 64;
+        if (target_y < miny) target_y = miny;
+        if (target_y > maxy) target_y = maxy;
+        land_widget_move(child, 0, target_y - child->box.y);
     }
-    land_widget_container_mouse_tick(super);
+    land_widget_container_mouse_tick(base);
 }
 
 void land_widget_scrolling_tick(LandWidget *super)
