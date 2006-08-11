@@ -5,6 +5,9 @@
 
 typedef struct LandWidgetVBox LandWidgetVBox;
 
+/* A VBox is a container where new children will be added in rows. It's layout
+ * will adjust to the children.
+ */
 struct LandWidgetVBox
 {
     LandWidgetContainer super;

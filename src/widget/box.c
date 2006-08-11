@@ -1,10 +1,12 @@
 #ifdef _PROTOTYPE_
 
+extern LandWidgetInterface *land_widget_box_interface;
+
 #endif /* _PROTOTYPE_ */
 
 #include "land.h"
 
-LandWidgetInterface *land_widget_box_interface ;
+LandWidgetInterface *land_widget_box_interface;
 
 void land_widget_box_draw(LandWidget *self)
 {

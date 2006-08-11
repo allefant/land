@@ -145,6 +145,9 @@ void land_widget_container_to_top(LandWidget *super, LandWidget *child)
 void land_widget_container_draw(LandWidget *base)
 {
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base);
+    /* The base container theme is completely invisible, but derived classes
+     * like panel or board will draw themselves here.
+     */
     land_widget_theme_draw(base);
     if (!self->children)
         return;
