@@ -1,36 +1,24 @@
-#ifdef _PROTOTYPE_
+import base
+static import land
 
-extern LandWidgetInterface *land_widget_box_interface;
+global LandWidgetInterface *land_widget_box_interface
 
-#endif /* _PROTOTYPE_ */
+def land_widget_box_draw(LandWidget *self):
+    land_widget_theme_draw(self)
 
-#include "land.h"
+LandWidget *def land_widget_box_new(LandWidget *parent, int x, int y, int w, int h):
+    LandWidget *self = land_widget_new(parent, x, y, w, h)
 
-LandWidgetInterface *land_widget_box_interface;
+    land_widget_box_interface_initialize()
 
-void land_widget_box_draw(LandWidget *self)
-{
-    land_widget_theme_draw(self);
-}
+    self->vt = land_widget_box_interface
+    return self
 
-LandWidget *land_widget_box_new(LandWidget *parent, int x, int y, int w, int h)
-{
-    LandWidget *self = land_widget_new(parent, x, y, w, h);
-    
-    land_widget_box_interface_initialize();
-
-    self->vt = land_widget_box_interface;
-    return self;
-}
-
-void land_widget_box_interface_initialize(void)
-{
-    if (land_widget_box_interface) return;
+def land_widget_box_interface_initialize(void):
+    if land_widget_box_interface: return
 
     land_widget_box_interface = land_widget_copy_interface(
-        land_widget_base_interface, "box");
+        land_widget_base_interface, "box")
 
-    land_widget_box_interface->id = LAND_WIDGET_ID_BASE;
-    land_widget_box_interface->draw = land_widget_box_draw;
-}
-
+    land_widget_box_interface->id = LAND_WIDGET_ID_BASE
+    land_widget_box_interface->draw = land_widget_box_draw
