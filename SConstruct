@@ -11,63 +11,25 @@ crosscompile = ARGUMENTS.get("crosscompile", "")
 debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
 
-sfiles = glob.glob("src/*.c")
-sfiles += glob.glob("src/*/*.c")
-
-# Environment to generate headers.
-headerenv = Environment(ENV = os.environ)
-headerenv.SConsignFile("scons/signatures")
-headerenv.BuildDir("inc", "src", duplicate = False)
-
-# This means, if the same h is created, it is recognized as unmodified
-headerenv.TargetSignatures("content")
-
-for c in sfiles:
-    dir = os.path.split(c)[0]
-    dir = dir[4:]
-    if dir:
-        d = "-d " + dir + " "
-    else:
-        d = ""
-    headerenv.Command(
-        "inc/" + c[4:-2] + ".inc",
-        c,
-        "splitheader -i $SOURCE -o $TARGET " + d + "-p LAND_LAND_")
-
-# Environment to generate prototypes with cproto.
-protoenv = Environment()
-protoenv.SConsignFile("scons/signatures")
-protoenv.BuildDir("pro", "src", duplicate = False)
-
-# This means, if the same pro is created, it is recognized as unmodified
-protoenv.TargetSignatures("content")
-
-for c in sfiles:
-    pro = "pro/" + c[4:-2] + ".pro"
-    p = protoenv.Command(
-        pro,
-        c,
-        "cproto.py $SOURCE > $TARGET")
+pyfiles = glob.glob("src/*.py")
+pyfiles += glob.glob("src/*/*.py")
 
 # Environment to generate includes.
 includeenv = Environment()
 includeenv.SConsignFile("scons/signatures")
 includeenv.BuildDir("include/land", "src", duplicate = False)
-protoenv.TargetSignatures("content")
+# This means, if the same .c or .h is created, then it should be treated as
+# unmodified (does this really work?)
+includeenv.TargetSignatures("content")
 
-def make_include(env, target, source):
-    h = file(source[0].path).readlines()
-    pro = file(source[1].path).readlines()
-    inc = file(target[0].path, "w").writelines(h[:-4] + pro + ["\n"] + h[-1:])
+includeenv.BuildDir("c", "src", duplicate = False)
 
-for c in sfiles:
-    pro = "pro/" + c[4:-2] + ".pro"
-    h = "inc/" + c[4:-2] + ".inc"
-    inc = "include/land/" + c[4:-2] + ".h"
-    p = includeenv.Command(
-        inc,
-        [h, pro],
-        make_include)
+for py in pyfiles:
+    h = "include/land/" + py[4:-3] + ".h"
+    c = "c/" + py[4:-3] + ".c"
+    name = py[4:-3]
+    includeenv.SideEffect(h, c)
+    includeenv.Command(c, py, "scramble.py %s %s %s %s" % (py, c, h, name))
 
 includeenv.Command("include/land.h", [],
     "echo '#include \"land/land.h\"' > include/land.h")
@@ -144,15 +106,14 @@ if env["PLATFORM"] == "win32":
         "ole32", "dinput", "ddraw", "dxguid", "winmm",
         "dsound"])
 
-env.BuildDir(BUILDDIR, "src", duplicate = False)
+env.BuildDir(BUILDDIR , "c", duplicate = False)
 
-sharedlib = env.SharedLibrary(SHAREDLIBNAME,
-    [BUILDDIR + "/" + x[4:] for x in sfiles])
+sources = [BUILDDIR + "/" + x[4:-3] + ".c" for x in pyfiles]
 
-staticlib = env.StaticLibrary(STATICLIBNAME,
-    [BUILDDIR + "/" + x[4:] for x in sfiles])
+sharedlib = env.SharedLibrary(SHAREDLIBNAME, sources)
+staticlib = env.StaticLibrary(STATICLIBNAME, sources)
 
-basenames = [x[4:-2] for x in sfiles]
+basenames = [x[4:-3] for x in pyfiles]
 
 LIBDIR = '/usr/local/lib'
 INCDIR = '/usr/local/include'
@@ -175,6 +136,6 @@ INSTALL_HEADERS.append(env.Install(INCDIR, ["include/land.h"]))
 
 env.Install(LIBDIR, [sharedlib, staticlib])
 
-env.Alias('install', ["inc", "pro", "include", LIBDIR, INSTALL_HEADERS])
+env.Alias('install', ["include", LIBDIR, INSTALL_HEADERS])
 
-env.Default(["inc", "pro", "include", sharedlib, staticlib])
+env.Default(["include", sharedlib, staticlib])
