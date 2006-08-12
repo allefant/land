@@ -1,115 +1,82 @@
-#include <stdlib.h>
-#include <string.h>
+import list
 
-#ifdef _PROTOTYPE_
+class LandRunner:
+    char *name
+    int inited
+    void (*init)(LandRunner *self)
+    void (*enter)(LandRunner *self)
+    void (*tick)(LandRunner *self)
+    void (*draw)(LandRunner *self)
+    void (*leave)(LandRunner *self)
+    void (*destroy)(LandRunner *self)
 
-#include "list.h"
+static import log, memory, global stdlib, string
 
-typedef struct LandRunner LandRunner;
-struct LandRunner
-{
-    char *name;
-    int inited;
-    void (*init)(LandRunner *self);
-    void (*enter)(LandRunner *self);
-    void (*tick)(LandRunner *self);
-    void (*draw)(LandRunner *self);
-    void (*leave)(LandRunner *self);
-    void (*destroy)(LandRunner *self);
-};
+static LandList *runners
 
-#endif /* _PROTOTYPE_ */
+static LandRunner *active_runner
 
-#include "runner.h"
-#include "log.h"
-#include "memory.h"
+def land_runner_register(LandRunner *self):
+    land_log_message("land_runner_register \"%s\"\n", self->name)
+    land_add_list_data(&runners, self)
 
-static LandList *runners;
-
-static LandRunner *active_runner;
-
-void land_runner_register(LandRunner *self)
-{
-    land_log_message("land_runner_register \"%s\"\n", self->name);
-    land_add_list_data(&runners, self);
-}
-
-void land_runner_initialize(LandRunner *self, char const *name, void (*init)(LandRunner *self),
+def land_runner_initialize(LandRunner *self, char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
-    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
-{
-    self->name = land_strdup(name);
-    self->init = init;
-    self->enter = enter;
-    self->tick = tick;
-    self->draw = draw;
-    self->leave = leave;
-    self->destroy = destroy;
-}
+    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
+    self->name = land_strdup(name)
+    self->init = init
+    self->enter = enter
+    self->tick = tick
+    self->draw = draw
+    self->leave = leave
+    self->destroy = destroy
 
-LandRunner *land_runner_new(char const *name, void (*init)(LandRunner *self),
+LandRunner *def land_runner_new(char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
-    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self))
-{
-    LandRunner *self;
-    land_alloc(self);
-    land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy);
-    return self;
-}
+    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
+    LandRunner *self
+    land_alloc(self)
+    land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy)
+    return self
 
-void land_runner_switch_active(LandRunner *self)
-{
-    land_runner_leave_active();
-    active_runner = self;
-    if (active_runner && !active_runner->inited)
-    {
-        active_runner->inited = 1;
-        if (active_runner->init) active_runner->init(active_runner);
-    }
-    land_runner_enter_active();
-}
+def land_runner_switch_active(LandRunner *self):
+    land_runner_leave_active()
+    active_runner = self
+    if active_runner && !active_runner->inited:
+        active_runner->inited = 1
+        if active_runner->init: active_runner->init(active_runner)
+    land_runner_enter_active()
 
-void land_runner_enter_active(void)
-{
-    LandRunner *self = active_runner;
-    if (self && self->enter)
-        self->enter(self);
-}
+def land_runner_enter_active(void):
+    LandRunner *self = active_runner
+    if self && self->enter:
+        self->enter(self)
 
-void land_runner_tick_active(void)
-{
-    LandRunner *self = active_runner;
-    if (self && self->tick)
-        self->tick(self);
-}
+def land_runner_tick_active(void):
+    LandRunner *self = active_runner
+    if self && self->tick:
+        self->tick(self)
 
-void land_runner_draw_active(void)
-{
-    LandRunner *self = active_runner;
-    if (self && self->draw)
-        self->draw(self);
-}
+def land_runner_draw_active(void):
+    LandRunner *self = active_runner
+    if self && self->draw:
+        self->draw(self)
 
-void land_runner_leave_active(void)
-{
-    LandRunner *self = active_runner;
-    if (self && self->leave)
-        self->leave(self);
-}
+def land_runner_leave_active(void):
+    LandRunner *self = active_runner
+    if self && self->leave:
+        self->leave(self)
 
-void land_runner_destroy_all(void)
-{
-    land_log_message("land_runner_destroy_all\n");
-    LandListItem *i;
-    if (!runners)
-        return;
-    for (i = runners->first; i; i = i->next)
-    {
-        LandRunner *self = (LandRunner *)i->data;
-        if (self->destroy)
-            self->destroy(self);
-        land_free(self->name);
-        land_free(self);
-    }
-    land_list_destroy(runners);
-}
+def land_runner_destroy_all(void):
+    land_log_message("land_runner_destroy_all\n")
+    LandListItem *i
+    if !runners:
+        return
+    for i = runners->first; i; i = i->next:
+        LandRunner *self = (LandRunner *)i->data
+        if self->destroy:
+            self->destroy(self)
+        land_free(self->name)
+        land_free(self)
+
+    land_list_destroy(runners)

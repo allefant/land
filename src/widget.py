@@ -1,25 +1,17 @@
-#ifdef _PROTOTYPE_
+import widget/gul, widget/base, widget/theme, widget/layout
 
-#include "widget/gul.h"
-#include "widget/base.h"
-#include "widget/theme.h"
-
-#include "widget/layout.h"
-
-#include "widget/box.h"
-#include "widget/container.h"
-#include "widget/scrolling.h"
-#include "widget/list.h"
-#include "widget/mover.h"
-#include "widget/sizer.h"
-#include "widget/button.h"
-#include "widget/panel.h"
-#include "widget/menu.h"
-#include "widget/vbox.h"
-#include "widget/hbox.h"
-#include "widget/book.h"
-#include "widget/edit.h"
-#include "widget/spin.h"
-#include "widget/board.h"
-
-#endif /* _PROTOTYPE_ */
+import widget/box
+import widget/container
+import widget/scrolling
+import widget/list
+import widget/mover
+import widget/sizer
+import widget/button
+import widget/panel
+import widget/menu
+import widget/vbox
+import widget/hbox
+import widget/book
+import widget/edit
+import widget/spin
+import widget/board

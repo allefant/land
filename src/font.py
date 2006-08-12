@@ -1,241 +1,155 @@
-#ifdef _PROTOTYPE_
+import array, display
 
-typedef struct LandFontInterface LandFontInterface;
-typedef struct LandFont LandFont;
-typedef struct LandFontState LandFontState;
-
-#include "array.h"
-#include "display.h"
-
-struct LandFontInterface
-{
+class LandFontInterface:
     land_method(void, print, (LandFontState *state, LandDisplay *display, char const *text,
-        int alignement));
-    land_method(void, destroy, (LandFont *self));
-};
+        int alignement))
+    land_method(void, destroy, (LandFont *self))
 
-struct LandFont
-{
-    LandFontInterface *vt;
-    int size;
-};
+class LandFont:
+    LandFontInterface *vt
+    int size
 
-struct LandFontState
-{
-    float x_pos, y_pos;
-    LandFont *font;
-    float x, y, w, h;
-    float off;
-};
+class LandFontState:
+    float x_pos, y_pos
+    LandFont *font
+    float x, y, w, h
+    float off
 
-#endif /* _PROTOTYPE_ */
+static import global allegro, stdio
+static import font, exception, main
+static import allegro/font, allegrogl/font
 
-#include <allegro.h>
-#include <stdio.h>
-#include "font.h"
-#include "exception.h"
-#include "main.h"
+static LandFontState *land_font_state
 
-#include "allegro/font.h"
-#include "allegrogl/font.h"
+def land_font_init():
+    land_alloc(land_font_state)
+    land_font_allegrogl_init()
+    land_font_allegro_init()
 
-static LandFontState *land_font_state;
+def land_font_exit():
+    land_free(land_font_state)
+    land_font_allegro_exit()
+    land_font_allegrogl_exit()
 
-void land_font_init(void)
-{
-    land_alloc(land_font_state);
-    land_font_allegrogl_init();
-    land_font_allegro_init();
-}
+LandFont *def land_font_load(char const *filename, float size):
+    LandFont *self
+    if land_get_flags() & LAND_OPENGL:
+        self = land_font_allegrogl_load(filename, size)
+    else:
+        self = land_font_allegro_load(filename, size)
 
-void land_font_exit(void)
-{
-    land_free(land_font_state);
-    land_font_allegro_exit();
-    land_font_allegrogl_exit();
-}
+    land_font_state->font = self
+    return self
 
-LandFont *land_font_load(char const *filename, float size)
-{
-    LandFont *self;
-    if (land_get_flags() & LAND_OPENGL)
-    {
-        self = land_font_allegrogl_load(filename, size);
-    }
-    else
-        self = land_font_allegro_load(filename, size);
+def land_font_destroy(LandFont *self):
+    self->vt->destroy(self)
 
-    land_font_state->font = self;
-    return self;
-}
+def land_font_set(LandFont *self):
+    land_font_state->font = self
 
-void land_font_destroy(LandFont *self)
-{
-    self->vt->destroy(self);
-}
+#__attribute__((noreturn))
+def land_text_size(float sx, float sy):
+    land_exception("Text sizing currently not implemented, use different fonts instead.")
 
-void land_font_set(LandFont *self)
-{
-    land_font_state->font = self;
-}
+def land_text_pos(float x, float y):
+    land_font_state->x_pos = x
+    land_font_state->y_pos = y
 
-//__attribute__((noreturn))
-void land_text_size(float sx, float sy)
-{
-    land_exception("Text sizing currently not implemented, use different fonts instead.");
-}
+float def land_text_x_pos():
+    return land_font_state->x_pos
 
-void land_text_pos(float x, float y)
-{
-    land_font_state->x_pos = x;
-    land_font_state->y_pos = y;
-}
+float def land_text_y_pos():
+    return land_font_state->y_pos
 
-float land_text_x_pos(void)
-{
-    return land_font_state->x_pos;
-}
+float def land_text_x():
+    return land_font_state->x
 
-float land_text_y_pos(void)
-{
-    return land_font_state->y_pos;
-}
+float def land_text_y():
+    return land_font_state->y
 
-float land_text_x(void)
-{
-    return land_font_state->x;
-}
+float def land_text_width():
+    return land_font_state->w
 
-float land_text_y(void)
-{
-    return land_font_state->y;
-}
+float def land_text_height():
+    return land_font_state->h
 
-float land_text_width(void)
-{
-    return land_font_state->w;
-}
+int def land_text_state():
+    return land_font_state->off
 
-float land_text_height(void)
-{
-    return land_font_state->h;
-}
+int def land_font_height(LandFont *self):
+    return self->size
 
-int land_text_state(void)
-{
-    return land_font_state->off;
-}
+LandFont *def land_font_current():
+    return land_font_state->font
 
-int land_font_height(LandFont *self)
-{
-    return self->size;
-}
+def land_text_off():
+    land_font_state->off = 1
 
-LandFont *land_font_current(void)
-{
-    return land_font_state->font;
-}
+def land_text_on():
+    land_font_state->off = 0
 
-void land_text_off(void)
-{
-    land_font_state->off = 1;
-}
+static def _print(char const *str, int newline, int alignement):
+    land_font_state->font->vt->print(land_font_state, _land_active_display, str, alignement)
+    if newline:
+        land_font_state->y_pos = land_font_state->y + land_font_state->h
 
-void land_text_on(void)
-{
-    land_font_state->off = 0;
-}
+    else:
+        land_font_state->x_pos = land_font_state->x + land_font_state->w
 
-static void _print(char const *str, int newline, int alignement)
-{
-    land_font_state->font->vt->print(land_font_state, _land_active_display, str, alignement);
-    if (newline)
-    {
-        land_font_state->y_pos = land_font_state->y + land_font_state->h;
-    }
-    else
-    {
-        land_font_state->x_pos = land_font_state->x + land_font_state->w;
-    }
-}
 
-int land_text_get_width(char const *str)
-{
-    int onoff = land_font_state->off;
-    land_font_state->off = 1;
-    land_font_state->font->vt->print(land_font_state, NULL, str, 0);
-    land_font_state->off = onoff;
-    return land_font_state->w;
-}
+int def land_text_get_width(char const *str):
+    int onoff = land_font_state->off
+    land_font_state->off = 1
+    land_font_state->font->vt->print(land_font_state, NULL, str, 0)
+    land_font_state->off = onoff
+    return land_font_state->w
 
-/* Get the position at which the nth character is drawn. */
-int land_text_get_char_offset(char const *str, int nth)
-{
-    int l = ustrlen(str);
-    if (nth > l) nth = l;
-    char *s = land_strdup(str);
-    usetat(s, nth, '\0');
-    int x = land_text_get_width(s);
-    land_free(s);
-    return x;
-}
+# Get the position at which the nth character is drawn. 
+int def land_text_get_char_offset(char const *str, int nth):
+    int l = ustrlen(str)
+    if nth > l: nth = l
+    char *s = land_strdup(str)
+    usetat(s, nth, '\0')
+    int x = land_text_get_width(s)
+    land_free(s)
+    return x
 
-/* Get the character index which is under the given pixel position, so that
- * the following j always is i:
- * x = land_text_get_char_offset(str, i);
- * j = land_text_get_char_index(x);
- */
-int land_text_get_char_index(char const *str, int x)
-{
-    if (x < 0) return 0;
-    int l = ustrlen(str);
-    int i;
-    for (i = 0; i <= l; i++)
-    {
-        if (land_text_get_char_offset(str, i) > x) return i - 1;
-    }
-    return l;
-}
+# Get the character index which is under the given pixel position, so that
+# the following j always is i:
+# x = land_text_get_char_offset(str, i)
+# j = land_text_get_char_index(x)
+# 
+int def land_text_get_char_index(char const *str, int x):
+    if x < 0: return 0
+    int l = ustrlen(str)
+    int i
+    for i = 0; i <= l; i++:
+        if land_text_get_char_offset(str, i) > x: return i - 1
 
-#define VPRINT \
-    char str[1024]; \
-    va_list args; \
-    va_start(args, text); \
-    vsnprintf(str, sizeof str, text, args); \
-    va_end(args); \
+    return l
 
-void land_print(char const *text, ...)
-{
+macro VPRINT char str[1024]; va_list args; va_start(args, text); vsnprintf(str, sizeof str, text, args); va_end(args);
+
+def land_print(char const *text, ...):
     VPRINT
-    _print(str, 1, 0);
-}
+    _print(str, 1, 0)
 
-void land_print_right(char const *text, ...)
-{
+def land_print_right(char const *text, ...):
     VPRINT
-    _print(str, 1, 1);
-}
+    _print(str, 1, 1)
 
-void land_print_center(char const *text, ...)
-{
+def land_print_center(char const *text, ...):
     VPRINT
-    _print(str, 1, 2);
-}
+    _print(str, 1, 2)
 
-void land_write(char const *text, ...)
-{
+def land_write(char const *text, ...):
     VPRINT
-    _print(str, 0, 0);
-}
+    _print(str, 0, 0)
 
-void land_write_right(char const *text, ...)
-{
+def land_write_right(char const *text, ...):
     VPRINT
-    _print(str, 0, 1);
-}
+    _print(str, 0, 1)
 
-void land_write_center(char const *text, ...)
-{
+def land_write_center(char const *text, ...):
     VPRINT
-    _print(str, 0, 2);
-}
+    _print(str, 0, 2)

@@ -1,54 +1,34 @@
-#ifdef _PROTOTYPE_
+import global stdlib
+class LandArray:
+    int count
+    void **data
 
-#include <stdlib.h>
+static import array, memory
 
-typedef struct LandArray LandArray;
-struct LandArray
-{
-    int count;
-    void **data;
-};
+LandArray *def land_array_new():
+    LandArray *self
+    land_alloc(self)
+    return self
 
-#endif /* _PROTOTYPE_ */
+# Given a pointer to a (possibly NULL valued) array pointer, create a new node
+# with the given data, and add to the (possibly modified) array.
+# 
+def land_array_add_data(LandArray **array, void *data):
+    LandArray *self = *array
+    if !self:
+        self = land_array_new()
 
-#include "array.h"
-#include "memory.h"
+    self->data = land_realloc(self->data, (self->count + 1) * sizeof *self->data)
+    self->data[self->count] = data
+    self->count++
+    *array = self
 
-LandArray *land_array_new(void)
-{
-    LandArray *self;
-    land_alloc(self);
-    return self;
-}
+void *def land_array_get_nth(LandArray *array, int i):
+    return array->data[i]
 
-/* Given a pointer to a (possibly NULL valued) array pointer, create a new node
- * with the given data, and add to the (possibly modified) array.
- */
-void land_array_add_data(LandArray **array, void *data)
-{
-    LandArray *self = *array;
-    if (!self)
-    {
-        self = land_array_new();
-    }
-    self->data = land_realloc(self->data, (self->count + 1) * sizeof *self->data);
-    self->data[self->count] = data;
-    self->count++;
-    *array = self;
-}
+def land_array_destroy(LandArray *self):
+    land_free(self->data)
+    land_free(self)
 
-void *land_array_get_nth(LandArray *array, int i)
-{
-    return array->data[i];
-}
-
-void land_array_destroy(LandArray *self)
-{
-    land_free(self->data);
-    land_free(self);
-}
-
-void land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b))
-{
-    qsort(self->data, self->count, sizeof(void *), cmpfnc);
-}
+def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)):
+    qsort(self->data, self->count, sizeof(void *), cmpfnc)

@@ -1,93 +1,62 @@
-#include <allegro.h>
+static import global allegro
+static import exception
 
-#include "mouse.h"
-#include "exception.h"
+static int mx, my, mz, omx, omy, omz
+static int mb, omb
 
-static int mx, my, mz, omx, omy, omz;
-static int mb, omb;
+static int have_os_cursor = 0
 
-static int have_os_cursor = 0;
+def land_mouse_init():
+    enable_hardware_cursor()
+    select_mouse_cursor(MOUSE_CURSOR_ARROW)
+    show_mouse(screen)
+    have_os_cursor = gfx_capabilities & GFX_SYSTEM_CURSOR
+    if !have_os_cursor: show_mouse(NULL)
 
-void land_mouse_init(void)
-{
-    enable_hardware_cursor();
-    select_mouse_cursor(MOUSE_CURSOR_ARROW);
-    show_mouse(screen);
-    have_os_cursor = gfx_capabilities & GFX_SYSTEM_CURSOR;
-    if (!have_os_cursor)
-        show_mouse(NULL);
-}
+int def land_have_os_cursor():
+    return have_os_cursor
 
-int land_have_os_cursor(void)
-{
-    return have_os_cursor;
-}
+def land_mouse_tick():
+    omx = mx
+    omy = my
+    omz = mz
+    omb = mb
+    mx = mouse_x
+    my = mouse_y
+    mz = mouse_z
+    mb = mouse_b
 
-void land_mouse_tick(void)
-{
-    omx = mx;
-    omy = my;
-    omz = mz;
-    omb = mb;
-    mx = mouse_x;
-    my = mouse_y;
-    mz = mouse_z;
-    mb = mouse_b;
-}
+int def land_mouse_x():
+    return mx
 
-int land_mouse_x(void)
-{
-    return mx;
-}
+int def land_mouse_y():
+    return my
 
-int land_mouse_y(void)
-{
-    return my;
-}
+int def land_mouse_z():
+    return mz
 
-int land_mouse_z(void)
-{
-    return mz;
-}
+int def land_mouse_b():
+    return mb
 
-int land_mouse_b(void)
-{
-    return mb;
-}
+int def land_mouse_delta_x():
+    return mx - omx
 
-int land_mouse_delta_x(void)
-{
-    return mx - omx;
-}
+int def land_mouse_delta_y():
+    return my - omy
 
-int land_mouse_delta_y(void)
-{
-    return my - omy;
-}
+int def land_mouse_delta_z():
+    return mz - omz
 
-int land_mouse_delta_z(void)
-{
-    return mz - omz;
-}
+int def land_mouse_delta_b():
+    return mb ^ omb
 
-int land_mouse_delta_b(void)
-{
-    return mb ^ omb;
-}
+def land_mouse_set_pos(int x, int y):
+    position_mouse(x, y)
+    mx = x
+    my = y
 
-void land_mouse_set_pos(int x, int y)
-{
-    position_mouse(x, y);
-    mx = x;
-    my = y;
-}
+int def land_hide_mouse_cursor():
+    return !show_os_cursor(MOUSE_CURSOR_NONE)
 
-int land_hide_mouse_cursor(void)
-{
-    return !show_os_cursor(MOUSE_CURSOR_NONE);
-}
-
-int land_show_mouse_cursor(void)
-{
-    return !show_os_cursor(MOUSE_CURSOR_ARROW);
-}
+int def land_show_mouse_cursor():
+    return !show_os_cursor(MOUSE_CURSOR_ARROW)
