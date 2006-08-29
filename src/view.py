@@ -1,7 +1,8 @@
 import grid, array
 
 class LandView:
-    float scroll_x, scroll_y; # position inside the map (origin of view relative to origin of map) 
+    float scroll_x, scroll_y; # position inside the map
+    # (origin of view relative to origin of map) 
     int x, y, w, h; # screen area 
 
 static import memory
