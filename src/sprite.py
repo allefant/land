@@ -231,14 +231,13 @@ def land_sprite_show(LandSprite *self):
 def land_sprite_hide(int sprite, int grid):
     pass
 
-# Given to sprites who have a type LandSpriteTypeImage, do a pixel overlap
+# Given two sprites who have a type LandSpriteTypeImage, do a pixel overlap
 # test, and return 0 if they don't overlap.
 int def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other):
     return land_image_overlaps(LAND_SPRITE_TYPE_IMAGE(self->type)->image,
     self->x, self->y, self->angle,
     LAND_SPRITE_TYPE_IMAGE(other->type)->image,
     other->x, other->y, other->angle)
-
 
 # Return a list of all sprites overlapping the sprite in the given grid.
 # The sprite itself is not returned.
@@ -279,9 +278,6 @@ LandList *def land_sprites_grid_overlap(LandSprite *self, LandGrid
                         if self->type->overlap(self, other):
                             land_add_list_data(&retlist, other)
                     item = item->next
-
-
-
 
     return retlist
 

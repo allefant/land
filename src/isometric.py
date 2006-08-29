@@ -351,8 +351,6 @@ def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
             cell_x++
             if cell_x >= self->x_cells: cell_x -= self->x_cells
 
-
-
 def land_isometric_init():
     land_log_message("land_isometric_init\n")
 
