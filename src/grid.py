@@ -19,6 +19,22 @@ static LandGrid *active_grid = 0
 def land_grid_draw(LandGrid *self, LandView *view):
     self->vt->draw(self, view)
 
+def land_grid_draw_grid(LandGrid *self, LandView *view):
+    int i
+    land_color(0, 0, 1, 0.5)
+
+    float cx = view->scroll_x / self->cell_w
+    float ox = cx - floor(cx)
+    for i = 0; i < view->w / self->cell_w; i++:
+        float x = view->x + (i + ox) * self->cell_w
+        land_line(x, view->y, x, view->y + view->h)
+        
+    float cy = view->scroll_y / self->cell_h
+    float oy = cy - floor(cy)
+    for i = 0; i < view->h / self->cell_h; i++:
+        float y = view->y + (i + oy) * self->cell_h
+        land_line(view->x, y, view->x + view->w, y)
+
 def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, float view_y,
     float *cell_x, float *cell_y):
     self->vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
