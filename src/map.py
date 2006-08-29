@@ -9,7 +9,6 @@ def land_map_draw(LandMap *self, LandView *view):
         land_layer_draw(layer, view)
         layer = layer->next_in_map
 
-
 def land_map_add_layer(LandMap *map, LandLayer *layer):
     if map->first_layer:
         LandLayer *l = map->first_layer
@@ -29,7 +28,6 @@ def land_map_del(LandMap *self):
         while l:
             land_layer_del(l)
             l = l->next_in_map
-
 
     land_free(self)
 
