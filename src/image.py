@@ -29,6 +29,8 @@ class LandImage:
 
     float l, t, r, b; # Cut-away left, top, right, bottom. 
 
+import allegro/image, allegrogl/image
+
 # TODO
 class LandSubImage:
     LandImage super
@@ -36,7 +38,7 @@ class LandSubImage:
     float x, y, w, h
 
 static import global string
-static import display, data, allegro/image, allegrogl/image
+static import display, data
 
 extern LandDataFile *_land_datafile
 
@@ -191,9 +193,6 @@ def land_image_colorize(LandImage *self, LandImage *colormask):
                 hsv_to_rgb(ch, cs, v, &r, &g, &b)
                 putpixel(self->bitmap, x, y, makecol(r, g, b))
 
-
-
-
 def land_image_prepare(LandImage *self):
     self->vt->prepare(self)
 
@@ -262,7 +261,6 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
             LandImage *sub = land_image_sub(sheet, x, y, grid_w, grid_h)
             land_array_add_data(&array, sub)
 
-
     if _cb: _cb(filename, sheet)
     return array
 
@@ -287,7 +285,17 @@ LandArray *def land_image_load_split_sheet(char const *filename, int offset_x, i
 
 def land_image_draw_scaled_rotated_tinted(LandImage *self, float x, float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
-    self->vt->draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha)
+    # FIXME
+    # We cannot just use the image's vtable here. And we also cannot just use
+    # the display's vtable. In fact, we might need another method for any
+    # display/image combination. For now, if the display is an ImageDisplay,
+    # we draw the image as if it were an LandImageAllegro, no matter what type
+    # of image it is. In all other cases, we let the image vtable do whateve
+    # it sees fit.
+    if land_display_image_check(_land_active_display):
+        land_image_allegro_draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha)
+    else:
+        self->vt->draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha)
 
 def land_image_draw_scaled_rotated(LandImage *self, float x, float y, float sx, float sy,
     float angle):
