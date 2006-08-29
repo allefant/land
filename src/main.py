@@ -16,6 +16,7 @@ static int quit
 static volatile int ticks
 static int frames
 static int x_clicked
+static struct timeval start_time
 
 static def ticker():
     ticks++
@@ -24,6 +25,13 @@ static def closebutton():
     x_clicked++
 
 def land_init():
+    #ifndef ALLEGRO_WINDOWS
+    gettimeofday(&start_time, NULL)
+    #else
+    #FIXME
+
+    #endif
+
     land_log_message("land_init\n")
     land_alloc(parameters)
     parameters->w = 640
@@ -90,7 +98,7 @@ double def land_get_time():
     #ifndef ALLEGRO_WINDOWS
     struct timeval tv
     gettimeofday(&tv, NULL)
-    return (tv.tv_sec * 1000000.0 + tv.tv_usec) * 0.000001
+    return ((tv.tv_sec - start_time.tv_sec) * 1000000.0 + tv.tv_usec) * 0.000001
     #else
     #FIXME
     return ticks / frequency
