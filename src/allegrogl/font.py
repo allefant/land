@@ -119,38 +119,31 @@ static LandFontInterface *vtable
 #    state->w = w
 #    state->h = h
 
-LandFont *def land_font_allegrogl_load(char const *filename, float size):
-    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
-    LandFontAllegrogl *self
-    land_alloc(self)
-    PALETTE pal
-    int data = size
-    FONT *temp = load_font(filename, pal, &data)
+static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
     int alpha = 0
     int paletted = 0
-    if is_color_font(temp):
-        FONT_COLOR_DATA *fcd = temp->data
+    if is_color_font(af):
+        FONT_COLOR_DATA *fcd = af->data
         if bitmap_color_depth(fcd->bitmaps[0]) == 32:
             alpha = 1
         else:
             paletted = 1
             fudgefont_color_range(0, 0, 0, 255, 255, 255)
-
     else:
         select_palette(pal)
         paletted = 1
 
-    if alpha: make_trans_font(temp)
-    
-        land_log_message(" using %salpha, using %spalette\n",
-            alpha ? "" : "no ", paletted ? "" : "no ")
+    if alpha:
+        make_trans_font(af)
+    land_log_message(" using %salpha, using %spalette\n",
+        alpha ? "" : "no ", paletted ? "" : "no ")
 
-    self->font = allegro_gl_convert_allegro_font_ex(temp,
+    self->font = allegro_gl_convert_allegro_font_ex(af,
         AGL_FONT_TYPE_TEXTURED, -1, paletted ? GL_ALPHA : GL_RGBA8)
     self->super.size = text_height(self->font)
     self->super.vt = vtable
     if self->font:
-        land_log_message_nostamp(" %d success\n", text_height(temp))
+        land_log_message_nostamp(" %d success\n", text_height(af))
         GLuint ids[10]
         int n = allegro_gl_list_font_textures(self->font, ids, 10)
         int i
@@ -164,11 +157,25 @@ LandFont *def land_font_allegrogl_load(char const *filename, float size):
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a)
             land_log_message(" texture %d: %d x %d x (%d%d%d%d)\n", ids[i], w, h, r, g, b, a)
-
-
     else:
         land_log_message_nostamp("failure\n")
+
+LandFont *def land_font_allegrogl_load(char const *filename, float size):
+    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
+    LandFontAllegrogl *self; land_alloc(self)
+    int data = size
+    PALETTE pal
+    FONT *temp = load_font(filename, pal, &data)
+    convert(self, temp, pal)
     destroy_font(temp)
+    return &self->super
+
+LandFont *def land_font_allegrogl_default():
+    LandFontAllegrogl *self; land_alloc(self)
+    land_log_message("land_font_allegrogl_default\n")
+    PALETTE pal
+    memcpy(pal, default_palette, sizeof pal)
+    convert(self, font, pal)
     return &self->super
 
 def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
