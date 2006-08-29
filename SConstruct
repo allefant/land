@@ -28,8 +28,7 @@ for py in pyfiles:
     h = "include/land/" + py[4:-3] + ".h"
     c = "c/" + py[4:-3] + ".c"
     name = py[4:-3]
-    includeenv.SideEffect(h, c)
-    includeenv.Command(c, py, "scramble.py %s %s %s %s" % (py, c, h, name))
+    includeenv.Command([c, h], py, "scramble.py %s %s %s %s _LAND_HEADER" % (py, c, h, name))
 
 includeenv.Command("include/land.h", [],
     "echo '#include \"land/land.h\"' > include/land.h")
