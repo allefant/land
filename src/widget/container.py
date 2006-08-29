@@ -7,7 +7,8 @@ class LandWidgetContainer:
     LandWidget *mouse # we keep a reference to the focus object.
     LandWidget *keyboard
 
-macro LAND_WIDGET_CONTAINER(widget) ((LandWidgetContainer *) land_widget_check(widget, LAND_WIDGET_ID_CONTAINER, __FILE__, __LINE__))
+macro LAND_WIDGET_CONTAINER(widget) ((LandWidgetContainer *)
+    land_widget_check(widget, LAND_WIDGET_ID_CONTAINER, __FILE__, __LINE__))
 
 global LandWidgetInterface *land_widget_container_interface
 
@@ -80,7 +81,7 @@ def land_widget_container_keyboard_leave(LandWidget *super):
 
 
 # Returns the item/iterator for the given child of the container.
-LandListItem *def land_widget_container_child_item(LandWidget *super, LandWidget *child):
+LandListItem *def land_widget_container_child_item(LandWidget *super, *child):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if !self->children:
         return NULL
@@ -157,7 +158,7 @@ def land_widget_container_size(LandWidget *super):
 
     land_widget_base_size(super)
 
-LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, int y):
+LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if not self->children:
         return NULL
@@ -346,7 +347,8 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
     land_remove_list_data(&LAND_WIDGET_CONTAINER(base)->children, rem)
     land_widget_unreference(rem)
 
-def land_widget_container_initialize(LandWidget *super, LandWidget *parent, int x, int y, int w, int h):
+def land_widget_container_initialize(LandWidget *super, *parent,
+    int x, y, w, h):
    land_widget_container_interface_initialize()
 
    LandWidgetContainer *self = (LandWidgetContainer *)super
@@ -354,7 +356,7 @@ def land_widget_container_initialize(LandWidget *super, LandWidget *parent, int 
    super->vt = land_widget_container_interface
    self->children = NULL
 
-LandWidget *def land_widget_container_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
     LandWidgetContainer *self
     land_alloc(self)
     land_widget_container_initialize(&self->super, parent, x, y, w, h)
@@ -365,7 +367,8 @@ def land_widget_container_interface_initialize(void):
 
     land_alloc(land_widget_container_interface)
     land_widget_interface_register(land_widget_container_interface)
-    land_widget_container_interface->id = LAND_WIDGET_ID_BASE | LAND_WIDGET_ID_CONTAINER
+    land_widget_container_interface->id = LAND_WIDGET_ID_BASE |\
+        LAND_WIDGET_ID_CONTAINER
     land_widget_container_interface->name = "container"
     land_widget_container_interface->destroy = land_widget_container_destroy
     land_widget_container_interface->draw = land_widget_container_draw
@@ -373,9 +376,15 @@ def land_widget_container_interface_initialize(void):
     land_widget_container_interface->add = land_widget_container_add
     land_widget_container_interface->move = land_widget_container_move
     land_widget_container_interface->size = land_widget_container_size
-    land_widget_container_interface->mouse_tick = land_widget_container_mouse_tick
-    land_widget_container_interface->mouse_enter = land_widget_container_mouse_enter
-    land_widget_container_interface->mouse_leave = land_widget_container_mouse_leave
-    land_widget_container_interface->keyboard_tick = land_widget_container_keyboard_tick
-    land_widget_container_interface->keyboard_enter = land_widget_container_keyboard_enter
-    land_widget_container_interface->keyboard_leave = land_widget_container_keyboard_leave
+    land_widget_container_interface->mouse_tick =\
+        land_widget_container_mouse_tick
+    land_widget_container_interface->mouse_enter =\
+        land_widget_container_mouse_enter
+    land_widget_container_interface->mouse_leave =\
+        land_widget_container_mouse_leave
+    land_widget_container_interface->keyboard_tick =\
+        land_widget_container_keyboard_tick
+    land_widget_container_interface->keyboard_enter =\
+        land_widget_container_keyboard_enter
+    land_widget_container_interface->keyboard_leave =\
+        land_widget_container_keyboard_leave

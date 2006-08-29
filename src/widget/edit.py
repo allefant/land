@@ -11,7 +11,8 @@ class LandWidgetEdit:
     int last_char
     void (*modified)(LandWidget *self)
 
-macro LAND_WIDGET_EDIT(widget) ((LandWidgetEdit *) land_widget_check(widget, LAND_WIDGET_ID_EDIT, __FILE__, __LINE__))
+macro LAND_WIDGET_EDIT(widget) ((LandWidgetEdit *) land_widget_check(widget,
+    LAND_WIDGET_ID_EDIT, __FILE__, __LINE__))
 
 static import land
 
@@ -50,13 +51,11 @@ def land_widget_edit_draw(LandWidget *base):
             pos -= floor(pos)
             if pos < 0.5:
                 int cx = land_text_get_char_offset(self->text, self->cursor)
-                land_line(x + cx, y, x + cx, base->box.y + base->box.h - base->box.ib)
-
-
+                land_line(x + cx, y, x + cx, base->box.y + base->box.h -
+                    base->box.ib)
 
     if !base->dont_clip:
         land_clip_pop()
-
 
 def land_widget_edit_mouse_tick(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
@@ -66,8 +65,6 @@ def land_widget_edit_mouse_tick(LandWidget *base):
             base->want_focus = 1
             int x = land_mouse_x() - base->box.x - base->box.il
             edit->cursor = land_text_get_char_index(edit->text, x)
-
-
 
 macro M if (edit->modified) edit->modified(base)
 def land_widget_edit_keyboard_tick(LandWidget *base):
@@ -83,7 +80,6 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
             uinsert(edit->text, edit->cursor, u)
             edit->cursor++
             M
-
         else:
             int l = ustrlen(edit->text)
             if k == KEY_LEFT:
@@ -100,8 +96,6 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                     edit->bytes = ustrsizez(edit->text)
                     edit->text = land_realloc(edit->text, edit->bytes)
                     M
-
-
             elif k == KEY_BACKSPACE:
                 if edit->cursor > 0:
                     edit->cursor--
@@ -109,8 +103,6 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                     edit->bytes = ustrsizez(edit->text)
                     edit->text = land_realloc(edit->text, edit->bytes)
                     M
-
-
             elif k == KEY_HOME:
                 edit->cursor = 0
 

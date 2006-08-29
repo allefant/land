@@ -120,14 +120,15 @@ def gul_box_del(LandLayoutBox * self):
 #}
 
 # Same as find_box_in_grid, but O(c) instead of O(n). 
-static LandLayoutBox *def lookup_box_in_grid(LandLayoutBox *self, int col, int row):
+static LandLayoutBox *def lookup_box_in_grid(LandLayoutBox *self, int col, row):
     assert(col < self->cols && row < self->rows)
 
     return self->lookup_grid[row * self->cols + col]
 
 static def update_lookup_grid(LandLayoutBox *self):
     if (self->lookup_grid) land_free(self->lookup_grid)
-    self->lookup_grid = land_calloc(self->cols * self->rows * sizeof *self->lookup_grid)
+    self->lookup_grid = land_calloc(self->cols * self->rows *
+        sizeof *self->lookup_grid)
     
     # The lookup grid initially is filled with 0. Now all non-hidden boxes
     # fill in which grid cells they occupy.
@@ -276,7 +277,7 @@ def gul_remove_child(LandLayoutBox * self, LandLayoutBox * rem, int update):
         p = c
 
 
-def gul_box_replace_child(LandLayoutBox * self, LandLayoutBox * child, LandLayoutBox * with):
+def gul_box_replace_child(LandLayoutBox *self, LandLayoutBox *child, *with):
     gul_remove_child(self, child, 0)
     with->col = child->col
     with->row = child->row
@@ -290,7 +291,7 @@ def gul_box_replace_child(LandLayoutBox * self, LandLayoutBox * child, LandLayou
 #
 #
 # 
-static def gul_box_bottom_up(LandLayoutBox * self):
+static def gul_box_bottom_up(LandLayoutBox *self):
     LandLayoutBox *c
     if (self->flags & GUL_HIDDEN) return
 
