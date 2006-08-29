@@ -3,9 +3,10 @@ import base, scrolling, vbox
 class LandWidgetList:
     LandWidgetVBox super
     # If set, multiple items can get selected. 
-    unsigned int multi_select
+    unsigned int multi_select : 1
 
-macro LAND_WIDGET_LIST(widget) ((LandWidgetList *) land_widget_check(widget, LAND_WIDGET_ID_LIST, __FILE__, __LINE__))
+macro LAND_WIDGET_LIST(widget) ((LandWidgetList *) land_widget_check(widget,
+    LAND_WIDGET_ID_LIST, __FILE__, __LINE__))
 
 static import land, widget/button
 
@@ -39,7 +40,7 @@ def land_widget_list_initialize(LandWidget *base, LandWidget *parent,
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.
 # 
-LandWidget *def land_widget_list_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_list_new(LandWidget *parent, int x, y, w, h):
     LandWidgetList *self
     land_alloc(self)
     LandWidget *widget = (LandWidget *)self
@@ -88,3 +89,11 @@ LandArray *def land_widget_list_get_selected_items(LandWidget *self):
             land_array_add_data(&array, child)
 
     return array
+
+def land_widget_list_clear_selection(LandWidget *self):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
+    LandListItem *item
+    for item = container->children->first; item; item = item->next:
+        LandWidget *child = item->data
+        if child->selected:
+            child->selected = 0
