@@ -90,6 +90,7 @@ def land_display_allegro_init():
     vtable->line = land_display_image_line
     vtable->filled_circle = land_display_image_filled_circle
     vtable->plot = land_display_image_plot
+    vtable->pick_color = land_display_image_pick_color
 
     vtable->set = land_display_allegro_set
     vtable->flip = land_display_allegro_flip

@@ -22,6 +22,7 @@ class LandDisplayInterface:
     land_method(void, polygon, (LandDisplay *self, int n, float *x, float *y))
     land_method(void, filled_polygon, (LandDisplay *self, int n, float *x, float *y))
     land_method(void, plot, (LandDisplay *self, float x, float y))
+    land_method(void, pick_color, (LandDisplay *self, float x, float y))
 
 class LandDisplay:
     LandDisplayInterface *vt
@@ -270,6 +271,9 @@ def land_filled_polygon(int n, float *x, float *y):
 
 def land_plot(float x, float y):
     _land_active_display->vt->plot(_land_active_display, x, y)
+    
+def land_pick_color(float x, float y):
+    _land_active_display->vt->pick_color(_land_active_display, x, y)
 
 int def land_display_width():
     LandDisplay *self = _land_active_display
