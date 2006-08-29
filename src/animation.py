@@ -1,6 +1,7 @@
 import array, image
 
 class LandAnimation:
+    float fps
     LandArray *frames
 
 static import animation, memory
@@ -8,6 +9,7 @@ static import animation, memory
 LandAnimation *def land_animation_new(LandArray *frames):
     LandAnimation *self
     land_alloc(self)
+    self->fps = 10
     self->frames = frames
     return self
 
