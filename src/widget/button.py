@@ -1,14 +1,17 @@
-import base, ../image
+import base, ../image, ../animation
 
 class LandWidgetButton:
     LandWidget super
-    unsigned int xalign : 2; /* 0 = left, 1 = right, 2 = center */
-    unsigned int yalign : 2; /* 0 = top, 1 = bottom, 2 = center */
+    unsigned int xalign : 2 # 0 = left, 1 = right, 2 = center
+    unsigned int yalign : 2 # 0 = top, 1 = bottom, 2 = center
+    LandAnimation *animation
     LandImage *image
     char *text
     void (*clicked)(LandWidget *self)
+    void (*rclicked)(LandWidget *self)
 
-macro LAND_WIDGET_BUTTON(widget) ((LandWidgetButton *) land_widget_check(widget, LAND_WIDGET_ID_BUTTON, __FILE__, __LINE__))
+macro LAND_WIDGET_BUTTON(widget) ((LandWidgetButton *)
+    land_widget_check(widget, LAND_WIDGET_ID_BUTTON, __FILE__, __LINE__))
 
 static import land
 
@@ -33,14 +36,36 @@ def land_widget_button_draw(LandWidget *base):
         float x = base->box.x + base->box.il
         switch self->xalign:
             case 1: x = base->box.x + base->box.w - base->box.ir - w; break
-            case 2: x = base->box.x + (base->box.w - base->box.il - base->box.ir - w) * 0.5; break
+            case 2: x = base->box.x + (base->box.w -
+                base->box.il - base->box.ir - w) * 0.5; break
 
         float y = base->box.y + base->box.it
         switch self->yalign:
             case 1: y = base->box.y + base->box.h - base->box.ib - h; break
-            case 2: y = base->box.y + (base->box.h - base->box.it - base->box.ib - h) * 0.5; break
+            case 2: y = base->box.y + (base->box.h - base->box.it -
+                base->box.ib - h) * 0.5; break
 
         land_image_draw(self->image, x + self->image->x, y + self->image->y)
+
+    if self->animation:
+        float fps = self->animation->fps
+        int i = (int)(land_get_time() * fps) % self->animation->frames->count
+        LandImage *image = land_animation_get_frame(self->animation, i)
+        int w = land_image_width(image)
+        int h = land_image_height(image)
+        float x = base->box.x + base->box.il
+        switch self->xalign:
+            case 1: x = base->box.x + base->box.w - base->box.ir - w; break
+            case 2: x = base->box.x + (base->box.w -
+                base->box.il - base->box.ir - w) * 0.5; break
+
+        float y = base->box.y + base->box.it
+        switch self->yalign:
+            case 1: y = base->box.y + base->box.h - base->box.ib - h; break
+            case 2: y = base->box.y + (base->box.h -
+                base->box.it - base->box.ib - h) * 0.5; break
+
+        land_image_draw(image, x + image->x, y + image->y)
 
     if self->text:
         int x, y = base->box.y + base->box.it
@@ -48,7 +73,8 @@ def land_widget_button_draw(LandWidget *base):
         int th = land_font_height(land_font_current())
         switch self->yalign:
             case 1: y = base->box.y + base->box.h - base->box.ib - th; break
-            case 2: y = base->box.y + (base->box.h - base->box.it + base->box.ib - th) / 2; break
+            case 2: y = base->box.y + (base->box.h - base->box.it +
+                base->box.ib - th) / 2; break
 
         switch self->xalign:
             case 0:
@@ -62,7 +88,8 @@ def land_widget_button_draw(LandWidget *base):
                 land_print_right(self->text)
                 break
             case 2:
-                x = base->box.x + (base->box.w - base->box.il + base->box.ir) / 2
+                x = base->box.x + (base->box.w - base->box.il +
+                    base->box.ir) / 2
                 land_text_pos(x, y)
                 land_print_center(self->text)
                 break
@@ -74,10 +101,14 @@ def land_widget_button_draw(LandWidget *base):
 
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    if not button->clicked: return
-    if land_mouse_delta_b() & 1:
-        if land_mouse_b() & 1:
-            button->clicked(base)
+    if button->clicked:
+        if land_mouse_delta_b() & 1:
+            if land_mouse_b() & 1:
+                button->clicked(base)
+    if button->rclicked:
+        if land_mouse_delta_b() & 2:
+            if land_mouse_b() & 2:
+                button->rclicked(base)
 
 def land_widget_button_destroy(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -134,6 +165,22 @@ LandWidget *def land_widget_button_new_with_image(LandWidget *parent,
 
     return self
 
+LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
+    char const *text, LandAnimation *animation,
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+    LandWidgetButton *button
+    land_alloc(button)
+    LandWidget *self = (LandWidget *)button
+
+    land_widget_button_initialize(self,
+        parent, text, NULL, clicked, x, y, w, h)
+    button->animation = animation
+
+    land_widget_theme_layout_border(self)
+    land_widget_layout(parent)
+
+    return self
+
 LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
     int x, int y, int w, int h):
     LandWidgetButton *button
@@ -171,4 +218,5 @@ def land_widget_button_interface_initialize():
     land_widget_button_interface->destroy = land_widget_button_destroy
     land_widget_button_interface->draw = land_widget_button_draw
     land_widget_button_interface->mouse_tick = land_widget_button_mouse_tick
-    land_widget_button_interface->get_inner_size = land_widget_button_get_inner_size
+    land_widget_button_interface->get_inner_size =\
+        land_widget_button_get_inner_size
