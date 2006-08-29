@@ -30,6 +30,9 @@ LandDisplay *def land_display_image_new(LandImage *target, int flags):
 
     return super
 
+int def land_display_image_check(LandDisplay *self):
+    return self->vt == vtable
+
 def land_display_image_clear(LandDisplay *super, float r, float g, float b, float a):
     LandDisplayImage *self = LAND_DISPLAY_IMAGE(super)
     clear_to_color(self->bitmap, makeacol(r * 255, g * 255, b * 255, a * 255))
@@ -75,10 +78,17 @@ def land_display_image_filled_circle(LandDisplay *display,
     ellipsefill(self->bitmap, (x + x_) / 2, (y + y_) / 2,
         (x_ - x) / 2, (y_ - y) / 2, color(display))
 
-def land_display_image_plot(LandDisplay *display,
-    float x, float y):
+def land_display_image_plot(LandDisplay *display, float x, y):
     LandDisplayImage *self = LAND_DISPLAY_IMAGE(display)
     putpixel(self->bitmap, x, y, color(display))
+
+def land_display_image_pick_color(LandDisplay *display, float x, y):
+    LandDisplayImage *self = LAND_DISPLAY_IMAGE(display)
+    int rgb = getpixel(self->bitmap, x, y)
+    display->color_r = getr(rgb) / 255.0
+    display->color_g = getg(rgb) / 255.0
+    display->color_b = getb(rgb) / 255.0
+    display->color_a = geta(rgb) / 255.0
 
 def land_display_image_init():
     land_log_message("land_display_image_init\n")
@@ -91,6 +101,7 @@ def land_display_image_init():
     vtable->line = land_display_image_line
     vtable->filled_circle = land_display_image_filled_circle
     vtable->plot = land_display_image_plot
+    vtable->pick_color = land_display_image_pick_color
 
     vtable->set = land_display_image_set
     vtable->flip = land_display_image_flip
