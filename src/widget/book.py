@@ -4,7 +4,8 @@ class LandWidgetBook:
     LandWidgetContainer super
     LandList *pages
 
-macro LAND_WIDGET_BOOK(widget) ((LandWidgetBook *) land_widget_check(widget, LAND_WIDGET_ID_BOOK, __FILE__, __LINE__))
+macro LAND_WIDGET_BOOK(widget) ((LandWidgetBook *) land_widget_check(widget,
+    LAND_WIDGET_ID_BOOK, __FILE__, __LINE__))
 
 static import land, widget/hbox
 
@@ -46,8 +47,10 @@ def land_widget_book_initialize(LandWidget *base,
 
 def land_widget_book_show_page(LandWidget *self, LandWidget *page):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
-    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data)
-    LandWidgetContainer *tabbar = LAND_WIDGET_CONTAINER(book->children->first->next->data)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
+    LandWidgetContainer *tabbar = LAND_WIDGET_CONTAINER(
+        book->children->first->next->data)
 
     LandListItem *panelitem = panel->children->first
     LandListItem *tabitem = tabbar->children->first
@@ -80,7 +83,8 @@ static def clicked(LandWidget *button):
     
     LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(button->parent)
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(button->parent->parent)
-    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
 
     LandListItem *panelitem = panel->children->first
     LandListItem *item = hbox->children->first
@@ -98,7 +102,8 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
     # and add it to our container.
 
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
-    LandWidgetHBox *hbox = LAND_WIDGET_HBOX(container->children->first->next->data)
+    LandWidgetHBox *hbox = LAND_WIDGET_HBOX(
+        container->children->first->next->data)
     LandWidget *panel = LAND_WIDGET(container->children->first->data)
 
     LandWidget *tab = land_widget_button_new(LAND_WIDGET(hbox),
@@ -118,11 +123,12 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
 
 def land_widget_book_pagename(LandWidget *widget, char const *name):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
-    LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(container->children->first->next->data)
+    LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(
+        container->children->first->next->data)
     LandWidget *button = hbox->children->last->data
     land_widget_button_set_text(button, name)
 
-LandWidget *def land_widget_book_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_book_new(LandWidget *parent, int x, y, w, h):
     LandWidgetBook *self
     land_alloc(self)
     land_widget_book_initialize((LandWidget *)self, parent, x, y, w, h)
@@ -149,7 +155,8 @@ def land_widget_book_interface_initialize(void):
 # Return the current active page or NULL
 LandWidget *def land_widget_book_get_current_page(LandWidget *self):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
-    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
 
     LandListItem *panelitem = panel->children->first
 
@@ -166,7 +173,8 @@ LandWidget *def land_widget_book_get_current_page(LandWidget *self):
 # Return the last active page or NULL.
 LandWidget *def land_widget_book_get_last_page(LandWidget *self):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
-    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
 
     LandListItem *panelitem = panel->children->last
     if panelitem:
@@ -177,7 +185,8 @@ LandWidget *def land_widget_book_get_last_page(LandWidget *self):
 # such page, NULL is returned.
 LandWidget *def land_widget_book_get_nth_page(LandWidget *self, int n):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
-    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(book->children->first->data)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
 
     LandListItem *panelitem = panel->children->first
 
