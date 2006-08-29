@@ -41,6 +41,13 @@ LandFont *def land_font_load(char const *filename, float size):
     land_font_state->font = self
     return self
 
+LandFont *def land_font_default():
+    LandFont *self = None
+    if land_get_flags() & LAND_OPENGL:
+        self = land_font_allegrogl_default()
+    land_font_state->font = self
+    return self
+
 def land_font_destroy(LandFont *self):
     self->vt->destroy(self)
 
@@ -92,10 +99,8 @@ static def _print(char const *str, int newline, int alignement):
     land_font_state->font->vt->print(land_font_state, _land_active_display, str, alignement)
     if newline:
         land_font_state->y_pos = land_font_state->y + land_font_state->h
-
     else:
         land_font_state->x_pos = land_font_state->x + land_font_state->w
-
 
 int def land_text_get_width(char const *str):
     int onoff = land_font_state->off
