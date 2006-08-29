@@ -32,6 +32,7 @@ static def get_bounding_box(float l, float t, float r, float b, float angle,
     elif angle < 3 * AL_PI / 2: BB(r, b, l, b, l, t, r, t)
     else BB(l, b, l, t, r, t, r, b)
 
+#ifdef DEBUG_MASK
 static def printout_mask(SinglePixelMask *mask):
     int i
     int mask_w = mask->w
@@ -44,7 +45,7 @@ static def printout_mask(SinglePixelMask *mask):
                 printf("%c", m & (1 << b) ? '1' : '0')
 
         printf("\n")
-
+#endif
 
 # Creates n prerotated bitmasks for the given bitmap. A single bit represents
 # one pixel.
