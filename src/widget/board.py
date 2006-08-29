@@ -3,7 +3,8 @@ import container
 class LandWidgetBoard:
     LandWidgetContainer super
 
-macro LAND_WIDGET_BOARD(widget) ((LandWidgetBoard *) land_widget_check(widget, LAND_WIDGET_ID_BOARD, __FILE__, __LINE__))
+macro LAND_WIDGET_BOARD(widget) ((LandWidgetBoard *) land_widget_check(widget,
+    LAND_WIDGET_ID_BOARD, __FILE__, __LINE__))
 
 static import land
 
@@ -17,7 +18,7 @@ def land_widget_board_initialize(LandWidget *base,
     land_widget_container_initialize(&super->super, parent, x, y, w, h)
     base->vt = land_widget_board_interface
 
-LandWidget *def land_widget_board_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_board_new(LandWidget *parent, int x, y, w, h):
     LandWidgetBoard *self
     land_alloc(self)
     land_widget_board_initialize((LandWidget *)self, parent, x, y, w, h)
