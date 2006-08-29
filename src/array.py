@@ -32,3 +32,7 @@ def land_array_destroy(LandArray *self):
 
 def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)):
     qsort(self->data, self->count, sizeof(void *), cmpfnc)
+
+int def land_array_count(LandArray *self):
+    if not self: return 0
+    return self->count
