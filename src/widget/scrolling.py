@@ -9,7 +9,8 @@ class LandWidgetScrolling:
 # 3. A horizontal scrollbar at the bottom.
 # 
 
-macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *) land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
+macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *) \
+    land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
 
 static import widget/box, widget/scrollbar
 
@@ -40,7 +41,7 @@ def land_widget_scrolling_size(LandWidget *widget):
 def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
-    if (!children) return
+    if not children: return
     LandWidget *child =  children->first->data
 
     child->box.x = contents->box.x + contents->box.il + x
@@ -48,21 +49,26 @@ def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
 
     land_widget_scrolling_size(base)
 
-LandWidget *def land_widget_scrolling_get_at_pos(LandWidget *base, int x, int y):
+LandWidget *def land_widget_scrolling_get_at_pos(LandWidget *base, int x, y):
     return land_widget_container_get_at_pos(base, x, y)
 
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     if land_mouse_delta_z():
-        LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
+        LandWidget *contents =\
+            LAND_WIDGET_CONTAINER(base)->children->first->data
         LandList *children = LAND_WIDGET_CONTAINER(contents)->children
         if not children: return
         LandWidget *child = children->first->data
         int maxy = contents->box.y + contents->box.it
-        int miny = contents->box.y + contents->box.h - contents->box.ib - child->box.h
-        int target_y = child->box.y + land_mouse_delta_z() * 64
-        if target_y < miny: target_y = miny
-        if target_y > maxy: target_y = maxy
-        land_widget_move(child, 0, target_y - child->box.y)
+        int miny = contents->box.y + contents->box.h -\
+            contents->box.ib - child->box.h
+        int dy = land_mouse_delta_z() * 64
+        int y = child->box.y
+        int target_y = y + dy
+        if dy < 0 and target_y < miny: target_y = miny
+        if dy > 0 and target_y > maxy: target_y = maxy
+        if (dy < 0 and target_y < y) or (dy > 0 and target_y > y):
+            land_widget_move(child, 0, target_y - child->box.y)
 
     land_widget_container_mouse_tick(base)
 
@@ -125,7 +131,7 @@ def land_widget_scrolling_remove_child(LandWidget *base):
 # Creates a new Scrolling widget. You can add a child widget to it, and it
 # will automatically display scrollbars and translate mouse coordinates.
 # 
-LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     LandWidgetScrolling *self
     
     land_widget_scrolling_interface_initialize()
@@ -159,7 +165,8 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, int y, int 
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0)
     bottom->vt = land_widget_scrolling_horizontal_container_interface
     land_widget_theme_set_minimum_size(bottom)
-    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL, 0, 0, 0, 0, 0)
+    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL,
+        0, 0, 0, 0, 0)
     land_widget_theme_set_minimum_size(bottombar)
 
     land_widget_layout_set_grid(bottom, 1, 1)
@@ -185,7 +192,8 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, int y, int 
     land_widget_theme_layout_border(bottom)
     land_widget_layout_set_shrinking(bottom, 0, 1)
 
-    # FIXME: The layout lib allows no empty cells yet, so need to put an empty box. 
+    # FIXME: The layout lib allows no empty cells yet, so need to put an empty
+    # box. 
     LandWidget *empty = land_widget_box_new(widget, 0, 0, 0, 0)
     land_widget_layout_add(widget, empty)
     land_widget_layout_set_grid_position(empty, 1, 1)
@@ -210,11 +218,15 @@ def land_widget_scrolling_interface_initialize():
     land_widget_scrolling_interface->add = land_widget_scrolling_add
     land_widget_scrolling_interface->move = land_widget_scrolling_move
     land_widget_scrolling_interface->size = land_widget_scrolling_size
-    land_widget_scrolling_interface->mouse_tick = land_widget_scrolling_mouse_tick
+    land_widget_scrolling_interface->mouse_tick =\
+        land_widget_scrolling_mouse_tick
 
-    land_widget_scrolling_contents_container_interface = land_widget_copy_interface(
+    land_widget_scrolling_contents_container_interface =\
+        land_widget_copy_interface(
         land_widget_container_interface, "scrolling.contents.container")
-    land_widget_scrolling_vertical_container_interface = land_widget_copy_interface(
+    land_widget_scrolling_vertical_container_interface =\
+        land_widget_copy_interface(
         land_widget_container_interface, "scrolling.vertical.container")
-    land_widget_scrolling_horizontal_container_interface = land_widget_copy_interface(
+    land_widget_scrolling_horizontal_container_interface =\
+        land_widget_copy_interface(
         land_widget_container_interface, "scrolling.horizontal.container")
