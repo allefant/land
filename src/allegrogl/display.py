@@ -167,12 +167,15 @@ def land_display_allegrogl_circle(LandDisplay *super,
 
     glEnd()
 
-def land_display_allegrogl_plot(LandDisplay *super,
-    float x, float y):
+def land_display_allegrogl_plot(LandDisplay *super, float x, y):
     glDisable(GL_TEXTURE_2D)
     glBegin(GL_POINTS)
     glVertex2f(x + 0.5, y + 0.5)
     glEnd()
+
+def land_display_allegrogl_pick_color(LandDisplay *super, float x, y):
+    # could use glReadPixels or somesuch, followed by glColor
+    pass
 
 def land_display_allegrogl_filled_polygon(LandDisplay *super, int n,
     float *x, float *y):
@@ -285,6 +288,7 @@ def land_display_allegrogl_init(void):
     vtable->plot = land_display_allegrogl_plot
     vtable->polygon = land_display_allegrogl_polygon
     vtable->filled_polygon = land_display_allegrogl_filled_polygon
+    vtable->pick_color = land_display_allegrogl_pick_color
 
 def land_display_allegrogl_exit(void):
     land_log_message("land_display_allegrogl_exit\n")
