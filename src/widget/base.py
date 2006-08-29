@@ -187,7 +187,8 @@ class LandWidgetProperty:
     void (*destroy)(void *data)
     void *data
 
-macro LAND_WIDGET(widget) ((LandWidget *) land_widget_check(widget, LAND_WIDGET_ID_BASE, __FILE__, __LINE__))
+macro LAND_WIDGET(widget) ((LandWidget *) land_widget_check(widget,
+    LAND_WIDGET_ID_BASE, __FILE__, __LINE__))
 
 static import widget/layout, util
 
@@ -198,7 +199,8 @@ void *def land_widget_check(void const *ptr, int id, char const *file,
     int linenum):
     LandWidget const *widget = ptr
     if (widget->vt->id & id) == id:
-        return (void *)ptr # should provide a const version of the whole function isntead
+        return (void *)ptr # should provide a const version of the whole
+        #function instead
     land_exception("%s: %d: Widget cannot be converted.", file, linenum)
     return NULL
 
@@ -239,7 +241,7 @@ def land_widget_remove_all_properties(LandWidget *self):
     land_hash_destroy(self->properties)
     self->properties = NULL
 
-def land_widget_base_initialize(LandWidget *self, LandWidget *parent, int x, int y, int w, int h):
+def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     land_widget_base_interface_initialize()
 
     gul_box_initialize(&self->box)
@@ -253,7 +255,7 @@ def land_widget_base_initialize(LandWidget *self, LandWidget *parent, int x, int
         land_call_method(parent, add, (parent, self))
 
 
-LandWidget *def land_widget_base_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
     LandWidget *self
     land_alloc(self)
     land_widget_base_initialize(self, parent, x, y, w, h)
@@ -286,7 +288,7 @@ LandWidgetInterface *def land_widget_copy_interface(LandWidgetInterface *basevt,
 def land_widget_create_interface(LandWidget *widget, char const *name):
     widget->vt = land_widget_copy_interface(widget->vt, name)
 
-LandWidget *def land_widget_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_new(LandWidget *parent, int x, y, w, h):
     LandWidget *self
     land_alloc(self)
     land_widget_base_initialize(self, parent, x, y, w, h)
@@ -338,7 +340,7 @@ def land_widget_base_size(LandWidget *self):
 
     land_widget_layout_enable(self)
 
-def land_widget_size(LandWidget *self, float dx, float dy):
+def land_widget_size(LandWidget *self, float dx, dy):
     self->box.w += dx
     self->box.h += dy
     land_call_method(self, size, (self))
@@ -349,7 +351,7 @@ def land_widget_size(LandWidget *self, float dx, float dy):
 def land_widget_retain_mouse_focus(LandWidget *self):
     self->got_mouse = 1
 
-# Called inside mouse_enter, inhibits highlighting of he widget.
+# Called inside mouse_enter, inhibits highlighting of the widget.
 def land_widget_refuse_mouse_focus(LandWidget *self):
     self->got_mouse = 0
 
