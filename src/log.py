@@ -11,22 +11,25 @@ def land_log_overwrite(char const *name):
     if f:
         fclose(f)
 
-
 def land_log_set(char const *name):
     if logname: land_free(logname)
     logname = land_strdup(name)
 
 def land_log_del():
     if logname: land_free(logname)
+    logname = NULL
 
 def land_log_new(char const *base, int unique):
+    static int once = 0
     FILE *f
     int i = 0
     if logname: land_free(logname)
 
     logname = land_malloc(strlen(base) + 10)
 
-    atexit(land_log_del)
+    if not once:
+        atexit(land_log_del)
+        once++
 
     if unique:
         do:
