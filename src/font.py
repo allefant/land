@@ -62,21 +62,27 @@ def land_text_pos(float x, float y):
     land_font_state->x_pos = x
     land_font_state->y_pos = y
 
+# Current cursor X coordinate.
 float def land_text_x_pos():
     return land_font_state->x_pos
 
+# Current cursor Y coordinate.
 float def land_text_y_pos():
     return land_font_state->y_pos
 
+# Left edge of last printed text.
 float def land_text_x():
     return land_font_state->x
 
+# Top edge of last printed text.
 float def land_text_y():
     return land_font_state->y
 
+# Width of last printed text.
 float def land_text_width():
     return land_font_state->w
 
+# Height of last printed text.
 float def land_text_height():
     return land_font_state->h
 

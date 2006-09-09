@@ -12,8 +12,6 @@ static def cb(int k):
             key_pressed[k]++
             key_state[k] = 1
 
-
-
 def land_keyboard_init():
     keyboard_lowlevel_callback = cb
 
