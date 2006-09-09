@@ -156,7 +156,8 @@ int def land_main():
             land_draw()
         else:
             while frames <= ticks:
-                poll_keyboard() # just in case 
+                # We must not poll keyboard or mouse here, since then Allegro
+                # will activate polling mode.
                 land_tick()
                 frames++
 
