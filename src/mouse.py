@@ -7,11 +7,7 @@ static int mb, omb
 static int have_os_cursor = 0
 
 def land_mouse_init():
-    enable_hardware_cursor()
-    select_mouse_cursor(MOUSE_CURSOR_ARROW)
-    show_mouse(screen)
-    have_os_cursor = gfx_capabilities & GFX_SYSTEM_CURSOR
-    if !have_os_cursor: show_mouse(NULL)
+    land_show_mouse_cursor()
 
 int def land_have_os_cursor():
     return have_os_cursor
