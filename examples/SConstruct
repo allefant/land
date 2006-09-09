@@ -8,8 +8,19 @@ examples = [ex for ex in glob.glob("*") if os.path.isdir(ex) and ex != "scons"]
 
 for ex in examples:
     srcdir = os.path.join(ex, "src")
+    cdir = os.path.join(ex, "c")
 
-    sfiles = glob.glob(os.path.join(srcdir, "*.c"))
+    cfiles = []
+    pyfiles = glob.glob(os.path.join(srcdir, "*.py"))
+
+    for py in pyfiles:
+        pyenv = Environment()
+        pyenv.BuildDir(cdir, srcdir, duplicate = False)
+        h = cdir + "/" + py[len(srcdir) + 1:-3] + ".h"
+        c = cdir + "/" + py[len(srcdir) + 1:-3] + ".c"
+        name = py[len(srcdir) + 1:-3]
+        pyenv.Command([c, h], py, "scramble.py %s %s %s %s" % (py, c, h, name))
+        cfiles += [c]
 
     env = Environment()
 
@@ -35,7 +46,7 @@ for ex in examples:
 
     env.SConsignFile("scons/signatures")
 
-    env.BuildDir(BUILDDIR, srcdir, duplicate = False)
-    sources = [os.path.join(BUILDDIR, os.path.split(x)[1]) for x in sfiles]
+    env.BuildDir(BUILDDIR, cdir, duplicate = False)
+    sources = [os.path.join(BUILDDIR, os.path.split(x)[1]) for x in cfiles]
     prog = env.Program(os.path.join(ex, ex), sources)
 
