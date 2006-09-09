@@ -1,7 +1,10 @@
+# Import everything so the complete Land API is available.
+# Also the platform independent macros to launch the Land main loop are here.
+
 import global allegro, stdio, stdlib, string, stdarg, math
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
-import log, color, data, memory, widget
+import log, color, data, memory, widget, net
 
 macro land_begin() static void _land_main(); int main(int argc, char **argv) {
     land_argc = argc; land_argv = argv; _land_main();
