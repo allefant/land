@@ -238,17 +238,18 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
     if !find_offset(self, view_x, view_y, &cell_x, &cell_y, &pixel_x, &pixel_y):
         return
 
+    # FIXME: is the below needed?
     # One row up might also be in. 
-    if pixel_y > -h:
-        # if cell_x > 0 && pixel_x > 0: #        {
+    # if pixel_y > -h:
+        # if cell_x > 0 and pixel_x > 0:
         #            cell_x--
         #            pixel_x -= w
         #            pixel_y -= h
         #        }
         # elif cell_y > 0:
-        cell_y--
-        pixel_x += w
-        pixel_y -= h
+        #    cell_y--
+        #    pixel_x += w
+        #    pixel_y -= h
 
 
     pixel_x += view->x
@@ -292,8 +293,6 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
             pixel_x += w
             pixel_y += h
             cell_x++
-
-
 
 def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
     float w = self->cell_w / 2
