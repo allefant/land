@@ -140,6 +140,7 @@ class LandWidgetInterface:
     void (*keyboard_leave)(LandWidget *self)
 
     void (*add)(LandWidget *self, LandWidget *add)
+    void (*remove)(LandWidget *self, LandWidget *rem)
     void (*move)(LandWidget *self, float dx, float dy)
     void (*size)(LandWidget *self)
 
@@ -236,8 +237,6 @@ def land_widget_remove_all_properties(LandWidget *self):
                 if prop->destroy: prop->destroy(prop->data)
                 land_free(prop)
 
-
-
     land_hash_destroy(self->properties)
     self->properties = NULL
 
@@ -254,12 +253,16 @@ def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
         self->theme = parent->theme
         land_call_method(parent, add, (parent, self))
 
-
 LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
     LandWidget *self
     land_alloc(self)
     land_widget_base_initialize(self, parent, x, y, w, h)
     return self
+
+# Remove a widget from its parent.
+def land_widget_remove(LandWidget *self):
+    if not self->parent: return
+    land_call_method(self->parent, remove, (self->parent, self))
 
 def land_widget_interfaces_destroy_all(void):
     int i
@@ -306,7 +309,6 @@ static def land_widget_really_destroy(LandWidget *self):
         land_log_message("*** widget without destructor?\n")
         land_widget_base_destroy(self)
 
-
 def land_widget_unreference(LandWidget *self):
     self->reference--
     if self->reference <= 0:
@@ -331,12 +333,9 @@ def land_widget_move(LandWidget *self, float dx, float dy):
     else:
         land_widget_base_move(self, dx, dy)
 
-
 def land_widget_base_size(LandWidget *self):
     land_widget_layout_inhibit(self)
-    int r = land_widget_layout(self)
-    if r:
-        land_widget_layout_adjust(self, r & 1, r & 2)
+    land_widget_layout(self)
 
     land_widget_layout_enable(self)
 
@@ -381,7 +380,6 @@ def land_widget_draw(LandWidget *self):
     land_call_method(self, draw, (self))
     if pop:
         land_clip_pop()
-
 
 def land_widget_hide(LandWidget *self):
     if self->hidden: return
