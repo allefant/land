@@ -298,7 +298,7 @@ def land_widget_container_mouse_tick(LandWidget *super):
             next = item->next
             LandWidget *child = item->data
 
-            /* Propagate up focus request. */
+            # Propagate up focus request.
             if child->want_focus:
                 super->want_focus = 1
 
@@ -329,6 +329,7 @@ def land_widget_container_tick(LandWidget *super):
     land_call_method(super, keyboard_tick, (super))
 
 def land_widget_container_add(LandWidget *super, LandWidget *add):
+
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
 
     # We increase the reference count of the child only. Increasing the
@@ -341,10 +342,17 @@ def land_widget_container_add(LandWidget *super, LandWidget *add):
 
     add->parent = super
 
+# Containers do not know about layout - the derived class like VBox must make
+# sure to also fix up the layout structure when a widget is removed, and should
+# then call this method.
 def land_widget_container_remove(LandWidget *base, LandWidget *rem):
-    # TODO: assert here that parent points to base, if not.. we're fucked
+    ASSERT(rem->parent == base)
+
     rem->parent = NULL
     land_remove_list_data(&LAND_WIDGET_CONTAINER(base)->children, rem)
+
+    # Whenever the item was added to our container, the container acquired a
+    # reference to it, which it has to give up now.
     land_widget_unreference(rem)
 
 def land_widget_container_initialize(LandWidget *super, *parent,
@@ -374,6 +382,7 @@ def land_widget_container_interface_initialize(void):
     land_widget_container_interface->draw = land_widget_container_draw
     land_widget_container_interface->tick = land_widget_container_tick
     land_widget_container_interface->add = land_widget_container_add
+    land_widget_container_interface->remove = land_widget_container_remove
     land_widget_container_interface->move = land_widget_container_move
     land_widget_container_interface->size = land_widget_container_size
     land_widget_container_interface->mouse_tick =\

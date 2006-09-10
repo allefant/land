@@ -38,7 +38,7 @@ def land_widget_panel_add(LandWidget *base, LandWidget *add):
 
     land_widget_layout_enable(base)
 
-    land_widget_layout_adjust(base, 1, 1)
+    land_widget_layout(base)
 
 def land_widget_panel_interface_initialize():
     if (land_widget_panel_interface) return

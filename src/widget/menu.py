@@ -190,7 +190,7 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
         
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1)
+    land_widget_layout(parent)
 
     return self
 
@@ -208,7 +208,7 @@ LandWidget *def land_widget_submenuitem_new(LandWidget *parent, char const *name
 
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1)
+    land_widget_layout(parent)
     return button
 
 LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
@@ -217,7 +217,7 @@ LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
 
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
-    land_widget_layout_adjust(parent, 1, 1)
+    land_widget_layout(parent)
     return button
 
 def land_widget_menu_mouse_enter(LandWidget *self, LandWidget *focus):

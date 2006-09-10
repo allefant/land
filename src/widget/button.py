@@ -142,11 +142,14 @@ LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
 
+    #FIXME: Inhibit layout changes of parent, they make no sense before we
+    # set the layout below
+
     land_widget_button_initialize(self,
         parent, text, NULL, clicked, x, y, w, h)
 
     land_widget_theme_layout_border(self)
-    land_widget_layout(parent)
+    if parent: land_widget_layout(parent)
 
     return self
 

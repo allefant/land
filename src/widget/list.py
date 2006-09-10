@@ -56,7 +56,7 @@ LandWidget *def land_widget_listitem_new(LandWidget *parent,
     land_widget_listitem_interface_initialize()
     self->vt = land_widget_listitem_interface
     land_widget_theme_layout_border(self)
-    land_widget_layout_adjust(parent, 1, 1)
+    land_widget_layout(parent)
     return self
 
 def land_widget_list_interface_initialize():

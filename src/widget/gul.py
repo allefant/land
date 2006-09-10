@@ -1,6 +1,3 @@
-typedef enum GUL_GROW_TYPE GUL_GROW_TYPE
-typedef enum GUL_ALIGN_TYPE GUL_ALIGN_TYPE
-
 # 0000YYXX
 
 #GUL_EXPAND_X 0
@@ -58,8 +55,8 @@ class LandLayoutBox:
     int min_height             # Minimum outer height in pixels. 
 
     # useful to restrain expanding caused by children during bottom up
-    int max_width              # Maximum outer width in pixels. 
-    int max_height             # Maximum outer height in pixels. 
+    int max_width              # Maximum outer width in pixels (0 for no limit). 
+    int max_height             # Maximum outer height in pixels (0 for no limit). 
 
     int current_min_width
     int current_min_height
@@ -141,13 +138,14 @@ static def update_lookup_grid(LandLayoutBox *self):
                 self->lookup_grid[i + j * self->cols] = c
 
 
-
-
-# TODO: provide functions for changing grid-size and cell-position, and to
+# TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.
-# 
-def gul_layout_changed(LandLayoutBox *self):
+def gul_layout_updated(LandLayoutBox *self):
     update_lookup_grid(self)
+    if self->parent:
+        gul_layout_updated(self->parent)
+    else:
+        gul_box_fit_children(self)
 
 # Get minimum height of the specified row. 
 static int def row_min_height(LandLayoutBox * self, int row):
@@ -259,14 +257,13 @@ def gul_attach_child(LandLayoutBox *self, LandLayoutBox *att, int update):
     if update:
         update_lookup_grid(self)
 
-def gul_remove_child(LandLayoutBox * self, LandLayoutBox * rem, int update):
+def gul_remove_child(LandLayoutBox *self, LandLayoutBox *rem, int update):
     LandLayoutBox *c, *p = NULL
 
     for c = self->children; c; c = c->next:
         if c == rem:
             if p:
                 p->next = c->next
-
             else:
                 self->children = c->next
 
@@ -276,7 +273,6 @@ def gul_remove_child(LandLayoutBox * self, LandLayoutBox * rem, int update):
 
         p = c
 
-
 def gul_box_replace_child(LandLayoutBox *self, LandLayoutBox *child, *with):
     gul_remove_child(self, child, 0)
     with->col = child->col
@@ -285,12 +281,11 @@ def gul_box_replace_child(LandLayoutBox *self, LandLayoutBox *child, *with):
     with->extra_rows = child->extra_rows
     gul_attach_child(self, with, 0)
     
-    update_lookup_grid(self); # could just replace relevant entries, but we
-#        don't bother     
+    update_lookup_grid(self) # could just replace relevant entries, but we
+        #  don't bother     
 
-#
-#
-# 
+# Recursively calculate the minimum size of all children of the fiven box,
+# starting with the children.
 static def gul_box_bottom_up(LandLayoutBox *self):
     LandLayoutBox *c
     if (self->flags & GUL_HIDDEN) return
@@ -307,37 +302,25 @@ static def gul_box_bottom_up(LandLayoutBox *self):
         self->current_min_height = self->min_height
 
 
-# Return value:
-#
-# 0 - ok
-# 1 - too small width
-# 2 - too small height
-# 3 - too small width as well as height
-# 
-static int def gul_box_top_down(LandLayoutBox * self):
-    if (self->flags & GUL_HIDDEN) return 0
-    int r = 0
+# Starting with the given box, recursively fit in all children.
+static def gul_box_top_down(LandLayoutBox * self):
+    if (self->flags & GUL_HIDDEN) return
+
     D(printf("Box: %d x %d\n", self->w, self->h);)
     if self->cols == 0 or self->rows == 0:
         D(printf("    empty.\n");)
-        return 0
+        return
 
     int minw = min_width(self)
     int minh = min_height(self)
 
-    if minw > self->w:
+    if self->max_width and minw > self->max_width:
         ERR("Fatal: Minimum width of children (%d) "
-            "exceeds available space (%d).", minw, self->w)
-        r |= 1
+            "exceeds available space (%d).", minw, self->max_width)
 
-    if minh > self->h:
+    if self->max_height and minh > self->max_height:
         ERR("Fatal: Minimum height of children (%d) "
-            "exceeds available space (%d).", minh, self->h)
-        r |= 2
-
-    # Check if user specified min size is exceeded. 
-    if (self->current_min_width > self->w) r |= 1
-    if (self->current_min_height > self->h) r |= 2
+            "exceeds available space (%d).", minh, self->max_height)
 
     int available_width = self->w - minw
     int available_height = self->h - minh
@@ -436,23 +419,18 @@ static int def gul_box_top_down(LandLayoutBox * self):
     LandLayoutBox *c
 
     for c = self->children; c; c = c->next:
-        r |= gul_box_top_down(c)
+        gul_box_top_down(c)
 
-    return r
-
-# Given a box, (recursively) fit its children into it. If adjust is 1, then
-# the box changes its size to the minimum size for the children to fit.
+# Given a box, (recursively) fit its children into it.
 # 
-int def gul_box_fit_children(LandLayoutBox * self, int adjustx, int adjusty):
-    int r = 0
+def gul_box_fit_children(LandLayoutBox * self):
     D(printf("gul_box_bottom_up\n");)
     gul_box_bottom_up(self)
-    if (adjustx) self->w = self->current_min_width
-    if (adjusty) self->h = self->current_min_height
+    self->w = self->current_min_width 
+    self->h = self->current_min_height
 
     D(printf("gul_box_top_down\n");)
-    r |= gul_box_top_down(self)
-    return r
+    gul_box_top_down(self)
 
 # Returns the box at a given location. 
 LandLayoutBox *def gul_child_at(LandLayoutBox * self, int x, int y):

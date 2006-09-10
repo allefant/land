@@ -21,7 +21,7 @@ def land_widget_hbox_disable_updates(LandWidget *base):
 
 def land_widget_hbox_update(LandWidget *base):
     LAND_WIDGET_HBOX(base)->disable_updates = 0
-    land_widget_layout_adjust(base, 1, 1)
+    land_widget_layout(base)
 
 def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)

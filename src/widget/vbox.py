@@ -8,7 +8,8 @@ class LandWidgetVBox:
     int columns
     int disable_updates : 1
 
-macro LAND_WIDGET_VBOX(widget) ((LandWidgetVBox *) land_widget_check(widget, LAND_WIDGET_ID_VBOX, __FILE__, __LINE__))
+macro LAND_WIDGET_VBOX(widget) ((LandWidgetVBox *)land_widget_check(widget,
+    LAND_WIDGET_ID_VBOX, __FILE__, __LINE__))
 
 static import land
 
@@ -24,7 +25,24 @@ def land_widget_vbox_disable_updates(LandWidget *base):
 
 def land_widget_vbox_update(LandWidget *base):
     LAND_WIDGET_VBOX(base)->disable_updates = 0
-    land_widget_layout_adjust(base, 1, 1)
+    land_widget_layout(base)
+
+def land_widget_vbox_renumber(LandWidget *base):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
+    LandWidgetVBox *vbox = LAND_WIDGET_VBOX(base)
+    if container->children:
+        int x = 0, y = 0
+        LandListItem *item = container->children->first
+        while item:
+            LandWidget *child = item->data
+            land_widget_layout_set_grid_position(child, x, y)
+            x++
+            if x == vbox->columns:
+                x = 0
+                y++
+            item = item->next
+    if !vbox->disable_updates:
+        land_widget_vbox_update(base)
 
 def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
@@ -37,19 +55,26 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     int row = rows - 1
     int column = n - row * vbox->columns - 1
     
-    land_widget_layout_inhibit(base)
+    int layout = land_widget_layout_inhibit(base)
 
     land_widget_layout_set_grid_position(add, column, row)
     land_widget_layout_set_grid(base, vbox->columns, rows)
 
     land_widget_layout_set_shrinking(add, 0, 1)
     land_widget_layout_add(base, add)
-    
-    land_widget_layout_enable(base)
+
+    if layout: land_widget_layout_enable(base)
 
     if !vbox->disable_updates:
         land_widget_vbox_update(base)
 
+def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):
+    int layout = land_widget_layout_inhibit(base)
+    land_widget_layout_remove(base, rem)
+    land_widget_container_remove(base, rem)
+    if layout: land_widget_layout_enable(base)
+
+    land_widget_vbox_renumber(base)
 
 def land_widget_vbox_set_columns(LandWidget *base, int n):
     LAND_WIDGET_VBOX(base)->columns = n
@@ -85,3 +110,4 @@ def land_widget_vbox_interface_initialize():
         land_widget_container_interface, "vbox")
     land_widget_vbox_interface->id |= LAND_WIDGET_ID_VBOX
     land_widget_vbox_interface->add = land_widget_vbox_add
+    land_widget_vbox_interface->remove = land_widget_vbox_remove
