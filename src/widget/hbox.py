@@ -1,13 +1,16 @@
+#FIXME: merge hbox and vbox
 import base, scrolling
 
 class LandWidgetHBox:
+    """A HBox is a container where all children are layed out in columns."""
     LandWidgetContainer super
     int rows
     int disable_updates : 1
 
-macro LAND_WIDGET_HBOX(widget) ((LandWidgetHBox *) land_widget_check(widget, LAND_WIDGET_ID_HBOX, __FILE__, __LINE__))
+macro LAND_WIDGET_HBOX(widget) ((LandWidgetHBox *) land_widget_check(widget,
+    LAND_WIDGET_ID_HBOX, __FILE__, __LINE__))
 
-static import land, widget/hbox
+static import land
 
 global LandWidgetInterface *land_widget_hbox_interface
 
@@ -22,6 +25,23 @@ def land_widget_hbox_disable_updates(LandWidget *base):
 def land_widget_hbox_update(LandWidget *base):
     LAND_WIDGET_HBOX(base)->disable_updates = 0
     land_widget_layout(base)
+
+static def land_widget_hbox_renumber(LandWidget *base):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
+    LandWidgetHBox *hbox = LAND_WIDGET_HBOX(base)
+    if container->children:
+        int x = 0, y = 0
+        LandListItem *item = container->children->first
+        while item:
+            LandWidget *child = item->data
+            land_widget_layout_set_grid_position(child, x, y)
+            y++
+            if y == hbox->rows:
+                x++
+                y = 0
+            item = item->next
+    if !hbox->disable_updates:
+        land_widget_hbox_update(base)
 
 def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
@@ -39,7 +59,6 @@ def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     land_widget_layout_set_grid_position(add, column, row)
     land_widget_layout_set_grid(base, columns, hbox->rows)
 
-    land_widget_layout_set_shrinking(add, 1, 0)
     land_widget_layout_add(base, add)
 
     land_widget_layout_enable(base)
@@ -47,6 +66,13 @@ def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     if !hbox->disable_updates:
         land_widget_hbox_update(base)
 
+def land_widget_hbox_remove(LandWidget *base, LandWidget *rem):
+    int layout = land_widget_layout_inhibit(base)
+    land_widget_layout_remove(base, rem)
+    land_widget_container_remove(base, rem)
+    if layout: land_widget_layout_enable(base)
+
+    land_widget_hbox_renumber(base)
 
 def land_widget_hbox_set_rows(LandWidget *base, int n):
     LAND_WIDGET_HBOX(base)->rows = n
@@ -82,3 +108,4 @@ def land_widget_hbox_interface_initialize():
         land_widget_container_interface, "hbox")
     land_widget_hbox_interface->id |= LAND_WIDGET_ID_HBOX
     land_widget_hbox_interface->add = land_widget_hbox_add
+    land_widget_hbox_interface->remove = land_widget_hbox_remove
