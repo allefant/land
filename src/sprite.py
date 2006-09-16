@@ -118,7 +118,7 @@ def land_sprites_grid_del(LandGrid *super):
     land_free(self)
 
 
-def dummy(LandSprite *self, LandView *view):
+static def dummy(LandSprite *self, LandView *view):
 
     float x = self->x - self->type->x - view->scroll_x + view->x
     float y = self->y - self->type->y - view->scroll_y + view->y
@@ -127,7 +127,7 @@ def dummy(LandSprite *self, LandView *view):
         y + self->type->h)
 
 
-def dummy_image(LandSprite *self, LandView *view):
+static def dummy_image(LandSprite *self, LandView *view):
 
     float x = self->x - view->scroll_x + view->x
     float y = self->y - view->scroll_y + view->y
@@ -137,7 +137,7 @@ def dummy_image(LandSprite *self, LandView *view):
     #    land_image_debug_pixelmask(self->type->image, x, y, 0)
 
 
-def dummy_animation(LandSprite *self, LandView *view):
+static def dummy_animation(LandSprite *self, LandView *view):
 
     LandSpriteTypeAnimation *animation = (LandSpriteTypeAnimation *)self->type
     LandSpriteAnimated *animated = (LandSpriteAnimated *)self

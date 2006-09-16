@@ -1,4 +1,7 @@
-import widget/gul, widget/base, widget/theme, widget/layout
+import widget/gul
+import widget/base
+import widget/theme
+import widget/layout
 
 import widget/box
 import widget/container

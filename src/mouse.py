@@ -23,15 +23,19 @@ def land_mouse_tick():
     mb = mouse_b
 
 int def land_mouse_x():
+    """Return the mouse X coordinate for the current tick."""
     return mx
 
 int def land_mouse_y():
+    """Return the mouse Y coordinate for the current tick."""
     return my
 
 int def land_mouse_z():
+    """Return the mouse wheel coordinate for the current tick."""
     return mz
 
 int def land_mouse_b():
+    """Return the mouse button state for the current tick."""
     return mb
 
 int def land_mouse_delta_x():

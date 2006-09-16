@@ -46,12 +46,14 @@ static unsigned int def hash_function(LandHash *self, char const *thekey):
     return hash & (self->size - 1)
 
 LandHash *def land_hash_new():
+    """Create a new LandHash."""
     LandHash *self
     land_alloc(self)
     self->hash_function = hash_function
     return self
 
 def land_hash_destroy(LandHash *self):
+    """Destroy a LandHash. The data inside the hash are not freed"""
     int i
     for i = 0; i < self->size; i++:
         LandHashEntry *entry = self->entries[i]
@@ -67,6 +69,15 @@ def land_hash_destroy(LandHash *self):
     land_free(self)
 
 void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
+    """Insert data into a LandHash.
+    
+    A LandHash simply is a mapping of keys to
+    data pointers - it will never touch the passed data in any way. E.g. you
+    need to make sure to delete any pointers you add to a hash.
+    
+    If the key already exists, there will be two entries with the same key
+    from now on, and it is undefined behavior which one will get returned when
+    querying for the key."""
     int i
 
     # Need to resize? 
@@ -103,6 +114,12 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     return data
 
 void *def land_hash_remove(LandHash *self, char const *thekey):
+    """Remove the first entry found with the key, and return the associated
+    data.
+    
+    The returned pointer might need to be destroyed after you remove it from
+    the hash, if it has no more use.
+    """
     if !self->size: return NULL
     int i = self->hash_function(self, thekey)
     if !self->entries[i]: return NULL
@@ -122,6 +139,13 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
     return NULL
 
 void *def land_hash_get(LandHash *self, char const *thekey):
+    """Return the data associated with a hash key. If the key exists multiple
+    times, it can not relied on a certain one being returned. It might always
+    be the same, but it might not be - this is especially true if other entries
+    are added which could lead to a re-hashing when it gets to full.
+    
+    If the key is not found, None is returned.
+    """
     if !self->size: return NULL
     int i = self->hash_function(self, thekey)
     if !self->entries[i]: return NULL
@@ -133,6 +157,10 @@ void *def land_hash_get(LandHash *self, char const *thekey):
     return NULL
 
 LandArray *def land_hash_keys(LandHash *hash):
+    """Return an array containing all the keys in the hash. The strings are
+    direct pointers into the hash - so you must not modify or free them, and
+    they will get invalid if the hash is destroyed.
+    """
     LandArray *array = land_array_new()
     int i
     for i = 0; i < hash->size; i++:
@@ -146,6 +174,17 @@ LandArray *def land_hash_keys(LandHash *hash):
     return array
 
 LandArray *def land_hash_data(LandHash *hash):
+    """Return an array with all the data pointers in the hash. If you want to
+    destroy a hash including all its data, this may be a convenient way to
+    do it:
+    {{{#!python
+    data = land_hash_data(hash)
+    for i = 0; i < land_array_count(data); i++:
+        void *entry = land_array_get_nth(data, i)
+        land_free(entry)
+    land_hash_destroy(hash)
+    }}}
+    """
     LandArray *array = land_array_new()
     int i
     for i = 0; i < hash->size; i++:
@@ -159,6 +198,9 @@ LandArray *def land_hash_data(LandHash *hash):
     return array
 
 def land_hash_print_stats(LandHash *hash):
+    """This is an internal function for debugging purposes, which will print
+    out statistics about the hash to the console.
+    """
     int i
     int u = 0
     int c = 0

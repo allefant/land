@@ -137,7 +137,7 @@ LandNet *def land_net_new():
         err = WSAStartup (wVersionRequested, &wsaData)
         if err != 0:
             return NULL
-        atexit (cleanup)
+        land_exit_function(cleanup)
         #else
         struct sigaction sa
         sigset_t mask

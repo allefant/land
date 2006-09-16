@@ -25,6 +25,7 @@ static def closebutton():
     x_clicked++
 
 def land_init():
+    """Initialize Land. This must be called before anything else."""
     #ifndef ALLEGRO_WINDOWS
     gettimeofday(&start_time, NULL)
     #else
@@ -66,18 +67,36 @@ static def land_draw():
     land_flip()
 
 def land_quit():
+    """Quit the Land application. Call it when you want the program to exit."""
     quit = 1
 
 int def land_closebutton():
+    """Check if the closebutton has been clicked.
+    
+    * Returns: True if yes, else False.
+    """
     int r = x_clicked
     x_clicked = 0
     return r
 
 def land_set_frequency(int f):
+    """Set the frequency in Hz at which Land should tick. Default is 60."""
+
     land_log_message("land_set_frequency %d\n", f)
     parameters->frequency = f
 
 def land_set_display_parameters(int w, int h, int bpp, int hz, int flags):
+    """Set the display parameters to use initially.
+    * w, h Width and height in pixel.
+    * bpp Color depth, 0 for auto.
+    * hz Refresh rate, 0 for auto. Passing something besides 0 may be dangerous
+    for the monitor, so usually pass 0 here.
+    * flags, a combination of:
+    ** LAND_WINDOWED
+    ** LAND_FULLSCREEN
+    ** LAND_OPENGL
+    ** LAND_CLOSE_LINES
+    """
     parameters->bpp = bpp
     parameters->hz = hz
     parameters->w = w
@@ -85,16 +104,19 @@ def land_set_display_parameters(int w, int h, int bpp, int hz, int flags):
     parameters->flags = flags
 
 def land_set_initial_runner(LandRunner *runner):
+    """Set the initial runner."""
     parameters->start = runner
 
 double def land_get_frequency():
+    """Return the current frequency."""
     return frequency
 
 int def land_get_ticks():
+    """Return the number of ticks Land has executed."""
     return ticks
 
-# Get the time in seconds. 
 double def land_get_time():
+    """Get the time in seconds since Land has started."""
     #ifndef ALLEGRO_WINDOWS
     struct timeval tv
     gettimeofday(&tv, NULL)
@@ -114,10 +136,22 @@ def land_maximize_fps(int onoff):
     _maximize_fps = onoff
 
 def land_skip_frames():
+    """Skip any frames the logic may be behind. Usually, the tick function of
+    a runner is called for each tick of Land. If a runner does not return from
+    its tick method for some reason, then it can fall behind. For example if
+    there is a function to load a lot of data from disk. In this case, it may
+    be best to synchronize to the current ticks, and not catch up to the
+    current time - this is when you would call this function."""
     frames = ticks
 
 int def land_main():
+    """Run Land. This function will use all the parameters set before to
+    initialize everything, then run the initial runner. It will return when
+    you call land_quit() inside the tick function of the active runner.
+    """
     land_log_message("land_main\n")
+    
+    land_exit_function(land_exit)
 
     land_display_init()
     land_font_init()
@@ -177,7 +211,7 @@ int def land_main():
     land_image_exit()
     land_display_exit()
 
-    land_exit()
+    land_exit_functions()
 
     land_log_message("exit\n")
     return 0
