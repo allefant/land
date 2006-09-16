@@ -68,6 +68,7 @@ def land_widget_list_interface_initialize():
     land_widget_list_interface->id |= LAND_WIDGET_ID_LIST
 
 def land_widget_listitem_interface_initialize():
+    # FIXME: What is the difference to a button?
     if land_widget_listitem_interface: return
     land_widget_vbox_interface_initialize()
 
