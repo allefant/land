@@ -46,7 +46,6 @@ def land_log_new(char const *base, int unique):
         fprintf(f, "******* new log *******\n")
         fclose(f)
 
-
 def land_log_message_nostamp (char const *template, ...):
     if !logname: land_log_new("land", 0)
     FILE *logfile
@@ -84,5 +83,5 @@ def land_log_message(char const *template, ...):
         tv.tv_usec)
     vfprintf(logfile, template, va_args)
     fclose(logfile)
-    //vprintf(template, va_args)
+    # vprintf(template, va_args)
     va_end(va_args)
