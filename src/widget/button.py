@@ -4,6 +4,8 @@ class LandWidgetButton:
     LandWidget super
     unsigned int xalign : 2 # 0 = left, 1 = right, 2 = center
     unsigned int yalign : 2 # 0 = top, 1 = bottom, 2 = center
+    int xshift
+    int yshift
     LandAnimation *animation
     LandImage *image
     char *text
@@ -45,6 +47,8 @@ def land_widget_button_draw(LandWidget *base):
             case 2: y = base->box.y + (base->box.h - base->box.it -
                 base->box.ib - h) * 0.5; break
 
+        x += self->xshift
+        y += self->yshift
         land_image_draw(self->image, x + self->image->x, y + self->image->y)
 
     if self->animation:
@@ -65,31 +69,38 @@ def land_widget_button_draw(LandWidget *base):
             case 2: y = base->box.y + (base->box.h -
                 base->box.it - base->box.ib - h) * 0.5; break
 
+        x += self->xshift
+        y += self->yshift
         land_image_draw(image, x + image->x, y + image->y)
 
     if self->text:
         int x, y = base->box.y + base->box.it
         land_widget_theme_color(base)
+        land_widget_theme_font(base)
         int th = land_font_height(land_font_current())
         switch self->yalign:
             case 1: y = base->box.y + base->box.h - base->box.ib - th; break
             case 2: y = base->box.y + (base->box.h - base->box.it +
                 base->box.ib - th) / 2; break
 
+        y += self->yshift
         switch self->xalign:
             case 0:
                 x = base->box.x + base->box.il
+                x += self->xshift
                 land_text_pos(x, y)
                 land_print(self->text)
                 break
             case 1:
                 x = base->box.x + base->box.w - base->box.ir
+                x += self->xshift
                 land_text_pos(x, y)
                 land_print_right(self->text)
                 break
             case 2:
                 x = base->box.x + (base->box.w - base->box.il +
                     base->box.ir) / 2
+                x += self->xshift
                 land_text_pos(x, y)
                 land_print_center(self->text)
                 break
@@ -97,7 +108,6 @@ def land_widget_button_draw(LandWidget *base):
 
     if !base->dont_clip:
         land_clip_pop()
-
 
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -208,6 +218,11 @@ def land_widget_button_align(LandWidget *self, int x, int y):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
     button->xalign = x
     button->yalign = y
+    
+def land_widget_button_shift(LandWidget *self, int x, int y):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
+    button->xshift = x
+    button->yshift = y
 
 def land_widget_button_get_inner_size(LandWidget *self, float *w, float *h):
     pass
