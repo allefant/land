@@ -196,7 +196,7 @@ def land_widget_scrollbar_autohide(LandWidget *self, int autohide):
     LAND_WIDGET_SCROLLBAR(self)->autohide = autohide
 
 def land_widget_scrollbar_interface_initialize():
-    if !land_widget_scrollbar_vertical_interface:
+    if not land_widget_scrollbar_vertical_interface:
         LandWidgetInterface *i = land_widget_copy_interface(
             land_widget_base_interface, "scrollbar.vertical")
         i->id = LAND_WIDGET_ID_SCROLLBAR
@@ -205,7 +205,7 @@ def land_widget_scrollbar_interface_initialize():
         i->mouse_tick = land_widget_scrollbar_mouse_tick
         land_widget_scrollbar_vertical_interface = i
 
-    if !land_widget_scrollbar_horizontal_interface:
+    if not land_widget_scrollbar_horizontal_interface:
         LandWidgetInterface *i = land_widget_copy_interface(
             land_widget_base_interface, "scrollbar.horizontal")
         i->id = LAND_WIDGET_ID_SCROLLBAR

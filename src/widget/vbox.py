@@ -1,9 +1,8 @@
+#FIXME: merge hbox and vbox
 import base, scrolling
 
-# A VBox is a container where new children will be added in rows. It's layout
-# will adjust to the children.
-# 
 class LandWidgetVBox:
+    """A VBox is a container where all children are layed out in rows."""
     LandWidgetContainer super
     int columns
     int disable_updates : 1
@@ -27,7 +26,7 @@ def land_widget_vbox_update(LandWidget *base):
     LAND_WIDGET_VBOX(base)->disable_updates = 0
     land_widget_layout(base)
 
-def land_widget_vbox_renumber(LandWidget *base):
+static def land_widget_vbox_renumber(LandWidget *base):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
     LandWidgetVBox *vbox = LAND_WIDGET_VBOX(base)
     if container->children:
@@ -60,7 +59,6 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     land_widget_layout_set_grid_position(add, column, row)
     land_widget_layout_set_grid(base, vbox->columns, rows)
 
-    land_widget_layout_set_shrinking(add, 0, 1)
     land_widget_layout_add(base, add)
 
     if layout: land_widget_layout_enable(base)
@@ -103,7 +101,7 @@ LandWidget *def land_widget_vbox_new(LandWidget *parent, int x, int y, int w, in
     return widget
 
 def land_widget_vbox_interface_initialize():
-    if (land_widget_vbox_interface) return
+    if land_widget_vbox_interface: return
     land_widget_container_interface_initialize()
 
     land_widget_vbox_interface = land_widget_copy_interface(

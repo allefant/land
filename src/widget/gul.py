@@ -285,7 +285,8 @@ def gul_box_replace_child(LandLayoutBox *self, LandLayoutBox *child, *with):
         #  don't bother     
 
 # Recursively calculate the minimum size of all children of the fiven box,
-# starting with the children.
+# starting with the children. Basically, current_min_width/height is calculated
+# for each box, based on the min_width/height of the bottom-most boxes.
 static def gul_box_bottom_up(LandLayoutBox *self):
     LandLayoutBox *c
     if (self->flags & GUL_HIDDEN) return
@@ -346,10 +347,10 @@ static def gul_box_top_down(LandLayoutBox * self):
         int cw = column_min_width(self, i)
         int cx = x
 
-        if (is_column_expanding(self, i)):
+        if is_column_expanding(self, i):
             cw += share
             # The first columns may get an extra pixel, in case we can't
-#               evenly share. 
+            # evenly share. 
             if available_width:
                 cw += 1
                 available_width -= 1
@@ -364,8 +365,8 @@ static def gul_box_top_down(LandLayoutBox * self):
         for j = 0; j < self->rows; j++:
             LandLayoutBox *c = lookup_box_in_grid(self, i, j)
 
-            if c && c->row == j:
-                # Multi-row cells already were handled. :
+            if c and c->row == j:
+                # Multi-row cells already were handled.
                 if c->col == i:
                     c->x = cx
                     c->w = cw
@@ -390,7 +391,7 @@ static def gul_box_top_down(LandLayoutBox * self):
         if (is_row_expanding(self, j)):
             ch += share
             # The first rows may get an extra pixel, in case we can't
-#               evenly share. 
+            # evenly share. 
             if available_height:
                 ch += 1
                 available_height -= 1
@@ -405,8 +406,8 @@ static def gul_box_top_down(LandLayoutBox * self):
         for i = 0; i < self->cols; i++:
             LandLayoutBox *c = lookup_box_in_grid(self, i, j)
 
-            if c && c->col == i:
-                # Multi-column cells already were handled. :
+            if c and c->col == i:
+                # Multi-column cells already were handled.
                 if c->row == j:
                     c->y = cy
                     c->h = ch
@@ -422,7 +423,6 @@ static def gul_box_top_down(LandLayoutBox * self):
         gul_box_top_down(c)
 
 # Given a box, (recursively) fit its children into it.
-# 
 def gul_box_fit_children(LandLayoutBox * self):
     D(printf("gul_box_bottom_up\n");)
     gul_box_bottom_up(self)

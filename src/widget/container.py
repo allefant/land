@@ -12,8 +12,8 @@ macro LAND_WIDGET_CONTAINER(widget) ((LandWidgetContainer *)
 
 global LandWidgetInterface *land_widget_container_interface
 
-# Destroy the container and all its children.
 def land_widget_container_destroy(LandWidget *base):
+    """Destroy the container and all its children."""
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base)
     if self->mouse:
         land_widget_unreference(self->mouse)
@@ -47,8 +47,9 @@ def land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus):
             land_widget_unreference(self->mouse)
             self->mouse = NULL
 
-# Give keyboard focus to the container, and to children who requested focus.
 def land_widget_container_keyboard_enter(LandWidget *super):
+    """ Give keyboard focus to the container, and to children who requested
+        focus."""
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if self->children:
         LandListItem *item, *next
@@ -370,7 +371,7 @@ LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
     land_widget_container_initialize(&self->super, parent, x, y, w, h)
     return &self->super
 
-def land_widget_container_interface_initialize(void):
+def land_widget_container_interface_initialize():
     if (land_widget_container_interface) return
 
     land_alloc(land_widget_container_interface)
