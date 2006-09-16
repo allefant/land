@@ -11,6 +11,8 @@ crosscompile = ARGUMENTS.get("crosscompile", "")
 debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
 
+static = ARGUMENTS.get("static", "")
+
 pyfiles = glob.glob("src/*.py")
 pyfiles += glob.glob("src/*/*.py")
 
@@ -23,18 +25,21 @@ includeenv.BuildDir("include/land", "src", duplicate = False)
 includeenv.TargetSignatures("content")
 
 includeenv.BuildDir("c", "src", duplicate = False)
+includeenv.BuildDir("docstrings", "src", duplicate = False)
 
 for py in pyfiles:
     h = "include/land/" + py[4:-3] + ".h"
     c = "c/" + py[4:-3] + ".c"
+    doc = "docstrings/" + py[4:-3] + ".txt"
     name = py[4:-3]
-    includeenv.Command([c, h], py, "scramble.py %s %s %s %s _LAND_HEADER" % (py, c, h, name))
+    includeenv.Command([c, h, doc], py, "scramble.py -i %s -c %s -h %s -d %s -n %s -p _LAND_HEADER" % (py, c, h, doc, name))
 
 includeenv.Command("include/land.h", [],
     "echo '#include \"land/land.h\"' > include/land.h")
 
 # Main environment.
 env = Environment()
+env.TargetSignatures("content")
 
 if crosscompile:
     env["PLATFORM"] = "win32"
@@ -133,8 +138,11 @@ for incdir in INCDIRS:
     INSTALL_HEADERS.append(incdir)
 INSTALL_HEADERS.append(env.Install(INCDIR, ["include/land.h"]))
 
-env.Install(LIBDIR, [sharedlib, staticlib])
-
 env.Alias('install', ["include", LIBDIR, INSTALL_HEADERS])
 
-env.Default(["include", sharedlib, staticlib])
+if static:
+    env.Default(["include", staticlib])
+    env.Install(LIBDIR, [staticlib])
+else:
+    env.Default(["include", sharedlib])
+    env.Install(LIBDIR, [sharedlib])
