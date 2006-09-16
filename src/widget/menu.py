@@ -259,7 +259,7 @@ def land_widget_menu_mouse_tick(LandWidget *self):
         return
 
 def land_widget_menu_interface_initialize():
-    if (land_widget_menu_interface) return
+    if land_widget_menu_interface: return
 
     land_widget_container_interface_initialize()
 

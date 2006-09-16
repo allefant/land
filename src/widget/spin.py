@@ -150,9 +150,6 @@ def land_widget_spinbutton_mouse_tick(LandWidget *base):
 
                 spinning(base, spinbutton->step)
 
-
-
-
 def land_widget_spinbutton_interface_initialize():
     if land_widget_spinbutton_interface: return
 
