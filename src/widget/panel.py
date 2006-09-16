@@ -41,7 +41,7 @@ def land_widget_panel_add(LandWidget *base, LandWidget *add):
     land_widget_layout(base)
 
 def land_widget_panel_interface_initialize():
-    if (land_widget_panel_interface) return
+    if land_widget_panel_interface: return
     land_widget_container_interface_initialize()
     land_widget_panel_interface = land_widget_copy_interface(
         land_widget_container_interface, "panel")

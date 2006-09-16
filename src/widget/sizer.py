@@ -46,7 +46,7 @@ LandWidget *def land_widget_sizer_new(LandWidget *parent, int x, int y, int w, i
     return super
 
 def land_widget_sizer_interface_initialize():
-    if (land_widget_sizer_interface) return
+    if land_widget_sizer_interface: return
 
     land_widget_sizer_interface = land_widget_copy_interface(
         land_widget_base_interface, "sizer")

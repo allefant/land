@@ -207,7 +207,7 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     return widget
 
 def land_widget_scrolling_interface_initialize():
-    if (land_widget_scrolling_interface) return
+    if land_widget_scrolling_interface: return
 
     land_widget_container_interface_initialize()
 
