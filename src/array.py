@@ -5,6 +5,22 @@ class LandArray:
 
 static import array, memory
 
+#ifdef LAND_MEMLOG
+
+#undef land_array_new
+#undef land_array_destroy
+
+LandArray *def land_array_new_memlog(char const *f, int l):
+    LandArray *array = land_array_new()
+    land_memory_add(array, "array", 1, f, l)
+    return array
+
+def land_array_destroy_memlog(LandArray *self, char const *f, int l):
+    land_memory_remove(self, "array", 1, f, l)
+    land_array_destroy(self)
+
+#endif
+
 LandArray *def land_array_new():
     LandArray *self
     land_alloc(self)
@@ -12,11 +28,14 @@ LandArray *def land_array_new():
 
 # Given a pointer to a (possibly NULL valued) array pointer, create a new node
 # with the given data, and add to the (possibly modified) array.
-# 
 def land_array_add_data(LandArray **array, void *data):
     LandArray *self = *array
     if !self:
+        #ifdef LAND_MEMLOG
+        self = land_array_new_memlog(__FILE__, __LINE__)
+        #else
         self = land_array_new()
+        #endif
 
     self->data = land_realloc(self->data, (self->count + 1) * sizeof *self->data)
     self->data[self->count] = data
@@ -27,7 +46,7 @@ void *def land_array_get_nth(LandArray *array, int i):
     return array->data[i]
 
 def land_array_destroy(LandArray *self):
-    land_free(self->data)
+    if self->data: land_free(self->data)
     land_free(self)
 
 def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)):
@@ -36,3 +55,11 @@ def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)
 int def land_array_count(LandArray *self):
     if not self: return 0
     return self->count
+
+#header
+#ifdef LAND_MEMLOG
+
+macro land_array_new() land_array_new_memlog(__FILE__, __LINE__)
+macro land_array_destroy(x) land_array_destroy_memlog(x, __FILE__, __LINE__)
+
+#endif
