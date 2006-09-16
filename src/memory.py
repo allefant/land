@@ -46,6 +46,17 @@ static def done():
         fprintf(lf, "%s: %d: %d bytes [%s] not freed: %p\n",
                 not_freed[n].file, not_freed[n].line,
                 not_freed[n].size, not_freed[n].id, not_freed[n].ptr)
+        int i
+        if !strcmp(not_freed[n].id, ""):
+            fprintf(lf, "    first bytes: [")
+            for i = 0; i < 16; i++:
+                if i >= not_freed[n].size: break
+                int c = *((unsigned char *)(not_freed[n].ptr) + i)
+                if c >= 32 and c <= 127:
+                    fprintf(lf, "%c", c)
+                else:
+                    fprintf(lf, "«%d»", c)
+            fprintf(lf, "]\n")
     fclose(lf);
 
 static def install():
@@ -100,6 +111,7 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
         FILE *lf = fopen(LOGFILE, "a")
         fprintf(lf, "%s: %d: freed 0 pointer [%s]\n", f, l, id)
         fclose(lf)
+        abort()
 
         return
 
@@ -121,6 +133,8 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     fprintf(lf, "%s: %d: double freed or never allocated: %p [%s]\n", f,
         l, ptr, id)
     fclose(lf)
+    
+    abort()
 
 void *def land_malloc_memlog(int size, char const *f, int l):
     void *ptr = malloc(size)
