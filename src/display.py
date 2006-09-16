@@ -1,3 +1,97 @@
+"""
+Drawing Primitives in Land
+
+= Positions
+
+The most basic information drawing primitives need is, where on the target
+should they be drawn. There are several ways:
+
+Relative screen coordinates. For example, 0/0 is the upper left screen edge, 1/1
+the lower right screen edge. A rectangle from 0.1/0.1 to 0.9/0.9 would span 80%
+of the width and the height of the screen, and leave a 10% border all around.
+Obviously, using such coordinates is most useful if you don't want to care at
+all about the actual resolution used.
+
+Pixel coordinates. A coordinate is given in pixels. So, if you draw a line from
+1/1 to 2/2, the pixels at 1/1 and at 2/2 would be lit. This is what Land
+originally used in its first incarnation, a very long time ago. This has some
+disadvantages. Besides positions relying on the current resolution, it is also
+impossible to specify sub-pixel behavior, for example when anti-aliasing is
+switched on.
+
+Subpixel coordinates. This is what Land uses by default, but you can easily
+change it. It is a mixture of the two modes above. You give coordinates in pixel
+positions (so positions depend on the resolution), but each integer position is
+the upper left corner of a pixel, not the pixel as the whole, as in the method
+before. To get the behavior of the previous method, you would do two things:
+
+1. Add 0.5 to all positions for drawing primitives, so they are drawn at pixel
+centers.
+
+2. For images, don't do this.
+
+To make clear why, let's compare a rectangle
+and an image. The rectangle is drawn at pixel 0/0 with the pixel method, and 10x10
+pixels big. So the pixels that are lit are from 0/0 to 9/9, inclusive. Doing the
+same with the subpixel method, we would shift this so pixel centers are used.
+That is, we would start at 0.5/0.5, and draw to 9.5/9.5.
+
+But what just happened? The rectangle of lit pixels before was 10x10 pixels big,
+from pixel 0 to pixel 9 inclusive. The new subpixel rectangle however is only
+9x9 pixels big. From 0.5 to 9.5. 
+
+The problem is, that what we really want with subpixel coordinates is not just
+an outline anymore, but a frame which is one pixel thick. Its outer rectangle
+would actually start at 0/0, and end at 10/10. Its inner rectangle would start
+at 1/1 and end at 9/9. Drawing a single rectangle from 0.5/0.5 to 9.5/9.5 just
+works, because we assumed a line-thickness of 1.
+
+But with images, there is no line thickness. So if we draw an image which is
+10x10 pixels big, and we draw it to 0/0, it will exactly fit the same rectangle.
+Would we draw it to 0.5/0.5, that just would be wrong.
+
+Now, to make things easier, you don't have to use sub-pixel coordinates if you
+absolutely don't want to. Call:
+
+land_use_screen_positions()
+
+to use the method which maps the screen to 0/0..1/1,
+
+or
+
+land_use_pixel_positions()
+
+to use pixel positions. That is, Land will always lit the exact pixel you
+specify, and also draw images correctly to full-pixel positions. In fact, this
+mode just maps the coordinates like described above, so you still can use
+non-integer positions (but there really is no reason to not use one of the other
+two positioning modes then) and enable e.g. anti-aliasing.
+
+= Primitives
+
+== line
+
+This draws a line from the first point to the second point.
+
+== rectangle
+
+This draws a rectangle from the first point to the second point.
+
+== filled_rectangle
+
+Like rectangle, but filled.
+
+== circle/ellipse/oval
+
+This draws a circle, inscribed into the given rectangle. The alternate names
+"ellipse" and "oval" for this function actually fit better.
+
+== filled_circle
+
+Like circle, but filled.
+"""
+
+
 import global allegro, alleggl, stdlib
 import list, image, log, memory
 
