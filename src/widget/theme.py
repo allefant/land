@@ -245,6 +245,7 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
     self->a = 1
     self->minw = 4
     self->minh = 4
+    self->font = land_font_current()
 
     LandImage *img = NULL
     if argc:
@@ -384,6 +385,11 @@ def land_widget_theme_color(LandWidget *self):
     if not element: return
     land_color(element->r, element->g, element->b, element->a)
 
+def land_widget_theme_font(LandWidget *self):
+    LandWidgetThemeElement *element = get_element(self)
+    if not element: return
+    land_font_set(element->font)
+
 def land_widget_theme_layout_border(LandWidget *self):
     LandWidgetThemeElement *element = get_element(self)
     if not element: return
@@ -399,6 +405,7 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     char const *text):
     LandWidgetThemeElement *element = get_element(self)
     if not element: return
+    land_font_set(element->font)
     int w = land_text_get_width(text)
     int h = land_font_height(land_font_current())
     land_widget_layout_set_minimum_size(self, element->bl + element->br + w,
