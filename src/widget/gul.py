@@ -69,7 +69,7 @@ static import log, memory
 #static macro D(_); _
 static macro D(_); (void)0;
 
-def ERR(char const *format, ...):
+static def ERR(char const *format, ...):
     va_list args
     va_start(args, format)
     #vprintf(format, args)

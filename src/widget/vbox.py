@@ -14,15 +14,19 @@ static import land
 
 global LandWidgetInterface *land_widget_vbox_interface
 
-# Call this before adding *many* items to the vbox, then call
-# land_widget_vbox_update when done. This can speed things up, since there is
-# no need to calculate intermediate layouts for each single added item.
-# 
-
 def land_widget_vbox_disable_updates(LandWidget *base):
+    """
+    Call this before adding *many* items to the vbox, then call
+    land_widget_vbox_update when done. This can speed things up, since there is
+    no need to calculate intermediate layouts for each single added item.
+    """
     LAND_WIDGET_VBOX(base)->disable_updates = 1
 
 def land_widget_vbox_update(LandWidget *base):
+    """
+    Update the vbox, after updates have previously been disabled with
+    land_widget_vbox_disable_updates.
+    """
     LAND_WIDGET_VBOX(base)->disable_updates = 0
     land_widget_layout(base)
 
@@ -44,6 +48,10 @@ static def land_widget_vbox_renumber(LandWidget *base):
         land_widget_vbox_update(base)
 
 def land_widget_vbox_add(LandWidget *base, LandWidget *add):
+    """
+    Add a widget to the vbox. It will be put to the end, going left to right
+    in columns and top to bottom in rows.
+    """
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
     LandWidgetVBox *vbox = LAND_WIDGET_VBOX(base)
 
@@ -67,6 +75,7 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
         land_widget_vbox_update(base)
 
 def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):
+    """Remove a widget from the vbox."""
     int layout = land_widget_layout_inhibit(base)
     land_widget_layout_remove(base, rem)
     land_widget_container_remove(base, rem)
@@ -75,10 +84,12 @@ def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):
     land_widget_vbox_renumber(base)
 
 def land_widget_vbox_set_columns(LandWidget *base, int n):
+    """Specify the number of columns for the vbox. By default, it is 1."""
     LAND_WIDGET_VBOX(base)->columns = n
 
 def land_widget_vbox_initialize(LandWidget *base, LandWidget *parent,
     int x, int y, int w, int h):
+    """Initialize the given vbox widget."""
     land_widget_vbox_interface_initialize()
 
     LandWidgetVBox *self = (LandWidgetVBox *)base
@@ -92,7 +103,9 @@ def land_widget_vbox_initialize(LandWidget *base, LandWidget *parent,
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.
 # 
-LandWidget *def land_widget_vbox_new(LandWidget *parent, int x, int y, int w, int h):
+LandWidget *def land_widget_vbox_new(LandWidget *parent, int x, int y, int w,
+    int h):
+    """Create a new vbox widget."""
     LandWidgetVBox *self
     land_alloc(self)
     LandWidget *widget = (LandWidget *)self
