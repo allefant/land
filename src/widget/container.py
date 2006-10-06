@@ -149,6 +149,7 @@ def land_widget_container_move(LandWidget *super, float dx, float dy):
 
 def land_widget_container_size(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
+    land_widget_base_size(super)
     if !self->children:
         return
     LandListItem *item = self->children->first
@@ -156,8 +157,6 @@ def land_widget_container_size(LandWidget *super):
         LandWidget *child = item->data
         land_call_method(child, size, (child))
         item = item->next
-
-    land_widget_base_size(super)
 
 LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
