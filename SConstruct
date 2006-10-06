@@ -95,6 +95,7 @@ if crosscompile:
 
 if env["PLATFORM"] == "win32":
     env.Append(CCFLAGS = ["-DALLEGRO_STATICLINK"])
+    env.Append(CCFLAGS = ["-DWINDOWS"])
 
     env.Append(CPPPATH = ["dependencies/mingw-include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
@@ -108,7 +109,7 @@ if env["PLATFORM"] == "win32":
 
     env.Append(LIBS = ["kernel32", "user32", "gdi32", "comdlg32",
         "ole32", "dinput", "ddraw", "dxguid", "winmm",
-        "dsound"])
+        "dsound", "ws2_32"])
 
 env.BuildDir(BUILDDIR , "c", duplicate = False)
 
