@@ -406,14 +406,13 @@ def land_widget_move(LandWidget *self, float dx, float dy):
         land_widget_base_move(self, dx, dy)
 
 def land_widget_base_size(LandWidget *self):
-    land_widget_layout_inhibit(self)
     land_widget_layout(self)
-
-    land_widget_layout_enable(self)
 
 def land_widget_size(LandWidget *self, float dx, dy):
     self->box.w += dx
     self->box.h += dy
+    self->box.min_width = self->box.w;
+    self->box.min_height = self->box.h;
     land_call_method(self, size, (self))
 
 # Called inside mouse_leave, will keep the mouse focus, and no other widget
