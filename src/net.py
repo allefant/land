@@ -3,11 +3,12 @@
 import global land, unistd
 
 #ifdef WINDOWS
-static import global winsock
+static import global winsock2, ws2tcpip
+static macro SHUT_RDWR SD_BOTH
+#else
+static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet
+static import netdb, signal
 #endif
-
-static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet, netdb,\
-    signal
 
 # Pseudocode for server:
 # 
@@ -62,7 +63,6 @@ static macro D(_) _
 # #define DEBUG_BYTES
 
 #ifdef WINDOWS
-static int once = 1
 static def cleanup():
     WSACleanup()
 #else
@@ -180,8 +180,12 @@ def land_net_listen(LandNet *self, char const *address):
         return
 
     free (host)
-    
+
+    #ifdef WINDOWS
+    char a = 1;
+    #else
     int a = 1
+    #endif
     setsockopt(self->sock, IPPROTO_TCP, SO_REUSEADDR, &a, sizeof(a))
 
     # Address to listen on. 
@@ -305,7 +309,12 @@ static def land_net_poll_connect(LandNet *self):
     # TODO: on Windows, need to check exception descriptors to know if connection failed? 
     r = select (FD_SETSIZE, NULL, &ds, NULL, &tv)
     if r > 0:
+        #ifdef WINDOWS
+        char a;
+        int as = sizeof a
+        #else
         unsigned int a, as = sizeof a
+        #endif
         if getsockopt (self->sock, SOL_SOCKET, SO_ERROR, &a, &as) == 0:
             if a != 0:
                 errno = a
@@ -398,7 +407,7 @@ static def land_net_poll_recv(LandNet *self):
 
     if r < 0:
         #if defined WINDOWS
-        if WSAGetLastError () != WSAEINTR &&
+        if WSAGetLastError () != WSAEINTR and\
             WSAGetLastError () != WSAEWOULDBLOCK:
         #else
         if errno != EINTR && errno != EWOULDBLOCK && errno != EAGAIN:
