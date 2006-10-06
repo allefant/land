@@ -86,11 +86,10 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     add->box.y = contents->box.y + contents->box.it
 
     # There is no need to add extra references to the added widget from the
-#     * scrollbars. They live and die with the whole scrolling widget anyway,
-#     * so if the added widget is to be destroyed, then it has to be detached
-#     * first from contents, which can *only* happen over
-#     * land_widget_scrolling_destroy_child.
-#     
+    # scrollbars. They live and die with the whole scrolling widget anyway,
+    # so if the added widget is to be destroyed, then it has to be detached
+    # first from contents, which can *only* happen over
+    # land_widget_scrolling_destroy_child.
 
     item = item->next
     LandWidgetContainer *right = LAND_WIDGET_CONTAINER(item->data)
@@ -104,16 +103,21 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item2->data)
     bottombar->target = add
 
-# Return the child window of the scrolling window. Usually, a scrolling
-# window has exactly one child window, which is controlled by the scrollbars.
-# This window is returned.
-# 
 LandWidget *def land_widget_scrolling_get_child(LandWidget *base):
+    """
+    Return the child window of the scrolling window. Usually, a scrolling
+    window has exactly one child window, which is controlled by the scrollbars.
+    That window is returned.
+    """
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
     return children ? children->first->data : NULL
 
 def land_widget_scrolling_remove_child(LandWidget *base):
+    """
+    Detach the window managed inside the scrolled window. If there are no
+    other references to it, it will be destroyed.
+    """
     LandList *list = LAND_WIDGET_CONTAINER(base)->children
     LandWidget *contents = list->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
@@ -192,9 +196,8 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     land_widget_theme_layout_border(bottom)
     land_widget_layout_set_shrinking(bottom, 0, 1)
 
-    # FIXME: The layout lib allows no empty cells yet, so need to put an empty
-    # box. 
-    LandWidget *empty = land_widget_box_new(widget, 0, 0, 0, 0)
+    # Child 4: Empty box. 
+    LandWidget *empty = land_widget_panel_new(widget, 0, 0, 0, 0)
     land_widget_layout_add(widget, empty)
     land_widget_layout_set_grid_position(empty, 1, 1)
     land_widget_layout_set_shrinking(empty, 1, 1)
@@ -205,6 +208,11 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     land_widget_layout(widget)
 
     return widget
+
+LandWidget *def land_widget_scrolling_get_empty(LandWidget *base):
+    LandList *children = LAND_WIDGET_CONTAINER(base)->children
+    LandWidget *empty = children->first->next->next->next->data;
+    return empty
 
 def land_widget_scrolling_interface_initialize():
     if land_widget_scrolling_interface: return
