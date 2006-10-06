@@ -82,6 +82,10 @@ def land_widget_layout_add(LandWidget *parent, LandWidget *child):
 def land_widget_layout_remove(LandWidget *parent, LandWidget *child):
     gul_remove_child(&parent->box, &child->box, !parent->no_layout)
 
+def land_widget_layout_replace(LandWidget *parent, LandWidget *old,
+    LandWidget *with):
+    gul_box_replace_child(&parent->box, &old->box, &with->box)
+
 def land_widget_layout(LandWidget *self):
     if !self->no_layout:
         gul_layout_updated(&self->box)
