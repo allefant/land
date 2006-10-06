@@ -273,7 +273,7 @@ def gul_remove_child(LandLayoutBox *self, LandLayoutBox *rem, int update):
 
         p = c
 
-def gul_box_replace_child(LandLayoutBox *self, LandLayoutBox *child, *with):
+def gul_box_replace_child(LandLayoutBox *self, *child, *with):
     gul_remove_child(self, child, 0)
     with->col = child->col
     with->row = child->row
