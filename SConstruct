@@ -116,7 +116,8 @@ env.BuildDir(BUILDDIR , "c", duplicate = False)
 sources = [BUILDDIR + "/" + x[4:-3] + ".c" for x in pyfiles]
 
 sharedlib = env.SharedLibrary(SHAREDLIBNAME, sources)
-staticlib = env.StaticLibrary(STATICLIBNAME, sources)
+if static:
+    staticlib = env.StaticLibrary(STATICLIBNAME, sources)
 
 basenames = [x[4:-3] for x in pyfiles]
 
