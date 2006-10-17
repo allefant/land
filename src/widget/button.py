@@ -129,6 +129,10 @@ def land_widget_button_initialize(LandWidget *base,
     LandWidget *parent, char const *text,
     LandImage *image,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+    
+    #FIXME: Inhibit layout changes of parent, they make no sense before we
+    # set the layout below
+
     land_widget_base_initialize(base, parent, x, y, w, h)
     land_widget_button_interface_initialize()
     base->vt = land_widget_button_interface
@@ -145,6 +149,9 @@ def land_widget_button_initialize(LandWidget *base,
         land_widget_theme_set_minimum_size_for_image(base, image)
 
     self->clicked = clicked
+    
+    land_widget_theme_layout_border(base)
+    if parent: land_widget_layout(parent)
 
 LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h):
@@ -152,14 +159,8 @@ LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
 
-    #FIXME: Inhibit layout changes of parent, they make no sense before we
-    # set the layout below
-
     land_widget_button_initialize(self,
         parent, text, NULL, clicked, x, y, w, h)
-
-    land_widget_theme_layout_border(self)
-    if parent: land_widget_layout(parent)
 
     return self
 
@@ -173,9 +174,6 @@ LandWidget *def land_widget_button_new_with_image(LandWidget *parent,
     land_widget_button_initialize(self,
         parent, text, image, clicked, x, y, w, h)
 
-    land_widget_theme_layout_border(self)
-    land_widget_layout(parent)
-
     return self
 
 LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
@@ -188,9 +186,6 @@ LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
     land_widget_button_initialize(self,
         parent, text, NULL, clicked, x, y, w, h)
     button->animation = animation
-
-    land_widget_theme_layout_border(self)
-    land_widget_layout(parent)
 
     return self
 

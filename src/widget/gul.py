@@ -93,7 +93,10 @@ LandLayoutBox *def gul_box_new():
     return self
 
 def gul_box_deinitialize(LandLayoutBox *self):
-    if (self->lookup_grid) land_free(self->lookup_grid)
+    if self->lookup_grid:
+        land_free(self->lookup_grid)
+        self->lookup_grid = None
+    
 
 def gul_box_del(LandLayoutBox * self):
     gul_box_deinitialize(self)
@@ -123,10 +126,10 @@ static LandLayoutBox *def lookup_box_in_grid(LandLayoutBox *self, int col, row):
     return self->lookup_grid[row * self->cols + col]
 
 static def update_lookup_grid(LandLayoutBox *self):
-    if (self->lookup_grid) land_free(self->lookup_grid)
+    if self->lookup_grid: land_free(self->lookup_grid)
     self->lookup_grid = land_calloc(self->cols * self->rows *
         sizeof *self->lookup_grid)
-    
+
     # The lookup grid initially is filled with 0. Now all non-hidden boxes
     # fill in which grid cells they occupy.
     LandLayoutBox *c = self->children
@@ -141,6 +144,10 @@ static def update_lookup_grid(LandLayoutBox *self):
 # TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.
 def gul_layout_updated(LandLayoutBox *self):
+    # The parent is the layout parent, *not* the widget's parent. That is, if
+    # a widget has a parent, e.g. a scrolling window, then this function will
+    # not skip up over it and redo the desktop layout. Instead, it should only
+    # update parents as far up as might be affected.
     update_lookup_grid(self)
     if self->parent:
         gul_layout_updated(self->parent)
@@ -330,8 +337,8 @@ static def gul_box_top_down(LandLayoutBox * self):
     int want_height = expanding_rows(self)
 
     D(printf("    Children: %d (%d exp) x %d (%d exp)\n",
-           self->cols, want_width, self->rows, want_height)
-    printf("              %d x %d\n", minw, minh);)
+        self->cols, want_width, self->rows, want_height);
+        printf("              %d x %d\n", minw, minh);)
 
     int i, j
 

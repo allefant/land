@@ -1,13 +1,13 @@
 import container
 
 class LandWidgetScrolling:
+    """
+    This has 3 fixed children:
+    # The contents window, a container.
+    # A vertical scrollbar to the right.
+    # A horizontal scrollbar at the bottom.
+    """
     LandWidgetContainer super
-
-# This has 3 fixed children:
-# 1. The contents window, a container.
-# 2. A vertical scrollbar to the right.
-# 3. A horizontal scrollbar at the bottom.
-# 
 
 macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *) \
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))

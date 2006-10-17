@@ -19,8 +19,10 @@ class LandWidgetSpinButton:
     int count
     double step
 
-macro LAND_WIDGET_SPIN(widget) ((LandWidgetSpin *) land_widget_check(widget, LAND_WIDGET_ID_SPIN, __FILE__, __LINE__))
-macro LAND_WIDGET_SPINBUTTON(widget) ((LandWidgetSpinButton *) land_widget_check(widget, LAND_WIDGET_ID_SPINBUTTON, __FILE__, __LINE__))
+macro LAND_WIDGET_SPIN(widget) ((LandWidgetSpin *) land_widget_check(widget,
+    LAND_WIDGET_ID_SPIN, __FILE__, __LINE__))
+macro LAND_WIDGET_SPINBUTTON(widget) ((LandWidgetSpinButton *)
+    land_widget_check(widget, LAND_WIDGET_ID_SPINBUTTON, __FILE__, __LINE__))
 
 static import land
 
@@ -76,10 +78,17 @@ def land_widget_spin_initialize(LandWidget *base,
     buttondown->spin = base
     buttondown->dir = -1
 
-    land_widget_layout_set_expanding(LAND_WIDGET(buttonup), 0, 1)
-    land_widget_layout_set_expanding(LAND_WIDGET(buttondown), 0, 1)
-    land_widget_layout_set_expanding(edit, 1, 1)
+    land_widget_layout_set_shrinking(LAND_WIDGET(buttonup), 1, 0)
+    land_widget_layout_set_shrinking(LAND_WIDGET(buttondown), 1, 0)
+    land_widget_layout_set_shrinking(spinner, 1, 0)
+
+    land_widget_layout_set_expanding(edit, 1, 0)
     land_widget_spin_set_value(base, val)
+    
+    land_widget_layout_set_expanding(base, 1, 0)
+
+    land_widget_theme_layout_border(base)
+    if parent: land_widget_layout(parent)
 
 LandWidget *def land_widget_spin_new(LandWidget *parent,
     float val, float min, float max, float step,
@@ -135,8 +144,6 @@ def land_widget_spinbutton_mouse_tick(LandWidget *base):
             spinbutton->count = 0
             spinbutton->step = spin->step * spinbutton->dir
             spinning(base, spinbutton->step)
-
-
     else:
         if (land_mouse_b() & 1):
             double seconds = land_get_time()

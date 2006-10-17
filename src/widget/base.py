@@ -5,10 +5,10 @@ This module implements a simple graphical user interface on top of Land.
 
 = Some Features =
 
-* Simple. This is intended to be used in-game, so no advanced features.
-* A widget is basically a box. It can contain other boxes, to which mouse and
-  keyboard input is dispatched.
-* Themeable, either with custom drawing, or bitmap themes.
+ * Simple. This is intended to be used in-game, so no advanced features.
+ * A widget is basically a box. It can contain other boxes, to which mouse and
+   keyboard input is dispatched.
+ * Themeable, either with custom drawing, or bitmap themes.
 
 = Mouse Focus =
 
@@ -30,24 +30,24 @@ order, starting with the parent, then the children, recursively.
 
 About using the auto layout:
 
-* Each widget has an outer box, which is how much space it takes up inside
-  its parent.
+ * Each widget has an outer box, which is how much space it takes up inside
+   its parent.
 
-* Additionally, it has an inner box, which is the space available to
-  children. The inner box is 6 values: il, it, ir, ib, hgap, vgap. The first
-  4 are for a border all around the widget, the last 2 are gaps between
-  multiple children.
+ * Additionally, it has an inner box, which is the space available to
+   children. The inner box is 6 values: il, it, ir, ib, hgap, vgap. The first
+   4 are for a border all around the widget, the last 2 are gaps between
+   multiple children.
 
-* The space between outer and inner box is usually filled with some kind of
-  border by the themeing.
+ * The space between outer and inner box is usually filled with some kind of
+   border by the themeing.
 
-* The layout allows layers, so child windows can share the same space.
+ * The layout allows layers, so child windows can share the same space.
 
-* By default, container widgets try to fill up as much space as they can, so
-  if you place e.g. a VBox onto the desktop, it fills it up completely when
-  using auto layout. Non-container widgets on the other hand usually try to
-  be as small as possible, e.g. a button will try to fit around the text/image
-  inside it. You can of course change for each widget how it behaves.
+ * By default, container widgets try to fill up as much space as they can, so
+   if you place e.g. a VBox onto the desktop, it fills it up completely when
+   using auto layout. Non-container widgets on the other hand usually try to
+   be as small as possible, e.g. a button will try to fit around the text/image
+   inside it. You can of course change for each widget how it behaves.
 
 = Themeing =
 
@@ -157,29 +157,31 @@ import ../hash, gul
 
 # A widget ID must contain the bit-pattern of its parent's ID.
 
-macro  LAND_WIDGET_ID_BASE         0x00000001 # no visual, no layout
-macro  LAND_WIDGET_ID_CONTAINER    0x00000011 # no visual, no layout
-macro  LAND_WIDGET_ID_SCROLLING    0x00000111 # visual, layout
-macro  LAND_WIDGET_ID_VBOX         0x00000211 # no visual, layout
-macro  LAND_WIDGET_ID_LIST         0x00001211 # visual, layout
-macro  LAND_WIDGET_ID_HBOX         0x00000311 # no visual, layout
-macro  LAND_WIDGET_ID_TABBAR       0x00001311 # visual, layout
-macro  LAND_WIDGET_ID_SPIN         0x00002311 # visual, layout
-macro  LAND_WIDGET_ID_PANEL        0x00000411 # visual, layout
-macro  LAND_WIDGET_ID_BOARD        0x00000511 # visual, no layout
-macro  LAND_WIDGET_ID_MENU         0x00000611
-macro  LAND_WIDGET_ID_MENUBAR      0x00001611
-macro  LAND_WIDGET_ID_BOOK         0x00000711
-macro  LAND_WIDGET_ID_BUTTON       0x00000021
-macro  LAND_WIDGET_ID_MENUBUTTON   0x00000121
-macro  LAND_WIDGET_ID_MENUITEM     0x00000221
-macro  LAND_WIDGET_ID_LISTITEM     0x00000321
-macro  LAND_WIDGET_ID_TAB          0x00000421
-macro  LAND_WIDGET_ID_SPINBUTTON   0x00000521
-macro  LAND_WIDGET_ID_SCROLLBAR    0x00000031
-macro  LAND_WIDGET_ID_EDIT         0x00000041
+macro LAND_WIDGET_ID_BASE         0x00000001 # no visual, no layout
+macro LAND_WIDGET_ID_CONTAINER    0x00000011 # no visual, no layout
+macro LAND_WIDGET_ID_SCROLLING    0x00000111 # visual, layout
+macro LAND_WIDGET_ID_VBOX         0x00000211 # no visual, layout
+macro LAND_WIDGET_ID_LIST         0x00001211 # visual, layout
+macro LAND_WIDGET_ID_HBOX         0x00000311 # no visual, layout
+macro LAND_WIDGET_ID_TABBAR       0x00001311 # visual, layout
+macro LAND_WIDGET_ID_SPIN         0x00002311 # visual, layout
+macro LAND_WIDGET_ID_PANEL        0x00000411 # visual, layout
+macro LAND_WIDGET_ID_BOARD        0x00000511 # visual, no layout
+macro LAND_WIDGET_ID_MENU         0x00000611
+macro LAND_WIDGET_ID_MENUBAR      0x00001611
+macro LAND_WIDGET_ID_BOOK         0x00000711
+macro LAND_WIDGET_ID_SLIDER       0x00000811
+macro LAND_WIDGET_ID_BUTTON       0x00000021
+macro LAND_WIDGET_ID_MENUBUTTON   0x00000121
+macro LAND_WIDGET_ID_MENUITEM     0x00000221
+macro LAND_WIDGET_ID_LISTITEM     0x00000321
+macro LAND_WIDGET_ID_TAB          0x00000421
+macro LAND_WIDGET_ID_SPINBUTTON   0x00000521
+macro LAND_WIDGET_ID_SCROLLBAR    0x00000031
+macro LAND_WIDGET_ID_EDIT         0x00000041
+macro LAND_WIDGET_ID_HANDLE       0x00000051
 
-macro  LAND_WIDGET_ID_USER         0x80000000
+macro LAND_WIDGET_ID_USER         0x80000000
 
 class LandWidgetInterface:
     int id
@@ -215,14 +217,19 @@ class LandWidgetInterface:
     void (*leave)(LandWidget *self)
     void (*destroy)(LandWidget *self)
 
-# A Land widget.
-#
-# Event the most basic widget already is a quite heavy object:
-# - A widget can have arbitrary string-keyed properties attached to it.
-# - A widget is reference counted.
-# - A widget has a theme.
-#
 class LandWidget:
+    """
+    The base widget class.
+
+    Event the most basic widget already is a quite heavy object:
+    * It has a parent.
+    * It has an on-screen position.
+    * It has layout parameters.
+    * It has various flags (like keyboard focus, hidden, ...).
+    * Each widget can have arbitrary string-keyed properties attached to it.
+    * Each widget is reference counted.
+    * Each widget has a theme pointer.
+    """
     LandWidgetInterface *vt
     LandWidget *parent
     LandLayoutBox box
@@ -317,6 +324,8 @@ def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     if parent:
         self->theme = parent->theme
         land_call_method(parent, add, (parent, self))
+    else:
+        self->theme = land_widget_theme_default()
 
 LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
     LandWidget *self

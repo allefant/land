@@ -9,7 +9,8 @@ class LandWidgetScrollbar:
     int autohide : 1
     void (*callback)(LandWidget *self, int set, int *min, int *max, int *range, int *pos)
 
-macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *) land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
+macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)
+    land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
 
 static import widget/box
 
@@ -123,8 +124,6 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
             super->box.w = posrange
             super->box.x = pos
 
-
-
 def land_widget_scrollbar_draw(LandWidget *self):
     land_widget_scrollbar_update(self, 0)
     land_widget_theme_draw(self)
@@ -147,14 +146,10 @@ def land_widget_scrollbar_mouse_tick(LandWidget *super):
         int t = super->parent->box.y + super->parent->box.it
         int r = super->parent->box.x + super->parent->box.w - super->box.w - super->parent->box.ir
         int b = super->parent->box.y + super->parent->box.h - super->box.h - super->parent->box.ib
-        if newx > r:
-            newx = r
-        if newy > b:
-            newy = b
-        if newx < l:
-            newx = l
-        if newy < t:
-            newy = t
+        if newx > r: newx = r
+        if newy > b: newy = b
+        if newx < l: newx = l
+        if newy < t: newy = t
         int dx = newx - super->box.x
         int dy = newy - super->box.y
         land_widget_move(super, dx, dy)
@@ -169,9 +164,8 @@ def land_widget_scrollbar_mouse_tick(LandWidget *super):
             if self->vertical and dy > 0: self->drag_y += new_size - old_size
             if not self->vertical and dx > 0: self->drag_x += new_size - old_size
 
-
-
-LandWidget *def land_widget_scrollbar_new(LandWidget *parent, LandWidget *target, int vertical, int x, int y, int w, int h):
+LandWidget *def land_widget_scrollbar_new(LandWidget *parent, *target,
+    int vertical, int x, y, w, h):
     LandWidgetScrollbar *self
     
     land_widget_scrollbar_interface_initialize()

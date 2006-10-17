@@ -1,4 +1,4 @@
-import ../land, base
+import land, base
 
 enum LandWidgetThemeFlags:
     TILE_H = 0
@@ -29,6 +29,14 @@ class LandWidgetTheme:
     char *suffix
     # TODO: instead of a list, use a mapping from the widget names. 
     LandList *elements
+
+static LandWidgetTheme *default_theme
+
+LandWidgetTheme *def land_widget_theme_default():
+    return default_theme
+
+def land_widget_theme_set_default(LandWidgetTheme *self):
+    default_theme = self
 
 # Given two sizes, return an offset <= 0, so when texturing the area of size1
 # with a texture of size size2, the center will be aligned.
