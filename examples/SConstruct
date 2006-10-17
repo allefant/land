@@ -19,7 +19,7 @@ for ex in examples:
         h = cdir + "/" + py[len(srcdir) + 1:-3] + ".h"
         c = cdir + "/" + py[len(srcdir) + 1:-3] + ".c"
         name = py[len(srcdir) + 1:-3]
-        pyenv.Command([c, h], py, "scramble.py %s %s %s %s" % (py, c, h, name))
+        pyenv.Command([c, h], py, "scramble.py -i %s -c %s -h %s -n %s" % (py, c, h, name))
         cfiles += [c]
 
     env = Environment()
