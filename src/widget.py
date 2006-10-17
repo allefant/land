@@ -18,3 +18,4 @@ import widget/book
 import widget/edit
 import widget/spin
 import widget/board
+import widget/slider
