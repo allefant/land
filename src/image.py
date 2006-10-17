@@ -12,6 +12,14 @@ class LandImageInterface:
     land_method(void, sub, (LandImage *self, LandImage *parent))
 
 class LandImage:
+    """
+    An image is a rectangular area of pixels. Land will by default always keep a
+    "memory cache" of the image, that is an uncompressed copy of all the R/G/B/A
+    values of all pixels contained in it.
+    Usually, output drivers will convert the image to a device dependent format
+    (e.g. an OpenGL texture) which is much faster to display than sending all
+    the single pixels to the screen each time the image is to be shown.
+    """
     LandImageInterface *vt
     char *filename
     char *name
@@ -33,6 +41,10 @@ import allegro/image, allegrogl/image
 
 # TODO
 class LandSubImage:
+    """
+    A sub-image is an image sharing all of its pixels with some other image. If
+    the other image is changed, then also the sub-image changes.
+    """
     LandImage super
     LandImage *parent
     float x, y, w, h
@@ -134,6 +146,10 @@ def land_image_crop(LandImage *self, int x, int y, int w, int h):
     pass
 
 LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
+    """
+    Create a new image, copying pixel data from a rectangle in an existing
+    image.
+    """
     BITMAP *bmp = create_bitmap_ex(bitmap_color_depth(copy->memory_cache),
         w, h)
     LandImage *self = land_display_new_image()
@@ -151,10 +167,12 @@ LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     land_image_prepare(self)
     return self
 
-# Returns the number of pixels in the image, and the average red, green, blue
-# and alpha component.
-# 
-int def land_image_color_stats(LandImage *self, float *red, float *green, float *blue, float *alpha):
+int def land_image_color_stats(LandImage *self,
+    float *red, *green, *blue, *alpha):
+    """
+    Returns the number of pixels in the image, and the average red, green, blue
+    and alpha component. 
+    """
     int n = 0
     *red = 0
     *green = 0
@@ -173,8 +191,11 @@ int def land_image_color_stats(LandImage *self, float *red, float *green, float 
 
     return n
 
-# Colorizes the part of the image specified by the mask with the current color. 
 def land_image_colorize(LandImage *self, LandImage *colormask):
+    """
+    Colorizes the part of the image specified by the mask with the current
+    color. 
+    """
     int allegro_pink = bitmap_mask_color(colormask->bitmap)
     int x, y
     float ch, cs, v
@@ -194,6 +215,12 @@ def land_image_colorize(LandImage *self, LandImage *colormask):
                 putpixel(self->bitmap, x, y, makecol(r, g, b))
 
 def land_image_prepare(LandImage *self):
+    """
+    This is used to convert image data into a device dependent format, which
+    is used to display the image (instead of the raw R/G/B/A values). Usually
+    this is not needed, but it can be useful for certain optimizations, where
+    the automatic synchronization is circumvented.
+    """
     self->vt->prepare(self)
 
 static int def callback(const char *filename, int attrib, void *param):
@@ -207,6 +234,10 @@ static int def compar(void const *a, void const *b):
     return ustrcmp(an, bn)
 
 LandArray *def land_load_images(char const *pattern, int center, int optimize):
+    """
+    Load all images matching the file name pattern, and create an array
+    referencing them all.
+    """
     LandArray *filenames = NULL
     int count = 0
     if _land_datafile:

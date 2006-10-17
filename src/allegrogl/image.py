@@ -8,6 +8,10 @@ static LandList *images
 macro LAND_IMAGE_OPENGL(_x_) ((LandImageOpenGL *)_x_)
 
 class LandImageOpenGL:
+    """
+    The OpenGL version of a LandImage. Additional members:
+     * gl_texture The texture ID, or 0 if the image is not uploaded currently.
+    """
     LandImage super
 
     unsigned int gl_texture
@@ -28,6 +32,11 @@ static def pad_pot(int w, int h, int *pad_w, int *pad_h):
     *pad_h -= h
 
 def land_image_allegrogl_reupload(void):
+    """
+    Uses land_image_allegrogl_prepare to upload all currently managed images
+    to OpenGL. This may be necessary if the OpenGL context was changed, or the
+    OpenGL memory was invalidated in some other way.
+    """
     if not images: return
     int size = 0
     LandListItem *i
@@ -102,8 +111,11 @@ static def quad(LandImage *self):
 
     glEnd()
 
-def land_image_allegrogl_draw_scaled_rotated_tinted(LandImage *self, float x, float y,
-    float sx, float sy, float angle, float r, float g, float b, float a):
+def land_image_allegrogl_draw_scaled_rotated_tinted(LandImage *self, float x, y,
+    sx, sy, angle, r, g, b, a):
+    """
+    What it says, does it all using an OpenGL texture.
+    """
     glColor4f(r, g, b, a)
     glPushMatrix()
     glTranslatef(x, y, 0)
@@ -113,6 +125,9 @@ def land_image_allegrogl_draw_scaled_rotated_tinted(LandImage *self, float x, fl
     glPopMatrix()
 
 def land_image_allegrogl_grab(LandImage *self, int x, int y):
+    """
+    Grab the image contents from OpenGL, with the upper left corner at x/y.
+    """
     LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self)
 
     if !sub->gl_texture:
@@ -135,7 +150,11 @@ def land_image_allegrogl_grab(LandImage *self, int x, int y):
     # y position is bottom edge on screen to map to bottom edge of texture 
     glCopyTexImage2D(GL_TEXTURE_2D, 0, format, x, land_display_height() - y - h, w, h, 0)
 
-def land_image_allegrogl_grab_into(LandImage *self, int x, int y, int tx, int ty, int tw, int th):
+def land_image_allegrogl_grab_into(LandImage *self, int x, y, tx, ty, tw, th):
+    """
+    Use glCopyTexSubImage2D to copy from the current OpenGL buffer at position
+    x/y into a rectangle of the image, specified with with tx/ty/tw/th.
+    """
     int dh = land_display_height()
     int dw = land_display_width()
     if x < 0:
@@ -179,6 +198,12 @@ def land_image_allegrogl_grab_into(LandImage *self, int x, int y, int tx, int ty
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, tx, h - ty - th, x, dh - y - th, tw, th)
 
 def land_image_allegrogl_cache(LandImage *super):
+    """
+    Images are normally kept in main memory, and uploaded to OpenGL when
+    needed (that is, so far, always). If you are using OpenGL, you may be
+    able to modify the OpenGL texture independent of Land, and can use this
+    function to update the memory cache of the image from the OpenGL texture.
+    """
     LandImageOpenGL *self = LAND_IMAGE_OPENGL(self)
     glBindTexture(GL_TEXTURE_2D, self->gl_texture)
     GLint w, h
@@ -191,7 +216,6 @@ def land_image_allegrogl_cache(LandImage *super):
     for y = 0; y < super->memory_cache->h; y++:
         for x = 0; x < super->memory_cache->w; x++:
             ((int *)super->memory_cache->line[y])[x] = ((int *)(pixels + w * 4))[x]
-
 
     land_free(pixels)
 
@@ -212,6 +236,14 @@ def land_image_allegrogl_exit(void):
     land_free(vtable)
 
 def land_image_allegrogl_prepare(LandImage *self):
+    """
+    An internal function, which updates the OpenGL texture of this image from
+    its memory cache. This should be used after drawing to the image (which is,
+    its memory copy), and before displaying it (since if possible, the OpenGL
+    texture will be used for display). Usually Land will synchronize the
+    texture automatically after changes, so you do not need to use this
+    function unless for special things.
+    """
     LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self)
 
     # FIXME: Sub-images don't work yet, they need a pointer to their parent,

@@ -1,7 +1,7 @@
 """
 Drawing Primitives in Land
 
-= Positions
+= Positions =
 
 The most basic information drawing primitives need is, where on the target
 should they be drawn. There are several ways:
@@ -67,26 +67,26 @@ mode just maps the coordinates like described above, so you still can use
 non-integer positions (but there really is no reason to not use one of the other
 two positioning modes then) and enable e.g. anti-aliasing.
 
-= Primitives
+= Primitives =
 
-== line
+== line ==
 
 This draws a line from the first point to the second point.
 
-== rectangle
+== rectangle ==
 
 This draws a rectangle from the first point to the second point.
 
-== filled_rectangle
+== filled_rectangle ==
 
 Like rectangle, but filled.
 
-== circle/ellipse/oval
+== circle/ellipse/oval ==
 
 This draws a circle, inscribed into the given rectangle. The alternate names
 "ellipse" and "oval" for this function actually fit better.
 
-== filled_circle
+== filled_circle ==
 
 Like circle, but filled.
 """
@@ -174,6 +174,10 @@ def land_display_del(LandDisplay *self):
     land_display_destroy(self)
 
 def land_set_image_display(LandImage *image):
+    """
+    Change the display of the current thread to an internal display which draws
+    to the specified image. This cannot be nested.
+    """
     LandDisplayImage *self = LAND_DISPLAY_IMAGE(_global_image_shortcut_display)
     if nested:
         land_exception("land_set_image_display cannot be nested")
@@ -191,11 +195,20 @@ def land_set_image_display(LandImage *image):
     land_display_select(_global_image_shortcut_display)
 
 def land_unset_image_display():
+    """
+    Restore the display to what it was before the call to
+    land_set_image_display.
+    """
     land_display_unselect()
     land_image_prepare(_global_image)
     _global_image = NULL
 
 def land_display_set():
+    """
+    Make the active display of the current thread the active one. This may
+    involve creating a new window. There is usually no need to call this
+    function directly, as it will be called internally.
+    """
     _land_active_display->vt->set(_land_active_display)
     _land_active_display->vt->color(_land_active_display)
     _land_active_display->vt->clip(_land_active_display)
@@ -204,9 +217,15 @@ def land_display_set():
         set_display_switch_mode(SWITCH_BACKAMNESIA)
 
 LandDisplay *def land_display_get():
+    """
+    Retrieve a handle to the currently active display of the calling thread.
+    """
     return _land_active_display
 
 def land_display_unset():
+    """
+    Make the current display invalid. Usually there is no need for this.
+    """
     _land_active_display = NULL
 
 def land_display_init():
@@ -225,13 +244,14 @@ def land_display_exit():
     land_display_allegrogl_exit()
     land_display_allegro_exit()
 
-# This function is dangerous! It will completely halt Land for the passed
-# time in seconds.
-# The function will try to determine how long flipping of the display takes.
-# This can be used to see if the refresh rate is honored (usually because
-# vsync is enabled).
-# 
 double def land_display_time_flip_speed(double howlong):
+    """
+    This function is dangerous! It will completely halt Land for the passed
+    time in seconds.
+    The function will try to determine how long flipping of the display takes.
+    This can be used to see if the refresh rate is honored (usually because
+    vsync is enabled).
+    """
     land_flip()
     double t = land_get_time()
     double t2
@@ -243,6 +263,10 @@ double def land_display_time_flip_speed(double howlong):
     return i / (t2 - t)
 
 def land_display_toggle_fullscreen():
+    """
+    Toggle the current thread's display between windowed and fullscreen mode,
+    if possible.
+    """
     LandDisplay *d = _land_active_display
     d->flags ^= LAND_FULLSCREEN
     if d->flags & LAND_FULLSCREEN: d->flags &= ~LAND_WINDOWED
@@ -250,10 +274,18 @@ def land_display_toggle_fullscreen():
     land_display_set()
 
 def land_clear(float r, float g, float b, float a):
+    """
+    Clear the current thread's display to the specified color. Always set
+    '''a''' to 1, or you may get a transparent background.
+    """
     LandDisplay *d = _land_active_display
     _land_active_display->vt->clear(d, r, g, b, a)
 
 def land_color(float r, float g, float b, float a):
+    """
+    Change the color of the current thread's active display. This is the color
+    which will be used for subsequent graphics commands.
+    """
     LandDisplay *d = _land_active_display
     d->color_r = r
     d->color_g = g
@@ -262,6 +294,9 @@ def land_color(float r, float g, float b, float a):
     _land_active_display->vt->color(d)
 
 def land_get_color(float *r, float *g, float *b, float *a):
+    """
+    Retrieve the current color.
+    """
     LandDisplay *d = _land_active_display
     *r = d->color_r
     *g = d->color_g
