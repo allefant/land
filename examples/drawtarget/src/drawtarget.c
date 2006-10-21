@@ -55,10 +55,15 @@ void draw(LandRunner *self)
     land_image_draw_scaled_rotated(image, x, y, 1, 1, angle);
 }
 
+void done(LandRunner *self)
+{
+    land_image_destroy(image);
+}
+
 int main(void)
 {
     land_init();
-    LandRunner *runner = land_runner_new("Draw Target", init, NULL, tick, draw, NULL, NULL);
+    LandRunner *runner = land_runner_new("Draw Target", init, NULL, tick, draw, NULL, done);
     land_runner_register(runner);
     land_set_initial_runner(runner);
     land_set_display_parameters(640, 480, 32, 100, LAND_OPENGL | LAND_WINDOWED);
