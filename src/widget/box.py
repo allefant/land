@@ -7,11 +7,13 @@ def land_widget_box_draw(LandWidget *self):
     land_widget_theme_draw(self)
 
 LandWidget *def land_widget_box_new(LandWidget *parent, int x, y, w, h):
-    LandWidget *self = land_widget_new(parent, x, y, w, h)
+    LandWidget *self = land_widget_base_new(parent, x, y, w, h)
 
     land_widget_box_interface_initialize()
 
     self->vt = land_widget_box_interface
+    
+    land_widget_theme_initialize(self)
     return self
 
 def land_widget_box_interface_initialize(void):

@@ -12,10 +12,10 @@ LandWidgetInterface *land_widget_sizer_interface = NULL
 
 def land_widget_sizer_draw(LandWidget *self):
     land_widget_theme_draw(self)
-    float x = self->box.x + self->box.il;
-    float y = self->box.y + self->box.it;
-    float x_ = self->box.x + self->box.w - self->box.ir;
-    float y_ = self->box.y + self->box.h - self->box.ib;
+    float x = self->box.x + self->element->il;
+    float y = self->box.y + self->element->it;
+    float x_ = self->box.x + self->box.w - self->element->ir;
+    float y_ = self->box.y + self->box.h - self->element->ib;
     land_color(1, 1, 1, 0.5)
     land_line(x_, y, x, y_)
     land_line(x_, y + 3, x + 3, y_)
@@ -39,7 +39,7 @@ def land_widget_sizer_mouse_tick(LandWidget *super):
             self->dragged = 0
 
     if ((land_mouse_b() & 1) && self->dragged):
-        land_widget_size(self->target, land_mouse_x() - r + self->drag_x,
+        land_widget_resize(self->target, land_mouse_x() - r + self->drag_x,
             land_mouse_y() - b + self->drag_y)
 
 
@@ -56,7 +56,7 @@ LandWidget *def land_widget_sizer_new(LandWidget *parent, int x, y, w, h):
     super->vt = land_widget_sizer_interface
 
     land_widget_layout_set_shrinking(super, 1, 1)
-    land_widget_theme_layout_border(super)
+    land_widget_theme_initialize(super)
     if parent: land_widget_layout(parent)
     
     # by default, size the parent. 

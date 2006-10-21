@@ -54,24 +54,21 @@ def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     int column = columns - 1
     int row = n - column * hbox->rows - 1
 
-    land_widget_layout_inhibit(base)
+    int f = land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid_position(add, column, row)
     land_widget_layout_set_grid(base, columns, hbox->rows)
 
-    land_widget_layout_add(base, add)
-
-    land_widget_layout_enable(base)
+    if f: land_widget_layout_unfreeze(base)
 
     if !hbox->disable_updates:
         land_widget_hbox_update(base)
 
 def land_widget_hbox_remove(LandWidget *base, LandWidget *rem):
-    int layout = land_widget_layout_inhibit(base)
-    land_widget_layout_remove(base, rem)
+    int layout = land_widget_layout_freeze(base)
     land_widget_container_remove(base, rem)
-    if layout: land_widget_layout_enable(base)
-
+    if layout: land_widget_layout_unfreeze(base)
+    
     land_widget_hbox_renumber(base)
 
 def land_widget_hbox_set_rows(LandWidget *base, int n):
@@ -84,9 +81,10 @@ def land_widget_hbox_initialize(LandWidget *base, LandWidget *parent,
     LandWidgetHBox *self = (LandWidgetHBox *)base
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_hbox_interface
+    land_widget_layout_enable(base)
     self->rows = 1
 
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
 
 # Create a new List widget. A list is simply a container with a layout in
 # rows and columns. Each time you add a widget to it, it will be placed in the

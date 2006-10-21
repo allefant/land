@@ -155,8 +155,7 @@ delete one of its widgets, and why it is like that.
 """
 import ../hash, gul
 
-# A widget ID must contain the bit-pattern of its parent's ID.
-
+# A widget ID must contain the hex digits of the parent.
 macro LAND_WIDGET_ID_BASE         0x00000001 # no visual, no layout
 macro LAND_WIDGET_ID_CONTAINER    0x00000011 # no visual, no layout
 macro LAND_WIDGET_ID_SCROLLING    0x00000111 # visual, layout
@@ -208,8 +207,13 @@ class LandWidgetInterface:
 
     void (*add)(LandWidget *self, LandWidget *add)
     void (*remove)(LandWidget *self, LandWidget *rem)
+    
+    # Called whenever the widget's absolute position changes. It is called
+    # after the movement has been done.
     void (*move)(LandWidget *self, float dx, float dy)
-    void (*size)(LandWidget *self)
+    # Called whenever the widget's size changes. It is called after te resizing
+    # was done.
+    void (*size)(LandWidget *self, float dx, float dy)
 
     void (*get_inner_size)(LandWidget *self, float *w, float *h)
 
@@ -235,15 +239,17 @@ class LandWidget:
     LandLayoutBox box
 
     # internal state
-    unsigned int got_mouse : 1; # this widget has the mouse focus
-    unsigned int got_keyboard : 1; # this widget has the keyboard focus
-    unsigned int send_to_top : 1; # move this widget to top in next tick
-    unsigned int want_focus : 1; # give keyboard focus to this widget
-    unsigned int dont_clip : 1; # children can draw outside this widget
-    unsigned int no_decoration : 1; # draw nothing except contents
-    unsigned int only_border : 1; # draw only a border, for performance reasons
-    unsigned int hidden : 1; # this is not displayed at all, e.g. hidden scrollbar
-    unsigned int no_layout : 1; # inhibit layout updates, for performance reasons
+    unsigned int got_mouse : 1 # this widget has the mouse focus
+    unsigned int got_keyboard : 1 # this widget has the keyboard focus
+    unsigned int send_to_top : 1 # move this widget to top in next tick
+    unsigned int want_focus : 1 # give keyboard focus to this widget
+    unsigned int dont_clip : 1 # children can draw outside this widget
+    unsigned int no_decoration : 1 # draw nothing except contents
+    unsigned int only_border : 1 # draw only a border, for performance reasons
+    # Widget is not displayed at all, e.g. hidden scrollbar.
+    unsigned int hidden : 1 
+    # inhibit layout updates, for performance reasons
+    unsigned int no_layout : 1
 
     # user state
     unsigned int selected : 1; # e.g. checked checkbox or pressed button
@@ -254,7 +260,7 @@ class LandWidget:
 
     LandHash *properties; # arbitrary string-keyed properties
 
-    struct LandWidgetTheme *theme; # this widget's theme
+    struct LandWidgetThemeElement *element; # this widget's theme
 
 class LandWidgetProperty:
     void (*destroy)(void *data)
@@ -268,10 +274,18 @@ static import widget/layout, util
 global LandWidgetInterface *land_widget_base_interface
 LandArray *land_widget_interfaces
 
+int def land_widget_is(LandWidget const *self, int id):
+    int i
+    for i = 0; i < 7; i++:
+        int digit = id & (0xf << (i * 4))
+        if not digit: break
+        if (self->vt->id & (0xf << (i * 4))) != digit: return False
+    return True
+
 void *def land_widget_check(void const *ptr, int id, char const *file,
     int linenum):
     LandWidget const *widget = ptr
-    if (widget->vt->id & id) == id:
+    if land_widget_is(widget, id):
         return (void *)ptr # should provide a const version of the whole
         #function instead
     land_exception("%s: %d: Widget cannot be converted.", file, linenum)
@@ -315,17 +329,16 @@ def land_widget_remove_all_properties(LandWidget *self):
 def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     land_widget_base_interface_initialize()
 
-    gul_box_initialize(&self->box)
-    self->box.x = x
-    self->box.y = y
-    self->box.w = w
-    self->box.h = h
+    land_widget_layout_initialize(self, x, y, w, h)
+    self->vt = land_widget_base_interface
     land_widget_layout_set_minimum_size(self, w, h)
     if parent:
-        self->theme = parent->theme
+        self->element = land_widget_theme_get_element(parent->element->theme,
+            self)
         land_call_method(parent, add, (parent, self))
     else:
-        self->theme = land_widget_theme_default()
+        self->element = land_widget_theme_get_element(
+            land_widget_theme_default(), self)
 
 LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
     LandWidget *self
@@ -372,12 +385,6 @@ LandWidgetInterface *def land_widget_copy_interface(LandWidgetInterface *basevt,
 def land_widget_create_interface(LandWidget *widget, char const *name):
     widget->vt = land_widget_copy_interface(widget->vt, name)
 
-LandWidget *def land_widget_new(LandWidget *parent, int x, y, w, h):
-    LandWidget *self
-    land_alloc(self)
-    land_widget_base_initialize(self, parent, x, y, w, h)
-    return self
-
 def land_widget_base_destroy(LandWidget *self):
     land_widget_remove_all_properties(self)
     gul_box_deinitialize(&self->box)
@@ -404,50 +411,78 @@ def land_widget_base_mouse_enter(LandWidget *self, LandWidget *focus):
 def land_widget_base_mouse_leave(LandWidget *self, LandWidget *focus):
     pass
 
-def land_widget_base_move(LandWidget *self, float dx, float dy):
+def land_widget_base_move(LandWidget *self, float dx, dy):
+    pass
+
+def land_widget_move(LandWidget *self, float dx, dy):
+    """
+    Moves the widget.
+    """
     self->box.x += dx
     self->box.y += dy
+    land_call_method(self, move, (self, dx, dy))
 
-def land_widget_move(LandWidget *self, float dx, float dy):
-    if self->vt->move:
-        self->vt->move(self, dx, dy)
-    else:
-        land_widget_base_move(self, dx, dy)
-
-def land_widget_base_size(LandWidget *self):
-    land_widget_layout(self)
+def land_widget_base_size(LandWidget *self, float dx, dy):
+    pass
 
 def land_widget_size(LandWidget *self, float dx, dy):
+    """
+    Resizes a widget.
+    """
     self->box.w += dx
     self->box.h += dy
-    self->box.min_width = self->box.w;
-    self->box.min_height = self->box.h;
-    land_call_method(self, size, (self))
+    land_call_method(self, size, (self, dx, dy))
+    
+def land_widget_resize(LandWidget *self, float dx, dy):
+    """
+    Changes the minimum size of the widget to its current size modified by the
+    given offset.
+    """
+    self->box.min_width = self->box.w + dx
+    self->box.min_height = self->box.h + dy
+    land_widget_size(self, dx, dy)
 
-# Called inside mouse_leave, will keep the mouse focus, and no other widget
-# can get highlighted.
-#
 def land_widget_retain_mouse_focus(LandWidget *self):
+    """
+    Called inside mouse_leave, will keep the mouse focus, and no other widget
+    can get highlighted.
+    """
     self->got_mouse = 1
 
-# Called inside mouse_enter, inhibits highlighting of the widget.
 def land_widget_refuse_mouse_focus(LandWidget *self):
+    """
+    Called inside mouse_enter, inhibits highlighting of the widget.
+    """
     self->got_mouse = 0
 
-# Called in mouse_tick (or elsewhere), will cause the widget to receive the
-# keyboard focus.
-#
 def land_widget_request_keyboard_focus(LandWidget *self):
+    """
+    Called in mouse_tick (or elsewhere), will cause the widget to receive the
+    keyboard focus.
+    """
     self->want_focus = 1
 
-# Called in keyboard_leave to keep the focus. Doesn't usually make sense.
 def land_widget_retain_keyboard_focus(LandWidget *self):
+    """
+    Called in keyboard_leave to keep the focus. Doesn't usually make sense.
+    """
     self->got_keyboard = 1
 
 def land_widget_tick(LandWidget *self):
+    """
+    Call this regularly on your desktop widget. It's the base function which is
+    needed in any widgets application to handle input to the widgets. The other
+    important function is land_widget_draw, which handles display of widgets.
+    """
     land_call_method(self, tick, (self))
 
 def land_widget_draw(LandWidget *self):
+    """
+    Draw a widget on its current position. Call this on your desktop widget to
+    display all of your widgets. This function and land_widget_tick are the two
+    functions you should call on your desktop widget in each widgets using
+    application.
+    """
     if self->hidden: return
     int pop = 0
     if !self->dont_clip:
@@ -462,16 +497,29 @@ def land_widget_draw(LandWidget *self):
         land_clip_pop()
 
 def land_widget_hide(LandWidget *self):
+    """
+    Hide the widget. It will not be displayed anymore, and also not take up any
+    more space.
+    """
     if self->hidden: return
     self->hidden = 1
     self->box.flags |= GUL_HIDDEN
     land_widget_layout(self->parent)
 
 def land_widget_unhide(LandWidget *self):
+    """
+    Unhide the widget.
+    """
     if not self->hidden: return
     self->hidden = 0
     self->box.flags &= ~GUL_HIDDEN
     land_widget_layout(self->parent)
+
+def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
+    *x = self->box.x + self->element->il
+    *y = self->box.y + self->element->it
+    *w = self->box.w - self->element->il - self->element->ir
+    *h = self->box.h - self->element->il - self->element->ib
 
 def land_widget_base_interface_initialize(void):
     if land_widget_base_interface: return

@@ -115,10 +115,10 @@ def land_widget_container_draw(LandWidget *base):
         return
 
     if not base->dont_clip:
-        int l = base->box.x + base->box.il
-        int t = base->box.y + base->box.it
-        int r = base->box.x + base->box.w - base->box.ir
-        int b = base->box.y + base->box.h - base->box.ib
+        int l = base->box.x + base->element->il
+        int t = base->box.y + base->element->it
+        int r = base->box.x + base->box.w - base->element->ir
+        int b = base->box.y + base->box.h - base->element->ib
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 
@@ -141,29 +141,24 @@ def land_widget_container_draw(LandWidget *base):
         land_clip_pop()
 
 def land_widget_container_move(LandWidget *super, float dx, float dy):
-    super->box.x += dx
-    super->box.y += dy
+    """
+    Move all children of the container when the container itself is moved.
+    """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if !self->children:
-        return
+    if not self->children: return
     LandListItem *item = self->children->first
     while item:
         LandWidget *child = item->data
         land_widget_move(child, dx, dy)
         item = item->next
 
-def land_widget_container_size(LandWidget *super):
-    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    land_widget_base_size(super)
-    if !self->children:
-        return
-    LandListItem *item = self->children->first
-    while item:
-        LandWidget *child = item->data
-        land_call_method(child, size, (child))
-        item = item->next
+def land_widget_container_size(LandWidget *super, float dx, dy):
+    if dx or dy: land_widget_layout(super)
 
 LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
+    """
+    Returns the child under a specific (absolute) position.
+    """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if not self->children:
         return NULL
@@ -171,11 +166,13 @@ LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
     for ; item; item = item->prev:
         LandWidget *child = item->data
         if child->hidden: continue
-        if (x >= child->box.x && y >= child->box.y &&
-            x < child->box.x + child->box.w && y < child->box.y + child->box.h):
+        if (x >= child->box.x
+        and y >= child->box.y
+        and x < child->box.x + child->box.w
+        and y < child->box.y + child->box.h):
             return child
 
-    return NULL
+    return None
 
 # Transfer the mouse focus inside base to child. If child is NULL, remove any
 # mouse focus.
@@ -362,12 +359,16 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
 
 def land_widget_container_initialize(LandWidget *super, *parent,
     int x, y, w, h):
-   land_widget_container_interface_initialize()
+    land_widget_container_interface_initialize()
 
-   LandWidgetContainer *self = (LandWidgetContainer *)super
-   land_widget_base_initialize(super, parent, x, y, w, h)
-   super->vt = land_widget_container_interface
-   self->children = NULL
+    LandWidgetContainer *self = (LandWidgetContainer *)super
+    land_widget_base_initialize(super, parent, x, y, w, h)
+    super->vt = land_widget_container_interface
+    self->children = None
+    # By default, a container does not use a layout.
+    land_widget_layout_disable(super)
+
+    land_widget_theme_initialize(super)
 
 LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
     LandWidgetContainer *self

@@ -18,7 +18,8 @@ def land_widget_panel_initialize(LandWidget *base,
     LandWidgetContainer *super = &self->super
     land_widget_container_initialize(&super->super, parent, x, y, w, h)
     base->vt = land_widget_panel_interface
-    land_widget_theme_layout_border(base)
+    land_widget_layout_enable(base)
+    land_widget_theme_initialize(base)
 
 LandWidget *def land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h):
     LandWidgetPanel *self
@@ -29,14 +30,12 @@ LandWidget *def land_widget_panel_new(LandWidget *parent, int x, int y, int w, i
 def land_widget_panel_add(LandWidget *base, LandWidget *add):
     land_widget_container_add(base, add)
 
-    land_widget_layout_inhibit(base)
+    int f = land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid_position(add, 0, 0)
     land_widget_layout_set_grid(base, 1, 1)
 
-    land_widget_layout_add(base, add)
-
-    land_widget_layout_enable(base)
+    if f: land_widget_layout_unfreeze(base)
 
     land_widget_layout(base)
 

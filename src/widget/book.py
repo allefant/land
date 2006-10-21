@@ -21,6 +21,7 @@ def land_widget_book_initialize(LandWidget *base,
     land_alloc(self)
 
     land_widget_container_initialize(base, parent, x, y, w, h)
+    land_widget_layout_enable(base)
 
     # The panel with the active page. This is the first child so it gets
     # drawn first and we can draw the tabs overlapping a bit.
@@ -38,8 +39,6 @@ def land_widget_book_initialize(LandWidget *base,
     land_widget_layout_set_grid(base, 1, 2)
     land_widget_layout_set_grid_position(tabbar, 0, 0)
     land_widget_layout_set_grid_position(page, 0, 1)
-    land_widget_layout_add(base, tabbar); /* Here, the tabbar is first. */
-    land_widget_layout_add(base, page)
     land_widget_layout_set_shrinking(tabbar, 0, 1)
 
     # From now on, adding a subwindow will create a tab.
@@ -119,7 +118,6 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
 
     land_widget_layout_set_grid(panel, 1, 1)
     land_widget_layout_set_grid_position(add, 0, 0)
-    land_widget_layout_add(panel, add)
 
 def land_widget_book_pagename(LandWidget *widget, char const *name):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)

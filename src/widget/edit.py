@@ -32,16 +32,16 @@ def land_widget_edit_draw(LandWidget *base):
         land_widget_box_draw(base)
 
     if !base->dont_clip:
-        int l = base->box.x + base->box.il
-        int t = base->box.y + base->box.it
-        int r = base->box.x + base->box.w - base->box.ir
-        int b = base->box.y + base->box.h - base->box.ib
+        int l = base->box.x + base->element->il
+        int t = base->box.y + base->element->it
+        int r = base->box.x + base->box.w - base->element->r
+        int b = base->box.y + base->box.h - base->element->ib
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 
     if self->text:
-        int x = base->box.x + base->box.il
-        int y = base->box.y + base->box.it
+        int x = base->box.x + base->element->il
+        int y = base->box.y + base->element->it
         land_widget_theme_color(base)
         land_text_pos(x, y)
         land_print(self->text)
@@ -52,7 +52,7 @@ def land_widget_edit_draw(LandWidget *base):
             if pos < 0.5:
                 int cx = land_text_get_char_offset(self->text, self->cursor)
                 land_line(x + cx, y, x + cx, base->box.y + base->box.h -
-                    base->box.ib)
+                    base->element->ib)
 
     if !base->dont_clip:
         land_clip_pop()
@@ -63,7 +63,7 @@ def land_widget_edit_mouse_tick(LandWidget *base):
     if (land_mouse_delta_b() & 1):
         if (land_mouse_b() & 1):
             base->want_focus = 1
-            int x = land_mouse_x() - base->box.x - base->box.il
+            int x = land_mouse_x() - base->box.x - base->element->il
             edit->cursor = land_text_get_char_index(edit->text, x)
 
 macro M if (edit->modified) edit->modified(base)

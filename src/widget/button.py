@@ -25,27 +25,27 @@ def land_widget_button_draw(LandWidget *base):
         land_widget_box_draw(base)
 
     if !base->dont_clip:
-        int l = base->box.x + base->box.il
-        int t = base->box.y + base->box.it
-        int r = base->box.x + base->box.w - base->box.ir
-        int b = base->box.y + base->box.h - base->box.ib
+        int l = base->box.x + base->element->il
+        int t = base->box.y + base->element->it
+        int r = base->box.x + base->box.w - base->element->ir
+        int b = base->box.y + base->box.h - base->element->ib
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 
     if self->image:
         int w = land_image_width(self->image)
         int h = land_image_height(self->image)
-        float x = base->box.x + base->box.il
+        float x = base->box.x + base->element->il
         switch self->xalign:
-            case 1: x = base->box.x + base->box.w - base->box.ir - w; break
+            case 1: x = base->box.x + base->box.w - base->element->ir - w; break
             case 2: x = base->box.x + (base->box.w -
-                base->box.il - base->box.ir - w) * 0.5; break
+                base->element->il - base->element->ir - w) * 0.5; break
 
-        float y = base->box.y + base->box.it
+        float y = base->box.y + base->element->it
         switch self->yalign:
-            case 1: y = base->box.y + base->box.h - base->box.ib - h; break
-            case 2: y = base->box.y + (base->box.h - base->box.it -
-                base->box.ib - h) * 0.5; break
+            case 1: y = base->box.y + base->box.h - base->element->ib - h; break
+            case 2: y = base->box.y + (base->box.h - base->element->it -
+                base->element->ib - h) * 0.5; break
 
         x += self->xshift
         y += self->yshift
@@ -57,49 +57,49 @@ def land_widget_button_draw(LandWidget *base):
         LandImage *image = land_animation_get_frame(self->animation, i)
         int w = land_image_width(image)
         int h = land_image_height(image)
-        float x = base->box.x + base->box.il
+        float x = base->box.x + base->element->il
         switch self->xalign:
-            case 1: x = base->box.x + base->box.w - base->box.ir - w; break
+            case 1: x = base->box.x + base->box.w - base->element->ir - w; break
             case 2: x = base->box.x + (base->box.w -
-                base->box.il - base->box.ir - w) * 0.5; break
+                base->element->il - base->element->ir - w) * 0.5; break
 
-        float y = base->box.y + base->box.it
+        float y = base->box.y + base->element->it
         switch self->yalign:
-            case 1: y = base->box.y + base->box.h - base->box.ib - h; break
+            case 1: y = base->box.y + base->box.h - base->element->ib - h; break
             case 2: y = base->box.y + (base->box.h -
-                base->box.it - base->box.ib - h) * 0.5; break
+                base->element->it - base->element->ib - h) * 0.5; break
 
         x += self->xshift
         y += self->yshift
         land_image_draw(image, x + image->x, y + image->y)
 
     if self->text:
-        int x, y = base->box.y + base->box.it
+        int x, y = base->box.y + base->element->it
         land_widget_theme_color(base)
         land_widget_theme_font(base)
         int th = land_font_height(land_font_current())
         switch self->yalign:
-            case 1: y = base->box.y + base->box.h - base->box.ib - th; break
-            case 2: y = base->box.y + (base->box.h - base->box.it +
-                base->box.ib - th) / 2; break
+            case 1: y = base->box.y + base->box.h - base->element->ib - th; break
+            case 2: y = base->box.y + (base->box.h - base->element->it +
+                base->element->ib - th) / 2; break
 
         y += self->yshift
         switch self->xalign:
             case 0:
-                x = base->box.x + base->box.il
+                x = base->box.x + base->element->il
                 x += self->xshift
                 land_text_pos(x, y)
                 land_print(self->text)
                 break
             case 1:
-                x = base->box.x + base->box.w - base->box.ir
+                x = base->box.x + base->box.w - base->element->ir
                 x += self->xshift
                 land_text_pos(x, y)
                 land_print_right(self->text)
                 break
             case 2:
-                x = base->box.x + (base->box.w - base->box.il +
-                    base->box.ir) / 2
+                x = base->box.x + (base->box.w - base->element->il +
+                    base->element->ir) / 2
                 x += self->xshift
                 land_text_pos(x, y)
                 land_print_center(self->text)
@@ -150,7 +150,7 @@ def land_widget_button_initialize(LandWidget *base,
 
     self->clicked = clicked
     
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
     if parent: land_widget_layout(parent)
 
 LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
@@ -198,7 +198,7 @@ LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
     land_widget_button_initialize(self,
         parent, text, NULL, NULL, x, y, w, h)
     self->no_decoration = 1
-    land_widget_theme_layout_border(self)
+    land_widget_theme_initialize(self)
     land_widget_layout(parent)
 
     return self

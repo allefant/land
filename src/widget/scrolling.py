@@ -22,7 +22,8 @@ LandWidgetInterface *land_widget_scrolling_horizontal_container_interface
 def land_widget_scrolling_move(LandWidget *widget, float dx, float dy):
     land_widget_container_move(widget, dx, dy)
 
-def land_widget_scrolling_size(LandWidget *widget):
+def land_widget_scrolling_size(LandWidget *widget, float dx, float dy):
+    if not (dx or dy): return
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandListItem *item = container->children->first
 
@@ -44,10 +45,10 @@ def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
     if not children: return
     LandWidget *child =  children->first->data
 
-    child->box.x = contents->box.x + contents->box.il + x
-    child->box.y = contents->box.y + contents->box.it + y
+    child->box.x = contents->box.x + contents->element->il + x
+    child->box.y = contents->box.y + contents->element->it + y
 
-    land_widget_scrolling_size(base)
+    land_widget_scrolling_size(base, 0, 0)
 
 LandWidget *def land_widget_scrolling_get_at_pos(LandWidget *base, int x, y):
     return land_widget_container_get_at_pos(base, x, y)
@@ -59,9 +60,9 @@ def land_widget_scrolling_mouse_tick(LandWidget *base):
         LandList *children = LAND_WIDGET_CONTAINER(contents)->children
         if not children: return
         LandWidget *child = children->first->data
-        int maxy = contents->box.y + contents->box.it
+        int maxy = contents->box.y + contents->element->it
         int miny = contents->box.y + contents->box.h -\
-            contents->box.ib - child->box.h
+            contents->element->ib - child->box.h
         int dy = land_mouse_delta_z() * 64
         int y = child->box.y
         int target_y = y + dy
@@ -82,8 +83,8 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     land_widget_container_add(contents, add)
 
     # A freshly added widget start always at the no-scroll position. 
-    add->box.x = contents->box.x + contents->box.il
-    add->box.y = contents->box.y + contents->box.it
+    add->box.x = contents->box.x + contents->element->il
+    add->box.y = contents->box.y + contents->element->it
 
     # There is no need to add extra references to the added widget from the
     # scrollbars. They live and die with the whole scrolling widget anyway,
@@ -144,6 +145,9 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     LandWidgetContainer *super = &self->super
     LandWidget *widget = &super->super
     land_widget_container_initialize(widget, parent, x, y, w, h)
+    land_widget_layout_enable(widget)
+    
+    printf("%x\n", widget->box.flags)
 
     # Add own widgets without special hook. 
     widget->vt = land_widget_container_interface
@@ -152,58 +156,44 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0)
     contents->only_border = 1
     contents->vt = land_widget_scrolling_contents_container_interface
-    land_widget_theme_layout_border(contents)
+    land_widget_theme_initialize(contents)
 
     # child 2: vertical scrollbar 
     LandWidget *right = land_widget_container_new(widget, 0, 0, 0, 0)
     right->vt = land_widget_scrolling_vertical_container_interface
+    land_widget_theme_initialize(right)
     land_widget_theme_set_minimum_size(right)
-    LandWidget *rightbar = land_widget_scrollbar_new(right, NULL, 1, 0, 0, 0, 0)
-    land_widget_theme_set_minimum_size(rightbar)
-    
-    land_widget_layout_set_grid(right, 1, 1)
-    land_widget_layout_set_grid_position(rightbar, 0, 0)
-    land_widget_layout_add(right, rightbar)
+    land_widget_scrollbar_new(right, NULL,
+        1, right->element->il, right->element->it, 0, 0)
 
     # child 3: horizontal scrollbar 
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0)
     bottom->vt = land_widget_scrolling_horizontal_container_interface
+    land_widget_theme_initialize(bottom)
     land_widget_theme_set_minimum_size(bottom)
-    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL,
-        0, 0, 0, 0, 0)
-    land_widget_theme_set_minimum_size(bottombar)
-
-    land_widget_layout_set_grid(bottom, 1, 1)
-    land_widget_layout_set_grid_position(bottombar, 0, 0)
-    land_widget_layout_add(bottom, bottombar)
+    land_widget_scrollbar_new(bottom, NULL,
+        0, bottom->element->il, bottom->element->it, 0, 0)
 
     # overall layout 
     land_widget_layout_set_grid(widget, 2, 2)
-    land_widget_theme_layout_border(widget)
-    land_widget_layout_add(widget, contents)
-    land_widget_layout_add(widget, right)
-    land_widget_layout_add(widget, bottom)
-
     land_widget_layout_set_grid_position(contents, 0, 0)
 
     # Vertical scrollbar layout. 
     land_widget_layout_set_grid_position(right, 1, 0)
-    land_widget_theme_layout_border(right)
     land_widget_layout_set_shrinking(right, 1, 0)
 
     # Horizontal scrollbar layout. 
     land_widget_layout_set_grid_position(bottom, 0, 1)
-    land_widget_theme_layout_border(bottom)
     land_widget_layout_set_shrinking(bottom, 0, 1)
 
     # Child 4: Empty box. 
     LandWidget *empty = land_widget_panel_new(widget, 0, 0, 0, 0)
-    land_widget_layout_add(widget, empty)
     land_widget_layout_set_grid_position(empty, 1, 1)
     land_widget_layout_set_shrinking(empty, 1, 1)
 
     # From now on, special vtable is used. 
     widget->vt = land_widget_scrolling_interface
+    land_widget_theme_initialize(widget)
     
     land_widget_layout(widget)
 

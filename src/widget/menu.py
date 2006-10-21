@@ -44,6 +44,7 @@ LandWidget *def land_widget_menu_new(LandWidget *parent, float x, float y,
     LandWidget *base = (LandWidget *)self
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_menu_interface
+    land_widget_layout_enable(base)
     land_widget_theme_layout_border(base)
     return base
 
@@ -138,14 +139,13 @@ def land_widget_menu_add(LandWidget *base, LandWidget *item):
     land_widget_container_add(base, item)
     int n = container->children->count
     
-    land_widget_layout_inhibit(base)
+    land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid(base, 1, n)
     land_widget_layout_set_grid_position(item, 0, n - 1)
     land_widget_layout_set_shrinking(item, 1, 1)
-    land_widget_layout_add(base, item)
-    
-    land_widget_layout_enable(base)
+
+    land_widget_layout_unfreeze(base)
     # FIXME: since the add method is called from the constructor, the layout
     # is not ready yet, e.g. min-size is not calculated yet
     //land_widget_layout_adjust(base, 1, 1, 1)
@@ -155,14 +155,13 @@ def land_widget_menubar_add(LandWidget *base, LandWidget *item):
     land_widget_container_add(base, item)
     int n = container->children->count
     
-    land_widget_layout_inhibit(base)
+    land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid(base, n, 1)
     land_widget_layout_set_grid_position(item, n - 1, 0)
     land_widget_layout_set_shrinking(item, 1, 1)
-    land_widget_layout_add(base, item)
-    
-    land_widget_layout_enable(base)
+
+    land_widget_layout_unfreeze(base)
     # FIXME: since the add method is called from the constructor, the layout
     # is not ready yet, e.g. min-size is not calculated yet
     //land_widget_layout_adjust(base, 1, 1, 1)
@@ -185,8 +184,8 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
 
     land_widget_theme_layout_border(self)
     land_widget_layout_set_minimum_size(self,
-        self->box.il + self->box.ir + tw,
-        self->box.it + self->box.ib + th)
+        self->element->il + self->element->ir + tw,
+        self->element->it + self->element->ib + th)
         
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
@@ -203,8 +202,8 @@ LandWidget *def land_widget_submenuitem_new(LandWidget *parent, char const *name
     LAND_WIDGET_MENU(submenu)->menubutton = button
     land_widget_theme_layout_border(button)
     land_widget_layout_set_minimum_size(button,
-        button->box.il + button->box.ir + tw,
-        button->box.it + button->box.ib + th)
+        button->element->il + button->element->ir + tw,
+        button->element->it + button->element->ib + th)
 
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add

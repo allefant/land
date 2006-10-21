@@ -17,6 +17,7 @@ def land_widget_board_initialize(LandWidget *base,
     LandWidgetContainer *super = &self->super
     land_widget_container_initialize(&super->super, parent, x, y, w, h)
     base->vt = land_widget_board_interface
+    land_widget_theme_initialize(base)
 
 LandWidget *def land_widget_board_new(LandWidget *parent, int x, y, w, h):
     LandWidgetBoard *self

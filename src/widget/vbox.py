@@ -62,24 +62,21 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     int row = rows - 1
     int column = n - row * vbox->columns - 1
     
-    int layout = land_widget_layout_inhibit(base)
+    int layout = land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid_position(add, column, row)
     land_widget_layout_set_grid(base, vbox->columns, rows)
 
-    land_widget_layout_add(base, add)
-
-    if layout: land_widget_layout_enable(base)
+    if layout: land_widget_layout_unfreeze(base)
 
     if !vbox->disable_updates:
         land_widget_vbox_update(base)
 
 def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):
     """Remove a widget from the vbox."""
-    int layout = land_widget_layout_inhibit(base)
-    land_widget_layout_remove(base, rem)
+    int layout = land_widget_layout_freeze(base)
     land_widget_container_remove(base, rem)
-    if layout: land_widget_layout_enable(base)
+    if layout: land_widget_layout_unfreeze(base)
 
     land_widget_vbox_renumber(base)
 
@@ -95,9 +92,10 @@ def land_widget_vbox_initialize(LandWidget *base, LandWidget *parent,
     LandWidgetVBox *self = (LandWidgetVBox *)base
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_vbox_interface
+    land_widget_layout_enable(base)
     self->columns = 1
    
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
 
 # Create a new List widget. A list is simply a container with a layout in
 # rows and columns. Each time you add a widget to it, it will be placed in the
