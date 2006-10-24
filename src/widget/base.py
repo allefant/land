@@ -519,7 +519,14 @@ def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
     *x = self->box.x + self->element->il
     *y = self->box.y + self->element->it
     *w = self->box.w - self->element->il - self->element->ir
-    *h = self->box.h - self->element->il - self->element->ib
+    *h = self->box.h - self->element->it - self->element->ib
+
+def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
+    *l = self->box.x + self->element->il
+    *t = self->box.y + self->element->it
+    *r = self->box.x + self->box.w - self->element->ir
+    *b = self->box.y + self->box.h - self->element->ib
+
 
 def land_widget_base_interface_initialize(void):
     if land_widget_base_interface: return
