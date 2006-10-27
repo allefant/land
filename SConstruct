@@ -10,6 +10,7 @@ crosscompile = ARGUMENTS.get("crosscompile", "")
 
 debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
+optimization = ARGUMENTS.get("optimization", "")
 
 static = ARGUMENTS.get("static", "")
 
@@ -67,7 +68,9 @@ env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 
 if debug:
-    env.Append(CCFLAGS = "-O2 -g -DLAND_MEMLOG")
+    if optimization != "0":
+        env.Append(CCFLAGS = "-O2")
+    env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
 elif profile:
@@ -76,7 +79,8 @@ elif profile:
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
 else:
-    env.Append(CCFLAGS = "-O3")
+    if optimization != "0":
+        env.Append(CCFLAGS = "-O3")
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "lib/%s/land" % (env["PLATFORM"])
 
