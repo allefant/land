@@ -26,6 +26,7 @@ class LandWidgetThemeElement:
     int il, it, ir, ib # Offset to contents, inner border.
     int hgap, vgap # If there are child elements, space between them.
     
+    LandWidgetThemeElement *selected
     LandWidgetTheme *theme
 
 class LandWidgetTheme:
@@ -364,27 +365,41 @@ static LandWidgetThemeElement *def find_element(LandList *list, char const *name
             return elem
         item = item->next
 
-    return NULL
+    return None
 
-LandWidgetThemeElement *def land_widget_theme_get_element(
+LandWidgetThemeElement *def land_widget_theme_find_element(
     LandWidgetTheme *theme, LandWidget *widget):
     if not theme:
-        return NULL
+        return None
     LandWidgetThemeElement *element
-    char name[1024]
-    ustrzcpy(name, sizeof name, widget->vt->name)
-    if widget->selected:
+    
+    element = find_element(theme->elements, widget->vt->name)
+    if not element:
+        element = find_element(theme->elements, "base")
+
+    if not element->selected:
+        char name[1024]
+        # First, try to find "widget.selected"
+        ustrzcpy(name, sizeof name, widget->vt->name)
         ustrzcat(name, sizeof name, ".selected")
-    element = find_element(theme->elements, name)
-    if !element:
-        element = find_element(theme->elements, widget->vt->name)
-        if !element:
-            element = find_element(theme->elements, "base")
+        element->selected = find_element(theme->elements, name)
+        # If it doesn't exist, try "base.selected"
+        if not element->selected:
+            ustrzcpy(name, sizeof name, element->name)
+            ustrzcat(name, sizeof name, ".selected")
+            element->selected = find_element(theme->elements, name)
+        # If that doesn't exist as well, use the same as non-selected.
+        if not element->selected:
+            element->selected = element
 
     return element
 
+LandWidgetThemeElement *def land_widget_theme_element(LandWidget *self):
+    if self->selected: return self->element->selected
+    return self->element
+
 def land_widget_theme_draw(LandWidget *self):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
 
     if element->transparent: return
@@ -393,19 +408,19 @@ def land_widget_theme_draw(LandWidget *self):
         self->only_border)
 
 def land_widget_theme_color(LandWidget *self):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     land_color(element->r, element->g, element->b, element->a)
 
 def land_widget_theme_font(LandWidget *self):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     land_font_set(element->font)
 
 def land_widget_theme_layout_border(LandWidget *self):
     # FIXME: This function should be removed - the layout parameters must be
     # read directly from the theme, at the time it is loaded.
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     # TODO
     element->il = element->bl
@@ -417,7 +432,7 @@ def land_widget_theme_layout_border(LandWidget *self):
     element->vgap = 0
 
 def land_widget_theme_set_minimum_size(LandWidget *self):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     land_widget_layout_set_minimum_size(self,
         MAX(self->box.min_width, element->minw),
@@ -428,12 +443,12 @@ def land_widget_theme_initialize(LandWidget *self):
     Adjust the widget's theme to its class (widgets all start off as "base"
     otherwise).
     """
-    self->element = land_widget_theme_get_element(self->element->theme, self)
+    self->element = land_widget_theme_find_element(self->element->theme, self)
     land_widget_theme_layout_border(self)
 
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     char const *text):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     land_font_set(element->font)
     int w = land_text_get_width(text)
@@ -443,7 +458,7 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
 
 def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     LandImage *image):
-    LandWidgetThemeElement *element = self->element
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     int w = land_image_width(image)
     int h = land_image_height(image)

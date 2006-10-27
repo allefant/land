@@ -117,13 +117,6 @@ def gul_box_del(LandLayoutBox * self):
 #    return NULL
 #}
 
-# Same as find_box_in_grid, but O(c) instead of O(n). 
-static LandWidget *def lookup_box_in_grid(LandWidget *self,
-    int col, row):
-    assert(col < self->box.cols && row < self->box.rows)
-
-    return self->box.lookup_grid[row * self->box.cols + col]
-
 static def update_lookup_grid(LandWidget *self):
     if self->box.lookup_grid: land_free(self->box.lookup_grid)
     self->box.lookup_grid = None
@@ -151,6 +144,15 @@ static def update_lookup_grid(LandWidget *self):
                 for j = c->box.row; j <= c->box.row + c->box.extra_rows; j++:
                     self->box.lookup_grid[i + j * self->box.cols] = c
 
+
+# Same as find_box_in_grid, but O(c) instead of O(n). 
+static LandWidget *def lookup_box_in_grid(LandWidget *self,
+    int col, row):
+    if not self->box.lookup_grid: update_lookup_grid(self)
+    if not self->box.lookup_grid: return None
+    assert(col < self->box.cols && row < self->box.rows)
+
+    return self->box.lookup_grid[row * self->box.cols + col]
 
 # TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.

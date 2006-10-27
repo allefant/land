@@ -116,6 +116,11 @@ def land_widget_spin_set_value(LandWidget *base, float val):
     uszprintf(text, sizeof text, format, val)
     land_widget_edit_set_text(edit, text)
 
+def land_widget_spin_set_minimum_text(LandWidget *base, char const *text):
+    LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
+    LandWidget *edit = LAND_WIDGET(item->data)
+    land_widget_theme_set_minimum_size_for_text(edit, text)
+
 float def land_widget_spin_get_value(LandWidget *base):
     LandWidgetSpin *spin = LAND_WIDGET_SPIN(base)
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first

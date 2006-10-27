@@ -333,11 +333,12 @@ def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     self->vt = land_widget_base_interface
     land_widget_layout_set_minimum_size(self, w, h)
     if parent:
-        self->element = land_widget_theme_get_element(parent->element->theme,
+        # Retrieve "base" theme element.
+        self->element = land_widget_theme_find_element(parent->element->theme,
             self)
         land_call_method(parent, add, (parent, self))
     else:
-        self->element = land_widget_theme_get_element(
+        self->element = land_widget_theme_find_element(
             land_widget_theme_default(), self)
 
 LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
@@ -504,7 +505,7 @@ def land_widget_hide(LandWidget *self):
     if self->hidden: return
     self->hidden = 1
     self->box.flags |= GUL_HIDDEN
-    land_widget_layout(self->parent)
+    if self->parent: land_widget_layout(self->parent)
 
 def land_widget_unhide(LandWidget *self):
     """
@@ -513,7 +514,7 @@ def land_widget_unhide(LandWidget *self):
     if not self->hidden: return
     self->hidden = 0
     self->box.flags &= ~GUL_HIDDEN
-    land_widget_layout(self->parent)
+    if self->parent: land_widget_layout(self->parent)
 
 def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
     *x = self->box.x + self->element->il

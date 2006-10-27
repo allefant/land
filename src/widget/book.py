@@ -1,6 +1,10 @@
 import container, ../list
 
 class LandWidgetBook:
+    """
+    A book widget is a container, which shows only one of its children at a
+    time. The visible one can be selected with tabs (usually at the top).
+    """
     LandWidgetContainer super
     LandList *pages
 
@@ -27,13 +31,12 @@ def land_widget_book_initialize(LandWidget *base,
     # drawn first and we can draw the tabs overlapping a bit.
     
     LandWidget *page = land_widget_panel_new(base, 0, 0, 10, 10)
-    land_widget_theme_layout_border(page)
 
     # Tab bar.
     LandWidget *tabbar = land_widget_hbox_new(base, 0, 0, 10, 10)
     tabbar->dont_clip = 1
     tabbar->vt = land_widget_tabbar_interface
-    land_widget_theme_layout_border(tabbar)
+    land_widget_theme_initialize(tabbar)
 
     # The layout.
     land_widget_layout_set_grid(base, 1, 2)
@@ -43,8 +46,14 @@ def land_widget_book_initialize(LandWidget *base,
 
     # From now on, adding a subwindow will create a tab.
     base->vt = land_widget_book_interface
+    
+    land_widget_theme_initialize(base)
 
 def land_widget_book_show_page(LandWidget *self, LandWidget *page):
+    """
+    Change the visible page of the notebook. If ''page'' is None or not a
+    children of the notebook, then an empty tab will be shown.
+    """
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)
@@ -97,8 +106,10 @@ static def clicked(LandWidget *button):
 
 
 def land_widget_book_add(LandWidget *widget, LandWidget *add):
-    # A new item is added to the book, we'll create a new tab button for it,
-    # and add it to our container.
+    """
+    Add a new item to the notebook. This will not make it visible yet, use
+    ["land_widget_book_show_page"] for that.
+    """
 
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandWidgetHBox *hbox = LAND_WIDGET_HBOX(
@@ -108,10 +119,10 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
     LandWidget *tab = land_widget_button_new(LAND_WIDGET(hbox),
         "", clicked, 0, 0, 10, 10)
     tab->vt = land_widget_tab_interface
-    land_widget_theme_layout_border(tab)
+    land_widget_theme_initialize(tab)
 
     land_widget_container_add(panel, add)
-    land_widget_hide(add); /* Newly added widget is not visible. */
+    land_widget_hide(add) # Newly added widget is not visible.
 
     # Each page is handled by the layout, so it should always auto-size to the
     # page panel.
