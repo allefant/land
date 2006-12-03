@@ -63,6 +63,8 @@ collision detection now.
 
 == Isometric (diamond layout)
 
+== Hexagon (diamond layout)
+
 == Isometric (row or column shifted layout)
 
 == Hexagon (row or coumn shifted layout)
@@ -132,4 +134,4 @@ def land_grid_exit():
     land_sprites_exit()
 
 def land_grid_del(LandGrid *self):
-    self->vt->del(self)
+    land_call_method(self, del, (self))
