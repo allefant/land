@@ -31,6 +31,10 @@ static def pad_pot(int w, int h, int *pad_w, int *pad_h):
 
     *pad_h -= h
 
+unsigned int def land_image_allegrogl_texture(LandImage *super):
+    LandImageOpenGL *self = LAND_IMAGE_OPENGL(super)
+    return self->gl_texture
+
 def land_image_allegrogl_reupload(void):
     """
     Uses land_image_allegrogl_prepare to upload all currently managed images
