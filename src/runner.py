@@ -3,6 +3,7 @@ import list
 class LandRunner:
     char *name
     int inited
+    int allocated : 1
     void (*init)(LandRunner *self)
     void (*enter)(LandRunner *self)
     void (*tick)(LandRunner *self)
@@ -36,6 +37,7 @@ LandRunner *def land_runner_new(char const *name, void (*init)(LandRunner *self)
     void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
     LandRunner *self
     land_alloc(self)
+    self->allocated = 1
     land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy)
     return self
 
@@ -76,7 +78,8 @@ def land_runner_destroy_all(void):
         LandRunner *self = (LandRunner *)i->data
         if self->destroy:
             self->destroy(self)
+        land_log_message("destroyed %s\n", self->name)
         land_free(self->name)
-        land_free(self)
+        if self->allocated: land_free(self)
 
     land_list_destroy(runners)
