@@ -35,18 +35,33 @@ static import isometric, log, display
 global LandGridInterface *land_grid_vtable_isometric
 global LandGridInterface *land_grid_vtable_isometric_wrap
 
-LandGrid *def land_isometric_new(int cell_w, int cell_h, int x_cells, int y_cells):
+LandGrid *def land_isometric_new(int cell_w, cell_h, x_cells, y_cells):
     LandGrid *self
     land_alloc(self)
     land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells)
     self->vt = land_grid_vtable_isometric
     return self
 
-LandGrid *def land_isometric_wrap_new(int cell_w, int cell_h, int x_cells, int y_cells):
+LandGrid *def land_isometric_wrap_new(int cell_w, cell_h, x_cells, y_cells):
     LandGrid *self
     land_alloc(self)
     land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells)
     self->vt = land_grid_vtable_isometric_wrap
+    return self
+
+LandGrid *def land_isometric_custom_grid(int cell_w, cell_h, x_cells, y_cells,
+    int wrap,
+    void (*draw_cell)(LandGrid *self, LandView *view, int cell_x, int cell_y,
+        float x, float y)):
+    LandGrid *self
+    land_alloc(self)
+    land_grid_initialize(self, cell_w, cell_h, x_cells, y_cells)
+    land_alloc(self->vt)
+    self->vt->draw = wrap ? land_grid_draw_isometric_wrap :\
+        land_grid_draw_isometric
+    self->vt->get_cell_at = wrap ? land_grid_pixel_to_cell_isometric_wrap :\
+        land_grid_pixel_to_cell_isometric
+    self->vt->draw_cell = draw_cell
     return self
 
 # Returns the grid position in cells below the specified pixel position in
@@ -202,7 +217,7 @@ static def find_offset_wrap(LandGrid *self, float view_x, float view_y,
 #               ..
 #
 # 
-static def placeholder(LandGrid *self, LandView *view, int cell_x, int cell_y, float x, float y):
+static def placeholder(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
     int x_, y_
     int w = self->cell_w / 2
     int h = self->cell_h / 2
