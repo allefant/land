@@ -35,6 +35,10 @@ int def land_mouse_z():
     return mz
 
 int def land_mouse_b():
+    """Short for land_mouse_button."""
+    return mb
+    
+int def land_mouse_button():
     """Return the mouse button state for the current tick."""
     return mb
 
@@ -56,7 +60,10 @@ def land_mouse_set_pos(int x, int y):
     my = y
 
 int def land_hide_mouse_cursor():
-    return !show_os_cursor(MOUSE_CURSOR_NONE)
+    show_os_cursor(MOUSE_CURSOR_NONE)
+    have_os_cursor = 0
+    return have_os_cursor
 
 int def land_show_mouse_cursor():
-    return !show_os_cursor(MOUSE_CURSOR_ARROW)
+    have_os_cursor = !show_os_cursor(MOUSE_CURSOR_ARROW)
+    return have_os_cursor
