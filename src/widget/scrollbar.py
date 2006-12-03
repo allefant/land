@@ -97,8 +97,8 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
             val = minval
         else:
             # Always round up when setting, since we round down when querying. 
-            int round = maxpos - 1 - minpos
-            val = (minval + (pos - minpos) * (maxval - minval) + round) / (maxpos - minpos)
+            int rounded = maxpos - 1 - minpos
+            val = (minval + (pos - minpos) * (maxval - minval) + rounded) / (maxpos - minpos)
 
         self->callback(super, 1, &minval, &maxval, &valrange, &val)
 

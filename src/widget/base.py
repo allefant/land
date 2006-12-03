@@ -279,8 +279,8 @@ int def land_widget_is(LandWidget const *self, int id):
     for i = 0; i < 7; i++:
         int digit = id & (0xf << (i * 4))
         if not digit: break
-        if (self->vt->id & (0xf << (i * 4))) != digit: return False
-    return True
+        if (self->vt->id & (0xf << (i * 4))) != digit: return 0
+    return 1
 
 void *def land_widget_check(void const *ptr, int id, char const *file,
     int linenum):
@@ -334,8 +334,9 @@ def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     land_widget_layout_set_minimum_size(self, w, h)
     if parent:
         # Retrieve "base" theme element.
-        self->element = land_widget_theme_find_element(parent->element->theme,
-            self)
+        if parent->element:
+            self->element = land_widget_theme_find_element(
+                parent->element->theme, self)
         land_call_method(parent, add, (parent, self))
     else:
         self->element = land_widget_theme_find_element(
@@ -517,16 +518,28 @@ def land_widget_unhide(LandWidget *self):
     if self->parent: land_widget_layout(self->parent)
 
 def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
-    *x = self->box.x + self->element->il
-    *y = self->box.y + self->element->it
-    *w = self->box.w - self->element->il - self->element->ir
-    *h = self->box.h - self->element->it - self->element->ib
+    *x = self->box.x
+    *y = self->box.y
+    *w = self->box.w
+    *h = self->box.h
+    
+    if self->element:
+        *x += self->element->il
+        *y += self->element->it
+        *w -= self->element->ir + self->element->ir
+        *h -= self->element->ib + self->element->ib
 
 def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
-    *l = self->box.x + self->element->il
-    *t = self->box.y + self->element->it
-    *r = self->box.x + self->box.w - self->element->ir
-    *b = self->box.y + self->box.h - self->element->ib
+    *l = self->box.x
+    *t = self->box.y
+    *r = self->box.x + self->box.w
+    *b = self->box.y + self->box.h 
+    
+    if self->element:
+        *l += self->element->il
+        *t += self->element->it
+        *r -= self->element->ir
+        *b -= self->element->ib
 
 
 def land_widget_base_interface_initialize(void):

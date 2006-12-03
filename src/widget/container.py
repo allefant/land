@@ -115,10 +115,8 @@ def land_widget_container_draw(LandWidget *base):
         return
 
     if not base->dont_clip:
-        int l = base->box.x + base->element->il
-        int t = base->box.y + base->element->it
-        int r = base->box.x + base->box.w - base->element->ir
-        int b = base->box.y + base->box.h - base->element->ib
+        float l, t, r, b
+        land_widget_inner_extents(base, &l, &t, &r, &b)
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 

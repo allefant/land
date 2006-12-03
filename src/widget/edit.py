@@ -66,7 +66,7 @@ def land_widget_edit_mouse_tick(LandWidget *base):
             int x = land_mouse_x() - base->box.x - base->element->il
             edit->cursor = land_text_get_char_index(edit->text, x)
 
-macro M if (edit->modified) edit->modified(base)
+static macro M if (edit->modified) edit->modified(base)
 def land_widget_edit_keyboard_tick(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     while (keypressed()):

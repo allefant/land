@@ -443,6 +443,7 @@ def land_widget_theme_initialize(LandWidget *self):
     Adjust the widget's theme to its class (widgets all start off as "base"
     otherwise).
     """
+    if not self->element: return
     self->element = land_widget_theme_find_element(self->element->theme, self)
     land_widget_theme_layout_border(self)
 

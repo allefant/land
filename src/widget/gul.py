@@ -251,8 +251,9 @@ static int def min_height(LandWidget *self):
 
     for i = 0; i < self->box.rows; i++:
         v += row_min_height(self, i)
-        
-    v += self->element->vgap * (i - 1) + self->element->it + self->element->ib
+    
+    if self->element:
+        v += self->element->vgap * (i - 1) + self->element->it + self->element->ib
 
     return v
 
@@ -264,7 +265,8 @@ static int def min_width(LandWidget *self):
     for i = 0; i < self->box.cols; i++:
         v += column_min_width(self, i)
 
-    v += self->element->hgap * (i - 1) + self->element->il + self->element->ir
+    if self->element:
+        v += self->element->hgap * (i - 1) + self->element->il + self->element->ir
 
     return v
 
@@ -338,7 +340,8 @@ static def gul_box_top_down(LandWidget *self):
     int i, j
 
     # Adjust column positions and widths. 
-    int x = self->box.x + element->il
+    int x = self->box.x
+    if self->element: x += element->il
     int share = 0
 
     if want_width:
@@ -361,7 +364,9 @@ static def gul_box_top_down(LandWidget *self):
 
         else:
             D(printf(" [-]%d", cw);)
-        x += cw + element->hgap
+        x += cw
+        if self->element:
+            x += element->hgap
 
         # Place all rows in the column accordingly 
         for j = 0; j < self->box.rows; j++:
@@ -390,7 +395,9 @@ static def gul_box_top_down(LandWidget *self):
 
     D(printf("    Rows:");)
     # Adjust row positions and heights. 
-    int y = self->box.y + element->it
+    int y = self->box.y
+    if self->element:
+        y += element->it
 
     share = 0
     if want_height:
@@ -412,7 +419,9 @@ static def gul_box_top_down(LandWidget *self):
 
         else:
             D(printf(" [-]%d", ch);)
-        y += ch + element->vgap
+        y += ch
+        if self->element:
+            y += element->vgap
 
         # Place all columns in the row accordingly. 
         for i = 0; i < self->box.cols; i++:
