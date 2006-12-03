@@ -194,7 +194,8 @@ int def land_image_color_stats(LandImage *self,
 def land_image_colorize(LandImage *self, LandImage *colormask):
     """
     Colorizes the part of the image specified by the mask with the current
-    color. 
+    color. The mask uses (1, 0, 1) for transparent, and the intensity is
+    otherwise used as intensity of the replacement color.
     """
     int allegro_pink = bitmap_mask_color(colormask->bitmap)
     int x, y
@@ -213,6 +214,42 @@ def land_image_colorize(LandImage *self, LandImage *colormask):
                 rgb_to_hsv(getr(col), getg(col), getb(col), &h, &s, &v)
                 hsv_to_rgb(ch, cs, v, &r, &g, &b)
                 putpixel(self->bitmap, x, y, makecol(r, g, b))
+
+int def land_image_colorize_replace(LandImage *self, int n, int *rgb):
+    """
+    Like land_image_colorize, but instead of a mask, a list of colors to
+    colorize is given (and intensity is taken from those colors). The colors use
+    integer 0..255 format, since exact comparison with the usual floating point
+    colors would be difficult otherwise. The array ''rgb'' should have 3 * n
+    integers, consisting of consecutive R, G, B triplets to replace.
+    """
+    int modified = 0
+    int x, y
+    float ch, cs, v
+    int r, g, b
+    r = _land_active_display->color_r * 255
+    g = _land_active_display->color_g * 255
+    b = _land_active_display->color_b * 255
+    rgb_to_hsv(r, g, b, &ch, &cs, &v)
+
+    for x = 0; x < self->bitmap->w; x++:
+        for y = 0; y < self->bitmap->h; y++:
+            int col = getpixel(self->bitmap, x, y)
+            int cr = getr(col)
+            int cg = getg(col)
+            int cb = getb(col)
+            int a = geta(col)
+            for int i = 0; i < n; i++:
+                if rgb[i * 3] == cr and rgb[i * 3 + 1] == cg and\
+                    rgb[i * 3 + 2] == cb:
+                    modified += 1
+                    float h, s
+                    rgb_to_hsv(cr, cg, cb, &h, &s, &v)
+                    hsv_to_rgb(ch, cs, v, &r, &g, &b)
+                    putpixel(self->bitmap, x, y, makeacol(r, g, b, a))
+                    break
+    if modified: land_image_prepare(self)
+    return modified
 
 def land_image_prepare(LandImage *self):
     """
