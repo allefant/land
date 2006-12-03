@@ -8,6 +8,9 @@ class LandView:
 static import memory
 
 LandView *def land_view_new(int x, int y, int w, int h):
+    """
+    Specify the view rectangle on the screen.
+    """
     LandView *self
     land_alloc(self)
     self->x = x
@@ -18,6 +21,13 @@ LandView *def land_view_new(int x, int y, int w, int h):
 
 def land_view_destroy(LandView *self):
     land_free(self)
+
+def land_view_scroll(LandView *self, float dx, float dy):
+    """
+    Scroll the view by the given amount of screen pixels.
+    """
+    self->scroll_x += dx
+    self->scroll_y += dy
 
 def land_view_scroll_to(LandView *self, float x, float y):
     self->scroll_x = x
