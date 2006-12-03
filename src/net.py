@@ -6,8 +6,9 @@ import global land, unistd
 static import global winsock2, ws2tcpip
 static macro SHUT_RDWR SD_BOTH
 #else
+static import global stdlib, string, signal
 static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet
-static import netdb, signal
+static import global netdb
 #endif
 
 # Pseudocode for server:
@@ -76,7 +77,7 @@ static int def nonblocking(LandNet *self):
     u_long a = 1
     r = ioctlsocket (self->sock, FIONBIO, &a)
     #else
-    u_long a = 1
+    int a = 1
     r = ioctl (self->sock, FIONBIO, &a)
     #endif
 
