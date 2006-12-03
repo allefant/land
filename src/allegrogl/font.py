@@ -1,6 +1,34 @@
 import global allegro, fudgefont
 import ../array, ../font, ../log
 
+# To be able to write out the range->texture mapping in the logs, we include
+# below 2 internal structs from AllegroGL. This is likely to break, but can
+# simply be removed.
+
+# FIXME: HACK
+static class AGL_GLYPH:
+    int glyph_num
+    int x, y, w, h
+    int offset_x, offset_y, offset_w, offset_h
+
+# FIXME: HACK
+static class FONT_AGL_DATA:
+    int type
+    int start, end
+    int is_free_chunk
+
+    float scale
+    GLint format
+
+    void *data
+    AGL_GLYPH *glyph_coords
+    GLuint list_base
+    GLuint texture
+
+    FONT_AGL_DATA *next
+
+    int has_alpha
+
 class LandFontAllegrogl:
     struct LandFont super
     FONT *font
@@ -8,6 +36,7 @@ class LandFontAllegrogl:
 macro LAND_FONT_ALLEGROGL(_x_) ((LandFontAllegrogl *)_x_)
 
 static import allegrogl/font, global allegro/internal/aintern
+static import data
 
 static LandFontInterface *vtable
 
@@ -143,29 +172,44 @@ static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
     self->super.size = text_height(self->font)
     self->super.vt = vtable
     if self->font:
-        land_log_message_nostamp(" %d success\n", text_height(af))
-        GLuint ids[10]
-        int n = allegro_gl_list_font_textures(self->font, ids, 10)
-        int i
-        for i = 0; i < n; i++:
+        land_log_message(" font of height %d loaded\n", text_height(af))
+        #int n = allegro_gl_list_font_textures(self->font, NULL, 0)
+        #GLuint ids[n]
+        #allegro_gl_list_font_textures(self->font, ids, n)
+        #for int i = 0; i < n; i++:
+        FONT_AGL_DATA *data = self->font->data
+        while data:
             int w, h, r, g, b, a
-            glBindTexture(GL_TEXTURE_2D, ids[i])
+            glBindTexture(GL_TEXTURE_2D, data->texture)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b)
             glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a)
-            land_log_message(" texture %d: %d x %d x (%d%d%d%d)\n", ids[i], w, h, r, g, b, a)
+            land_log_message(" texture %d: %d x %d x (%d%d%d%d) [%d..%d]\n",
+                data->texture, w, h, r, g, b, a, data->start, data->end)
+            data = data->next
     else:
         land_log_message_nostamp("failure\n")
+
+extern LandDataFile *_land_datafile
 
 LandFont *def land_font_allegrogl_load(char const *filename, float size):
     land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
     LandFontAllegrogl *self; land_alloc(self)
     int data = size
     PALETTE pal
-    FONT *temp = load_font(filename, pal, &data)
+    FONT *temp = None
+    if _land_datafile:
+        # FIXME: check for ttf extension, in which case fudgefont should support
+        # loading from memory instead of a file.
+        LandImage *image = land_image_load(filename)
+        temp = grab_font_from_bitmap(image->bitmap)
+        land_image_destroy(image)
+        
+    if not temp:
+        temp = load_font(filename, pal, &data)
     convert(self, temp, pal)
     destroy_font(temp)
     return &self->super
