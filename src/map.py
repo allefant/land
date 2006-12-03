@@ -17,6 +17,9 @@ def land_map_add_layer(LandMap *map, LandLayer *layer):
     else:
         map->first_layer = layer
 
+LandLayer *def land_map_base_layer(LandMap *map):
+    return map->first_layer
+
 LandMap *def land_map_new():
     LandMap *self
     land_alloc(self)
