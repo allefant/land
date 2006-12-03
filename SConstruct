@@ -66,6 +66,7 @@ env.Append(CCFLAGS = "-Wdisabled-optimization")
 #env.Append(CCFLAGS = "-Wunreachable-code")
 env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
+env.Append(CCFLAGS = "--std=gnu99")
 
 if debug:
     if optimization != "0":
