@@ -184,7 +184,7 @@ def land_display_allegrogl_filled_polygon(LandDisplay *super, int n,
     glBegin(GL_POLYGON)
     for i = 0; i < n; i++:
         glVertex2f(x[i], y[i])
-
+    glEnd()
 
 def land_display_allegrogl_line(LandDisplay *super,
     float x, float y, float x_, float y_):
