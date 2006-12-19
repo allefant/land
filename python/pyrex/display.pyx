@@ -42,6 +42,8 @@ cdef extern from "land.h":
     void land_display_del(LandDisplay *self)
     void land_set_image_display(image.LandImage *image)
     void land_unset_image_display()
+    void land_display_toggle_fullscreen()
+    void land_display_resize(int w, int h)
 
 WINDOWED = LAND_WINDOWED
 FULLSCREEN = LAND_FULLSCREEN
@@ -106,4 +108,5 @@ def flags(): return land_display_flags()
 #def del(display): land_display_del(display)
 def select_image(image.Image image): land_set_image_display(image.wrapped)
 def unselect_image(): land_unset_image_display()
-
+def toggle_fullscreen(): land_display_toggle_fullscreen()
+def resize(w, h): land_display_resize(w, h)

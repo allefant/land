@@ -24,7 +24,7 @@ class Game(land.runner.Runner):
         print "Enter from python"
 
     def tick(self):
-        if land.keyboard.pressed(land.keyboard.ESC):
+        if land.keyboard.pressed(land.keyboard.ESC) or land.closebutton():
             land.quit()
         w = 640 / 32
         h = 480 / 32

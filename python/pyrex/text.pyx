@@ -3,6 +3,7 @@ cdef extern from "land.h":
         pass
     LandFont *land_font_load(char *filename, float size)
     void land_font_set(LandFont *self)
+    void land_font_destroy(LandFont *self)
     void land_text_pos(float x, float y)
     float land_text_x_pos()
     float land_text_y_pos()
@@ -22,18 +23,32 @@ cdef extern from "land.h":
     void land_write_center(char *text, ...)
 
     void land_color(float r, float g, float b, float a)
+    
+    char *strdup(char *)
 
 cdef class Font:
     cdef LandFont *wrapped
+    cdef char *name
+    cdef int size
     def __init__(self, *args):
+        cdef char *s
         if len(args) == 2:
-            text = args[0]
-            self.wrapped = land_font_load(text, args[1])
+            self.wrapped = land_font_load(args[0], args[1])
+            s = args[0]
+            self.name = s
+            self.name = strdup(self.name)
+            self.size = args[1]
         else:
             raise land.LandException("Check parameters to Font().")
 
+    def __del__(self):
+        print "Reference count of font", self, "is 0."
+        land_font_destroy(self.wrapped)
+
     def set_pos(self, x, y):
         land_text_pos(x, y)
+    def get_x_pos(self): return land_text_x_pos()
+    def get_y_pos(self):  return land_text_y_pos()
     def get_x(self): return land_text_x()
     def get_y(self):  return land_text_y()
     def x(self): return land_text_x()
@@ -46,6 +61,12 @@ cdef class Font:
     def off(self): land_text_off()
     def on(self): land_text_on()
     def get_font_height(self): return land_font_height(self.wrapped)
+    def clear(self):
+        land_font_destroy(self.wrapped)
+        self.wrapped = NULL
+    def reload(self):
+        if self.wrapped: land_font_destroy(self.wrapped)
+        self.wrapped = land_font_load(self.name, self.size)
     def write(self, str, right = False, centered = False, color = None,
         pos = None, x = None, y = None):
 
@@ -70,4 +91,3 @@ cdef class Font:
             land_print_center("%s", s)
         else:
             land_print("%s", s)
-
