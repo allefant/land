@@ -275,6 +275,9 @@ global LandWidgetInterface *land_widget_base_interface
 LandArray *land_widget_interfaces
 
 int def land_widget_is(LandWidget const *self, int id):
+    """
+    Return true if the widget has the given type (or one derived from it).
+    """
     int i
     for i = 0; i < 7; i++:
         int digit = id & (0xf << (i * 4))

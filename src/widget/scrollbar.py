@@ -1,6 +1,9 @@
 import ../land, container
 
 class LandWidgetScrollbar:
+    """
+    A horizontal or vertical bar, which can be moved inside its parent.
+    """
     LandWidget super
     LandWidget *target
     int dragged
@@ -17,11 +20,13 @@ static import widget/box
 global LandWidgetInterface *land_widget_scrollbar_vertical_interface
 global LandWidgetInterface *land_widget_scrollbar_horizontal_interface
 
-# If set is not 0, then the target window is scrolle according to the scrollbar
-# position.
-# If set is 0, then the min/max/range/pos parameters are updated.
-# 
-static def scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, int *range, int *pos):
+static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
+    *pos):
+    """
+    If set is not 0, then the target window is scrolled according to the
+    scrollbar position.
+    If set is 0, then the min/max/range/pos parameters are updated.
+    """
     LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self)
     LandWidget *target = bar->target
     if target:
@@ -40,7 +45,8 @@ static def scroll_vertical_cb(LandWidget *self, int set, int *min, int *max, int
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
 
-static def scroll_horizontal_cb(LandWidget *self, int set, int *min, int *max, int *range, int *pos):
+static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
+    *pos):
     LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self)
     LandWidget *target = bar->target
     if target:

@@ -44,6 +44,9 @@ def land_widget_sizer_mouse_tick(LandWidget *super):
 
 
 LandWidget *def land_widget_sizer_new(LandWidget *parent, int x, y, w, h):
+    """
+    Create a new sizer widget. By default it will shrink in both directions.
+    """
     LandWidgetSizer *self
     
     land_widget_sizer_interface_initialize()
@@ -54,6 +57,7 @@ LandWidget *def land_widget_sizer_new(LandWidget *parent, int x, y, w, h):
     LandWidget *super = &self->super
     land_widget_base_initialize(super, parent, x, y, w, h)
     super->vt = land_widget_sizer_interface
+    land_widget_layout_set_shrinking(super, 1, 1)
 
     land_widget_layout_set_shrinking(super, 1, 1)
     land_widget_theme_initialize(super)
@@ -64,6 +68,9 @@ LandWidget *def land_widget_sizer_new(LandWidget *parent, int x, y, w, h):
     self->dragged = 0
 
     return super
+
+def land_widget_sizer_set_target(LandWidget *self, LandWidget *target):
+    LAND_WIDGET_SIZER(self)->target = target
 
 def land_widget_sizer_interface_initialize():
     if land_widget_sizer_interface: return

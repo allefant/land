@@ -31,13 +31,22 @@ macro LAND_WIDGET_MENUITEM(widget) ((LandWidgetMenuItem *) land_widget_check(wid
 
 LandWidget *def land_widget_menubar_new(LandWidget *parent, float x, float y,
     float w, float h):
+    """
+    Create a new menubar. That is, a menu which is layout horizontally instead
+    of vertically. By default, a menubar will expand horizontally, and shrink
+    vertically.
+    """
     LandWidget *base = land_widget_menu_new(parent, x, y, w, h)
     base->vt = land_widget_menubar_interface
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
+    land_widget_layout_set_shrinking(base, 1, 1)
     return base
 
 LandWidget *def land_widget_menu_new(LandWidget *parent, float x, float y,
     float w, float h):
+    """
+    Create a new menu, with menu items layout out vertically.
+    """
     land_widget_menu_interface_initialize()
     LandWidgetMenu *self
     land_alloc(self)
@@ -45,11 +54,13 @@ LandWidget *def land_widget_menu_new(LandWidget *parent, float x, float y,
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_menu_interface
     land_widget_layout_enable(base)
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
     return base
 
-# Hide the given menu and all its sub-menus. 
 def land_widget_menu_hide_sub(LandWidget *base):
+    """
+    Hide the given menu and all its sub-menus.
+    """
     LandWidgetMenu *menu = LAND_WIDGET_MENU(base)
     if menu->submenu:
         land_widget_menu_hide_sub(menu->submenu)
@@ -58,8 +69,10 @@ def land_widget_menu_hide_sub(LandWidget *base):
 
     land_widget_hide(base)
 
-# Hide the complete menu the given one is part of. 
 def land_widget_menu_hide_complete(LandWidget *base):
+    """
+    Hide the complete menu the given one is part of. 
+    """
     # Find topmost menu or menubar. 
     while 1:
         LandWidgetMenu *menu = LAND_WIDGET_MENU(base)
@@ -107,14 +120,16 @@ static def menubutton_clicked(LandWidget *base):
 static def menuitem_clicked(LandWidget *base):
     LandWidgetMenuItem *self = LAND_WIDGET_MENUITEM(base)
 
-    if (self->menu &&
-        (self->menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):
+    if self->menu and land_widget_is(self->menu, LAND_WIDGET_ID_MENU):
         land_widget_menu_hide_complete(self->menu)
 
-    if (self->callback): self->callback(LAND_WIDGET(self))
+    if self->callback: self->callback(LAND_WIDGET(self))
 
 LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *submenu, float x, float y, float w, float h):
+    """
+    Create a submenu, i.e. a button in a menu to open another menu when clicked.
+    """
     land_widget_menubutton_interface_initialize()
     LandWidgetMenuButton *self
     land_alloc(self)
@@ -123,10 +138,12 @@ LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
     self->menu = parent
     if ((parent->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR):
         self->below = 1
-    land_widget_button_initialize((LandWidget *)self, parent, name, NULL,
+    LandWidget *base = (void *)self
+    land_widget_button_initialize(base, parent, name, NULL,
         menubutton_clicked, x, y, w, h)
-    LAND_WIDGET(self)->vt = land_widget_menubutton_interface
-    return LAND_WIDGET(self)
+    base->vt = land_widget_menubutton_interface
+    land_widget_theme_initialize(base)
+    return base
 
 def land_widget_menubutton_destroy(LandWidget *self):
     LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self)
@@ -168,6 +185,10 @@ def land_widget_menubar_add(LandWidget *base, LandWidget *item):
 
 LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
     void (*callback)(LandWidget *widget)):
+    """
+    Create a new menu item, i.e. en entry which can be clicked to execute the
+    given callback.
+    """
     int tw = land_text_get_width(name)
     int th = land_font_height(land_font_current())
     LandWidgetMenuItem *menuitem
@@ -182,7 +203,7 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
     LandWidget *self = LAND_WIDGET(menuitem)
     self->vt = land_widget_menuitem_interface
 
-    land_widget_theme_layout_border(self)
+    land_widget_theme_initialize(self)
     land_widget_layout_set_minimum_size(self,
         self->element->il + self->element->ir + tw,
         self->element->it + self->element->ib + th)
@@ -224,10 +245,14 @@ def land_widget_menu_mouse_enter(LandWidget *self, LandWidget *focus):
 
 def land_widget_menu_mouse_leave(LandWidget *self, LandWidget *focus):
     # FIXME: check that this is indeed part of the same menu?
-    if (focus && (focus->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):
-        return
+    
+    # If the focus is to go to another menu, that is ok to us.
+    if focus:
+        if land_widget_is(focus, LAND_WIDGET_ID_MENU): return
+        if land_widget_is(focus, LAND_WIDGET_ID_MENUBUTTON): return
 
-    if (self->hidden) return
+    if self->hidden: return
+
     land_widget_retain_mouse_focus(self)
 
 def land_widget_menubutton_mouse_enter(LandWidget *self, LandWidget *focus):

@@ -50,9 +50,6 @@ def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
 
     land_widget_scrolling_size(base, 0, 0)
 
-LandWidget *def land_widget_scrolling_get_at_pos(LandWidget *base, int x, y):
-    return land_widget_container_get_at_pos(base, x, y)
-
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     if land_mouse_delta_z():
         LandWidget *contents =\
@@ -77,6 +74,10 @@ def land_widget_scrolling_tick(LandWidget *super):
     pass
 
 def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
+    """
+    Add a widget to the scrolling widget. The child widget can be bigger than
+    the parent, and scrollbars will appear to allow scrolling around.
+    """
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandListItem *item = container->children->first
     LandWidget *contents = LAND_WIDGET(item->data)
@@ -133,10 +134,13 @@ def land_widget_scrolling_remove_child(LandWidget *base):
     c = LAND_WIDGET_CONTAINER(list->first->next->next->data)
     LAND_WIDGET_SCROLLBAR(c->children->first->data)->target = NULL
 
-# Creates a new Scrolling widget. You can add a child widget to it, and it
-# will automatically display scrollbars and translate mouse coordinates.
-# 
 LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
+    """
+    Creates a new Scrolling widget. You can add a child widget to it, and it
+    will automatically display scrollbars and translate mouse coordinates.
+    
+    By default, the widget will expand in all directions.
+    """
     LandWidgetScrolling *self
     
     land_widget_scrolling_interface_initialize()
@@ -146,8 +150,6 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     LandWidget *widget = &super->super
     land_widget_container_initialize(widget, parent, x, y, w, h)
     land_widget_layout_enable(widget)
-    
-    printf("%x\n", widget->box.flags)
 
     # Add own widgets without special hook. 
     widget->vt = land_widget_container_interface
@@ -194,7 +196,7 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     # From now on, special vtable is used. 
     widget->vt = land_widget_scrolling_interface
     land_widget_theme_initialize(widget)
-    
+
     land_widget_layout(widget)
 
     return widget

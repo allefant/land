@@ -38,8 +38,19 @@ def land_widget_container_destroy(LandWidget *base):
 
     land_widget_base_destroy(base)
 
-def land_widget_container_mouse_enter(LandWidget *self, LandWidget *focus):
-    pass
+def land_widget_container_mouse_enter(LandWidget *super, LandWidget *focus):
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
+    # Get the child under the mouse
+    LandWidget *child = land_widget_container_get_child_at_pos(super,
+        land_mouse_x(), land_mouse_y())
+    if child:
+        land_widget_reference(child)
+        child->got_mouse = 1
+        land_call_method(child, mouse_enter, (child, self->mouse))
+        if not child->got_mouse: # refuses focus
+            land_widget_unreference(child)
+            return
+        self->mouse = child
 
 def land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
@@ -50,7 +61,7 @@ def land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus):
             super->got_mouse = 1
         else:
             land_widget_unreference(self->mouse)
-            self->mouse = NULL
+            self->mouse = None
 
 def land_widget_container_keyboard_enter(LandWidget *super):
     """ Give keyboard focus to the container, and to children who requested
@@ -153,13 +164,28 @@ def land_widget_container_move(LandWidget *super, float dx, float dy):
 def land_widget_container_size(LandWidget *super, float dx, dy):
     if dx or dy: land_widget_layout(super)
 
-LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
+LandWidget *def land_widget_container_get_descendant_at_pos(LandWidget *super,
+    int x, y):
     """
-    Returns the child under a specific (absolute) position.
+    Returns a descendant under a specific (absolute) position, or else the
+    widget itself.
+    """
+    LandWidget *child = land_widget_container_get_child_at_pos(super, x, y)
+    if child:
+        if land_widget_is(child, LAND_WIDGET_ID_CONTAINER):
+            return land_widget_container_get_descendant_at_pos(child, x, y)
+        return child
+
+    return super
+
+LandWidget *def land_widget_container_get_child_at_pos(LandWidget *super,
+    int x, y):
+    """
+    Returns the direct child under a specific (absolute) position.
     """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if not self->children:
-        return NULL
+        return None
     LandListItem *item = self->children->last
     for ; item; item = item->prev:
         LandWidget *child = item->data
@@ -174,34 +200,47 @@ LandWidget *def land_widget_container_get_at_pos(LandWidget *super, int x, y):
 
 # Transfer the mouse focus inside base to child. If child is NULL, remove any
 # mouse focus.
-static def transfer_mouse_focus(LandWidget *base, LandWidget *child):
+static def transfer_mouse_focus(LandWidget *base, LandWidget *child,
+    LandWidget *target):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base)
-    
+
     # We can't have this deleted inside any method call or we get a
     # dangling pointer. In case it receives the focus, the reference will
     # be hold until the focus is lost again.
-    if (child) land_widget_reference(child)
+    if child: land_widget_reference(child)
+
+    #printf("%d: Transfering focus from %s[%p] (%s[%p]) to %s[%p] (%s[%p]).\n",
+    #    land_get_ticks(), base->vt->name, base,
+    #    self->mouse ? self->mouse->vt->name : "none", self->mouse,
+    #    child ? child->vt->name : "none", child,
+    #    target ? target->vt->name : "none", target)
+
+    if self->mouse:
+        land_widget_unreference(self->mouse)
+        self->mouse = None
+    
+    self->mouse = child
 
     # Take focus away?
-    if self->mouse:
-        self->mouse->got_mouse = 0
-        land_call_method(self->mouse, mouse_leave, (self->mouse, child))
-        # Retain focus?
-        if self->mouse->got_mouse:
-            if (child) land_widget_unreference(child)
-            return
+    # if self->mouse:
+    #    self->mouse->got_mouse = 0
+    #    land_call_method(self->mouse, mouse_leave, (self->mouse, target))
+    #    # Retain focus?
+    #    if self->mouse->got_mouse:
+    #        if child: land_widget_unreference(child)
+    #        return
 
-        land_widget_unreference(self->mouse)
-        self->mouse = NULL
+    #    land_widget_unreference(self->mouse)
+    #    self->mouse = NULL
 
-    if child:
-        child->got_mouse = 1
-        land_call_method(child, mouse_enter, (child, self->mouse))
-        if not child->got_mouse: # refuses focus:
-            land_widget_unreference(child)
-            return
+    # if child:
+    #    child->got_mouse = 1
+    #    land_call_method(child, mouse_enter, (child, self->mouse))
+    #    if not child->got_mouse: # refuses focus:
+    #        land_widget_unreference(child)
+    #        return
 
-    self->mouse = child
+    #self->mouse = child
 
 static def transfer_keyboard_focus(LandWidget *base):
     # Need to take focus away first?
@@ -282,14 +321,25 @@ static def transfer_keyboard_focus(LandWidget *base):
 # |___| |__f|
 def land_widget_container_mouse_tick(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
+
     if self->mouse:
         land_call_method(self->mouse, mouse_tick, (self->mouse))
-    LandWidget *mouse = land_widget_container_get_at_pos(super, land_mouse_x(),
-        land_mouse_y())
-    if (mouse != self->mouse && !(land_mouse_b() & 1)):
-        transfer_mouse_focus(super, mouse)
 
-    int f = 0
+    LandWidget *mouse = land_widget_container_get_child_at_pos(super,
+        land_mouse_x(), land_mouse_y())
+
+    # Transfer mouse focus?
+
+    if mouse != self->mouse and not (land_mouse_b() & 1):
+        LandWidget *target = None
+        if mouse:
+            target = land_widget_container_get_descendant_at_pos(super,
+                land_mouse_x(), land_mouse_y())
+        transfer_mouse_focus(super, mouse, target)
+
+    # Transfer keyboard focus?
+
+    # If any direct child wants keyboard focus, so do we.
     if self->children:
         LandListItem *item, *next, *last
         item = self->children->first
@@ -305,7 +355,6 @@ def land_widget_container_mouse_tick(LandWidget *super):
             if child->send_to_top:
                 land_widget_container_to_top(super, child)
                 child->send_to_top = 0
-                f = 1
 
             if item == last:
                 break
@@ -313,7 +362,7 @@ def land_widget_container_mouse_tick(LandWidget *super):
 def land_widget_container_set_mouse(LandWidget *super, LandWidget *mouse):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if mouse != self->mouse:
-        transfer_mouse_focus(super, mouse)
+        transfer_mouse_focus(super, mouse, mouse)
 
 def land_widget_container_keyboard_tick(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)

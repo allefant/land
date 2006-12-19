@@ -208,6 +208,7 @@ def land_widget_button_set_text(LandWidget *base, char const *text):
     land_free(button->text)
     button->text = land_strdup(text)
     land_widget_theme_set_minimum_size_for_text(base, text)
+    if base->parent: land_widget_layout(base->parent)
 
 def land_widget_button_align(LandWidget *self, int x, int y):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
