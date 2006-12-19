@@ -273,6 +273,15 @@ def land_display_toggle_fullscreen():
     else: d->flags |= LAND_WINDOWED
     land_display_set()
 
+def land_display_resize(int w, h):
+    """
+    Resize the current display to the given dimensions.
+    """
+    LandDisplay *d = _land_active_display
+    d->w = w
+    d->h = h
+    land_display_set()
+
 def land_clear(float r, float g, float b, float a):
     """
     Clear the current thread's display to the specified color. Always set
