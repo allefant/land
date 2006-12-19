@@ -28,6 +28,9 @@ includeenv.TargetSignatures("content")
 includeenv.BuildDir("c", "src", duplicate = False)
 includeenv.BuildDir("docstrings", "src", duplicate = False)
 
+if includeenv["PLATFORM"] == "win32":
+    pyfiles = [x.replace("\\", "/") for x in pyfiles]
+
 for py in pyfiles:
     h = "include/land/" + py[4:-3] + ".h"
     c = "c/" + py[4:-3] + ".c"
@@ -116,7 +119,11 @@ if env["PLATFORM"] == "win32":
         "ole32", "dinput", "ddraw", "dxguid", "winmm",
         "dsound", "ws2_32"])
 
-env.BuildDir(BUILDDIR , "c", duplicate = False)
+    duplicate = True
+else:
+    duplicate = False
+
+env.BuildDir(BUILDDIR , "c", duplicate = duplicate)
 
 sources = [BUILDDIR + "/" + x[4:-3] + ".c" for x in pyfiles]
 
