@@ -8,9 +8,9 @@ env["CC"] = "i586-mingw32msvc-gcc"
 env["LINK"] = "i586-mingw32msvc-gcc"
 env["SHLIBSUFFIX"] = ".pyd"
 env['SHLIBPREFIX'] = ""
-env["LIBS"] = ["python24", "land"]
-env["LIBPATH"] = ["/XP/Python24/libs/", "../lib/win32"]
-env["CPPPATH"] = ["/XP/Python24/include", "../h", "../pro"]
+env["LIBS"] = ["python25", "land"]
+env["LIBPATH"] = ["/XP/Python25/libs/", "../lib/win32"]
+env["CPPPATH"] = ["/XP/Python25/include", "../include"]
 
 for module in modules:
     env.Command("build/mingw/%s.c" % module, "pyrex/%s.pyx" % module, "$PYREXC $SOURCES -o $TARGET")
