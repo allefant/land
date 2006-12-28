@@ -128,7 +128,7 @@ int def land_text_get_char_offset(char const *str, int nth):
 # Get the character index which is under the given pixel position, so that
 # the following j always is i:
 # x = land_text_get_char_offset(str, i)
-# j = land_text_get_char_index(x)
+# j = land_text_get_char_index(str, x)
 # 
 int def land_text_get_char_index(char const *str, int x):
     if x < 0: return 0

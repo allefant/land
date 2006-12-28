@@ -340,6 +340,7 @@ static def land_net_poll_connect(LandNet *self):
         closesocket (self->sock)
         return
 
+# FIXME: for big sends (say, some MB), this will spinloop
 def land_net_send (LandNet *self, char const *buffer, size_t size):
     size_t bytes = 0
     int r = 0
