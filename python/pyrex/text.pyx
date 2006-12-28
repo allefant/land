@@ -21,6 +21,9 @@ cdef extern from "land.h":
     void land_write(char *text, ...)
     void land_write_right(char *text, ...)
     void land_write_center(char *text, ...)
+    int land_text_get_char_offset(char *str, int nth)
+    int land_text_get_width(char *str)
+    int land_text_get_char_index(char *str, int x)
 
     void land_color(float r, float g, float b, float a)
     
@@ -67,6 +70,20 @@ cdef class Font:
     def reload(self):
         if self.wrapped: land_font_destroy(self.wrapped)
         self.wrapped = land_font_load(self.name, self.size)
+    def calculate_string_width(self, str):
+        land_font_set(self.wrapped)
+        return land_text_get_width(str)
+    def calculate_offset(self, str, n):
+        land_font_set(self.wrapped)
+        if type(str) == unicode:
+            str = str.encode("utf8")
+        return land_text_get_char_offset(str, n)
+    def calculate_index(self, str, x):
+        land_font_set(self.wrapped)
+        if type(str) == unicode:
+            str = str.encode("utf8")
+        return land_text_get_char_index(str, x)
+
     def write(self, str, right = False, centered = False, color = None,
         pos = None, x = None, y = None):
 
