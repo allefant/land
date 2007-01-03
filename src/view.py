@@ -34,6 +34,20 @@ def land_view_scroll_to(LandView *self, float x, float y):
     self->scroll_y = y
 
 def land_view_scroll_center(LandView *self, float x, float y):
+    """
+    Given two absolute map coordinates, make them the center of the view.
+    """
+    self->scroll_x = x - self->w / 2
+    self->scroll_y = y - self->h / 2
+
+def land_view_scroll_center_on_screen(LandView *self, float x, float y):
+    """
+    Given an on-screen position, make it the new center of the view.
+    """
+    x -= self->x
+    y -= self->y
+    x += self->scroll_x
+    y += self->scroll_y
     self->scroll_x = x - self->w / 2
     self->scroll_y = y - self->h / 2
 
