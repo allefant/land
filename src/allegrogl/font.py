@@ -32,6 +32,8 @@ static class FONT_AGL_DATA:
 class LandFontAllegrogl:
     struct LandFont super
     FONT *font
+    char *filename
+    float size
 
 macro LAND_FONT_ALLEGROGL(_x_) ((LandFontAllegrogl *)_x_)
 
@@ -39,6 +41,7 @@ static import allegrogl/font, global allegro/internal/aintern
 static import data
 
 static LandFontInterface *vtable
+static LandList *fonts
 
 # Simple font implementation bypassing AllegroGL. Probably we should switch
 # to using this one, and ditch the AllegroGL one, which is way too
@@ -148,6 +151,7 @@ static LandFontInterface *vtable
 #    state->w = w
 #    state->h = h
 
+       
 static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
     int alpha = 0
     int paletted = 0
@@ -195,27 +199,48 @@ static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
 
 extern LandDataFile *_land_datafile
 
-LandFont *def land_font_allegrogl_load(char const *filename, float size):
-    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
-    LandFontAllegrogl *self; land_alloc(self)
-    int data = size
+LandFont *def land_font_allegrogl_new(LandDisplay *super):
+    LandFontAllegrogl *self
+    land_alloc(self)
+    land_add_list_data(&fonts, self)
+    return &self->super
+
+def land_font_allegrogl_destroy(LandDisplay *d, LandFont *self):
+    LandFontAllegrogl *a = (LandFontAllegrogl *)self
+    destroy_font(a->font)
+    land_remove_list_data(&fonts, self)
+    land_free(a)
+
+def land_font_allegrogl_del(LandDisplay *d, LandFont *self):
+    land_font_allegrogl_destroy(d, self)
+
+static def reload(LandFontAllegrogl *self):
+    int data = self->size
     PALETTE pal
     FONT *temp = None
     if _land_datafile:
         # FIXME: check for ttf extension, in which case fudgefont should support
         # loading from memory instead of a file.
-        LandImage *image = land_image_load(filename)
+        LandImage *image = land_image_load(self->filename)
         temp = grab_font_from_bitmap(image->bitmap)
         land_image_destroy(image)
         
     if not temp:
-        temp = load_font(filename, pal, &data)
+        temp = load_font(self->filename, pal, &data)
     convert(self, temp, pal)
     destroy_font(temp)
+
+LandFont *def land_font_allegrogl_load(char const *filename, float size):
+    land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
+    LandFontAllegrogl *self = (void *)land_display_new_font()
+    self->filename = land_strdup(filename)
+    self->size = size
+    reload(self)
+
     return &self->super
 
 LandFont *def land_font_allegrogl_default():
-    LandFontAllegrogl *self; land_alloc(self)
+    LandFontAllegrogl *self = (void *)land_display_new_font()
     land_log_message("land_font_allegrogl_default\n")
     PALETTE pal
     memcpy(pal, default_palette, sizeof pal)
@@ -250,17 +275,32 @@ def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     state->y = y
     state->w = w
     state->h = h
+    
+def land_font_allegrogl_unupload(void):
+    if not fonts: return
+    LandListItem *i
+    land_log_message("Un-uploading all fonts..\n")
+    for i = fonts->first; i; i = i->next:
+        LandFontAllegrogl *f = i->data
+        destroy_font(f->font)
+        f->font = NULL
 
-def land_font_allegrogl_destroy(LandFont *self):
-    LandFontAllegrogl *a = (LandFontAllegrogl *)self
-    destroy_font(a->font)
-    land_free(a)
+def land_font_allegrogl_reupload(void):
+    if not fonts: return
+    LandListItem *i
+    land_log_message("Re-uploading all fonts..\n")
+
+    for i = fonts->first; i; i = i->next:
+        LandFontAllegrogl *f = i->data
+        if not f->font:
+            reload(f)
 
 def land_font_allegrogl_init(void):
     land_log_message("land_font_allegrogl_init\n")
     land_alloc(vtable)
     vtable->print = land_font_allegrogl_print
     vtable->destroy = land_font_allegrogl_destroy
+    fonts = land_list_new()
 
 def land_font_allegrogl_exit(void):
     land_log_message("land_font_allegrogl_exit\n")
