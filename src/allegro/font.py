@@ -72,7 +72,7 @@ def land_font_allegro_print(LandFontState *state, LandDisplay *display,
     state->w = w
     state->h = h
 
-def land_font_allegro_destroy(LandFont *self):
+def land_font_allegro_destroy(LandDisplay *d, LandFont *self):
     LandFontAllegro *a = (LandFontAllegro *)self
     destroy_font(a->font)
     land_free(a)

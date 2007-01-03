@@ -93,7 +93,7 @@ Like circle, but filled.
 
 
 import global allegro, alleggl, stdlib
-import list, image, log, memory
+import list, image, log, memory, font
 
 macro LAND_WINDOWED 1
 macro LAND_FULLSCREEN 2
@@ -110,7 +110,9 @@ class LandDisplayInterface:
     land_method(void, filled_circle, (LandDisplay *self, float x, float y, float x_, float y_))
     land_method(void, circle, (LandDisplay *self, float x, float y, float x_, float y_))
     land_method(LandImage *, new_image, (LandDisplay *self))
+    land_method(LandFont *, new_font, (LandDisplay *self))
     land_method(void, del_image, (LandDisplay *self, LandImage *image))
+    land_method(void, del_font, (LandDisplay *self, LandFont *font))
     land_method(void, color, (LandDisplay *self))
     land_method(void, clip, (LandDisplay *self))
     land_method(void, polygon, (LandDisplay *self, int n, float *x, float *y))
@@ -429,8 +431,15 @@ LandImage *def land_display_new_image():
     LandImage *image = _land_active_display->vt->new_image(_land_active_display)
     return image
 
+LandFont *def land_display_new_font():
+    LandFont *f = _land_active_display->vt->new_font(_land_active_display)
+    return f
+
 def land_display_del_image(LandImage *image):
     return _land_active_display->vt->del_image(_land_active_display, image)
+
+def land_display_del_font(LandFont *f):
+    return _land_active_display->vt->del_font(_land_active_display, f)
 
 def land_display_select(LandDisplay *display):
     if _land_active_display:
