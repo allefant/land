@@ -64,14 +64,31 @@ LandGrid *def land_isometric_custom_grid(int cell_w, cell_h, x_cells, y_cells,
     self->vt->draw_cell = draw_cell
     return self
 
-# Returns the grid position in cells below the specified pixel position in
-# the given view. 
 def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
     float mx, float my, float *partial_x, float *partial_y):
+    """
+    Returns the grid position in cells below the specified pixel position in
+    the given view. 
+    """
     float x = view->scroll_x + mx - view->x
     float y = view->scroll_y + my - view->y
     *partial_x = x / self->cell_w + y / self->cell_h
     *partial_y = y / self->cell_h - x / self->cell_w
+
+def land_grid_cell_to_pixel_isometric(LandGrid *self, LandView *view,
+    float cell_x, cell_y, *view_x, *view_y):
+    """
+    Given a cell position, return the position of the cell's origin in
+    on-screen coordinates, using the current view.
+    """
+    float w = self->cell_w / 2
+    float h = self->cell_h / 2
+    float mx = cell_x * w - cell_y * w
+    float my = cell_x * h + cell_y * h
+    mx = view->x + mx - view->scroll_x
+    my = view->y + my - view->scroll_y
+    *view_x = mx
+    *view_y = my
 
 def land_grid_pixel_to_cell_isometric_wrap(LandGrid *self, LandView *view,
     float mx, float my, float *partial_x, float *partial_y):
@@ -106,8 +123,7 @@ static def view_to_cell_wrap(LandGrid *self, float view_x, float view_y,
     *cell_x = cx
     *cell_y = cy
 
-static def cell_to_view(LandGrid *self, int cell_x, int cell_y,
-    float *view_x, float *view_y):
+static def cell_to_view(LandGrid *self, float cell_x, cell_y, *view_x, *view_y):
     float w = self->cell_w / 2
     float h = self->cell_h / 2
 
@@ -372,11 +388,13 @@ def land_isometric_init():
     land_grid_vtable_isometric->draw = land_grid_draw_isometric
     land_grid_vtable_isometric->draw_cell = placeholder
     land_grid_vtable_isometric->get_cell_at = land_grid_pixel_to_cell_isometric
+    land_grid_vtable_isometric->get_cell_position = land_grid_cell_to_pixel_isometric
 
     land_alloc(land_grid_vtable_isometric_wrap)
     land_grid_vtable_isometric_wrap->draw = land_grid_draw_isometric_wrap
     land_grid_vtable_isometric_wrap->draw_cell = placeholder
     land_grid_vtable_isometric_wrap->get_cell_at = land_grid_pixel_to_cell_isometric_wrap
+    land_grid_vtable_isometric_wrap->get_cell_position = land_grid_cell_to_pixel_isometric
 
 def land_isometric_exit():
     land_free(land_grid_vtable_isometric)
