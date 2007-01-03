@@ -10,6 +10,7 @@ cdef extern from "land.h":
         float *blue, float *alpha)
     void land_image_colorize(LandImage *self, LandImage *colormask)
     int land_image_colorize_replace(LandImage *self, int n, int *rgb)
+    LandImage *land_image_split_mask_from_colors(LandImage *self, int n_rgb, int *rgb)
     void land_image_prepare(LandImage *self)
 #    int land_load_images(char *pattern)
 #    LandImage *land_find_image(char *name)
@@ -36,6 +37,7 @@ cdef extern from "land.h":
     void land_image_grab_into(LandImage *self, int x, int y, int tx, int ty,
         int w, int h)
     unsigned int land_image_allegrogl_texture(LandImage *self)
+    int land_image_active()
 
 def load_all(pattern):
     pass
@@ -51,7 +53,7 @@ def find(name):
 cdef class Image:
     def __init__(self, *args):
         if len(args) == 0:
-            self.wrapped = NULL
+            return
         elif len(args) == 1:
 
             if isinstance(args[0], Image):
@@ -72,9 +74,18 @@ cdef class Image:
         else:
             raise land.LandException("Check parameters to Image().")
 
-    def __del__(self):
-        print "Reference count of image", self, "is 0."
-        land_image_del(self.wrapped)
+    def __new__(self, *args, **keywords):
+        self.wrapped = NULL
+
+    def __dealloc__(self):
+        # TODO: Make sure this is enough to make it work. Land will
+        # auto-destroy images on shutdown, so we only should auto-destroy
+        # images here before that (since the only other reference to an
+        # image can be through the python object, and we are called here when
+        # its refcount gets 0).
+        if land_image_active():
+            if self.wrapped:
+                land_image_del(self.wrapped)
 
     def crop(self, x, y, w, h): land_image_crop(self.wrapped, x, y, w, h)
     def color_stats(self):
@@ -91,6 +102,14 @@ cdef class Image:
                 rgb[i] = c
             m = land_image_colorize_replace(self.wrapped, len(replace) / 3, rgb)
             return m
+    def split_color_mask(self, replace = []):
+        cdef int rgb[256 *3]
+        for i, c in enumerate(replace):
+            rgb[i] = c
+        mask = Image()
+        (<Image>mask).wrapped = land_image_split_mask_from_colors(self.wrapped,
+            len(replace) / 3, rgb)
+        return mask
     def prepare(self): land_image_prepare(self.wrapped)
     def draw(self, x = 0, y = 0, sx = 1, sy = 1, angle = 0, r = 1, g = 1, b = 1, a = 1):
         land_image_draw_scaled_rotated_tinted(self.wrapped, x, y, sx, sy, angle,
