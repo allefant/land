@@ -1,6 +1,6 @@
 import global allegro, alleggl, math
 import ../array, ../display, ../log, ../exception
-static import allegrogl/display, allegrogl/image
+static import allegrogl/display, allegrogl/image, allegrogl/font
 
 class LandDisplayAllegroGL:
     LandDisplay super
@@ -46,6 +46,10 @@ def land_display_allegrogl_set(LandDisplay *super):
         if install_allegro_gl(): land_exception("install_allegro_gl")
 
         once++
+
+    # We need to reset all references to textures *before* re-creating the
+    # OpenGL context, else the texture ids reference wrong textures.
+    land_font_allegrogl_unupload()
 
     allegro_gl_set(AGL_COLOR_DEPTH, cd)
     allegro_gl_set(AGL_SUGGEST, AGL_COLOR_DEPTH)
@@ -96,6 +100,7 @@ def land_display_allegrogl_set(LandDisplay *super):
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     
     land_image_allegrogl_reupload()
+    land_font_allegrogl_reupload()
 
 def land_display_allegrogl_flip(LandDisplay *super):
     allegro_gl_flip()
@@ -280,6 +285,8 @@ def land_display_allegrogl_init(void):
     vtable->line = land_display_allegrogl_line
     vtable->new_image = land_image_allegrogl_new
     vtable->del_image = land_image_allegrogl_del
+    vtable->new_font = land_font_allegrogl_new
+    vtable->del_font = land_font_allegrogl_del
     vtable->filled_circle = land_display_allegrogl_filled_circle
     vtable->circle = land_display_allegrogl_circle
     vtable->color = land_display_allegrogl_color
