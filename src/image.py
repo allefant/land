@@ -56,6 +56,8 @@ extern LandDataFile *_land_datafile
 
 static void (*_cb)(char const *path, LandImage *image)
 
+static int active
+
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
@@ -251,6 +253,62 @@ int def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     if modified: land_image_prepare(self)
     return modified
 
+LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
+    int *rgb):
+    """
+    Takes the same parameters as land_image_colorize_replace - but instead of
+    recoloring the image itself, creates a separate image of the same size,
+    which is transparent except where mask colors have been found in the
+    given image. Here, it is colored in graylevels with the intensity
+    corresponding to the mask colors. In the original image, all mask colors
+    are replaced by transparency.
+    The use of this function is to always draw the mask over the original
+    image, but tint the white mask to other colors.
+    """
+    LandImage *mask = land_display_new_image()
+    mask->filename = None
+    mask->name = None
+    mask->x = self->x
+    mask->y = self->y
+    mask->l = self->l
+    mask->t = self->t
+    mask->r = self->r
+    mask->b = self->b
+
+    int w = self->bitmap->w
+    int h = self->bitmap->h
+    BITMAP *bmp = create_bitmap_ex(32, w, h)
+    clear_to_color(bmp, makeacol(0, 0, 0, 0))
+    mask->memory_cache = bmp
+    mask->bitmap = bmp
+    land_log_message("land_image_split_mask_from_colors %d x %d x %d.\n", w, h,
+        bitmap_color_depth(bmp))
+    
+    for int x = 0; x < self->bitmap->w; x++:
+        for int y = 0; y < self->bitmap->h; y++:
+            int col = getpixel(self->bitmap, x, y)
+            int cr = getr(col)
+            int cg = getg(col)
+            int cb = getb(col)
+            int a = geta(col)
+            for int i = 0; i < n_rgb; i++:
+                if rgb[i * 3] == cr and rgb[i * 3 + 1] == cg and\
+                    rgb[i * 3 + 2] == cb:
+                    float hue, sat, val
+                    rgb_to_hsv(cr, cg, cb, &hue, &sat, &val)
+                    int r, g, b
+                    hsv_to_rgb(hue, 0, val, &r, &g, &b)
+                    putpixel(self->memory_cache, x, y, makeacol(cr, cg, cb, 0))
+                    putpixel(mask->memory_cache, x, y, makeacol(r, g, b, a))
+                    break
+
+    float red, green, blue, alpha
+    int n = land_image_color_stats(mask, &red, &green, &blue, &alpha)
+    land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
+    land_image_prepare(self)
+    land_image_prepare(mask)
+    return mask
+
 def land_image_prepare(LandImage *self):
     """
     This is used to convert image data into a device dependent format, which
@@ -403,10 +461,15 @@ def land_image_center(LandImage *self):
 def land_image_init():
     land_image_allegro_init()
     land_image_allegrogl_init()
+    active = 1
 
 def land_image_exit():
     land_image_allegrogl_exit()
     land_image_allegro_exit()
+    active = 0
+
+int def land_image_active():
+    return active
 
 # Set's a source clip rectangle for the image. That is, only the specified
 # rectangle out of the image will actually be used when this image is drawn
