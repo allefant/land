@@ -1,4 +1,4 @@
-static import global stdio, stdlib
+static import global land
 #
 #   A C-program for MT19937, with initialization improved 2002/1/26.
 #   Coded by Takuji Nishimura and Makoto Matsumoto.
@@ -49,19 +49,27 @@ static macro MATRIX_A 0x9908b0dfUL   # constant vector a
 static macro UPPER_MASK 0x80000000UL # most significant w-r bits 
 static macro LOWER_MASK 0x7fffffffUL # least significant r bits 
 
-static unsigned long mt[N]; # the array for the state vector  
-static int mti=N+1; # mti==N+1 means mt[N] is not initialized 
+class LandRandom:
+    pass
+
+static class RandomState:
+    unsigned long mt[N]; # the array for the state vector  
+    int mti; # mti==N+1 means mt[N] is not initialized 
+
+static RandomState default_state = {.mti = N + 1}
 
 # initializes mt[N] with a seed 
-static def init_genrand(unsigned long s):
-    mt[0]= s & 0xffffffffUL
-    for mti=1; mti<N; mti++:
-        mt[mti] = (1812433253UL * (mt[mti-1] ^ (mt[mti-1] >> 30)) + mti)
+static def init_genrand(RandomState *r, unsigned long s):
+    r->mt[0]= s & 0xffffffffUL
+    for r->mti=1; r->mti<N; r->mti++:
+        r->mt[r->mti] = (1812433253UL * (
+            r->mt[r->mti-1] ^ (r->mt[r->mti-1] >> 30)
+            ) + r->mti)
         # See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. 
         # In the previous versions, MSBs of the seed affect   
         # only MSBs of the array mt[].                        
         # 2002/01/09 modified by Makoto Matsumoto             
-        mt[mti] &= 0xffffffffUL
+        r->mt[r->mti] &= 0xffffffffUL
         # for >32 bit machines 
 
 
@@ -92,31 +100,31 @@ static def init_by_array(unsigned long init_key[], int key_length):
 #endif
 
 # generates a random number on [0,0xffffffff]-interval 
-static unsigned long def genrand_int32():
+static unsigned long def genrand_int32(RandomState *r):
     unsigned long y
-    static unsigned long mag01[2]={0x0UL, MATRIX_A}
+    static const unsigned long mag01[2]={0x0UL, MATRIX_A}
     # mag01[x] = x * MATRIX_A  for x=0,1 
 
-    if mti >= N: # generate N words at one time 
+    if r->mti >= N: # generate N words at one time 
         int kk
 
-        if mti == N+1: # if init_genrand() has not been called, 
-            init_genrand(5489UL); # a default initial seed is used 
+        if r->mti == N+1: # if init_genrand() has not been called, 
+            init_genrand(r, 5489UL); # a default initial seed is used 
 
         for kk=0;kk<N-M;kk++:
-            y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK)
-            mt[kk] = mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1UL]
+            y = (r->mt[kk]&UPPER_MASK)|(r->mt[kk+1]&LOWER_MASK)
+            r->mt[kk] = r->mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1UL]
 
         for ;kk<N-1;kk++:
-            y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK)
-            mt[kk] = mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1UL]
+            y = (r->mt[kk]&UPPER_MASK)|(r->mt[kk+1]&LOWER_MASK)
+            r->mt[kk] = r->mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1UL]
 
-        y = (mt[N-1]&UPPER_MASK)|(mt[0]&LOWER_MASK)
-        mt[N-1] = mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1UL]
+        y = (r->mt[N-1]&UPPER_MASK)|(r->mt[0]&LOWER_MASK)
+        r->mt[N-1] = r->mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1UL]
 
-        mti = 0
+        r->mti = 0
 
-    y = mt[mti++]
+    y = r->mt[r->mti++]
 
     # Tempering 
     y ^= (y >> 11)
@@ -156,15 +164,29 @@ static double def genrand_res53():
 
 #endif
 
-static macro MAX 4294967295U
+static macro MAX_NUMBER 4294967295U
 
 def land_seed(int seed):
-    init_genrand(seed)
+    init_genrand(&default_state, seed)
 
 float def land_rnd(float min, float max):
     if min >= max: return min
-    return min + ((float)genrand_int32() / MAX) * (max - min)
+    return min + (
+        (float)genrand_int32(&default_state) / MAX_NUMBER) * (max - min)
 
 int def land_rand(int min, int max):
     if min >= max: return min
-    return min + genrand_int32() % (max - min + 1)
+    return min + genrand_int32(&default_state) % (max - min + 1)
+
+LandRandom *def land_random_new(int seed):
+    RandomState *self
+    land_alloc(self)
+    init_genrand(self, seed)
+    return (void *)self
+
+def land_random_del(LandRandom *self):
+    land_free(self)
+
+int def land_random(LandRandom *r, int min, int max):
+    if min >= max: return min
+    return min + genrand_int32((void *)r) % (max - min + 1)
