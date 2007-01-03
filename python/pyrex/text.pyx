@@ -44,8 +44,9 @@ cdef class Font:
         else:
             raise land.LandException("Check parameters to Font().")
 
-    def __del__(self):
-        print "Reference count of font", self, "is 0."
+    def __dealloc__(self):
+        # FIXME: Land likely will be changed to auto-destroy loaded fonts on
+        # shutdown (like for images) - need to adjust this then.
         land_font_destroy(self.wrapped)
 
     def set_pos(self, x, y):
