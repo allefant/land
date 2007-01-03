@@ -32,11 +32,11 @@ for ex in examples:
     if ARGUMENTS.get("debug", 0):
         env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
         env.Append(LIBS = ["landd", "agld"])
-        env.ParseConfig("allegro-config --libs debug")
+        env.ParseConfig("allegro-config --shared debug")
         BUILDDIR = os.path.join(BUILDDIR, "debug")
     else:
         env.Append(LIBS = ["land", "agl"])
-        env.ParseConfig("allegro-config --libs release")
+        env.ParseConfig("allegro-config --shared release")
         BUILDDIR = os.path.join(BUILDDIR, "release")
 
     BUILDDIR = os.path.join(BUILDDIR, ex)
