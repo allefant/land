@@ -3,7 +3,7 @@ import array, display
 class LandFontInterface:
     land_method(void, print, (LandFontState *state, LandDisplay *display, char const *text,
         int alignement))
-    land_method(void, destroy, (LandFont *self))
+    land_method(void, destroy, (LandDisplay *d, LandFont *self))
 
 class LandFont:
     LandFontInterface *vt
@@ -49,7 +49,7 @@ LandFont *def land_font_default():
     return self
 
 def land_font_destroy(LandFont *self):
-    self->vt->destroy(self)
+    land_display_del_font(self)
 
 def land_font_set(LandFont *self):
     land_font_state->font = self
