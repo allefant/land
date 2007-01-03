@@ -16,7 +16,11 @@ static int quit
 static volatile int ticks
 static int frames
 static int x_clicked
+#ifndef ALLEGRO_WINDOWS
 static struct timeval start_time
+#else
+    #FIXME
+#endif
 
 static def ticker():
     ticks++
@@ -44,7 +48,10 @@ def land_init():
 
     land_seed(time(NULL))
 
+    land_log_message("Compiled against Allegro %s.\n", ALLEGRO_VERSION_STR)
+
     if allegro_init():
+        land_log_message("Allegro initialization failed: %s\n", allegro_error)
         land_exception("Error in allegro_init: %s", allegro_error)
 
     _png_screen_gamma = 0
