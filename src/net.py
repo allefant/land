@@ -66,8 +66,25 @@ static macro D(_) _
 #ifdef WINDOWS
 static def cleanup():
     WSACleanup()
+
+static def sockerror(char const *name):
+    int err = WSAGetLastError()
+    char const *what = "unknown"
+    switch err:
+        case WSAEINTR: what = "WSAEINTR"; break
+        case WSAEBADF: what = "WSAEBADF"; break
+        case WSAEACCES: what = "WSAEACCES"; break
+        case WSAEFAULT: what = "WSAEFAULT"; break
+        case WSAEINVAL: what = "WSAEINVAL"; break
+        case WSAEMFILE: what = "WSAEMFILE"; break
+        case WSAEWOULDBLOCK: what = "WSAEWOULDBLOCK"; break
+        case WSAEINPROGRESS: what = "WSAEINPROGRESS"; break
+        case WSAEALREADY: what = "WSAEALREADY"; break
+        case WSAENOTSOCK: what = "WSAENOTSOCK"; break
+    fprintf(stderr, "%s: %s [%d]\n", name, what, err)
 #else
 static macro closesocket close
+static macro sockerror perror
 #endif
 
 static int def nonblocking(LandNet *self):
@@ -75,28 +92,28 @@ static int def nonblocking(LandNet *self):
     # Make non-blocking.
     #if defined WINDOWS
     u_long a = 1
-    r = ioctlsocket (self->sock, FIONBIO, &a)
+    r = ioctlsocket(self->sock, FIONBIO, &a)
     #else
     int a = 1
-    r = ioctl (self->sock, FIONBIO, &a)
+    r = ioctl(self->sock, FIONBIO, &a)
     #endif
 
     if r:
-        perror ("ioctl")
-        closesocket (self->sock)
+        sockerror("ioctl")
+        closesocket(self->sock)
         return -1
 
     return 0
 
 static def split_address(char const *address, char **host, int *port):
-    char *colon = strrchr (address, ':')
+    char *colon = strrchr(address, ':')
     if colon:
-        *host = malloc (colon - address + 1)
-        strncpy (*host, address, colon - address)
+        *host = land_calloc(colon - address + 1)
+        strncpy(*host, address, colon - address)
         (*host)[colon - address] = '\0'
-        *port = atoi (colon + 1)
+        *port = atoi(colon + 1)
     else:
-        *host = strdup (address)
+        *host = strdup(address)
         *port = 0
 
 static char *def land_net_get_address(LandNet *self, int remote):
@@ -109,7 +126,7 @@ static char *def land_net_get_address(LandNet *self, int remote):
         (struct sockaddr *)&sock_addr, &addrlength)
     if s == 0:
         if sock_addr.sin_addr.s_addr == INADDR_ANY:
-            sprintf (address, "*.*.*.*")
+            sprintf(address, "*.*.*.*")
 
         else:
             ip = (char *)&sock_addr.sin_addr.s_addr
@@ -117,7 +134,7 @@ static char *def land_net_get_address(LandNet *self, int remote):
                 (unsigned char)ip[1], (unsigned char)ip[2],
                 (unsigned char)ip[3])
 
-        sprintf(address + strlen (address), ":%d", ntohs(sock_addr.sin_port))
+        sprintf(address + strlen(address), ":%d", ntohs(sock_addr.sin_port))
 
     else:
         sprintf(address, "?:?")
@@ -134,29 +151,29 @@ LandNet *def land_net_new():
         WSADATA wsaData
         int err
 
-        wVersionRequested = MAKEWORD (1, 0)
-        err = WSAStartup (wVersionRequested, &wsaData)
+        wVersionRequested = MAKEWORD(1, 0)
+        err = WSAStartup(wVersionRequested, &wsaData)
         if err != 0:
             return NULL
         land_exit_function(cleanup)
         #else
         struct sigaction sa
         sigset_t mask
-        sigemptyset (&mask)
+        sigemptyset(&mask)
         sa.sa_handler = SIG_IGN
         sa.sa_mask = mask
         sa.sa_flags = 0
-        sigaction (SIGPIPE, &sa, NULL)
+        sigaction(SIGPIPE, &sa, NULL)
         #endif
 
         once = 0
 
     # Open socket. 
-    if (self->sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0:
-        perror("socket")
+    if (self->sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0:
+        sockerror("socket")
         return self
 
-    nonblocking (self)
+    nonblocking(self)
 
     return self
 
@@ -169,18 +186,18 @@ def land_net_listen(LandNet *self, char const *address):
     if self->state != LAND_NET_INVALID:
         return
 
-    self->local_address = strdup (address)
+    self->local_address = strdup(address)
     split_address(address, &host, &port)
 
     # Resolve hostname. 
     struct hostent *hostinfo
 
-    if not (hostinfo = gethostbyname (host)):
-        free (host)
-        perror("gethostbyname")
+    if not (hostinfo = gethostbyname(host)):
+        land_free(host)
+        sockerror("gethostbyname")
         return
 
-    free (host)
+    land_free(host)
 
     #ifdef WINDOWS
     char a = 1;
@@ -194,22 +211,22 @@ def land_net_listen(LandNet *self, char const *address):
     # Fill in IP (returned in network byte order by gethostbyname). 
     sock_address.sin_addr = *(struct in_addr *) hostinfo->h_addr
     # Fill in port (and convert to network byte order). 
-    sock_address.sin_port = htons (port)
+    sock_address.sin_port = htons(port)
 
     r = bind(self->sock, (struct sockaddr *) &sock_address, sizeof sock_address)
     if r < 0:
-        perror ("bind")
+        sockerror("bind")
         return
 
-    r = listen (self->sock, SOMAXCONN)
+    r = listen(self->sock, SOMAXCONN)
     if r < 0:
-        perror ("listen")
+        sockerror("listen")
         return
 
     self->state = LAND_NET_LISTENING
 
-    D(land_log_message ("Listening on host %s port %d (%s).\n", host, port,
-        land_net_get_address (self, 0)))
+    D(land_log_message("Listening on host %s port %d (%s).\n", host, port,
+        land_net_get_address(self, 0)))
 
 static def land_net_poll_accept(LandNet *self):
     int r
@@ -219,27 +236,27 @@ static def land_net_poll_accept(LandNet *self):
     if self->accepted:
         return
 
-    r = accept (self->sock, (struct sockaddr *) &address, &address_length)
+    r = accept(self->sock, (struct sockaddr *) &address, &address_length)
     if r < 0:
         #if defined LINUX
         if errno == EINTR or errno == EWOULDBLOCK or errno == EAGAIN:
         #elif defined WINDOWS
-        if WSAGetLastError () == WSAEINTR or\
-            WSAGetLastError () == WSAEWOULDBLOCK:
+        if WSAGetLastError() == WSAEINTR or\
+            WSAGetLastError() == WSAEWOULDBLOCK:
         #endif
             return
 
-        perror ("accept")
+        sockerror("accept")
         return
 
-    self->accepted = calloc (1, sizeof *self->accepted)
+    self->accepted = land_calloc(sizeof *self->accepted)
     self->accepted->sock = r
-    nonblocking (self->accepted)
+    nonblocking(self->accepted)
     self->accepted->state = LAND_NET_OK
 
-    D(land_log_message ("Accepted connection (%s ->",
+    D(land_log_message("Accepted connection (%s ->",
         land_net_get_address(self->accepted, 0)))
-    D(land_log_message_nostamp (" %s).\n",
+    D(land_log_message_nostamp(" %s).\n",
         land_net_get_address(self->accepted, 1)))
 
 LandNet *def land_net_accept(LandNet *self):
@@ -261,12 +278,12 @@ def land_net_connect(LandNet *self, char const *address):
     if self->state != LAND_NET_INVALID:
         return
 
-    self->remote_address = strdup (address)
-    split_address (address, &host, &port)
+    self->remote_address = strdup(address)
+    split_address(address, &host, &port)
 
-    if not (hostinfo = gethostbyname (host)):
-        free (host)
-        perror ("gethostbyname")
+    if not (hostinfo = gethostbyname(host)):
+        land_free(host)
+        sockerror("gethostbyname")
         return
 
     # Address to connect to. 
@@ -274,19 +291,20 @@ def land_net_connect(LandNet *self, char const *address):
     # Fill in IP (returned in network byte order by gethostbyname). 
     sock_address.sin_addr = *(struct in_addr *) hostinfo->h_addr
     # Fill in port (and convert to network byte order). 
-    sock_address.sin_port = htons (port)
+    sock_address.sin_port = htons(port)
 
     # Connect to the server. 
     if connect(self->sock, (struct sockaddr *) &sock_address,
         sizeof sock_address):
         #if defined WINDOWS
-        if WSAGetLastError () != WSAEINPROGRESS:
+        if WSAGetLastError() != WSAEINPROGRESS and\
+            WSAGetLastError() != WSAEWOULDBLOCK:
         #else
         if errno != EINPROGRESS:
         #endif
-            perror ("connect")
-            closesocket (self->sock)
-            free (host)
+            sockerror("connect")
+            closesocket(self->sock)
+            land_free(host)
             return
 
 
@@ -295,20 +313,20 @@ def land_net_connect(LandNet *self, char const *address):
     D(land_log_message("Connecting to host %s port %d (from %s).\n", host, port,
         land_net_get_address(self, 0)))
 
-    free (host)
+    land_free(host)
 
 static def land_net_poll_connect(LandNet *self):
     int r
     struct timeval tv
     fd_set ds
 
-    FD_ZERO (&ds)
-    FD_SET (self->sock, &ds)
+    FD_ZERO(&ds)
+    FD_SET((unsigned)self->sock, &ds)
     tv.tv_sec = 0
     tv.tv_usec = 0
 
     # TODO: on Windows, need to check exception descriptors to know if connection failed? 
-    r = select (FD_SETSIZE, NULL, &ds, NULL, &tv)
+    r = select(FD_SETSIZE, NULL, &ds, NULL, &tv)
     if r > 0:
         #ifdef WINDOWS
         char a;
@@ -316,32 +334,32 @@ static def land_net_poll_connect(LandNet *self):
         #else
         unsigned int a, as = sizeof a
         #endif
-        if getsockopt (self->sock, SOL_SOCKET, SO_ERROR, &a, &as) == 0:
+        if getsockopt(self->sock, SOL_SOCKET, SO_ERROR, &a, &as) == 0:
             if a != 0:
                 errno = a
                 self->state = LAND_NET_INVALID
-                perror ("select(connect)")
+                sockerror("select(connect)")
                 return
 
 
         self->state = LAND_NET_OK
         D(land_log_message("Connected (%s ->",
-            land_net_get_address (self, 0)))
+            land_net_get_address(self, 0)))
         D(land_log_message_nostamp(" %s).\n",
-            land_net_get_address (self, 1)))
+            land_net_get_address(self, 1)))
         return
 
     #if defined WINDOWS
-    if WSAGetLastError () != WSAEINTR:
+    if WSAGetLastError() != WSAEINTR:
     #else
     if r < 0 && errno != EINTR:
     #endif
-        perror ("select")
-        closesocket (self->sock)
+        sockerror("select")
+        closesocket(self->sock)
         return
 
 # FIXME: for big sends (say, some MB), this will spinloop
-def land_net_send (LandNet *self, char const *buffer, size_t size):
+def land_net_send(LandNet *self, char const *buffer, size_t size):
     size_t bytes = 0
     int r = 0
 
@@ -350,21 +368,21 @@ def land_net_send (LandNet *self, char const *buffer, size_t size):
 
     # TODO: hackish? 
     while 1:
-        r = send (self->sock, buffer + bytes, size - bytes, 0)
+        r = send(self->sock, buffer + bytes, size - bytes, 0)
 
         if r < 0:
             #if defined WINDOWS
-            if WSAGetLastError () == WSAEINTR or\
-                WSAGetLastError () == WSAEWOULDBLOCK:
+            if WSAGetLastError() == WSAEINTR or\
+                WSAGetLastError() == WSAEWOULDBLOCK:
                 r = 0
             else:
-                perror ("send")
+                sockerror("send")
                 return
             #else
             if errno == EINTR or errno == EWOULDBLOCK or errno == EAGAIN:
                 r = 0
             else:
-                perror ("send")
+                sockerror("send")
                 return
             #endif
 
@@ -395,7 +413,7 @@ def land_net_flush(LandNet *self, size_t size):
         self->full = 0
     else:
         if self->full > size:
-            memmove (self->buffer, self->buffer + size, self->full - size)
+            memmove(self->buffer, self->buffer + size, self->full - size)
         self->full -= size
 
 # Call this to add bytes to the front of the receive queue.
@@ -405,16 +423,16 @@ static def land_net_poll_recv(LandNet *self):
     if self->size == 0 or self->full == self->size:
         return
 
-    r = recv (self->sock, self->buffer + self->full, self->size - self->full, 0)
+    r = recv(self->sock, self->buffer + self->full, self->size - self->full, 0)
 
     if r < 0:
         #if defined WINDOWS
-        if WSAGetLastError () != WSAEINTR and\
-            WSAGetLastError () != WSAEWOULDBLOCK:
+        if WSAGetLastError() != WSAEINTR and\
+            WSAGetLastError() != WSAEWOULDBLOCK:
         #else
         if errno != EINTR && errno != EWOULDBLOCK && errno != EAGAIN:
         #endif
-            perror ("recv")
+            sockerror("recv")
             return
 
         return
@@ -429,7 +447,7 @@ static def land_net_poll_recv(LandNet *self):
     int i
     for i = 0; i < r; i++:
         int c = (unsigned char)self->buffer[self->full - r + i]
-        land_log_message_nostamp ("%d[%c],", c, c >= 32 && c <= 128 ? c : '.')
+        land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 128 ? c : '.')
     land_log_message_nostamp("\n")
     #endif
 
@@ -438,8 +456,8 @@ def land_net_disconnect(LandNet *self):
         return
 
     # Shutdown connection. 
-    if shutdown (self->sock, SHUT_RDWR):
-        perror ("shutdown")
+    if shutdown(self->sock, SHUT_RDWR):
+        sockerror("shutdown")
         return
 
     self->state = LAND_NET_INVALID
@@ -448,8 +466,8 @@ def land_net_del(LandNet *self):
     land_net_disconnect(self)
 
     # Close socket. 
-    if closesocket (self->sock):
-        perror ("close"); 
+    if closesocket(self->sock):
+        sockerror("close"); 
 
     land_free(self)
 
