@@ -112,7 +112,7 @@ class LandDisplayInterface:
     land_method(LandImage *, new_image, (LandDisplay *self))
     land_method(LandFont *, new_font, (LandDisplay *self))
     land_method(void, del_image, (LandDisplay *self, LandImage *image))
-    land_method(void, del_font, (LandDisplay *self, LandFont *font))
+    land_method(void, del_font, (LandDisplay *self, LandFont *f))
     land_method(void, color, (LandDisplay *self))
     land_method(void, clip, (LandDisplay *self))
     land_method(void, polygon, (LandDisplay *self, int n, float *x, float *y))
