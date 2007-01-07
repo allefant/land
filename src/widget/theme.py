@@ -291,6 +291,17 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     read_int_arg(argc, argv, &a, &self->br)
                     read_int_arg(argc, argv, &a, &self->bt)
                     read_int_arg(argc, argv, &a, &self->bb)
+                    # FIXME: should not overwrite a previous inner
+                    self->il = self->bl
+                    self->it = self->bt
+                    self->ir = self->br
+                    self->ib = self->bb
+                
+                elif (!strcmp (argv[a], "inner")):
+                    read_int_arg(argc, argv, &a, &self->il)
+                    read_int_arg(argc, argv, &a, &self->ir)
+                    read_int_arg(argc, argv, &a, &self->it)
+                    read_int_arg(argc, argv, &a, &self->ib)
 
                 elif (!ustrcmp(argv[a], "color")):
                     int c = 0
@@ -401,7 +412,7 @@ LandWidgetThemeElement *def land_widget_theme_element(LandWidget *self):
 def land_widget_theme_draw(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
-
+    if self->no_decoration: return
     if element->transparent: return
 
     draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h,
@@ -423,10 +434,7 @@ def land_widget_theme_layout_border(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     # TODO
-    element->il = element->bl
-    element->it = element->bt
-    element->ir = element->br
-    element->ib = element->bb
+    
     # TODO
     element->hgap = 0
     element->vgap = 0
