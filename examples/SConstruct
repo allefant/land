@@ -41,6 +41,7 @@ for ex in examples:
 
     BUILDDIR = os.path.join(BUILDDIR, ex)
 
+    env.Append(CCFLAGS = "--std=gnu99")
     env.Append(LIBS = ["ldpng", "png", "fudgefont",
         "freetype", "GL", "GLU", "dumb", "jpgal"])
 
