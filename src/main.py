@@ -46,7 +46,9 @@ def land_init():
     if not land_exception_handler:
         land_exception_handler_set(land_default_exception_handler)
 
-    land_seed(time(NULL))
+    int seed = time(NULL)
+    land_seed(seed)
+    land_log_message("Random seed is %d.\n", seed)
 
     land_log_message("Compiled against Allegro %s.\n", ALLEGRO_VERSION_STR)
 
