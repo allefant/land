@@ -21,8 +21,7 @@ global LandWidgetInterface *land_widget_button_interface
 
 def land_widget_button_draw(LandWidget *base):
     LandWidgetButton *self = LAND_WIDGET_BUTTON(base)
-    if !base->no_decoration:
-        land_widget_box_draw(base)
+    land_widget_box_draw(base)
 
     if !base->dont_clip:
         int l = base->box.x + base->element->il
