@@ -26,9 +26,11 @@ LandArray *def land_array_new():
     land_alloc(self)
     return self
 
-# Given a pointer to a (possibly NULL valued) array pointer, create a new node
-# with the given data, and add to the (possibly modified) array.
 def land_array_add_data(LandArray **array, void *data):
+    """
+    Given a pointer to a (possibly NULL valued) array pointer, create a new node
+    with the given data, and add to the (possibly modified) array.
+    """
     LandArray *self = *array
     if !self:
         #ifdef LAND_MEMLOG
@@ -45,7 +47,21 @@ def land_array_add_data(LandArray **array, void *data):
 void *def land_array_get_nth(LandArray *array, int i):
     return array->data[i]
 
+void *def land_array_replace_nth(LandArray *array, int i, void *data):
+    """
+    Replace the array entry at the given index, and return the previous
+    contents.
+    """
+    void *old = array->data[i]
+    array->data[i] = data
+    return old
+
 def land_array_destroy(LandArray *self):
+    """
+    Destroys an array. This does not destroy any of the data put into it - loop
+    through the array before and destroy the data if there are no other
+    references to them.
+    """
     if self->data: land_free(self->data)
     land_free(self)
 
