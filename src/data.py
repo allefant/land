@@ -131,7 +131,6 @@ int def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
                 break
             n++
 
-
     return n
 
 def land_set_datafile(LandDataFile *datafile):
