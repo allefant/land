@@ -33,14 +33,14 @@ def land_view_scroll_to(LandView *self, float x, float y):
     self->scroll_x = x
     self->scroll_y = y
 
-def land_view_scroll_center(LandView *self, float x, float y):
+def land_view_scroll_center(LandView *self, float x, y):
     """
     Given two absolute map coordinates, make them the center of the view.
     """
     self->scroll_x = x - self->w / 2
     self->scroll_y = y - self->h / 2
 
-def land_view_scroll_center_on_screen(LandView *self, float x, float y):
+def land_view_scroll_center_on_screen(LandView *self, float x, y):
     """
     Given an on-screen position, make it the new center of the view.
     """
@@ -48,14 +48,27 @@ def land_view_scroll_center_on_screen(LandView *self, float x, float y):
     y -= self->y
     x += self->scroll_x
     y += self->scroll_y
-    self->scroll_x = x - self->w / 2
-    self->scroll_y = y - self->h / 2
+    land_view_scroll_center(self, x, y)
 
-def land_view_ensure_visible(LandView *self, float x, float y, float bx, float by):
+def land_view_ensure_visible(LandView *self, float x, y, bx, by):
+    """
+    Given an absolute map position, scroll the view so it is not within bx/by
+    pixels to the view's border.
+    """
     if x - self->scroll_x < bx: self->scroll_x = x - bx
     if x - self->scroll_x > self->w - bx: self->scroll_x = x - self->w + bx
     if y - self->scroll_y < by: self->scroll_y = y - by
     if y - self->scroll_y > self->h - by: self->scroll_y = y - self->h + by
+
+def land_view_ensure_visible_on_screen(LandView *self, float x, y, bx, by):
+    """
+    land_view_ensure_visible, but the given position is in screen coordinates.
+    """
+    x -= self->x
+    y -= self->y
+    x += self->scroll_x
+    y += self->scroll_y
+    land_view_ensure_visible(self, x, y, bx, by)
 
 def land_view_ensure_inside_grid(LandView *self, LandGrid *grid):
     int w = grid->x_cells * grid->cell_w
