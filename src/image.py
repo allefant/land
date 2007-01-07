@@ -193,6 +193,47 @@ int def land_image_color_stats(LandImage *self,
 
     return n
 
+def land_image_colorkey(LandImage *self, int r255, int g255, int b255):
+    """
+    Replaces all pixels in the image matching the given RGB triplet (in 0..255
+    format) with full transparency.
+    """
+    BITMAP *bmp = self->memory_cache
+    for int x = 0; x < bmp->w; x++:
+        for int y = 0; y < bmp->h; y++:
+            int col = getpixel(bmp, x, y)
+            int r = getr(col)
+            int g = getg(col)
+            int b = getb(col)
+            if r == r255 and g == g255 and b == b255:
+                putpixel(bmp, x, y, 0)
+    land_image_prepare(self)
+    
+def land_image_colorkey_hack(LandImage *self, int allegro_color):
+    """
+    Like land_image_colorkey, but even more hackish, you directly specify
+    the color in Allegro's format. The only use for this is if you load
+    paletted pictures and want to colorkey by index.
+    """
+    BITMAP *bmp = self->memory_cache
+    set_palette(self->palette)
+    BITMAP *replace = create_bitmap_ex(32, bmp->w, bmp->h)
+    for int x = 0; x < bmp->w; x++:
+        for int y = 0; y < bmp->h; y++:
+            int col = getpixel(bmp, x, y)
+            int r = getr8(col)
+            int g = getg8(col)
+            int b = getb8(col)
+            if col == allegro_color:
+                putpixel(replace, x, y, makeacol32(0, 0, 0, 0))
+            else:
+                putpixel(replace, x, y, makeacol32(r, g, b, 255))
+    destroy_bitmap(bmp)
+    land_free(self->palette)
+    self->memory_cache = replace
+    self->bitmap = replace
+    land_image_prepare(self)
+
 def land_image_colorize(LandImage *self, LandImage *colormask):
     """
     Colorizes the part of the image specified by the mask with the current
@@ -391,9 +432,9 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
     return array
 
 # Loads multiple images out of a single file. 
-LandArray *def land_image_load_split_sheet(char const *filename, int offset_x, int offset_y,
-    int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
-    int auto_crop):
+LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
+    int offset_y, int grid_w, int grid_h, int x_gap, int y_gap, int x_count,
+    int y_count, int auto_crop):
     LandArray *array = NULL
     LandImage *sheet = land_image_load(filename)
     if !sheet: return NULL
