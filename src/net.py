@@ -58,6 +58,8 @@ class LandNet:
     char *buffer
     size_t size
     size_t full
+    
+    void *lag_simulator
 
 static macro D(_) _
 
@@ -358,12 +360,68 @@ static def land_net_poll_connect(LandNet *self):
         closesocket(self->sock)
         return
 
+#ifdef DEBUG_BYTES
+static def debug_packet(char const *buffer, int size):
+    land_log_message("Sent %d bytes: ", size)
+    int i
+    for i = 0; i < size; i++:
+        int c = (unsigned char)buffer[i];
+        land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 127 ? c : '.')
+    land_log_message_nostamp("\n")
+#endif
+
+# FIXME: this is unfinished, it has to use a proper dynamic data structure to
+# hold the packets
+static class LagSimulator:
+    int ringpos
+    int ringpos2
+    char packets[256 * 256]
+    int size[256]
+    double t[256]
+    double delay
+    
+static LagSimulator *def lag_simulator_new(double delay):
+    LagSimulator *self
+    land_alloc(self)
+    self->delay = delay
+    return self
+
+static def lag_simulator_add(LandNet *net, char const *packet, int size):
+    LagSimulator *self = net->lag_simulator
+    double t = land_get_time()
+    if packet:
+        memcpy(self->packets + self->ringpos * 256, packet, size)
+        self->size[self->ringpos] = size
+        self->t[self->ringpos] = t
+        self->ringpos++
+        if self->ringpos == 256: self->ringpos = 0
+    while self->ringpos2 != self->ringpos:
+        int i = self->ringpos2
+        if t >= self->t[i] + self->delay:
+            # Oldest packet should get sent
+            self->ringpos2++
+            if self->ringpos2 == 256: self->ringpos2 = 0
+            net->lag_simulator = None # avoid recursion
+            packet = self->packets + i * 256
+            size = self->size[i]
+            land_net_send(net, packet, size)
+            net->lag_simulator = self
+        else:
+            break
+
+def land_net_lag_simulator(LandNet *self, double delay):
+    self->lag_simulator = lag_simulator_new(delay)
+
 # FIXME: for big sends (say, some MB), this will spinloop
 def land_net_send(LandNet *self, char const *buffer, size_t size):
     size_t bytes = 0
     int r = 0
 
     if self->state != LAND_NET_OK:
+        return
+        
+    if self->lag_simulator:
+        lag_simulator_add(self, buffer, size)
         return
 
     # TODO: hackish? 
@@ -394,12 +452,7 @@ def land_net_send(LandNet *self, char const *buffer, size_t size):
         break
 
     #ifdef DEBUG_BYTES
-    land_log_message("Sent %d bytes: ", size)
-    int i
-    for i = 0; i < r; i++:
-        int c = (unsigned char)buffer[i];
-        land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 127 ? c : '.')
-    land_log_message_nostamp("\n")
+    debug_packet(buffer, size)
     #endif
 
 def land_net_buffer(LandNet *self, char *buffer, size_t size):
@@ -476,4 +529,7 @@ def land_net_poll(LandNet *self):
         case LAND_NET_INVALID: break
         case LAND_NET_LISTENING: land_net_poll_accept(self); break
         case LAND_NET_CONNECTING: land_net_poll_connect(self); break
-        case LAND_NET_OK: land_net_poll_recv(self); break
+        case LAND_NET_OK:
+            if self->lag_simulator: lag_simulator_add(self, None, 0)
+            land_net_poll_recv(self);
+            break
