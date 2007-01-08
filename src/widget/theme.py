@@ -15,11 +15,11 @@ class LandWidgetThemeElement:
     char *name
     LandImage *bmp
     LandWidgetThemeFlags flags
-    int bl, bt, br, bb; # border to cut out of the image 
+    int bl, bt, br, bb # border to cut out of the image 
     int minw, minh
-    LandWidget *anchor; # for the ALIGNED modes 
-    int ox, oy; # extra offset into the anchor widget 
-    float r, g, b, a; # text color 
+    LandWidget *anchor # for the ALIGNED modes 
+    int ox, oy # extra offset into the anchor widget 
+    float r, g, b, a # text color 
     LandFont *font
     unsigned int transparent : 1
     
