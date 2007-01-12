@@ -26,6 +26,7 @@ cdef extern from "land.h":
     int land_text_get_char_index(char *str, int x)
 
     void land_color(float r, float g, float b, float a)
+    int land_font_active()
     
     char *strdup(char *)
 
@@ -47,7 +48,9 @@ cdef class Font:
     def __dealloc__(self):
         # FIXME: Land likely will be changed to auto-destroy loaded fonts on
         # shutdown (like for images) - need to adjust this then.
-        land_font_destroy(self.wrapped)
+        if land_font_active():
+            if self.wrapped:
+                land_font_destroy(self.wrapped)
 
     def set_pos(self, x, y):
         land_text_pos(x, y)
