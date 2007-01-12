@@ -31,18 +31,18 @@ for ex in examples:
 
     if ARGUMENTS.get("debug", 0):
         env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
-        env.Append(LIBS = ["landd", "agld"])
+        env.Append(LIBS = ["landd", "agld", "fudgefontd"])
         env.ParseConfig("allegro-config --shared debug")
         BUILDDIR = os.path.join(BUILDDIR, "debug")
     else:
-        env.Append(LIBS = ["land", "agl"])
+        env.Append(LIBS = ["land", "agl", "fudgefont"])
         env.ParseConfig("allegro-config --shared release")
         BUILDDIR = os.path.join(BUILDDIR, "release")
 
     BUILDDIR = os.path.join(BUILDDIR, ex)
 
     env.Append(CCFLAGS = "--std=gnu99")
-    env.Append(LIBS = ["ldpng", "png", "fudgefont",
+    env.Append(LIBS = ["ldpng", "png",
         "freetype", "GL", "GLU", "dumb", "jpgal"])
 
     env.SConsignFile("scons/signatures")
