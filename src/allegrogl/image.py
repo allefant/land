@@ -115,6 +115,43 @@ static def quad(LandImage *self):
 
     glEnd()
 
+int def land_image_allegrogl_get_texture(LandImage *self):
+    """
+    Return the texture id used by the given image. This can only be used on al
+    OpenGL image of course.
+    """
+    LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self)
+    return sub->gl_texture
+    
+def land_image_allegrogl_bind_texture(LandImage *self):
+    """
+    Bind the texture of the given image.
+    """
+    LandImageOpenGL *sub = LAND_IMAGE_OPENGL(self)
+    glBindTexture(GL_TEXTURE_2D, sub->gl_texture)
+
+def land_image_allegrogl_texture_pos(LandImage *self, float x, y):
+    """
+    For a pixel position inside the image (relative to its origin/offset),
+    set the texture coordinates corresponding to this same position. This will
+    take into account possibly flipped vertical axis as well as texture
+    dimensions possibly different from the image dimensions.
+    
+    This can only be called if land_image_allegrogl_bind_texture was caled for
+    the same image before.
+    """
+    GLfloat w, h
+    GLint i
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &i)
+    w = i
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &i)
+    h = i
+
+    x += self->x
+    y += self->y
+    
+    glTexCoord2f(x / 2, (h - y) / h)
+
 def land_image_allegrogl_draw_scaled_rotated_tinted(LandImage *self, float x, y,
     sx, sy, angle, r, g, b, a):
     """
