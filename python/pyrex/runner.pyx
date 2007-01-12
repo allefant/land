@@ -51,7 +51,7 @@ cdef _destroy(LandRunnerPyrex *wrapped):
         land_quit()
 
 cdef class Runner:
-    def __new__(self):
+    def __new__(self, *args):
         land_runner_initialize(&self.wrapped.wrapped, "python runner",
             <void *>_init,
             <void *>_enter,
