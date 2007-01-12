@@ -20,16 +20,22 @@ static import font, exception, main
 static import allegro/font, allegrogl/font
 
 static LandFontState *land_font_state
+static int active
 
 def land_font_init():
     land_alloc(land_font_state)
     land_font_allegrogl_init()
     land_font_allegro_init()
+    active = 1
 
 def land_font_exit():
     land_free(land_font_state)
     land_font_allegro_exit()
     land_font_allegrogl_exit()
+    active = 0
+
+int def land_font_active():
+    return active
 
 LandFont *def land_font_load(char const *filename, float size):
     LandFont *self
