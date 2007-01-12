@@ -108,14 +108,20 @@ LandImage *def land_image_load(char const *filename):
     return self
 
 LandImage *def land_image_new(int w, int h):
-    BITMAP *bmp = create_bitmap(w, h)
+    """
+    Creates a new image. If w or h are 0, the image will have no contents at
+    all (this can be useful if the contents are to be added later).
+    """
     LandImage *self = land_display_new_image()
-    self->filename = NULL
-    self->name = NULL
-    self->bitmap = bmp
-    self->memory_cache = bmp
-    land_log_message("land_image_new %d x %d x %d.\n", w, h, bitmap_color_depth(bmp))
-    land_image_prepare(self)
+    if w > 0 and h > 0:
+        BITMAP *bmp = create_bitmap(w, h)
+        self->filename = None
+        self->name = None
+        self->bitmap = bmp
+        self->memory_cache = bmp
+        land_log_message("land_image_new %d x %d x %d.\n", w, h,
+            bitmap_color_depth(bmp))
+        land_image_prepare(self)
     return self
 
 LandImage *def land_image_create(int w, int h):
@@ -144,6 +150,29 @@ def land_image_destroy(LandImage *self):
     land_image_del(self)
 
 def land_image_crop(LandImage *self, int x, int y, int w, int h):
+    """
+    Crops an image to the specified rectangle. All image contents outside the
+    rectangle will be lost. You can also use this to make an image larger, in
+    which case the additional borders are filled with transparency. The offset
+    need not lie within the image.
+    """
+    BITMAP *b = self->memory_cache
+    if b and x == 0 and y == 0 and w == b->w and h == b->h:
+        return
+    BITMAP *cropped = create_bitmap_ex(32, w, h)
+    clear_to_color(cropped, 0)
+    if b:
+        blit(b, cropped, x, y, 0, 0, w, h)
+        destroy_bitmap(b)
+    self->memory_cache = cropped
+    self->bitmap = cropped
+    land_image_prepare(self)
+
+def land_image_auto_crop(LandImage *self):
+    """
+    This will optimize an image by cropping away any completely transparent
+    borders it may have.
+    """
     # TODO
     pass
 
