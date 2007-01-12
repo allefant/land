@@ -7,7 +7,7 @@ from Pyrex.Distutils import build_ext
 platform = "linux"
 if "mingw" in sys.argv: platform = "mingw"
 
-libraries = ["landd", "ldpng", "png", "jpgal", "fudgefont", "agl",
+libraries = ["landd", "ldpng", "png", "jpgal", "fudgefontd", "agld",
     "freetype", "m"]
 
 library_dirs = [".."]
