@@ -379,11 +379,13 @@ static class LagSimulator:
     int size[256]
     double t[256]
     double delay
+    double jitter
     
-static LagSimulator *def lag_simulator_new(double delay):
+static LagSimulator *def lag_simulator_new(double delay, double jitter):
     LagSimulator *self
     land_alloc(self)
     self->delay = delay
+    self->jitter = jitter
     return self
 
 static def lag_simulator_add(LandNet *net, char const *packet, int size):
@@ -392,7 +394,7 @@ static def lag_simulator_add(LandNet *net, char const *packet, int size):
     if packet:
         memcpy(self->packets + self->ringpos * 256, packet, size)
         self->size[self->ringpos] = size
-        self->t[self->ringpos] = t
+        self->t[self->ringpos] = t + land_rnd(-self->jitter, self->jitter)
         self->ringpos++
         if self->ringpos == 256: self->ringpos = 0
     while self->ringpos2 != self->ringpos:
@@ -409,8 +411,8 @@ static def lag_simulator_add(LandNet *net, char const *packet, int size):
         else:
             break
 
-def land_net_lag_simulator(LandNet *self, double delay):
-    self->lag_simulator = lag_simulator_new(delay)
+def land_net_lag_simulator(LandNet *self, double delay, double jitter):
+    self->lag_simulator = lag_simulator_new(delay, jitter)
 
 # FIXME: for big sends (say, some MB), this will spinloop
 def land_net_send(LandNet *self, char const *buffer, size_t size):
