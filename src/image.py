@@ -559,9 +559,11 @@ def land_image_unclip(LandImage *self):
     self->b = 0
 
 int def land_image_height(LandImage *self):
+    if not self->bitmap: return 0
     return self->bitmap->h
 
 int def land_image_width(LandImage *self):
+    if not self->bitmap: return 0
     return self->bitmap->w
 
 # Optimizes a bitmap to take only as little space as necesary, whilst
