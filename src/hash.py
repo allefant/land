@@ -212,7 +212,6 @@ def land_hash_print_stats(LandHash *hash):
             if n > l: l = n
             u++
 
-
     printf("hash stats: %d/%d[%d%%] full, %d/%d[%d%%] used, %d/%d[%d%%] colliding, longest chain is %d.\n",
         hash->count, hash->size, hash->size ? 100 * hash->count / hash->size : 0,
         u, hash->size, hash->size ? 100 * u / hash->size : 0,
