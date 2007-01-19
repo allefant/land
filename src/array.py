@@ -1,6 +1,7 @@
 import global stdlib
 class LandArray:
     int count
+    int size
     void **data
 
 static import array, memory
@@ -26,8 +27,64 @@ LandArray *def land_array_new():
     land_alloc(self)
     return self
 
+def land_array_add(LandArray *self, void *data):
+    """
+    Add data to an array.
+    """
+    # count size
+    # 0     0
+    # 1     1
+    # 2     2
+    # 3     4
+    # 4     4
+    # 5     8
+    # 6     8
+    # 7     8
+    # 8     8
+    # 9     16
+    int i = self->count++
+    if self->count > self->size:
+        if self->size == 0:
+            self->size = 1
+        else:
+            self->size *= 2
+        self->data = land_realloc(self->data, self->size *sizeof *self->data)
+    self->data[i] = data
+
+void *def land_array_pop(LandArray *self):
+    """
+    Remove the last element in the array and return it. Only the last element
+    in an array can be removed. To remove another element, you could replace
+    it with the last (land_array_replace_nth) and remove the last with this
+    function.
+    """
+    if self->count == 0: return None
+    int i = --self->count
+    # We should eventually reduce the allocated memory size as well. One idea
+    # would be to half the size when only 25% are filled anymore (not 50%, since
+    # adding/removing at just the 50% mark will constantly grow/shrink then.)
+    # Also, a likely scenario is to pop the array empty and then destroy, so
+    # shrinking might not be needed at all.
+    #
+    # count size
+    # 9     16
+    # 8     16
+    # 7     16
+    # 6     16
+    # 5     16
+    # 4     8 (25%)
+    # 3     8
+    # 2     4 (25%)
+    # 1     2 (25%)
+    # 0     0 (0 is special cased and we completely free)
+    return self->data[i]
+
 def land_array_add_data(LandArray **array, void *data):
     """
+    *deprecated*
+    Use land_array_add in new code, as this function might be removed in a
+    future version.
+
     Given a pointer to a (possibly NULL valued) array pointer, create a new node
     with the given data, and add to the (possibly modified) array.
     """
@@ -38,11 +95,9 @@ def land_array_add_data(LandArray **array, void *data):
         #else
         self = land_array_new()
         #endif
+        *array = self
 
-    self->data = land_realloc(self->data, (self->count + 1) * sizeof *self->data)
-    self->data[self->count] = data
-    self->count++
-    *array = self
+    land_array_add(self, data)
 
 void *def land_array_get_nth(LandArray *array, int i):
     return array->data[i]
@@ -71,6 +126,26 @@ def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)
 int def land_array_count(LandArray *self):
     if not self: return 0
     return self->count
+
+int def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
+    void *data):
+    """
+    Call the given callback for each array element. If the callback returns
+    anything but 0, the iteration is stopped. The return value is the number
+    of times the callback was called. The data argument simply is passed as-is
+    to the callback.
+    """
+    if not self: return 0
+    int i
+    for i = 0; i < self->count; i++:
+        if cb(self->data[i], data): break
+    return i
+
+def land_array_clear(LandArray *self):
+    """
+    Clear all elements in the array.
+    """
+    self->count = 0
 
 #header
 #ifdef LAND_MEMLOG
