@@ -16,6 +16,7 @@ static int quit
 static volatile int ticks
 static int frames
 static int x_clicked
+static int active
 #ifndef ALLEGRO_WINDOWS
 static struct timeval start_time
 #else
@@ -28,8 +29,16 @@ static def ticker():
 static def closebutton():
     x_clicked++
 
+static def land_exit():
+    if not active: return
+    active = 0
+    land_free(parameters)
+    land_log_message("land_exit\n")
+
 def land_init():
     """Initialize Land. This must be called before anything else."""
+    if active: return
+    active = 1
     #ifndef ALLEGRO_WINDOWS
     gettimeofday(&start_time, NULL)
     #else
@@ -42,6 +51,8 @@ def land_init():
     parameters->w = 640
     parameters->h = 480
     parameters->frequency = 60
+
+    atexit(land_exit)
 
     if not land_exception_handler:
         land_exception_handler_set(land_default_exception_handler)
@@ -61,10 +72,6 @@ def land_init():
     jpgalleg_init()
 
     install_fudgefont()
-
-static def land_exit():
-    land_free(parameters)
-    land_log_message("land_exit\n")
 
 static def land_tick():
     land_mouse_tick()
