@@ -11,6 +11,21 @@ LandImage *def land_image_allegro_new(LandDisplay *display):
 def land_image_allegro_del(LandDisplay *display, LandImage *self):
     land_free(self)
 
+def land_image_allegro_threshold_alpha(LandImage *self, int threshold):
+    """
+    Convert an image to use color-keys transparency. The threshold is in the
+    range 0..255, any pixels with alpha <= threshold are converted. 0 means,
+    only alpha 0 is replaced, 255 means, all pixels are replaced.
+    """
+    BITMAP *bmp = self->memory_cache
+    for int y = 0; y < bmp->h; y++:
+        for int x = 0; x < bmp->w; x++:
+            int c = getpixel(bmp, x, y)
+            int a = geta(c)
+            if a <= threshold:
+                putpixel(bmp, x, y, bitmap_mask_color(bmp))
+    land_image_prepare(self)
+
 def land_image_allegro_draw_scaled_rotated_tinted(LandImage *self,
     float x, float y, float sx, float sy, float angle, float r, float g, float b, float alpha):
     #set_alpha_blender()
