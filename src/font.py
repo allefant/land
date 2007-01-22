@@ -108,7 +108,8 @@ def land_text_on():
     land_font_state->off = 0
 
 static def _print(char const *str, int newline, int alignement):
-    land_font_state->font->vt->print(land_font_state, _land_active_display, str, alignement)
+    land_font_state->font->vt->print(land_font_state, _land_active_display, str,
+        alignement)
     if newline:
         land_font_state->y_pos = land_font_state->y + land_font_state->h
     else:
@@ -126,7 +127,7 @@ int def land_text_get_char_offset(char const *str, int nth):
     int l = ustrlen(str)
     if nth > l: nth = l
     char *s = land_strdup(str)
-    usetat(s, nth, '\0')
+    usetat(s, nth, 0)
     int x = land_text_get_width(s)
     land_free(s)
     return x
@@ -170,3 +171,59 @@ def land_write_right(char const *text, ...):
 def land_write_center(char const *text, ...):
     VPRINT
     _print(str, 0, 2)
+
+static int def _print_wordwrap(char const *text, int w, h, alignement):
+    """
+    Print text inside, and starts a new line whenever the text goes over the
+    given width, wrapping at whitespace. If a single word is bigger than w, it
+    will be printed in its own line and exceed w. If h is 0, the whole text is
+    printed. Otherwise, only as many lines as fit into h pixels are printed.
+    The return value is the offset into text in bytes of one past the last
+    printed character.
+    """
+    int y = land_text_y_pos()
+
+    char const *a = text
+    while 1:
+        if h > 0 and land_text_y_pos() >= y + h: break
+        int strip = 0
+        int n = 0
+        int pn
+        while 1:
+            pn = n
+            while ugetat(a, n) == ' ': n++
+            int c
+            while 1:
+                c = ugetat(a, n)
+                n++
+                if c == ' ': goto wrap
+                if c == '\n': strip = 1; break
+                if c == 0: break
+            break
+            label wrap
+            int x = land_text_get_char_offset(text, n)
+            if x >= w:
+                if pn > 0: n = pn
+                break
+
+        char *s = land_strdup(a)
+        usetat(s, n - strip, 0)
+        _print(s, 1, alignement)
+        land_free(s)
+        a += uoffset(a, n)
+        if ugetat(a, 0) == ' ': a += uoffset(a, 1)
+        if ugetat(a, 0) == 0: break
+
+    return a - text
+
+int def land_print_wordwrap(int w, h, char const *text, ...):
+    VPRINT
+    return _print_wordwrap(str, w, h, 0)
+
+int def land_print_wordwrap_right(int w, h, char const *text, ...):
+    VPRINT
+    return _print_wordwrap(str, w, h, 1)
+
+int def land_print_wordwrap_center(int w, h, char const *text, ...):
+    VPRINT
+    return _print_wordwrap(str, w, h, 2)
