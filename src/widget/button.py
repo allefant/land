@@ -6,6 +6,7 @@ class LandWidgetButton:
     unsigned int yalign : 2 # 0 = top, 1 = bottom, 2 = center
     int xshift
     int yshift
+    int wordwrap
     LandAnimation *animation
     LandImage *image
     char *text
@@ -88,20 +89,38 @@ def land_widget_button_draw(LandWidget *base):
                 x = base->box.x + base->element->il
                 x += self->xshift
                 land_text_pos(x, y)
-                land_print(self->text)
+                if self->wordwrap:
+                    land_print_wordwrap(base->box.w - base->element->il -
+                        base->element->ir,
+                        base->box.h - base->element->it -
+                        base->element->ib, self->text)
+                else:
+                    land_print(self->text)
                 break
             case 1:
                 x = base->box.x + base->box.w - base->element->ir
                 x += self->xshift
                 land_text_pos(x, y)
-                land_print_right(self->text)
+                if self->wordwrap:
+                    land_print_wordwrap_right(base->box.w - base->element->il -
+                        base->element->ir,
+                        base->box.h - base->element->it -
+                        base->element->ib, self->text)
+                else:
+                    land_print_right(self->text)
                 break
             case 2:
                 x = base->box.x + (base->box.w - base->element->il +
                     base->element->ir) / 2
                 x += self->xshift
                 land_text_pos(x, y)
-                land_print_center(self->text)
+                if self->wordwrap:
+                    land_print_wordwrap_center(base->box.w - base->element->il -
+                        base->element->ir,
+                        base->box.h - base->element->it -
+                        base->element->ib, self->text)
+                else:
+                    land_print_center(self->text)
                 break
 
 
@@ -121,7 +140,7 @@ def land_widget_button_mouse_tick(LandWidget *base):
 
 def land_widget_button_destroy(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    land_free(button->text)
+    if button->text: land_free(button->text)
     land_widget_base_destroy(base)
 
 def land_widget_button_initialize(LandWidget *base,
@@ -204,10 +223,15 @@ LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
 
 def land_widget_button_set_text(LandWidget *base, char const *text):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    land_free(button->text)
+    if button->text: land_free(button->text)
     button->text = land_strdup(text)
-    land_widget_theme_set_minimum_size_for_text(base, text)
+    if not button->wordwrap:
+        land_widget_theme_set_minimum_size_for_text(base, text)
     if base->parent: land_widget_layout(base->parent)
+
+def land_widget_button_wordwrap(LandWidget *self, int onoff):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
+    button->wordwrap = onoff
 
 def land_widget_button_align(LandWidget *self, int x, int y):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
