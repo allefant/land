@@ -303,6 +303,10 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     read_int_arg(argc, argv, &a, &self->it)
                     read_int_arg(argc, argv, &a, &self->ib)
 
+                elif (!strcmp (argv[a], "gap")):
+                    read_int_arg(argc, argv, &a, &self->hgap)
+                    read_int_arg(argc, argv, &a, &self->vgap)
+
                 elif (!ustrcmp(argv[a], "color")):
                     int c = 0
                     read_int_arg(argc, argv, &a, &c)
@@ -434,10 +438,6 @@ def land_widget_theme_layout_border(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     # TODO
-    
-    # TODO
-    element->hgap = 0
-    element->vgap = 0
 
 def land_widget_theme_set_minimum_size(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
