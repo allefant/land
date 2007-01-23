@@ -190,13 +190,12 @@ class LandWidgetInterface:
     void (*enter)(LandWidget *self)
     void (*tick)(LandWidget *self)
 
-    # Called when the mouse focus is transferred to the widget. The got_mouse
-    # flag can be used to decline focus.
-    void (*mouse_enter)(LandWidget *self, LandWidget *focus)
+    # Called when the mouse focus is transferred to the widget.
+    void (*mouse_enter)(LandWidget *self)
     void (*mouse_tick)(LandWidget *self)
     # This is called for the widget losing the mouse focus. It has the
     # possibility to retain focus with the got_mouse flag.
-    void (*mouse_leave)(LandWidget *self, LandWidget *focus)
+    void (*mouse_leave)(LandWidget *self)
 
     # Called when the keyboard focus is transferred to the widget. This will
     # only happen if the want_focus flag is set, and focus can be declined

@@ -12,6 +12,11 @@ class LandWidgetContainer:
     LandWidget *mouse # we keep a reference to the focus object.
     LandWidget *keyboard
 
+# Mouse focus works hierarchical. That is, we do not have a single widget having
+# mouse focus. Instead, the desktop always has focus if a mouse is inside it.
+# Then, one if its windows which has the mouse cursor also might have focus. As
+# well as one of its subwindows. And so on.
+
 macro LAND_WIDGET_CONTAINER(widget) ((LandWidgetContainer *)
     land_widget_check(widget, LAND_WIDGET_ID_CONTAINER, __FILE__, __LINE__))
 
@@ -38,7 +43,7 @@ def land_widget_container_destroy(LandWidget *base):
 
     land_widget_base_destroy(base)
 
-def land_widget_container_mouse_enter(LandWidget *super, LandWidget *focus):
+def land_widget_container_mouse_enter(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     # Get the child under the mouse
     LandWidget *child = land_widget_container_get_child_at_pos(super,
@@ -46,17 +51,14 @@ def land_widget_container_mouse_enter(LandWidget *super, LandWidget *focus):
     if child:
         land_widget_reference(child)
         child->got_mouse = 1
-        land_call_method(child, mouse_enter, (child, self->mouse))
-        if not child->got_mouse: # refuses focus
-            land_widget_unreference(child)
-            return
+        land_call_method(child, mouse_enter, (child))
         self->mouse = child
 
-def land_widget_container_mouse_leave(LandWidget *super, LandWidget *focus):
+def land_widget_container_mouse_leave(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if self->mouse:
         self->mouse->got_mouse = 0
-        land_call_method(self->mouse, mouse_leave, (self->mouse, focus))
+        land_call_method(self->mouse, mouse_leave, (self->mouse))
         if self->mouse->got_mouse:
             super->got_mouse = 1
         else:
@@ -200,8 +202,7 @@ LandWidget *def land_widget_container_get_child_at_pos(LandWidget *super,
 
 # Transfer the mouse focus inside base to child. If child is NULL, remove any
 # mouse focus.
-static def transfer_mouse_focus(LandWidget *base, LandWidget *child,
-    LandWidget *target):
+static def transfer_mouse_focus(LandWidget *base, LandWidget *child):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base)
 
     # We can't have this deleted inside any method call or we get a
@@ -209,38 +210,25 @@ static def transfer_mouse_focus(LandWidget *base, LandWidget *child,
     # be hold until the focus is lost again.
     if child: land_widget_reference(child)
 
-    #printf("%d: Transfering focus from %s[%p] (%s[%p]) to %s[%p] (%s[%p]).\n",
-    #    land_get_ticks(), base->vt->name, base,
-    #    self->mouse ? self->mouse->vt->name : "none", self->mouse,
-    #    child ? child->vt->name : "none", child,
-    #    target ? target->vt->name : "none", target)
-
+    # Take focus away? If the currently focused widget does not want to give up
+    # focus, then so be it.
     if self->mouse:
+        self->mouse->got_mouse = 0
+        land_call_method(self->mouse, mouse_leave, (self->mouse))
+        # Retain focus?
+        if self->mouse->got_mouse:
+            if child: land_widget_unreference(child)
+            return
+
+        # Ok, we do take away focus.
         land_widget_unreference(self->mouse)
         self->mouse = None
-    
-    self->mouse = child
 
-    # Take focus away?
-    # if self->mouse:
-    #    self->mouse->got_mouse = 0
-    #    land_call_method(self->mouse, mouse_leave, (self->mouse, target))
-    #    # Retain focus?
-    #    if self->mouse->got_mouse:
-    #        if child: land_widget_unreference(child)
-    #        return
-
-    #    land_widget_unreference(self->mouse)
-    #    self->mouse = NULL
-
-    # if child:
-    #    child->got_mouse = 1
-    #    land_call_method(child, mouse_enter, (child, self->mouse))
-    #    if not child->got_mouse: # refuses focus:
-    #        land_widget_unreference(child)
-    #        return
-
-    #self->mouse = child
+    # Give focus to the new widget. There is no way to refuse focus. If there
+    # will arise any use case where it might make sense, can add it here.
+    if child:
+        self->mouse = child
+        land_call_method(self->mouse, mouse_enter, (self->mouse))
 
 static def transfer_keyboard_focus(LandWidget *base):
     # Need to take focus away first?
@@ -331,11 +319,7 @@ def land_widget_container_mouse_tick(LandWidget *super):
     # Transfer mouse focus?
 
     if mouse != self->mouse and not (land_mouse_b() & 1):
-        LandWidget *target = None
-        if mouse:
-            target = land_widget_container_get_descendant_at_pos(super,
-                land_mouse_x(), land_mouse_y())
-        transfer_mouse_focus(super, mouse, target)
+        transfer_mouse_focus(super, mouse)
 
     # Transfer keyboard focus?
 
@@ -359,10 +343,13 @@ def land_widget_container_mouse_tick(LandWidget *super):
             if item == last:
                 break
 
-def land_widget_container_set_mouse(LandWidget *super, LandWidget *mouse):
+def land_widget_container_set_mouse_focus(LandWidget *super, LandWidget *mouse):
+    """
+    Only suceeds if the currently focused window agrees.
+    """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if mouse != self->mouse:
-        transfer_mouse_focus(super, mouse, mouse)
+        transfer_mouse_focus(super, mouse)
 
 def land_widget_container_keyboard_tick(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
