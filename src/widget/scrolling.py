@@ -50,6 +50,30 @@ def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
 
     land_widget_scrolling_size(base, 0, 0)
 
+def land_widget_scrolling_update(LandWidget *base):
+    """
+    Adjusts the corner widget depending on the state of the scrollbars.
+    Whenever a scrollbar is added/removed, this function should be called.
+    """
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
+    LandListItem *item = container->children->first
+
+    item = item->next
+    LandWidget *right = LAND_WIDGET(item->data)
+
+    item = item->next
+    LandWidget *bottom = LAND_WIDGET(item->data)
+
+    item = item->next
+    LandWidget *empty = LAND_WIDGET(item->data)
+
+    if right->hidden or bottom->hidden:
+        if not empty->hidden:
+            land_widget_hide(empty)
+    if not right->hidden and not bottom->hidden:
+        if empty->hidden:
+            land_widget_unhide(empty)
+
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     if land_mouse_delta_z():
         LandWidget *contents =\
@@ -165,16 +189,20 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     right->vt = land_widget_scrolling_vertical_container_interface
     land_widget_theme_initialize(right)
     land_widget_theme_set_minimum_size(right)
-    land_widget_scrollbar_new(right, NULL,
+    LandWidget *rightbar = land_widget_scrollbar_new(right, NULL,
         1, right->element->il, right->element->it, 0, 0)
+    LAND_WIDGET_SCROLLBAR(rightbar)->hide_callback =\
+        land_widget_scrolling_update
 
     # child 3: horizontal scrollbar 
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0)
     bottom->vt = land_widget_scrolling_horizontal_container_interface
     land_widget_theme_initialize(bottom)
     land_widget_theme_set_minimum_size(bottom)
-    land_widget_scrollbar_new(bottom, NULL,
+    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL,
         0, bottom->element->il, bottom->element->it, 0, 0)
+    LAND_WIDGET_SCROLLBAR(bottombar)->hide_callback =\
+        land_widget_scrolling_update
 
     # overall layout 
     land_widget_layout_set_grid(widget, 2, 2)
