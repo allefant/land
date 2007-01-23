@@ -141,6 +141,7 @@ LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *base = (void *)self
     land_widget_button_initialize(base, parent, name, NULL,
         menubutton_clicked, x, y, w, h)
+    LAND_WIDGET_MENU(submenu)->menubutton = base
     base->vt = land_widget_menubutton_interface
     land_widget_theme_initialize(base)
     return base
@@ -165,7 +166,7 @@ def land_widget_menu_add(LandWidget *base, LandWidget *item):
     land_widget_layout_unfreeze(base)
     # FIXME: since the add method is called from the constructor, the layout
     # is not ready yet, e.g. min-size is not calculated yet
-    //land_widget_layout_adjust(base, 1, 1, 1)
+    # land_widget_layout_adjust(base, 1, 1, 1)
 
 def land_widget_menubar_add(LandWidget *base, LandWidget *item):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
@@ -181,7 +182,7 @@ def land_widget_menubar_add(LandWidget *base, LandWidget *item):
     land_widget_layout_unfreeze(base)
     # FIXME: since the add method is called from the constructor, the layout
     # is not ready yet, e.g. min-size is not calculated yet
-    //land_widget_layout_adjust(base, 1, 1, 1)
+    # land_widget_layout_adjust(base, 1, 1, 1)
 
 LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
     void (*callback)(LandWidget *widget)):
@@ -214,8 +215,8 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
 
     return self
 
-LandWidget *def land_widget_submenuitem_new(LandWidget *parent, char const *name,
-    LandWidget *submenu):
+LandWidget *def land_widget_submenuitem_new(LandWidget *parent,
+    char const *name, LandWidget *submenu):
     int tw = land_text_get_width(name)
     int th = land_font_height(land_font_current())
     LandWidget *button = land_widget_menubutton_new(parent, name, submenu,
@@ -240,37 +241,81 @@ LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
     land_widget_layout(parent)
     return button
 
-def land_widget_menu_mouse_enter(LandWidget *self, LandWidget *focus):
+def land_widget_menu_mouse_enter(LandWidget *self):
     pass
 
-def land_widget_menu_mouse_leave(LandWidget *self, LandWidget *focus):
-    # FIXME: check that this is indeed part of the same menu?
-    
-    # If the focus is to go to another menu, that is ok to us.
-    if focus:
-        if land_widget_is(focus, LAND_WIDGET_ID_MENU): return
-        if land_widget_is(focus, LAND_WIDGET_ID_MENUBUTTON): return
+static int def is_in_menu(LandWidget *self, LandWidget *other):
+    """
+    Check if the given menu has other as an ancestor.
+    """
+    while self:
+        if self == other: return 1
+        LandWidgetMenu *menu = LAND_WIDGET_MENU(self)
+        LandWidget *buttonwidget = menu->menubutton
+        if not buttonwidget: break
+        LandWidgetMenuButton *button = LAND_WIDGET_MENUBUTTON(buttonwidget)
+        self = button->menu
+    return 0
 
+static int def is_related(LandWidget *self, LandWidget *other):
+    """
+    Check if other is a menu item or menu button related to this menu.
+    """
+    if land_widget_is(other, LAND_WIDGET_ID_MENUITEM):
+        LandWidgetMenuItem *othermenuitem = LAND_WIDGET_MENUITEM(other)
+        LandWidget *othermenuwidget = othermenuitem->menu
+        while othermenuwidget:
+            if is_in_menu(self, othermenuwidget): return 1
+            LandWidgetMenu *othermenu = LAND_WIDGET_MENU(othermenuwidget)
+            LandWidget *otherbuttonwidget = othermenu->menubutton
+            if not otherbuttonwidget: break
+            LandWidgetMenuButton *othermenubutton = LAND_WIDGET_MENUBUTTON(
+                otherbuttonwidget)
+            othermenuwidget = othermenubutton->menu
+    elif land_widget_is(other, LAND_WIDGET_ID_MENUBUTTON):
+        while other:
+            LandWidgetMenuButton *otherbutton = LAND_WIDGET_MENUBUTTON(other)
+            LandWidget *othermenuwidget = otherbutton->menu
+            if not othermenuwidget: break
+            if is_in_menu(self, othermenuwidget): return 1
+            LandWidgetMenu *othermenu = LAND_WIDGET_MENU(othermenuwidget)
+            other = othermenu->menubutton
+
+    return 0
+
+def land_widget_menu_mouse_leave(LandWidget *self):
     if self->hidden: return
+
+    # If the mouse is over another menu, then switch to that.
+    # TODO: Maybe add some configurable delay before switching.
+    LandWidget *up = self
+    while up->parent:
+        up = up->parent
+
+    LandWidget *target = land_widget_container_get_descendant_at_pos(up,
+        land_mouse_x(), land_mouse_y())
+
+    if is_related(self, target):
+        return
 
     land_widget_retain_mouse_focus(self)
 
-def land_widget_menubutton_mouse_enter(LandWidget *self, LandWidget *focus):
+def land_widget_menubutton_mouse_enter(LandWidget *self):
     # Auto-open menus 
     # TODO: maybe make this a theme option, and a configurable delay
     menubutton_clicked(self)
 
-def land_widget_menubutton_mouse_leave(LandWidget *self, LandWidget *focus):
+def land_widget_menubutton_mouse_leave(LandWidget *self):
     pass
 
-def land_widget_menubar_mouse_leave(LandWidget *self, LandWidget *focus):
+def land_widget_menubar_mouse_leave(LandWidget *self):
     # FIXME: check that this is indeed part of the same menu?
-    if focus and (focus->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU:
-        return
 
-    if not LAND_WIDGET_MENU(self)->submenu:
-        return
-    land_widget_retain_mouse_focus(self)
+    # if not LAND_WIDGET_MENU(self)->submenu:
+    #    return
+    # land_widget_retain_mouse_focus(self)
+    
+    return
 
 def land_widget_menu_mouse_tick(LandWidget *self):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
