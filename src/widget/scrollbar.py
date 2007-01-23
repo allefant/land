@@ -10,7 +10,9 @@ class LandWidgetScrollbar:
     int drag_x, drag_y
     int vertical : 1
     int autohide : 1
-    void (*callback)(LandWidget *self, int set, int *min, int *max, int *range, int *pos)
+    void (*callback)(LandWidget *self, int set, int *min, int *max, int *range,
+        int *pos)
+    void (*hide_callback)(LandWidget *self)
 
 macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
@@ -113,6 +115,9 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         if posrange < minlen: posrange = minlen
         maxpos -= posrange - 1
         maxval -= valrange - 1
+        
+        # FIXME: Check the autohide flag
+
         # Cannot allow updates in hide/unhide, since the hiding/unhiding of the
         # scrollbar will change the layout.
         int f = land_widget_layout_freeze(super->parent->parent)
@@ -124,7 +129,10 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
             pos = minpos + (val - minval) * (maxpos - minpos) / (maxval - minval)
             if super->parent->hidden:
                 land_widget_unhide(super->parent)
+
         if f: land_widget_layout_unfreeze(super->parent->parent)
+
+        if self->hide_callback: self->hide_callback(super->parent->parent)
 
         int dx = 0, dy = 0, dw = 0, dh = 0
         if self->vertical:
