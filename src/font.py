@@ -172,6 +172,49 @@ def land_write_center(char const *text, ...):
     VPRINT
     _print(str, 0, 2)
 
+static int def _wordwrap_helper(char const *text, int w, h,
+    void (*cb)(int a, int b, void *data), void *data):
+    int y = land_text_y_pos()
+    char const *a = text
+    while 1:
+        if h > 0 and land_text_y_pos() >= y + h: break
+        int n = 0
+        int pn
+        while 1:
+            pn = n
+            int c
+            while 1:
+                c = ugetat(a, n)
+                if c == 0: break
+                if c == ' ' or c == '\n':
+                    break
+                n++
+
+            int x = land_text_get_char_offset(a, n)
+            if x > w:
+                if pn > 0:
+                    n = pn - 1
+                break
+            if c == 0 or c == '\n': break
+            n++
+
+        cb(a - text, a + n - text, data)
+
+        a += uoffset(a, n)
+        int c = ugetat(a, 0)
+        if c == 0: break
+        if c == ' ' or c == '\n': a += uoffset(a, 1)
+    return a - text
+
+static def _print_wordwrap_cb(int a, b, void *data):
+    void **p = data
+    char *text = p[0]
+    int *alignement = p[1]
+
+    char s[b - a + 1]
+    ustrzcpy(s, b - a + 1, text + a)
+    _print(s, 1, *alignement)
+
 static int def _print_wordwrap(char const *text, int w, h, alignement):
     """
     Print text inside, and starts a new line whenever the text goes over the
@@ -181,40 +224,8 @@ static int def _print_wordwrap(char const *text, int w, h, alignement):
     The return value is the offset into text in bytes of one past the last
     printed character.
     """
-    int y = land_text_y_pos()
-
-    char const *a = text
-    while 1:
-        if h > 0 and land_text_y_pos() >= y + h: break
-        int strip = 0
-        int n = 0
-        int pn
-        while 1:
-            pn = n
-            while ugetat(a, n) == ' ': n++
-            int c
-            while 1:
-                c = ugetat(a, n)
-                n++
-                if c == ' ': goto wrap
-                if c == '\n': strip = 1; break
-                if c == 0: break
-            break
-            label wrap
-            int x = land_text_get_char_offset(text, n)
-            if x >= w:
-                if pn > 0: n = pn
-                break
-
-        char *s = land_strdup(a)
-        usetat(s, n - strip, 0)
-        _print(s, 1, alignement)
-        land_free(s)
-        a += uoffset(a, n)
-        if ugetat(a, 0) == ' ': a += uoffset(a, 1)
-        if ugetat(a, 0) == 0: break
-
-    return a - text
+    void *data[] = {(void *)text, &alignement}
+    return _wordwrap_helper(text, w, h, _print_wordwrap_cb, data)
 
 int def land_print_wordwrap(int w, h, char const *text, ...):
     VPRINT
@@ -227,3 +238,24 @@ int def land_print_wordwrap_right(int w, h, char const *text, ...):
 int def land_print_wordwrap_center(int w, h, char const *text, ...):
     VPRINT
     return _print_wordwrap(str, w, h, 2)
+
+static def land_wordwrap_text_cb(int a, b, void *data):
+    void **p = data
+    char *text = p[0]
+    LandArray *lines = p[1]
+    char *s = land_malloc(b - a + 1)
+    ustrzcpy(s, b - a + 1, text + a)
+    land_array_add(lines, s)
+
+LandArray *def land_wordwrap_text(int w, h, char const *str):
+    """
+    Splits the given string into multiple lines no longer than w pixels. The
+    returned array will have a newly allocated string for each line. You are
+    responsible for freeing those strings again.
+    """
+    LandArray *lines = land_array_new()
+    
+    void *data[] = {(void *)str, lines}
+    _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
+
+    return lines
