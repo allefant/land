@@ -480,9 +480,4 @@ def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
         element->it + element->ib + h)
 
-    printf("%s (%s) %d %d %d %d (%d %d) %d %d\n", element->name,
-        self->vt->name,
-        element->il, element->it,
-        element->ir, element->ib,
-        w, h, self->box.min_width, self->box.min_height)
     
