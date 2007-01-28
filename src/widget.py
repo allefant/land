@@ -19,3 +19,4 @@ import widget/edit
 import widget/spin
 import widget/board
 import widget/slider
+import widget/text
