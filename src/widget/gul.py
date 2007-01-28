@@ -34,8 +34,6 @@ macro GUL_NO_LAYOUT (2 * 65536)
 # is affected though. (Use LEAVE_X to make the widget itself not be affected.)
 #
 
-
-
 class LandLayoutBox:
     int x, y, w, h # outer box 
 
@@ -205,7 +203,7 @@ static int def is_column_expanding(LandWidget *self, int col):
     for i = 0; i < self->box.rows; i++:
         LandWidget *c = lookup_box_in_grid(self, col, i)
 
-        if c and not (c->box.flags & GUL_SHRINK_X):
+        if c and c->box.col == col and not (c->box.flags & GUL_SHRINK_X):
             return 1
 
     return 0
@@ -217,7 +215,7 @@ static int def is_row_expanding(LandWidget *self, int row):
     for i = 0; i < self->box.cols; i++:
         LandWidget *c = lookup_box_in_grid(self, i, row)
 
-        if c and not (c->box.flags & GUL_SHRINK_Y):
+        if c and c->box.row == row and not (c->box.flags & GUL_SHRINK_Y):
             return 1
 
     return 0
@@ -348,6 +346,7 @@ static def gul_box_top_down(LandWidget *self):
         share = available_width / want_width
     available_width -= share * want_width
     D(printf("    Columns:");)
+    int hgap = self->element ? element->hgap : 0
     for i = 0; i < self->box.cols; i++:
         int cw = column_min_width(self, i)
         int cx = x
@@ -364,9 +363,7 @@ static def gul_box_top_down(LandWidget *self):
 
         else:
             D(printf(" [-]%d", cw);)
-        x += cw
-        if self->element:
-            x += element->hgap
+        x += cw + hgap
 
         # Place all rows in the column accordingly 
         for j = 0; j < self->box.rows; j++:
@@ -386,7 +383,7 @@ static def gul_box_top_down(LandWidget *self):
                     land_widget_move(c, dx, 0)
                     land_widget_size(c, dw, 0)
                 else:
-                    int dw = cw - c->box.w
+                    int dw = cw + hgap
                     land_widget_size(c, dw, 0)
                     
                 if f: land_widget_layout_unfreeze(c)
@@ -403,6 +400,7 @@ static def gul_box_top_down(LandWidget *self):
     if want_height:
         share = available_height / want_height
     available_height -= share * want_height
+    int vgap = self->element ? element->vgap : 0
     for j = 0; j < self->box.rows; j++:
         int ch = row_min_height(self, j)
         int cy = y
@@ -420,8 +418,7 @@ static def gul_box_top_down(LandWidget *self):
         else:
             D(printf(" [-]%d", ch);)
         y += ch
-        if self->element:
-            y += element->vgap
+        y += vgap
 
         # Place all columns in the row accordingly. 
         for i = 0; i < self->box.cols; i++:
@@ -436,7 +433,7 @@ static def gul_box_top_down(LandWidget *self):
                     land_widget_move(c, 0, dy)
                     land_widget_size(c, 0, dh)
                 else:
-                    int dh = ch - c->box.h
+                    int dh = ch + vgap
                     land_widget_size(c, 0, dh)
                     
                 if f: land_widget_layout_unfreeze(c)
@@ -460,6 +457,10 @@ def gul_box_fit_children(LandWidget *self):
     int dh = self->box.current_min_height - self->box.h
     self->box.w = self->box.current_min_width 
     self->box.h = self->box.current_min_height
+
+    # Prevent recursive layout updates.
+    int f = land_widget_layout_freeze(self)
     land_call_method(self, size, (self, dw, dh))
+    if f: land_widget_layout_unfreeze(self)
 
     gul_box_top_down(self)
