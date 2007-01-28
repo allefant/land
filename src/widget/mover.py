@@ -43,7 +43,7 @@ LandWidget *def land_widget_mover_new(LandWidget *parent, char const *text, int 
     base->vt = land_widget_mover_interface
     
     land_widget_layout_set_shrinking(base, 0, 1)
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
     if parent: land_widget_layout(parent)
 
     # by default, move the parent. 
