@@ -12,7 +12,7 @@ int def land_widget_layout_unfreeze(LandWidget *self):
     self->no_layout = 0
     return nl
 
-def land_widget_layout_set_grid(LandWidget *self, int columns, int rows):
+def land_widget_layout_set_grid(LandWidget *self, int columns, rows):
     self->box.rows = rows
     self->box.cols = columns
     land_widget_layout(self)
@@ -23,19 +23,19 @@ def land_widget_layout_disable(LandWidget *self):
 def land_widget_layout_enable(LandWidget *self):
     self->box.flags &= ~GUL_NO_LAYOUT
 
-def land_widget_layout_set_grid_position(LandWidget *self, int column, int row):
+def land_widget_layout_set_grid_position(LandWidget *self, int column, row):
     self->box.col = column
     self->box.row = row
     if self->parent:
         land_widget_layout(self->parent)
 
-def land_widget_layout_set_grid_extra(LandWidget *self, int columns, int rows):
+def land_widget_layout_set_grid_extra(LandWidget *self, int columns, rows):
     self->box.extra_cols = columns
     self->box.extra_rows = rows
     if self->parent:
         land_widget_layout(self->parent)
 
-def land_widget_layout_set_minimum_size(LandWidget *self, int w, int h):
+def land_widget_layout_set_minimum_size(LandWidget *self, int w, h):
     self->box.min_width = w
     self->box.min_height = h
     if self->box.current_min_width < w:
