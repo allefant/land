@@ -9,10 +9,8 @@ class LandWidgetScrollbar:
     int dragged
     int drag_x, drag_y
     int vertical : 1
-    int autohide : 1
     void (*callback)(LandWidget *self, int set, int *min, int *max, int *range,
         int *pos)
-    void (*hide_callback)(LandWidget *self)
 
 macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
@@ -35,10 +33,9 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
         LandWidget *viewport = target->parent
         if set:
             int ty = viewport->box.y + viewport->element->it
-            if (target->box.y > ty) ty = target->box.y
+            if target->box.y > ty: ty = target->box.y
             ty -= *pos
             land_widget_move(target, 0, ty - target->box.y)
-
         else:
             *min = 0
             *max = target->box.h - 1
@@ -46,6 +43,12 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
             *pos = viewport->box.y + viewport->element->it - target->box.y
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
+
+
+#    range
+# min ___    max
+# |..|___|...|
+#    pos
 
 static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
     *pos):
@@ -55,7 +58,7 @@ static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
         LandWidget *viewport = target->parent
         if set:
             int tx = viewport->box.x + viewport->element->il
-            if (target->box.x > tx) tx = target->box.x
+            if target->box.x > tx: tx = target->box.x
             tx -= *pos
             land_widget_move(target, tx - target->box.x, 0)
 
@@ -97,42 +100,34 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         pos = super->box.x
         posrange = super->box.w
         minlen = super->element->minw
+
     if set:
         maxpos -= posrange - 1
         maxval -= valrange - 1
 
         if maxpos == minpos:
-            val = minval
+            return
         else:
             # Always round up when setting, since we round down when querying. 
-            int rounded = maxpos - 1 - minpos
+            int rounded = maxpos - minpos - 1
             val = (minval + (pos - minpos) * (maxval - minval) + rounded) / (maxpos - minpos)
 
         self->callback(super, 1, &minval, &maxval, &valrange, &val)
 
     else:
+        # minpos/maxpos: pixel positions which can be covered in view
+        # minval/maxval: pixel position which can be covered in scrollbar
+        # valrage: length of viewed area in view
         posrange = (1 + maxpos - minpos) * valrange / (1 + maxval - minval)
+        # posrange: length of scrollbar
         if posrange < minlen: posrange = minlen
         maxpos -= posrange - 1
         maxval -= valrange - 1
-        
-        # FIXME: Check the autohide flag
 
-        # Cannot allow updates in hide/unhide, since the hiding/unhiding of the
-        # scrollbar will change the layout.
-        int f = land_widget_layout_freeze(super->parent->parent)
         if maxval == minval:
             pos = minpos
-            if not super->parent->hidden:
-                land_widget_hide(super->parent)
         else:
             pos = minpos + (val - minval) * (maxpos - minpos) / (maxval - minval)
-            if super->parent->hidden:
-                land_widget_unhide(super->parent)
-
-        if f: land_widget_layout_unfreeze(super->parent->parent)
-
-        if self->hide_callback: self->hide_callback(super->parent->parent)
 
         int dx = 0, dy = 0, dw = 0, dh = 0
         if self->vertical:
@@ -145,7 +140,7 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         land_widget_size(super, dw, dh)
 
 def land_widget_scrollbar_draw(LandWidget *self):
-    land_widget_scrollbar_update(self, 0)
+    # land_widget_scrollbar_update(self, 0)
     land_widget_theme_draw(self)
 
 def land_widget_scrollbar_mouse_tick(LandWidget *super):
@@ -204,12 +199,8 @@ LandWidget *def land_widget_scrollbar_new(LandWidget *parent, *target,
         super->vt = land_widget_scrollbar_horizontal_interface
     
     land_widget_theme_initialize(super)
-    land_widget_theme_set_minimum_size(super)
     
     return super
-
-def land_widget_scrollbar_autohide(LandWidget *self, int autohide):
-    LAND_WIDGET_SCROLLBAR(self)->autohide = autohide
 
 def land_widget_scrollbar_interface_initialize():
     if not land_widget_scrollbar_vertical_interface:
