@@ -361,8 +361,14 @@ def land_widget_container_keyboard_tick(LandWidget *super):
         land_call_method(self->keyboard, keyboard_tick, (self->keyboard))
 
 def land_widget_container_tick(LandWidget *super):
+    # Don't allow anyone pulling the carpet below our feet.
+    land_widget_reference(super)
+    
     land_call_method(super, mouse_tick, (super))
     land_call_method(super, keyboard_tick, (super))
+
+    # See above.
+    land_widget_unreference(super)
 
 def land_widget_container_add(LandWidget *super, LandWidget *add):
 
@@ -390,6 +396,22 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
     # Whenever the item was added to our container, the container acquired a
     # reference to it, which it has to give up now.
     land_widget_unreference(rem)
+
+LandWidget *def land_widget_container_child(LandWidget *super):
+    """
+    Return the first child of the container or None.
+    """
+    LandWidgetContainer *self = (LandWidgetContainer *)super
+    LandList *l = self->children
+    if l:
+        LandListItem *first = l->first
+        if first:
+            return first->data
+    return None
+
+int def land_widget_container_is_empty(LandWidget *super):
+    LandWidgetContainer *self = (LandWidgetContainer *)super
+    return !self->children || self->children->count == 0
 
 def land_widget_container_initialize(LandWidget *super, *parent,
     int x, y, w, h):
