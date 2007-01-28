@@ -8,11 +8,21 @@ class LandWidgetScrolling:
     # A horizontal scrollbar at the bottom.
     """
     LandWidgetContainer super
-    # 0 = never hide scrollbars
+
+    # 0 = never hide scrollbars [default]
     # 1 = auto hide vertical scrollbar
     # 2 = auto hide horizontal scrollbar
-    # 3 = auto hide both scrollbars plus empty
-    unsigned int autohide : 2
+    # 3 = auto hide both scrollbars
+    # ored together with:
+    # 0 = never hide empty
+    # 4 = hide empty only if both scrollbars are hidden
+    # 8 = always hide empty except if both scrollbars are shown
+    unsigned int autohide : 4
+
+    # 0 = no scrollwheel scrolling
+    # 1 = scrolling [default]
+    # 2 = unlimited
+    unsigned int scrollwheel : 2
 
 macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
@@ -47,24 +57,29 @@ LandWidget *def land_widget_scrolling_get_empty(LandWidget *base):
 def land_widget_scrolling_move(LandWidget *widget, float dx, float dy):
     land_widget_container_move(widget, dx, dy)
 
-def land_widget_scrolling_autohide(LandWidget *widget, int hori, int vert):
+def land_widget_scrolling_autohide(LandWidget *widget, int hori, vert, empty):
+    """
+    Set hori/vert to 1 if the horizontal/vertical scrollbar should be auto
+    hidden. Set empty to 1 if the empty should be auto hidden, and set empty to
+    2 if the empty should be hidden as soon as one bar is hidden.
+    """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
-    self->autohide = hori + 2 * vert
+    self->autohide = hori + 2 * vert + 4 * empty
 
     land_widget_scrolling_update(widget)
 
 def land_widget_scrolling_autobars(LandWidget *widget):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
 
-    if not self->autohide: return
+    if (self->autohide & 3) == 0: return
 
     LandWidget *container = land_widget_scrolling_get_container(widget)
     LandWidget *empty = land_widget_scrolling_get_empty(widget)
     LandWidget *vbox = land_widget_scrolling_get_vertical(widget)
     LandWidget *hbox = land_widget_scrolling_get_horizontal(widget)
 
-    # Hide the bars.
-    if not vbox->hidden or not hbox->hidden:
+    # Hide the bars and empty.
+    if not vbox->hidden or not hbox->hidden or not empty->hidden:
         int f = land_widget_layout_freeze(widget)
         if not vbox->hidden: land_widget_hide(vbox)
         if not hbox->hidden: land_widget_hide(hbox)
@@ -89,13 +104,27 @@ def land_widget_scrolling_autobars(LandWidget *widget):
     int needh = self->autohide & 1 ? 0 : 1, needv = self->autohide & 2 ? 0 : 1
     if xp > xa or 1 + xb - xa > xr: needh = 1
     if yp > ya or 1 + yb - ya > yr: needv = 1
+    int neede = 1
+    if self->autohide & 4:
+        if not needh and not needv: neede = 0
+    if self->autohide & 8:
+        if not needh or not needv: neede = 0
 
-    if not needh and not needv:
+    if not needh and not needv and not neede:
         # Keep them all hidden.
         return
 
+    if not needh and not needv:
+        # Show empty only.
+        int f = land_widget_layout_freeze(widget)
+        land_widget_unhide(empty)
+        land_widget_layout_set_grid_extra(container, 0, 0)
+        if f: land_widget_layout_unfreeze(widget)
+        land_widget_layout(widget)
+        return
+
     if needh and needv:
-        # Show both bars.
+        # Show both bars and empty.
         int f = land_widget_layout_freeze(widget)
         land_widget_unhide(hbox)
         land_widget_unhide(vbox)
@@ -108,7 +137,7 @@ def land_widget_scrolling_autobars(LandWidget *widget):
     int f = land_widget_layout_freeze(widget)
     if needh:
         land_widget_unhide(hbox)
-        land_widget_unhide(empty)
+        if neede: land_widget_unhide(empty)
         land_widget_layout_set_grid_extra(container, 1, 0)
         if f: land_widget_layout_unfreeze(widget)
         land_widget_layout(widget)
@@ -122,7 +151,7 @@ def land_widget_scrolling_autobars(LandWidget *widget):
             return
     else:
         land_widget_unhide(vbox)
-        land_widget_unhide(empty)
+        if neede: land_widget_unhide(empty)
         land_widget_layout_set_grid_extra(container, 0, 1)
         if f: land_widget_layout_unfreeze(widget)
         land_widget_layout(widget)
@@ -174,6 +203,17 @@ def land_widget_scrolling_get_scroll_position(LandWidget *base, float *x, *y):
     *x = child->box.x - contents->box.x - contents->element->il
     *y = child->box.y - contents->box.y - contents->element->it
 
+def land_widget_scrolling_get_scroll_extents(LandWidget *base, float *x, *y):
+    LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
+    LandList *children = LAND_WIDGET_CONTAINER(contents)->children
+    if not children:
+        *x = 0
+        *y = 0
+        return
+    LandWidget *child =  children->first->data
+    *x = child->box.w - contents->box.w + contents->element->il + contents->element->ir
+    *y = child->box.h - contents->box.h + contents->element->it + contents->element->ib
+
 def land_widget_scrolling_scrollto(LandWidget *base, float x, y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
@@ -192,9 +232,16 @@ def land_widget_scrolling_scroll(LandWidget *base, float dx, dy):
     land_widget_scrolling_scrollto(base, x + dx, y + dy)
     
 def land_widget_scrolling_mouse_tick(LandWidget *base):
-    if land_mouse_delta_z():
+    LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(base)
+    if land_mouse_delta_z() and self->scrollwheel:
         int dy = land_mouse_delta_z() * land_font_height(base->element->font)
         land_widget_scrolling_scroll(base, 0, dy)
+        if not (self->scrollwheel & 2):
+            float x, y, w, h
+            land_widget_scrolling_get_scroll_position(base, &x, &y)
+            land_widget_scrolling_get_scroll_extents(base, &w, &h)
+            if y < -h: land_widget_scrolling_scrollto(base, x, -h)
+            if y > 0: land_widget_scrolling_scrollto(base, x, 0)
 
     land_widget_container_mouse_tick(base)
 
@@ -273,6 +320,9 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     # Add own widgets without special hook. 
     widget->vt = land_widget_container_interface
 
+    LandWidgetScrolling *scrolling = (void *)widget
+    scrolling->scrollwheel = 1
+
     # child 1: container 
     LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0)
     contents->only_border = 1
@@ -317,6 +367,15 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     land_widget_theme_initialize(widget)
 
     land_widget_layout(widget)
+
+def land_widget_scrolling_wheel(LandWidget *widget, int wheel):
+    """
+    0: no wheel scrolling
+    1: wheel scrolling [default]
+    2: unlimited scrolling
+    """
+    LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
+    self->scrollwheel = wheel
 
 LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     """
