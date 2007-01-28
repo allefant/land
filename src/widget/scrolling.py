@@ -8,89 +8,193 @@ class LandWidgetScrolling:
     # A horizontal scrollbar at the bottom.
     """
     LandWidgetContainer super
+    # 0 = never hide scrollbars
+    # 1 = auto hide vertical scrollbar
+    # 2 = auto hide horizontal scrollbar
+    # 3 = auto hide both scrollbars plus empty
+    unsigned int autohide : 2
 
-macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *) \
+macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
 
 static import widget/box, widget/scrollbar
 
-LandWidgetInterface *land_widget_scrolling_interface
+global LandWidgetInterface *land_widget_scrolling_interface
 LandWidgetInterface *land_widget_scrolling_contents_container_interface
 LandWidgetInterface *land_widget_scrolling_vertical_container_interface
 LandWidgetInterface *land_widget_scrolling_horizontal_container_interface
 
+LandWidget *def land_widget_scrolling_get_container(LandWidget *base):
+    LandList *children = LAND_WIDGET_CONTAINER(base)->children
+    LandWidget *w = children->first->data;
+    return w
+
+LandWidget *def land_widget_scrolling_get_vertical(LandWidget *base):
+    LandList *children = LAND_WIDGET_CONTAINER(base)->children
+    LandWidget *w = children->first->next->data;
+    return w
+
+LandWidget *def land_widget_scrolling_get_horizontal(LandWidget *base):
+    LandList *children = LAND_WIDGET_CONTAINER(base)->children
+    LandWidget *w = children->first->next->next->data;
+    return w
+
+LandWidget *def land_widget_scrolling_get_empty(LandWidget *base):
+    LandList *children = LAND_WIDGET_CONTAINER(base)->children
+    LandWidget *w = children->first->next->next->next->data;
+    return w
+
 def land_widget_scrolling_move(LandWidget *widget, float dx, float dy):
     land_widget_container_move(widget, dx, dy)
 
-def land_widget_scrolling_size(LandWidget *widget, float dx, float dy):
-    if not (dx or dy): return
+def land_widget_scrolling_autohide(LandWidget *widget, int hori, int vert):
+    LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
+    self->autohide = hori + 2 * vert
+
+    land_widget_scrolling_update(widget)
+
+def land_widget_scrolling_autobars(LandWidget *widget):
+    LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
+
+    if not self->autohide: return
+
+    LandWidget *container = land_widget_scrolling_get_container(widget)
+    LandWidget *empty = land_widget_scrolling_get_empty(widget)
+    LandWidget *vbox = land_widget_scrolling_get_vertical(widget)
+    LandWidget *hbox = land_widget_scrolling_get_horizontal(widget)
+
+    # Hide the bars.
+    if not vbox->hidden or not hbox->hidden:
+        int f = land_widget_layout_freeze(widget)
+        if not vbox->hidden: land_widget_hide(vbox)
+        if not hbox->hidden: land_widget_hide(hbox)
+        if not empty->hidden: land_widget_hide(empty)
+        land_widget_layout_set_grid_extra(container, 1, 1)
+        if f: land_widget_layout_unfreeze(widget)
+        land_widget_layout(widget)
+
+    LandWidget *vslider = land_widget_container_child(vbox)
+    LandWidget *hslider = land_widget_container_child(hbox)
+    # Get scrolling parameters
+    #      r
+    # a   ___    b   
+    # |..|___|...|
+    #    p
+    int xa, xb, xr, xp
+    int ya, yb, yr, yp
+    LAND_WIDGET_SCROLLBAR(hslider)->callback(hslider, 0, &xa, &xb, &xr, &xp)
+    LAND_WIDGET_SCROLLBAR(vslider)->callback(vslider, 0, &ya, &yb, &yr, &yp)
+
+    # Determine which bars are needed.
+    int needh = self->autohide & 1 ? 0 : 1, needv = self->autohide & 2 ? 0 : 1
+    if xp > xa or 1 + xb - xa > xr: needh = 1
+    if yp > ya or 1 + yb - ya > yr: needv = 1
+
+    if not needh and not needv:
+        # Keep them all hidden.
+        return
+
+    if needh and needv:
+        # Show both bars.
+        int f = land_widget_layout_freeze(widget)
+        land_widget_unhide(hbox)
+        land_widget_unhide(vbox)
+        land_widget_unhide(empty)
+        land_widget_layout_set_grid_extra(container, 0, 0)
+        if f: land_widget_layout_unfreeze(widget)
+        land_widget_layout(widget)
+        return
+
+    int f = land_widget_layout_freeze(widget)
+    if needh:
+        land_widget_unhide(hbox)
+        land_widget_unhide(empty)
+        land_widget_layout_set_grid_extra(container, 1, 0)
+        if f: land_widget_layout_unfreeze(widget)
+        land_widget_layout(widget)
+        # This has reduced the vertical space, so check again.
+        LAND_WIDGET_SCROLLBAR(vslider)->callback(vslider, 0, &ya, &yb, &yr, &yp)
+        if yp > ya or 1 + yb - ya > yr:
+            f = land_widget_layout_freeze(widget)
+            land_widget_unhide(vbox)
+            land_widget_layout_set_grid_extra(container, 0, 0)
+        else:
+            return
+    else:
+        land_widget_unhide(vbox)
+        land_widget_unhide(empty)
+        land_widget_layout_set_grid_extra(container, 0, 1)
+        if f: land_widget_layout_unfreeze(widget)
+        land_widget_layout(widget)
+        LAND_WIDGET_SCROLLBAR(hslider)->callback(hslider, 0, &xa, &xb, &xr, &xp)
+        if xp > xa or 1 + xb - xa > xr:
+            f = land_widget_layout_freeze(widget)
+            land_widget_unhide(hbox)
+            land_widget_layout_set_grid_extra(container, 0, 0)
+        else:
+            return
+
+    if f: land_widget_layout_unfreeze(widget)
+    land_widget_layout(widget)
+
+def land_widget_scrolling_update(LandWidget *widget):
+    """
+    Update the scrolling window after it was resized or scrolled.
+    """
+
+    land_widget_scrolling_autobars(widget)
+
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandListItem *item = container->children->first
 
     item = item->next
-    LandWidgetContainer *right = LAND_WIDGET_CONTAINER(item->data)
-    LandListItem *item2 = right->children->first
+    LandWidget *right = LAND_WIDGET(item->data)
+    LandListItem *item2 = LAND_WIDGET_CONTAINER(right)->children->first
     LandWidgetScrollbar *rightbar = LAND_WIDGET_SCROLLBAR(item2->data)
     land_widget_scrollbar_update(LAND_WIDGET(rightbar), 0)
 
     item = item->next
-    LandWidgetContainer *bottom = LAND_WIDGET_CONTAINER(item->data)
-    item2 = bottom->children->first
-    LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item2->data)
+    LandWidget *bottom = LAND_WIDGET(item->data)
+    LandListItem *item3 = LAND_WIDGET_CONTAINER(bottom)->children->first
+    LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item3->data)
     land_widget_scrollbar_update(LAND_WIDGET(bottombar), 0)
 
-def land_widget_scrolling_scrollto(LandWidget *base, float x, float y):
+def land_widget_scrolling_size(LandWidget *widget, float dx, float dy):
+    if not (dx or dy): return
+    land_widget_scrolling_update(widget)
+
+def land_widget_scrolling_get_scroll_position(LandWidget *base, float *x, *y):
+    LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
+    LandList *children = LAND_WIDGET_CONTAINER(contents)->children
+    if not children:
+        *x = 0
+        *y = 0
+        return
+    LandWidget *child =  children->first->data
+    *x = child->box.x - contents->box.x - contents->element->il
+    *y = child->box.y - contents->box.y - contents->element->it
+
+def land_widget_scrolling_scrollto(LandWidget *base, float x, y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
     if not children: return
     LandWidget *child =  children->first->data
 
-    child->box.x = contents->box.x + contents->element->il + x
-    child->box.y = contents->box.y + contents->element->it + y
+    land_widget_move(child,
+        contents->box.x + contents->element->il + x - child->box.x,
+        contents->box.y + contents->element->it + y - child->box.y)
 
-    land_widget_scrolling_size(base, 0, 0)
+    land_widget_scrolling_update(base)
 
-def land_widget_scrolling_update(LandWidget *base):
-    """
-    Adjusts the corner widget depending on the state of the scrollbars.
-    Whenever a scrollbar is added/removed, this function should be called.
-    """
-    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
-    LandListItem *item = container->children->first
-
-    item = item->next
-    LandWidget *right = LAND_WIDGET(item->data)
-
-    item = item->next
-    LandWidget *bottom = LAND_WIDGET(item->data)
-
-    item = item->next
-    LandWidget *empty = LAND_WIDGET(item->data)
-
-    if right->hidden or bottom->hidden:
-        if not empty->hidden:
-            land_widget_hide(empty)
-    if not right->hidden and not bottom->hidden:
-        if empty->hidden:
-            land_widget_unhide(empty)
-
+def land_widget_scrolling_scroll(LandWidget *base, float dx, dy):
+    float x, y
+    land_widget_scrolling_get_scroll_position(base, &x, &y)
+    land_widget_scrolling_scrollto(base, x + dx, y + dy)
+    
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     if land_mouse_delta_z():
-        LandWidget *contents =\
-            LAND_WIDGET_CONTAINER(base)->children->first->data
-        LandList *children = LAND_WIDGET_CONTAINER(contents)->children
-        if not children: return
-        LandWidget *child = children->first->data
-        int maxy = contents->box.y + contents->element->it
-        int miny = contents->box.y + contents->box.h -\
-            contents->element->ib - child->box.h
-        int dy = land_mouse_delta_z() * 64
-        int y = child->box.y
-        int target_y = y + dy
-        if dy < 0 and target_y < miny: target_y = miny
-        if dy > 0 and target_y > maxy: target_y = maxy
-        if (dy < 0 and target_y < y) or (dy > 0 and target_y > y):
-            land_widget_move(child, 0, target_y - child->box.y)
+        int dy = land_mouse_delta_z() * land_font_height(base->element->font)
+        land_widget_scrolling_scroll(base, 0, dy)
 
     land_widget_container_mouse_tick(base)
 
@@ -137,7 +241,7 @@ LandWidget *def land_widget_scrolling_get_child(LandWidget *base):
     """
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
-    return children ? children->first->data : NULL
+    return children ? children->first->data : None
 
 def land_widget_scrolling_remove_child(LandWidget *base):
     """
@@ -158,20 +262,11 @@ def land_widget_scrolling_remove_child(LandWidget *base):
     c = LAND_WIDGET_CONTAINER(list->first->next->next->data)
     LAND_WIDGET_SCROLLBAR(c->children->first->data)->target = NULL
 
-LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
-    """
-    Creates a new Scrolling widget. You can add a child widget to it, and it
-    will automatically display scrollbars and translate mouse coordinates.
-    
-    By default, the widget will expand in all directions.
-    """
-    LandWidgetScrolling *self
-    
+def land_widget_scrolling_initialize(LandWidget *widget,
+    LandWidget *parent, int x, y, w, h):
+
     land_widget_scrolling_interface_initialize()
 
-    land_alloc(self)
-    LandWidgetContainer *super = &self->super
-    LandWidget *widget = &super->super
     land_widget_container_initialize(widget, parent, x, y, w, h)
     land_widget_layout_enable(widget)
 
@@ -189,20 +284,16 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     right->vt = land_widget_scrolling_vertical_container_interface
     land_widget_theme_initialize(right)
     land_widget_theme_set_minimum_size(right)
-    LandWidget *rightbar = land_widget_scrollbar_new(right, NULL,
+    land_widget_scrollbar_new(right, NULL,
         1, right->element->il, right->element->it, 0, 0)
-    LAND_WIDGET_SCROLLBAR(rightbar)->hide_callback =\
-        land_widget_scrolling_update
 
     # child 3: horizontal scrollbar 
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0)
     bottom->vt = land_widget_scrolling_horizontal_container_interface
     land_widget_theme_initialize(bottom)
     land_widget_theme_set_minimum_size(bottom)
-    LandWidget *bottombar = land_widget_scrollbar_new(bottom, NULL,
+    land_widget_scrollbar_new(bottom, NULL,
         0, bottom->element->il, bottom->element->it, 0, 0)
-    LAND_WIDGET_SCROLLBAR(bottombar)->hide_callback =\
-        land_widget_scrolling_update
 
     # overall layout 
     land_widget_layout_set_grid(widget, 2, 2)
@@ -227,12 +318,19 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
 
     land_widget_layout(widget)
 
-    return widget
+LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
+    """
+    Creates a new Scrolling widget. You can add a child widget to it, and it
+    will automatically display scrollbars and translate mouse coordinates.
+    
+    By default, the widget will expand in all directions.
+    """
+    LandWidgetScrolling *self
+    land_alloc(self)
+    LandWidget *widget = (LandWidget *)self
+    land_widget_scrolling_initialize(widget, parent, x, y, w, h)
 
-LandWidget *def land_widget_scrolling_get_empty(LandWidget *base):
-    LandList *children = LAND_WIDGET_CONTAINER(base)->children
-    LandWidget *empty = children->first->next->next->next->data;
-    return empty
+    return widget
 
 def land_widget_scrolling_interface_initialize():
     if land_widget_scrolling_interface: return
