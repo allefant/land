@@ -34,7 +34,7 @@ def land_widget_list_initialize(LandWidget *base, LandWidget *parent,
     land_widget_vbox_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_list_interface
 
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
 
 # Create a new List widget. A list is simply a container with a layout in
 # rows and columns. Each time you add a widget to it, it will be placed in the
@@ -55,7 +55,7 @@ LandWidget *def land_widget_listitem_new(LandWidget *parent,
         x, y, w, h)
     land_widget_listitem_interface_initialize()
     self->vt = land_widget_listitem_interface
-    land_widget_theme_layout_border(self)
+    land_widget_theme_initialize(self)
     land_widget_layout(parent)
     return self
 
