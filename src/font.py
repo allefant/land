@@ -4,6 +4,7 @@ class LandFontInterface:
     land_method(void, print, (LandFontState *state, LandDisplay *display, char const *text,
         int alignement))
     land_method(void, destroy, (LandDisplay *d, LandFont *self))
+    land_method(float, length, (LandFontState *state,    char const *text))
 
 class LandFont:
     LandFontInterface *vt
@@ -14,6 +15,7 @@ class LandFontState:
     LandFont *font
     float x, y, w, h
     float off
+    float wordwrap_width, wordwrap_height
 
 static import global allegro, stdio
 static import font, exception, main
@@ -107,7 +109,7 @@ def land_text_off():
 def land_text_on():
     land_font_state->off = 0
 
-static def _print(char const *str, int newline, int alignement):
+def land_print_string(char const *str, int newline, int alignement):
     land_font_state->font->vt->print(land_font_state, _land_active_display, str,
         alignement)
     if newline:
@@ -116,11 +118,14 @@ static def _print(char const *str, int newline, int alignement):
         land_font_state->x_pos = land_font_state->x + land_font_state->w
 
 int def land_text_get_width(char const *str):
-    int onoff = land_font_state->off
-    land_font_state->off = 1
-    land_font_state->font->vt->print(land_font_state, NULL, str, 0)
-    land_font_state->off = onoff
-    return land_font_state->w
+    if land_font_state->font->vt->length:
+        return land_font_state->font->vt->length(land_font_state, str)
+    else:
+        int onoff = land_font_state->off
+        land_font_state->off = 1
+        land_font_state->font->vt->print(land_font_state, NULL, str, 0)
+        land_font_state->off = onoff
+        return land_font_state->w
 
 # Get the position at which the nth character is drawn. 
 int def land_text_get_char_offset(char const *str, int nth):
@@ -150,54 +155,73 @@ macro VPRINT char str[1024]; va_list args; va_start(args, text); vsnprintf(str, 
 
 def land_print(char const *text, ...):
     VPRINT
-    _print(str, 1, 0)
+    land_print_string(str, 1, 0)
 
 def land_print_right(char const *text, ...):
     VPRINT
-    _print(str, 1, 1)
+    land_print_string(str, 1, 1)
 
 def land_print_center(char const *text, ...):
     VPRINT
-    _print(str, 1, 2)
+    land_print_string(str, 1, 2)
 
 def land_write(char const *text, ...):
     VPRINT
-    _print(str, 0, 0)
+    land_print_string(str, 0, 0)
 
 def land_write_right(char const *text, ...):
     VPRINT
-    _print(str, 0, 1)
+    land_print_string(str, 0, 1)
 
 def land_write_center(char const *text, ...):
     VPRINT
-    _print(str, 0, 2)
+    land_print_string(str, 0, 2)
 
 static int def _wordwrap_helper(char const *text, int w, h,
     void (*cb)(int a, int b, void *data), void *data):
     int y = land_text_y_pos()
+    float fh = land_font_state->font->size
     char const *a = text
+    char glyph[sizeof(int) * 2]
+    int *ig = (void *)glyph
+    ig[1] = 0
     while 1:
+        char const *ptr = a
         if h > 0 and land_text_y_pos() >= y + h: break
         int n = 0
+        float offset = 0
+        float www = 0
         int pn
         while 1:
             pn = n
             int c
             while 1:
-                c = ugetat(a, n)
+                c = ugetat(ptr, 0)
                 if c == 0: break
                 if c == ' ' or c == '\n':
                     break
+                ig[0] = c
+                offset += land_text_get_width(glyph)
+                ptr += uoffset(a, 1)
                 n++
 
-            int x = land_text_get_char_offset(a, n)
+            int x = offset
             if x > w:
                 if pn > 0:
                     n = pn - 1
+                else:
+                    www = x
                 break
+            www = x
             if c == 0 or c == '\n': break
+            ig[0] = c
+            offset += land_text_get_width(glyph)
+            ptr += uoffset(ptr, 1)
             n++
 
+        if www > land_font_state->wordwrap_width:
+            land_font_state->wordwrap_width = www
+        land_font_state->wordwrap_height += fh
         cb(a - text, a + n - text, data)
 
         a += uoffset(a, n)
@@ -213,9 +237,9 @@ static def _print_wordwrap_cb(int a, b, void *data):
 
     char s[b - a + 1]
     ustrzcpy(s, b - a + 1, text + a)
-    _print(s, 1, *alignement)
+    land_print_string(s, 1, *alignement)
 
-static int def _print_wordwrap(char const *text, int w, h, alignement):
+int def land_print_string_wordwrap(char const *text, int w, h, alignement):
     """
     Print text inside, and starts a new line whenever the text goes over the
     given width, wrapping at whitespace. If a single word is bigger than w, it
@@ -229,15 +253,15 @@ static int def _print_wordwrap(char const *text, int w, h, alignement):
 
 int def land_print_wordwrap(int w, h, char const *text, ...):
     VPRINT
-    return _print_wordwrap(str, w, h, 0)
+    return land_print_string_wordwrap(str, w, h, 0)
 
 int def land_print_wordwrap_right(int w, h, char const *text, ...):
     VPRINT
-    return _print_wordwrap(str, w, h, 1)
+    return land_print_string_wordwrap(str, w, h, 1)
 
 int def land_print_wordwrap_center(int w, h, char const *text, ...):
     VPRINT
-    return _print_wordwrap(str, w, h, 2)
+    return land_print_string_wordwrap(str, w, h, 2)
 
 static def land_wordwrap_text_cb(int a, b, void *data):
     void **p = data
@@ -252,10 +276,39 @@ LandArray *def land_wordwrap_text(int w, h, char const *str):
     Splits the given string into multiple lines no longer than w pixels. The
     returned array will have a newly allocated string for each line. You are
     responsible for freeing those strings again.
+    The calculations will use the current font. Note that for large texts, this
+    can take a while, so you should do calculations on demand and only for the
+    visible text.
+    You can call land_wordwrap_extents after this functions to get the
+    dimensions of a box which will be able to hold all the text.
     """
     LandArray *lines = land_array_new()
-    
-    void *data[] = {(void *)str, lines}
-    _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
-
+    land_font_state->wordwrap_width = 0
+    land_font_state->wordwrap_height = 0
+    if str:
+        void *data[] = {(void *)str, lines}
+        _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
+     
     return lines
+
+def land_wordwrap_extents(float *w, float *h):
+    *w = land_font_state->wordwrap_width
+    *h = land_font_state->wordwrap_height
+
+def land_print_lines(LandArray *lines, int alignement):
+    """
+    Given an array of lines, print the visible ones.
+    """
+    float cl, ct, cr, cb
+    land_get_clip(&cl, &ct, &cr, &cb)
+    float fh = land_font_state->font->size
+    float ty = land_text_y_pos()
+    int first = (ct - ty) / fh
+    int last = (cb - ty) / fh
+    int n = land_array_count(lines)
+    if first < 0: first = 0
+    if last > n - 1: last = n - 1
+    land_font_state->y_pos += fh * first
+    for int i = first; i <= last; i++:
+        char *s = land_array_get_nth(lines, i)
+        land_print_string(s, 1, alignement)
