@@ -156,31 +156,32 @@ delete one of its widgets, and why it is like that.
 import ../hash, gul
 
 # A widget ID must contain the hex digits of the parent.
-macro LAND_WIDGET_ID_BASE         0x00000001 # no visual, no layout
-macro LAND_WIDGET_ID_CONTAINER    0x00000011 # no visual, no layout
-macro LAND_WIDGET_ID_SCROLLING    0x00000111 # visual, layout
-macro LAND_WIDGET_ID_VBOX         0x00000211 # no visual, layout
-macro LAND_WIDGET_ID_LIST         0x00001211 # visual, layout
-macro LAND_WIDGET_ID_HBOX         0x00000311 # no visual, layout
-macro LAND_WIDGET_ID_TABBAR       0x00001311 # visual, layout
-macro LAND_WIDGET_ID_SPIN         0x00002311 # visual, layout
-macro LAND_WIDGET_ID_PANEL        0x00000411 # visual, layout
-macro LAND_WIDGET_ID_BOARD        0x00000511 # visual, no layout
-macro LAND_WIDGET_ID_MENU         0x00000611
-macro LAND_WIDGET_ID_MENUBAR      0x00001611
-macro LAND_WIDGET_ID_BOOK         0x00000711
-macro LAND_WIDGET_ID_SLIDER       0x00000811
-macro LAND_WIDGET_ID_BUTTON       0x00000021
-macro LAND_WIDGET_ID_MENUBUTTON   0x00000121
-macro LAND_WIDGET_ID_MENUITEM     0x00000221
-macro LAND_WIDGET_ID_LISTITEM     0x00000321
-macro LAND_WIDGET_ID_TAB          0x00000421
-macro LAND_WIDGET_ID_SPINBUTTON   0x00000521
-macro LAND_WIDGET_ID_SCROLLBAR    0x00000031
-macro LAND_WIDGET_ID_EDIT         0x00000041
-macro LAND_WIDGET_ID_HANDLE       0x00000051
+macro LAND_WIDGET_ID_BASE           0x00000001 # no visual, no layout
+macro LAND_WIDGET_ID_CONTAINER      0x00000011 # no visual, no layout
+macro LAND_WIDGET_ID_SCROLLING      0x00000111 # visual, layout
+macro LAND_WIDGET_ID_SCROLLING_TEXT 0x00001111
+macro LAND_WIDGET_ID_VBOX           0x00000211 # no visual, layout
+macro LAND_WIDGET_ID_LIST           0x00001211 # visual, layout
+macro LAND_WIDGET_ID_HBOX           0x00000311 # no visual, layout
+macro LAND_WIDGET_ID_TABBAR         0x00001311 # visual, layout
+macro LAND_WIDGET_ID_SPIN           0x00002311 # visual, layout
+macro LAND_WIDGET_ID_PANEL          0x00000411 # visual, layout
+macro LAND_WIDGET_ID_BOARD          0x00000511 # visual, no layout
+macro LAND_WIDGET_ID_MENU           0x00000611
+macro LAND_WIDGET_ID_MENUBAR        0x00001611
+macro LAND_WIDGET_ID_BOOK           0x00000711
+macro LAND_WIDGET_ID_SLIDER         0x00000811
+macro LAND_WIDGET_ID_BUTTON         0x00000021
+macro LAND_WIDGET_ID_MENUBUTTON     0x00000121
+macro LAND_WIDGET_ID_MENUITEM       0x00000221
+macro LAND_WIDGET_ID_LISTITEM       0x00000321
+macro LAND_WIDGET_ID_TAB            0x00000421
+macro LAND_WIDGET_ID_SPINBUTTON     0x00000521
+macro LAND_WIDGET_ID_SCROLLBAR      0x00000031
+macro LAND_WIDGET_ID_EDIT           0x00000041
+macro LAND_WIDGET_ID_HANDLE         0x00000051
 
-macro LAND_WIDGET_ID_USER         0x80000000
+macro LAND_WIDGET_ID_USER           0x80000000
 
 class LandWidgetInterface:
     int id
@@ -251,15 +252,15 @@ class LandWidget:
     unsigned int no_layout : 1
 
     # user state
-    unsigned int selected : 1; # e.g. checked checkbox or pressed button
-    unsigned int highlighted : 1; # item with mouse hovering over it
-    unsigned int disabled : 1; # e.g. button who cannot currently be pressed
+    unsigned int selected : 1 # e.g. checked checkbox or pressed button
+    unsigned int highlighted : 1 # item with mouse hovering over it
+    unsigned int disabled : 1 # e.g. button who cannot currently be pressed
 
-    int reference; # reference counting
+    int reference # reference counting
 
-    LandHash *properties; # arbitrary string-keyed properties
+    LandHash *properties # arbitrary string-keyed properties
 
-    struct LandWidgetThemeElement *element; # this widget's theme
+    struct LandWidgetThemeElement *element # this widget's theme
 
 class LandWidgetProperty:
     void (*destroy)(void *data)
