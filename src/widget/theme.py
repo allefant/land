@@ -22,8 +22,11 @@ class LandWidgetThemeElement:
     float r, g, b, a # text color 
     LandFont *font
     unsigned int transparent : 1
-    
-    int il, it, ir, ib # Offset to contents, inner border.
+
+    # Offset to contents - by default this is the same as the border, but it can
+    # be smaller (contents are drawn over the border) or larger (there's some
+    # additional padding of contents).
+    int il, it, ir, ib
     int hgap, vgap # If there are child elements, space between them.
     
     LandWidgetThemeElement *selected
@@ -288,8 +291,8 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
 
                 elif (!strcmp (argv[a], "border")):
                     read_int_arg(argc, argv, &a, &self->bl)
-                    read_int_arg(argc, argv, &a, &self->br)
                     read_int_arg(argc, argv, &a, &self->bt)
+                    read_int_arg(argc, argv, &a, &self->br)
                     read_int_arg(argc, argv, &a, &self->bb)
                     # FIXME: should not overwrite a previous inner
                     self->il = self->bl
@@ -299,8 +302,8 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                 
                 elif (!strcmp (argv[a], "inner")):
                     read_int_arg(argc, argv, &a, &self->il)
-                    read_int_arg(argc, argv, &a, &self->ir)
                     read_int_arg(argc, argv, &a, &self->it)
+                    read_int_arg(argc, argv, &a, &self->ir)
                     read_int_arg(argc, argv, &a, &self->ib)
 
                 elif (!strcmp (argv[a], "gap")):
@@ -432,13 +435,6 @@ def land_widget_theme_font(LandWidget *self):
     if not element: return
     land_font_set(element->font)
 
-def land_widget_theme_layout_border(LandWidget *self):
-    # FIXME: This function should be removed - the layout parameters must be
-    # read directly from the theme, at the time it is loaded.
-    LandWidgetThemeElement *element = land_widget_theme_element(self)
-    if not element: return
-    # TODO
-
 def land_widget_theme_set_minimum_size(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
@@ -453,7 +449,16 @@ def land_widget_theme_initialize(LandWidget *self):
     """
     if not self->element: return
     self->element = land_widget_theme_find_element(self->element->theme, self)
-    land_widget_theme_layout_border(self)
+
+    land_widget_theme_set_minimum_size(self)
+
+def land_widget_theme_set_minimum_size_for_contents(LandWidget *self,
+    int w, int h):
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
+    if not element: return
+
+    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
+        element->it + element->ib + h)
 
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     char const *text):
@@ -462,8 +467,8 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     land_font_set(element->font)
     int w = land_text_get_width(text)
     int h = land_font_height(land_font_current())
-    land_widget_layout_set_minimum_size(self, element->bl + element->br + w,
-        element->bt + element->bb + h)
+    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
+        element->it + element->ib + h)
 
 def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     LandImage *image):
@@ -471,5 +476,13 @@ def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     if not element: return
     int w = land_image_width(image)
     int h = land_image_height(image)
-    land_widget_layout_set_minimum_size(self, element->bl + element->br + w,
-        element->bt + element->bb + h)
+    
+    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
+        element->it + element->ib + h)
+
+    printf("%s (%s) %d %d %d %d (%d %d) %d %d\n", element->name,
+        self->vt->name,
+        element->il, element->it,
+        element->ir, element->ib,
+        w, h, self->box.min_width, self->box.min_height)
+    
