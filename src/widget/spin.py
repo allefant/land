@@ -87,7 +87,7 @@ def land_widget_spin_initialize(LandWidget *base,
     
     land_widget_layout_set_expanding(base, 1, 0)
 
-    land_widget_theme_layout_border(base)
+    land_widget_theme_initialize(base)
     if parent: land_widget_layout(parent)
 
 LandWidget *def land_widget_spin_new(LandWidget *parent,
