@@ -222,7 +222,7 @@ LandWidget *def land_widget_submenuitem_new(LandWidget *parent,
     LandWidget *button = land_widget_menubutton_new(parent, name, submenu,
         0, 0, 0, 0)
     LAND_WIDGET_MENU(submenu)->menubutton = button
-    land_widget_theme_layout_border(button)
+    land_widget_theme_initialize(button)
     land_widget_layout_set_minimum_size(button,
         button->element->il + button->element->ir + tw,
         button->element->it + button->element->ib + th)
@@ -234,7 +234,7 @@ LandWidget *def land_widget_submenuitem_new(LandWidget *parent,
 
 LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
     LandWidget *button = land_widget_box_new(parent, 0, 0, 0, 0)
-    land_widget_theme_layout_border(button)
+    land_widget_theme_initialize(button)
 
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
