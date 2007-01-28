@@ -275,7 +275,12 @@ def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
     state->y = y
     state->w = w
     state->h = h
-    
+
+float def land_font_allegrogl_text_length(LandFontState *state,
+    char const *text):
+    LandFontAllegrogl *self = LAND_FONT_ALLEGROGL(state->font)
+    return text_length(self->font, text)
+
 def land_font_allegrogl_unupload(void):
     if not fonts: return
     LandListItem *i
@@ -300,6 +305,7 @@ def land_font_allegrogl_init(void):
     land_alloc(vtable)
     vtable->print = land_font_allegrogl_print
     vtable->destroy = land_font_allegrogl_destroy
+    vtable->length = land_font_allegrogl_text_length
     fonts = land_list_new()
 
 def land_font_allegrogl_exit(void):
