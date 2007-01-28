@@ -138,7 +138,7 @@ LandWidget *def land_widget_edit_new(LandWidget *parent, char const *text,
     land_widget_edit_initialize(self,
         parent, text, modified, x, y, w, h)
 
-    land_widget_theme_layout_border(self)
+    land_widget_theme_initialize(self)
     land_widget_layout(parent)
 
     return self
