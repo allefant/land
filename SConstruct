@@ -71,6 +71,8 @@ env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 env.Append(CCFLAGS = "--std=gnu99")
 
+env.Append(CPPPATH = ["include/land"])
+
 if debug:
     if optimization != "0":
         env.Append(CCFLAGS = "-O2")
@@ -93,8 +95,6 @@ else:
 
 SHAREDLIBNAME = LIBNAME
 STATICLIBNAME = LIBNAME + "_s"
-
-env.Append(CPPPATH = ["include/land"])
 
 if crosscompile:
     env["CC"] = "i586-mingw32msvc-gcc"
