@@ -165,6 +165,7 @@ def land_widget_button_initialize(LandWidget *base,
 
 LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
