@@ -136,7 +136,7 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
             self->count--
             return data
 
-    return NULL
+    return None
 
 void *def land_hash_get(LandHash *self, char const *thekey):
     """Return the data associated with a hash key. If the key exists multiple
@@ -154,7 +154,7 @@ void *def land_hash_get(LandHash *self, char const *thekey):
         if not ustrcmp(self->entries[i][j].thekey, thekey):
             return self->entries[i][j].data
 
-    return NULL
+    return None
 
 LandArray *def land_hash_keys(LandHash *hash):
     """Return an array containing all the keys in the hash. The strings are
