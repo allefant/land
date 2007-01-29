@@ -77,16 +77,19 @@ if debug:
     env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
+    env.ParseConfig("allegro-config --cflags debug")
 elif profile:
     env.Append(CCFLAGS = "-g -pg -fprofile-arcs")
     env.Append(LINKFLAGS = "-pg")
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
+    env.ParseConfig("allegro-config --cflags profile")
 else:
     if optimization != "0":
         env.Append(CCFLAGS = "-O3")
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "lib/%s/land" % (env["PLATFORM"])
+    env.ParseConfig("allegro-config --cflags release")
 
 SHAREDLIBNAME = LIBNAME
 STATICLIBNAME = LIBNAME + "_s"
