@@ -230,18 +230,21 @@ def land_widget_scrolling_scroll(LandWidget *base, float dx, dy):
     float x, y
     land_widget_scrolling_get_scroll_position(base, &x, &y)
     land_widget_scrolling_scrollto(base, x + dx, y + dy)
-    
+
+def land_widget_scrolling_limit(LandWidget *base):
+    float x, y, w, h
+    land_widget_scrolling_get_scroll_position(base, &x, &y)
+    land_widget_scrolling_get_scroll_extents(base, &w, &h)
+    if y < -h: land_widget_scrolling_scrollto(base, x, -h)
+    if y > 0: land_widget_scrolling_scrollto(base, x, 0)
+
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(base)
     if land_mouse_delta_z() and self->scrollwheel:
         int dy = land_mouse_delta_z() * land_font_height(base->element->font)
         land_widget_scrolling_scroll(base, 0, dy)
         if not (self->scrollwheel & 2):
-            float x, y, w, h
-            land_widget_scrolling_get_scroll_position(base, &x, &y)
-            land_widget_scrolling_get_scroll_extents(base, &w, &h)
-            if y < -h: land_widget_scrolling_scrollto(base, x, -h)
-            if y > 0: land_widget_scrolling_scrollto(base, x, 0)
+            land_widget_scrolling_limit(base)
 
     land_widget_container_mouse_tick(base)
 
