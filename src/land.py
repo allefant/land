@@ -178,7 +178,7 @@ So far, the state maintained by a LandDisplay thus is:
 import global allegro, stdio, stdlib, string, stdarg, math
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
-import log, color, data, memory, widget, net, queue
+import log, color, data, memory, widget, net, queue, sound
 
 static LandArray *exit_functions
 

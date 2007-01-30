@@ -190,6 +190,8 @@ int def land_main():
     if install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL):
         land_exception("Error in install_sound: %s", allegro_error)
 
+    land_sound_init()
+
     land_mouse_init()
     land_keyboard_init()
 
@@ -221,7 +223,8 @@ int def land_main():
     land_runner_destroy_all()
     
     land_display_destroy(display)
-    
+
+    land_sound_exit()
     land_grid_exit()
     land_font_exit()
     land_image_exit()
