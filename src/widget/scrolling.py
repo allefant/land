@@ -213,6 +213,8 @@ def land_widget_scrolling_get_scroll_extents(LandWidget *base, float *x, *y):
     LandWidget *child =  children->first->data
     *x = child->box.w - contents->box.w + contents->element->il + contents->element->ir
     *y = child->box.h - contents->box.h + contents->element->it + contents->element->ib
+    if *x < 0: *x = 0
+    if *y < 0: *y = 0
 
 def land_widget_scrolling_scrollto(LandWidget *base, float x, y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
