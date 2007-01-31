@@ -427,6 +427,15 @@ def land_widget_move(LandWidget *self, float dx, dy):
     self->box.y += dy
     land_call_method(self, move, (self, dx, dy))
 
+def land_widget_center(LandWidget *self):
+    int dw = land_display_width()
+    int dh = land_display_height()
+    int x = self->box.x
+    int y = self->box.y
+    int w = self->box.w
+    int h = self->box.h
+    land_widget_move(self, (dw - w) / 2 - x, (dh - h) / 2 - y)
+
 def land_widget_base_size(LandWidget *self, float dx, dy):
     pass
 
