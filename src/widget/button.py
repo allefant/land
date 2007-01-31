@@ -260,6 +260,11 @@ def land_widget_button_wordwrap(LandWidget *self, int onoff):
         land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
 
 def land_widget_button_align(LandWidget *self, int x, int y):
+    """
+    0 = left/top
+    1 = right/bottom
+    2 = center
+    """
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
     button->xalign = x
     button->yalign = y
