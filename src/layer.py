@@ -10,6 +10,11 @@ class LandLayer:
       
     float scrolling_x, scrolling_y
 
+    # This allows adding an offset to the view area. For example if you have a
+    # layer with objects who can overlap to the tiles above, it might make sense
+    # to increase view_h so additional tiles which could be visible are drawn.
+    float view_x, view_y, view_w, view_h
+
     LandGrid *grid
 
     LandSprite *first_active
@@ -22,6 +27,10 @@ def land_layer_draw(LandLayer *self, LandView *view):
     v.scroll_y -= self->y
     v.scroll_x *= self->scrolling_x
     v.scroll_y *= self->scrolling_y
+    v.x += self->view_x
+    v.y += self->view_y
+    v.w += self->view_w
+    v.h += self->view_h
     # TODO: can a layer have more than one grid?
     if self->grid: land_grid_draw(self->grid, &v)
 
