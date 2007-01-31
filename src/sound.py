@@ -25,7 +25,7 @@ def land_sound_destroy(LandSound *s):
 
 def land_sound_init():
     register_sample_file_type("ogg", apeg_preload_audio, None)
-    register_sample_file_type("mpg", apeg_preload_audio, None)
+    register_sample_file_type("mp3", apeg_preload_audio, None)
     active = 1
 
 def land_sound_exit():
