@@ -18,7 +18,7 @@ pyfiles = glob.glob("src/*.py")
 pyfiles += glob.glob("src/*/*.py")
 
 # Environment to generate includes.
-includeenv = Environment()
+includeenv = Environment(ENV = {'PATH' : os.environ['PATH']})
 includeenv.SConsignFile("scons/signatures")
 includeenv.BuildDir("include/land", "src", duplicate = False)
 # This means, if the same .c or .h is created, then it should be treated as
