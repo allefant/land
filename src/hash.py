@@ -130,7 +130,7 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
             void *data = self->entries[i][j].data
             land_free(self->entries[i][j].thekey)
             self->entries[i]->n--
-            self->entries[i][j] = self->entries[i][n - 1]
+            self->entries[i][j] = self->entries[i][n]
             self->entries[i] = land_realloc(self->entries[i],
                 self->entries[i]->n * sizeof *self->entries[i])
             self->count--
