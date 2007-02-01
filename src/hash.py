@@ -1,4 +1,4 @@
-import global stdio, stdlib, allegro
+import global assert, stdio, stdlib, allegro
 
 class LandHashEntry:
     char *thekey
@@ -78,11 +78,15 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     If the key already exists, there will be two entries with the same key
     from now on, and it is undefined behavior which one will get returned when
     querying for the key."""
+
+    assert(thekey)
+
     int i
 
     # Need to resize? 
     if (self->count + 1) * 2 > self->size:
         int oldsize = self->size
+        int oldcount = self->count
         LandHashEntry **oldentries = self->entries
         if !self->size: self->bits = 1 # for first entry, we already want size 2 
         else: self->bits++
@@ -93,14 +97,14 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
             LandHashEntry *entry = oldentries[i]
             if entry:
                 int j
-                for j = 0; j < entry->n; j++:
+                for j = 0; j < entry[0].n; j++:
                     land_hash_insert(self, entry[j].thekey, entry[j].data)
                     land_free(entry[j].thekey)
 
                 land_free(entry)
 
-
         if oldentries: land_free(oldentries)
+        assert(self->count == oldcount)
 
     # Now there should be ample room to add the new one. 
     i = self->hash_function(self, thekey)
@@ -109,7 +113,7 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     self->entries[i] = land_realloc(entry, n * sizeof *entry)
     self->entries[i][n - 1].thekey = land_strdup(thekey)
     self->entries[i][n - 1].data = data
-    self->entries[i]->n = n
+    self->entries[i][0].n = n
     self->count++
     return data
 
@@ -123,16 +127,20 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
     if !self->size: return NULL
     int i = self->hash_function(self, thekey)
     if !self->entries[i]: return NULL
-    int n = self->entries[i]->n
+    int n = self->entries[i][0].n
     int j
     for j = 0; j < n; j++:
         if not ustrcmp(self->entries[i][j].thekey, thekey):
             void *data = self->entries[i][j].data
             land_free(self->entries[i][j].thekey)
-            self->entries[i]->n--
-            self->entries[i][j] = self->entries[i][n]
-            self->entries[i] = land_realloc(self->entries[i],
-                self->entries[i]->n * sizeof *self->entries[i])
+            if n > 1:
+                self->entries[i][j] = self->entries[i][n - 1]
+                self->entries[i] = land_realloc(self->entries[i],
+                    (n - 1) * sizeof *self->entries[i])
+                self->entries[i][0].n = n - 1
+            else:
+                land_free(self->entries[i])
+                self->entries[i] = None
             self->count--
             return data
 
@@ -150,7 +158,7 @@ void *def land_hash_get(LandHash *self, char const *thekey):
     int i = self->hash_function(self, thekey)
     if !self->entries[i]: return NULL
     int j
-    for j = 0; j < self->entries[i]->n; j++:
+    for j = 0; j < self->entries[i][0].n; j++:
         if not ustrcmp(self->entries[i][j].thekey, thekey):
             return self->entries[i][j].data
 
