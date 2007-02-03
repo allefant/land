@@ -85,6 +85,8 @@ def land_widget_scrolling_autobars(LandWidget *widget):
         if not hbox->hidden: land_widget_hide(hbox)
         if not empty->hidden: land_widget_hide(empty)
         land_widget_layout_set_grid_extra(container, 1, 1)
+        land_widget_layout_set_grid_extra(hbox, 0, 0)
+        land_widget_layout_set_grid_extra(vbox, 0, 0)
         if f: land_widget_layout_unfreeze(widget)
         land_widget_layout(widget)
 
@@ -138,6 +140,7 @@ def land_widget_scrolling_autobars(LandWidget *widget):
     if needh:
         land_widget_unhide(hbox)
         if neede: land_widget_unhide(empty)
+        else: land_widget_layout_set_grid_extra(hbox, 1, 0)
         land_widget_layout_set_grid_extra(container, 1, 0)
         if f: land_widget_layout_unfreeze(widget)
         land_widget_layout(widget)
@@ -152,6 +155,7 @@ def land_widget_scrolling_autobars(LandWidget *widget):
     else:
         land_widget_unhide(vbox)
         if neede: land_widget_unhide(empty)
+        else: land_widget_layout_set_grid_extra(vbox, 0, 1)
         land_widget_layout_set_grid_extra(container, 0, 1)
         if f: land_widget_layout_unfreeze(widget)
         land_widget_layout(widget)
@@ -243,6 +247,10 @@ def land_widget_scrolling_limit(LandWidget *base):
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(base)
     if land_mouse_delta_z() and self->scrollwheel:
+        if not (self->scrollwheel & 2):
+            float w, h
+            land_widget_scrolling_get_scroll_extents(base, &w, &h)
+            if h <= 0: return
         int dy = land_mouse_delta_z() * land_font_height(base->element->font)
         land_widget_scrolling_scroll(base, 0, dy)
         if not (self->scrollwheel & 2):
