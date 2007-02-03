@@ -288,7 +288,31 @@ LandArray *def land_wordwrap_text(int w, h, char const *str):
     if str:
         void *data[] = {(void *)str, lines}
         _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
-     
+    return lines
+
+LandArray *def land_text_splitlines(char const *str):
+    """
+    Splits the text into lines, and updates the wordwrap extents.
+    """
+    land_font_state->wordwrap_width = 0
+
+    LandArray *lines = land_array_new()
+    while 1:
+        char const *p = ustrchr(str, '\n')
+        if not p:
+            p = str + strlen(str)
+        char *s = land_malloc(p - str + 1)
+        ustrzcpy(s, p - str + 1, str)
+
+        int w = land_text_get_width(s)
+        if w > land_font_state->wordwrap_width:
+            land_font_state->wordwrap_width = w
+        
+        land_array_add(lines, s)
+        if p[0] == 0: break
+        str = p + 1
+    land_font_state->wordwrap_height = land_font_state->font->size *\
+        land_array_count(lines)
     return lines
 
 def land_wordwrap_extents(float *w, float *h):
