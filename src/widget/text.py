@@ -52,7 +52,7 @@ def land_widget_scrolling_text_size(LandWidget *widget, float dx, float dy):
     land_widget_inner(container, &cx, &cy, &cw, &ch)
     LandWidget *button = land_widget_container_child(container)
     land_widget_size(button, cw - button->box.w, ch - button->box.h)
-    land_widget_button_wordwrap(button, LAND_WIDGET_BUTTON(button)->wordwrap)
+    land_widget_button_multiline(button, LAND_WIDGET_BUTTON(button)->multiline)
 
     land_widget_scrolling_size(widget, dx, dy)
 
