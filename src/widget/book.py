@@ -161,7 +161,7 @@ def land_widget_book_interface_initialize(void):
         land_widget_hbox_interface, "tabbar")
     land_widget_tabbar_interface->id |= LAND_WIDGET_ID_TABBAR
 
-# Return the current active page or NULL
+# Return the current active page or None
 LandWidget *def land_widget_book_get_current_page(LandWidget *self):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
@@ -177,9 +177,9 @@ LandWidget *def land_widget_book_get_current_page(LandWidget *self):
 
         panelitem = panelitem->next
 
-    return NULL
+    return None
 
-# Return the last active page or NULL.
+# Return the last active page or None.
 LandWidget *def land_widget_book_get_last_page(LandWidget *self):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
@@ -188,10 +188,10 @@ LandWidget *def land_widget_book_get_last_page(LandWidget *self):
     LandListItem *panelitem = panel->children->last
     if panelitem:
         return LAND_WIDGET(panelitem->data)
-    return NULL
+    return None
 
 # Return the given page, starting with 0 for the first page. If there is no
-# such page, NULL is returned.
+# such page, None is returned.
 LandWidget *def land_widget_book_get_nth_page(LandWidget *self, int n):
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
@@ -206,6 +206,10 @@ LandWidget *def land_widget_book_get_nth_page(LandWidget *self, int n):
             return page
 
         panelitem = panelitem->next
-    i++
+        i++
 
-    return NULL
+    return None
+
+def land_widget_book_show_nth(LandWidget *self, int n):
+    LandWidget *page = land_widget_book_get_nth_page(self, n)
+    if page: land_widget_book_show_page(self, page)
