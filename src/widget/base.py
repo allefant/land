@@ -529,6 +529,12 @@ def land_widget_unhide(LandWidget *self):
     self->box.flags &= ~GUL_HIDDEN
     if self->parent: land_widget_layout(self->parent)
 
+def land_widget_outer(LandWidget *self, float *x, *y, *w, *h):
+    *x = self->box.x
+    *y = self->box.y
+    *w = self->box.w
+    *h = self->box.h
+
 def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
     *x = self->box.x
     *y = self->box.y
