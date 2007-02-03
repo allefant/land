@@ -11,7 +11,10 @@ class LandWidgetButton:
     unsigned int yalign : 2 # 0 = top, 1 = bottom, 2 = center
     int xshift
     int yshift
-    int wordwrap
+    # 0 = single line
+    # 1 = multi line
+    # 2 = multi line with word wrapping
+    int multiline : 2
     LandAnimation *animation
     LandImage *image
     char *text
@@ -94,7 +97,7 @@ def land_widget_button_draw(LandWidget *base):
                 x = base->box.x + base->element->il
                 x += self->xshift
                 land_text_pos(x, y)
-                if self->wordwrap:
+                if self->multiline:
                     land_print_lines(self->lines, 0)
                 else:
                     land_print("%s", self->text)
@@ -103,7 +106,7 @@ def land_widget_button_draw(LandWidget *base):
                 x = base->box.x + base->box.w - base->element->ir
                 x += self->xshift
                 land_text_pos(x, y)
-                if self->wordwrap:
+                if self->multiline:
                     land_print_lines(self->lines, 1)
                 else:
                     land_print_right("%s", self->text)
@@ -113,7 +116,7 @@ def land_widget_button_draw(LandWidget *base):
                     base->element->ir) / 2
                 x += self->xshift
                 land_text_pos(x, y)
-                if self->wordwrap:
+                if self->multiline:
                     land_print_lines(self->lines, 2)
                 else:
                     land_print_center("%s", self->text)
@@ -213,7 +216,7 @@ LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
     land_widget_theme_initialize(self)
 
     if multiline:
-        land_widget_button_wordwrap(self, 1)
+        land_widget_button_multiline(self, multiline)
         land_widget_button_set_text(self, text)
     else:
         land_widget_layout(parent)
@@ -230,26 +233,36 @@ def land_widget_button_set_text(LandWidget *base, char const *text):
     button->text = None
     if text:
         button->text = land_strdup(text)
-        if button->wordwrap:
-            land_widget_button_wordwrap(base, 1)
+        if button->multiline:
+            land_widget_button_multiline(base, button->multiline)
         else:
             land_widget_theme_set_minimum_size_for_text(base, text)
     if base->parent: land_widget_layout(base->parent)
 
-def land_widget_button_wordwrap(LandWidget *self, int onoff):
+def land_widget_button_multiline(LandWidget *self, int style):
+    """
+    If style is 0, the text of this widget is a single line. No newline
+    characters are allowed.
+    If style is 1, the text can have multiple lines.
+    If style is 2, the text can have multiple lines, and long lines are
+    word wrapped.
+    """
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
-    button->wordwrap = onoff
+    button->multiline = style
     if button->lines:
         land_array_for_each(button->lines, _linedelcb, None)
         land_array_destroy(button->lines)
-    if onoff and button->text:
+    if style and button->text:
         float x, y, w, h
         land_widget_inner(self, &x, &y, &w, &h)
-        button->lines = land_wordwrap_text(w, 0, button->text)
+        if style == 1:
+            button->lines = land_text_splitlines(button->text)
+        else:
+            button->lines = land_wordwrap_text(w, 0, button->text)
         float ww, wh
         land_wordwrap_extents(&ww, &wh)
         if ww - w > 0.1:
-            # We can not wrap up text shorter than the single lonest word
+            # We can not wrap up text shorter than the single longest word
             # (which can't be split). So if our first try of wrapping was not
             # sucessful because it was too narrow, we wrap it again with a
             # width guaranteed to succeed.
