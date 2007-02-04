@@ -126,6 +126,11 @@ def land_widget_button_draw(LandWidget *base):
     if !base->dont_clip:
         land_clip_pop()
 
+def land_widget_button_size(LandWidget *base, float dx, dy):
+    if not (dx or dy): return
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    land_widget_button_multiline(base, button->multiline)
+
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->clicked:
@@ -301,6 +306,7 @@ def land_widget_button_interface_initialize():
     land_widget_button_interface->mouse_tick = land_widget_button_mouse_tick
     land_widget_button_interface->get_inner_size =\
         land_widget_button_get_inner_size
+    land_widget_button_interface->size = land_widget_button_size
 
 def land_widget_button_destroy(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
