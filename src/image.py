@@ -259,6 +259,7 @@ def land_image_colorkey_hack(LandImage *self, int allegro_color):
                 putpixel(replace, x, y, makeacol32(r, g, b, 255))
     destroy_bitmap(bmp)
     land_free(self->palette)
+    self->palette = None
     self->memory_cache = replace
     self->bitmap = replace
     land_image_prepare(self)
