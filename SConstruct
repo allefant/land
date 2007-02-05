@@ -79,19 +79,22 @@ if debug:
     env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
-    env.ParseConfig("allegro-config --cflags debug")
+    if env["PLATFORM"] != "win32":
+        env.ParseConfig("allegro-config --cflags debug")
 elif profile:
     env.Append(CCFLAGS = "-g -pg -fprofile-arcs")
     env.Append(LINKFLAGS = "-pg")
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
-    env.ParseConfig("allegro-config --cflags profile")
+    if env["PLATFORM"] != "win32":
+        env.ParseConfig("allegro-config --cflags profile")
 else:
     if optimization != "0":
         env.Append(CCFLAGS = "-O3")
     BUILDDIR = "scons/build/%s/release" % (env["PLATFORM"])
     LIBNAME = "lib/%s/land" % (env["PLATFORM"])
-    env.ParseConfig("allegro-config --cflags release")
+    if env["PLATFORM"] != "win32":
+        env.ParseConfig("allegro-config --cflags release")
 
 SHAREDLIBNAME = LIBNAME
 STATICLIBNAME = LIBNAME + "_s"
@@ -111,7 +114,7 @@ if env["PLATFORM"] == "win32":
     env.Append(CPPPATH = ["dependencies/mingw-include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
     env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "ldpng",
-        "jpgal", "alleg_s", "freetype"])
+        "jpgal", "alleg_s", "freetype", "apeg_s", "theora", "vorbis", "ogg"])
 
     if debug or profile: env.Append(LIBS = ["agld_s"])
     else: env.Append(LIBS = ["agl_s"])
@@ -163,3 +166,4 @@ if static:
 else:
     env.Default(["include", sharedlib])
     env.Install(LIBDIR, [sharedlib])
+
