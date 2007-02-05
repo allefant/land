@@ -458,6 +458,10 @@ def land_net_send(LandNet *self, char const *buffer, size_t size):
     #endif
 
 def land_net_buffer(LandNet *self, char *buffer, size_t size):
+    """
+    Assign a networking buffer to use. This buffer keeps being owned by you,
+    Land will never delete it on its own.
+    """
     self->buffer = buffer
     self->size = size
     self->full = 0
@@ -518,6 +522,10 @@ def land_net_disconnect(LandNet *self):
     self->state = LAND_NET_INVALID
 
 def land_net_del(LandNet *self):
+    """
+    Deletes a connection. Make sure to reclaim any buffers you have assigned
+    to it first.
+    """
     land_net_disconnect(self)
 
     # Close socket. 
