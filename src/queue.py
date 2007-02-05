@@ -33,6 +33,9 @@ def land_queue_del(LandQueue *q):
     land_free(q->array.data)
     land_free(q)
 
+def land_queue_destroy(LandQueue *q):
+    land_queue_del(q)
+
 def land_queue_add(LandQueue *q, void *data):
     """
     Add an element to the queue.
