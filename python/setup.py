@@ -8,6 +8,7 @@ platform = "linux"
 if "mingw" in sys.argv: platform = "mingw"
 
 libraries = ["landd", "ldpng", "png", "jpgal", "fudgefontd", "agld",
+    "apeg", "ogg", "theora", "vorbis",
     "freetype", "m"]
 
 library_dirs = [".."]
