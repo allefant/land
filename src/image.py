@@ -107,6 +107,25 @@ LandImage *def land_image_load(char const *filename):
     if _cb: _cb(filename, self)
     return self
 
+LandImage *def land_image_memory_new(int w, int h):
+    """
+    Creates a new image. If w or h are 0, the image will have no contents at
+    all (this can be useful if the contents are to be added later).
+    The image will always be a simple memory rectangle of pixels, with no
+    driver specific optimizations.
+    """
+    LandImage *self = land_image_allegro_new(_land_active_display)
+    if w > 0 and h > 0:
+        BITMAP *bmp = create_bitmap(w, h)
+        self->filename = None
+        self->name = None
+        self->bitmap = bmp
+        self->memory_cache = bmp
+        land_log_message("land_image_memory_new %d x %d x %d.\n", w, h,
+            bitmap_color_depth(bmp))
+        land_image_prepare(self)
+    return self
+
 LandImage *def land_image_new(int w, int h):
     """
     Creates a new image. If w or h are 0, the image will have no contents at
@@ -222,6 +241,23 @@ int def land_image_color_stats(LandImage *self,
 
     return n
 
+def land_image_color_replace(LandImage *self, int r255, int g255, int b255,
+    int a255, int _r255, int _g255, int _b255, int _a255):
+    """
+    Replaces a color with another.
+    """
+    BITMAP *bmp = self->memory_cache
+    for int x = 0; x < bmp->w; x++:
+        for int y = 0; y < bmp->h; y++:
+            int col = getpixel(bmp, x, y)
+            int r = getr(col)
+            int g = getg(col)
+            int b = getb(col)
+            int a = geta(col)
+            if r == r255 and g == g255 and b == b255 and a == a255:
+                putpixel(bmp, x, y, makeacol(_r255, _g255, _b255, _a255))
+    land_image_prepare(self)
+
 def land_image_colorkey(LandImage *self, int r255, int g255, int b255):
     """
     Replaces all pixels in the image matching the given RGB triplet (in 0..255
@@ -237,7 +273,7 @@ def land_image_colorkey(LandImage *self, int r255, int g255, int b255):
             if r == r255 and g == g255 and b == b255:
                 putpixel(bmp, x, y, 0)
     land_image_prepare(self)
-    
+
 def land_image_colorkey_hack(LandImage *self, int allegro_color):
     """
     Like land_image_colorkey, but even more hackish, you directly specify
@@ -524,6 +560,15 @@ def land_image_grab_into(LandImage *self, int x, int y, int tx, int ty, int tw, 
 def land_image_offset(LandImage *self, int x, int y):
     self->x = x
     self->y = y
+
+def land_image_memory_draw(LandImage *self, float x, float y):
+    # FIXME
+    glBindTexture(GL_TEXTURE_2D, 0) # This is needed, no idea why
+    # FIXME - this always draws to screen. When it really is needed is when we
+    # draw a memory bitmap to e.g. an OpenGL display. The correct way to do
+    # this is to add a method to each display driver to draw a memory bitmap.
+    blit(self->bitmap, screen, 0, 0, x - self->x, y - self->y,
+        self->bitmap->w, self->bitmap->h)
 
 def land_image_center(LandImage *self):
     self->x = self->bitmap->w / 2
