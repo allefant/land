@@ -559,7 +559,6 @@ def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
         *r -= self->element->ir
         *b -= self->element->ib
 
-
 def land_widget_base_interface_initialize(void):
     if land_widget_base_interface: return
 
