@@ -208,6 +208,7 @@ LandFont *def land_font_allegrogl_new(LandDisplay *super):
 def land_font_allegrogl_destroy(LandDisplay *d, LandFont *self):
     LandFontAllegrogl *a = (LandFontAllegrogl *)self
     destroy_font(a->font)
+    if a->filename: land_free(a->filename)
     land_remove_list_data(&fonts, self)
     land_free(a)
 
@@ -310,4 +311,5 @@ def land_font_allegrogl_init(void):
 
 def land_font_allegrogl_exit(void):
     land_log_message("land_font_allegrogl_exit\n")
+    land_list_destroy(fonts)
     land_free(vtable)
