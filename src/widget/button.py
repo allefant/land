@@ -122,7 +122,6 @@ def land_widget_button_draw(LandWidget *base):
                     land_print_center("%s", self->text)
                 break
 
-
     if !base->dont_clip:
         land_clip_pop()
 
@@ -208,11 +207,8 @@ LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
 
     return self
 
-LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
-    int multiline, int x, y, w, h):
-    LandWidgetButton *button
-    land_alloc(button)
-    LandWidget *self = (LandWidget *)button
+LandWidget *def land_widget_text_initialize(LandWidget *self,
+    LandWidget *parent, char const *text, int multiline, x, y, w, h):
 
     land_widget_button_initialize(self,
         parent, multiline ? None : text, NULL, NULL, x, y, w, h)
@@ -225,6 +221,16 @@ LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
         land_widget_button_set_text(self, text)
     else:
         land_widget_layout(parent)
+
+    return self
+
+LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
+    int multiline, x, y, w, h):
+    LandWidgetButton *button
+    land_alloc(button)
+    LandWidget *self = (LandWidget *)button
+
+    land_widget_text_initialize(self, parent, text, multiline, x, y, w, h)
 
     return self
 
