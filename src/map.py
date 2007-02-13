@@ -49,8 +49,9 @@ def land_map_del(LandMap *self):
     if self->first_layer:
         LandLayer *l = self->first_layer
         while l:
+            LandLayer *next = l->next_in_map
             land_layer_del(l)
-            l = l->next_in_map
+            l = next
 
     land_free(self)
 
