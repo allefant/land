@@ -21,9 +21,6 @@ def land_widget_book_initialize(LandWidget *base,
     LandWidget *parent, int x, int y, int w, int h):
     land_widget_book_interface_initialize()
 
-    LandWidgetBook *self = (LandWidgetBook *)base
-    land_alloc(self)
-
     land_widget_container_initialize(base, parent, x, y, w, h)
     land_widget_layout_enable(base)
 
