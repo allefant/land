@@ -115,7 +115,7 @@ static def split_address(char const *address, char **host, int *port):
         (*host)[colon - address] = '\0'
         *port = atoi(colon + 1)
     else:
-        *host = strdup(address)
+        *host = land_strdup(address)
         *port = 0
 
 static char *def land_net_get_address(LandNet *self, int remote):
@@ -188,7 +188,7 @@ def land_net_listen(LandNet *self, char const *address):
     if self->state != LAND_NET_INVALID:
         return
 
-    self->local_address = strdup(address)
+    self->local_address = land_strdup(address)
     split_address(address, &host, &port)
 
     # Resolve hostname. 
@@ -198,8 +198,6 @@ def land_net_listen(LandNet *self, char const *address):
         land_free(host)
         sockerror("gethostbyname")
         return
-
-    land_free(host)
 
     #ifdef WINDOWS
     char a = 1;
@@ -229,6 +227,8 @@ def land_net_listen(LandNet *self, char const *address):
 
     D(land_log_message("Listening on host %s port %d (%s).\n", host, port,
         land_net_get_address(self, 0)))
+
+    land_free(host)
 
 static def land_net_poll_accept(LandNet *self):
     int r
@@ -280,7 +280,7 @@ def land_net_connect(LandNet *self, char const *address):
     if self->state != LAND_NET_INVALID:
         return
 
-    self->remote_address = strdup(address)
+    self->remote_address = land_strdup(address)
     split_address(address, &host, &port)
 
     if not (hostinfo = gethostbyname(host)):
@@ -530,7 +530,10 @@ def land_net_del(LandNet *self):
 
     # Close socket. 
     if closesocket(self->sock):
-        sockerror("close"); 
+        sockerror("close");
+
+    if self->local_address: land_free(self->local_address)
+    if self->remote_address: land_free(self->remote_address)
 
     land_free(self)
 
