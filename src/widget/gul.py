@@ -125,6 +125,7 @@ static def update_lookup_grid(LandWidget *self):
         LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
 
         if not container->children: return
+        if self->box.cols * self->box.rows == 0: return
 
         self->box.lookup_grid = land_calloc(self->box.cols * self->box.rows *
             sizeof *self->box.lookup_grid)
