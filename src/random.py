@@ -53,8 +53,8 @@ class LandRandom:
     pass
 
 static class RandomState:
-    unsigned long mt[N]; # the array for the state vector  
-    int mti; # mti==N+1 means mt[N] is not initialized 
+    unsigned long mt[N] # the array for the state vector  
+    int mti # mti==N+1 means mt[N] is not initialized 
 
 static RandomState default_state = {.mti = N + 1}
 
