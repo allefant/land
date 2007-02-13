@@ -16,8 +16,9 @@ LandSound *def land_sound_load(char const *filename):
     sound->filename = land_strdup(filename)
     return sound
 
-def land_sound_play(LandSound *s):
-    play_sample(s->sample, 255, 128, 1000, 0)
+def land_sound_play(LandSound *s, float volume, pan, frequency):
+    play_sample(s->sample, 255 * volume, 127.5 + 127.5 * pan, 1000 * frequency,
+        0)
 
 def land_sound_destroy(LandSound *s):
     land_free(s->filename)
