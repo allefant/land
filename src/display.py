@@ -456,3 +456,20 @@ def land_display_unselect():
 
     else:
         _land_active_display = NULL
+
+def land_screenshot(char const *filename):
+    BITMAP *bmp
+    int w = _land_active_display->w
+    int h = _land_active_display->h
+    bmp = create_bitmap(w, h)
+    blit(screen, bmp, 0, 0, 0, 0, w, h)
+    save_bitmap(filename, bmp, None)
+    destroy_bitmap(bmp)
+
+def land_screenshot_autoname(char const *name):
+    for int i = 0; ; i++:
+        char path[1024]
+        uszprintf(path, sizeof path, "%s%d.jpg", name, i)
+        if not exists(path):
+            land_screenshot(path)
+            break
