@@ -43,6 +43,12 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
             *pos = viewport->box.y + viewport->element->it - target->box.y
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
+    else:
+        if not set:
+            *min = 0
+            *max = 0
+            *range = 0
+            *pos = 0
 
 
 #    range
@@ -69,6 +75,12 @@ static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
             *pos = viewport->box.x + viewport->element->il - target->box.x
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
+    else:
+        if not set:
+            *min = 0
+            *max = 0
+            *range = 0
+            *pos = 0
 
 static int def get_size(LandWidget *super):
     LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super)
