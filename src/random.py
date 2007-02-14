@@ -1,3 +1,4 @@
+import global stdint
 static import global land
 #
 #   A C-program for MT19937, with initialization improved 2002/1/26.
@@ -43,23 +44,21 @@ static import global land
 #
 
 # Period parameters 
-static macro N 624
+macro LAND_RANDOM_N 624
+static macro N LAND_RANDOM_N
 static macro M 397
 static macro MATRIX_A 0x9908b0dfUL   # constant vector a 
 static macro UPPER_MASK 0x80000000UL # most significant w-r bits 
 static macro LOWER_MASK 0x7fffffffUL # least significant r bits 
 
 class LandRandom:
-    pass
+    uint32_t mt[LAND_RANDOM_N] # the array for the state vector  
+    uint32_t mti # mti==N+1 means mt[N] is not initialized 
 
-static class RandomState:
-    unsigned long mt[N] # the array for the state vector  
-    int mti # mti==N+1 means mt[N] is not initialized 
-
-static RandomState default_state = {.mti = N + 1}
+static LandRandom default_state = {.mti = N + 1}
 
 # initializes mt[N] with a seed 
-static def init_genrand(RandomState *r, unsigned long s):
+static def init_genrand(LandRandom *r, unsigned long s):
     r->mt[0]= s & 0xffffffffUL
     for r->mti=1; r->mti<N; r->mti++:
         r->mt[r->mti] = (1812433253UL * (
@@ -100,7 +99,7 @@ static def init_by_array(unsigned long init_key[], int key_length):
 #endif
 
 # generates a random number on [0,0xffffffff]-interval 
-static unsigned long def genrand_int32(RandomState *r):
+static unsigned long def genrand_int32(LandRandom *r):
     unsigned long y
     static const unsigned long mag01[2]={0x0UL, MATRIX_A}
     # mag01[x] = x * MATRIX_A  for x=0,1 
@@ -179,14 +178,14 @@ int def land_rand(int min, int max):
     return min + genrand_int32(&default_state) % (max - min + 1)
 
 LandRandom *def land_random_new(int seed):
-    RandomState *self
+    LandRandom *self
     land_alloc(self)
     init_genrand(self, seed)
-    return (void *)self
+    return self
 
 def land_random_del(LandRandom *self):
     land_free(self)
 
 int def land_random(LandRandom *r, int min, int max):
     if min >= max: return min
-    return min + genrand_int32((void *)r) % (max - min + 1)
+    return min + genrand_int32(r) % (max - min + 1)
