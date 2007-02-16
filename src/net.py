@@ -58,7 +58,10 @@ class LandNet:
     char *buffer
     size_t size
     size_t full
-    
+
+    double timestamp
+    int rate_control
+    int max_rate # bytes received / second
     void *lag_simulator
 
 static macro D(_) _
@@ -118,7 +121,7 @@ static def split_address(char const *address, char **host, int *port):
         *host = land_strdup(address)
         *port = 0
 
-static char *def land_net_get_address(LandNet *self, int remote):
+char *def land_net_get_address(LandNet *self, int remote):
     int s
     static char address[256]
     struct sockaddr_in sock_addr
@@ -414,6 +417,9 @@ static def lag_simulator_add(LandNet *net, char const *packet, int size):
 def land_net_lag_simulator(LandNet *self, double delay, double jitter):
     self->lag_simulator = lag_simulator_new(delay, jitter)
 
+def land_net_limit_receive_rate(LandNet *self, int rate):
+    self->max_rate = rate
+
 # FIXME: for big sends (say, some MB), this will spinloop
 def land_net_send(LandNet *self, char const *buffer, size_t size):
     size_t bytes = 0
@@ -482,7 +488,17 @@ static def land_net_poll_recv(LandNet *self):
     if self->size == 0 or self->full == self->size:
         return
 
-    r = recv(self->sock, self->buffer + self->full, self->size - self->full, 0)
+    int max = self->size - self->full
+    if self->max_rate:
+        double t = land_get_time()
+        double dt = t - self->timestamp
+        if dt > 1: dt = 1
+        if max > self->max_rate * dt:
+            max = self->max_rate * dt
+        self->timestamp = t
+        if max == 0: return
+
+    r = recv(self->sock, self->buffer + self->full, max, 0)
 
     if r < 0:
         #if defined WINDOWS
