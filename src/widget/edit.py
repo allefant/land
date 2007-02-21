@@ -144,11 +144,18 @@ LandWidget *def land_widget_edit_new(LandWidget *parent, char const *text,
     return self
 
 def land_widget_edit_set_text(LandWidget *base, char const *text):
+    """
+    Changes the text of the edit widget to a copy of the given string. The
+    string itself is not touched nor referenced - if you allocated it, you
+    can immediately free it after this function returns.
+    """
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     land_free(edit->text)
     edit->text = land_strdup(text)
     edit->bytes = ustrsizez(edit->text)
     land_widget_theme_set_minimum_size_for_text(base, text)
+    if edit->cursor > ustrlen(text):
+        edit->cursor = ustrlen(text)
 
 char const *def land_widget_edit_get_text(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
