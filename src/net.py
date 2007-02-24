@@ -45,6 +45,7 @@ enum LandNetState:
 
 class LandNet:
     int sock
+    int sockd
 
     LandNetState state
     char *local_address
@@ -121,26 +122,30 @@ static def split_address(char const *address, char **host, int *port):
         *host = land_strdup(address)
         *port = 0
 
+static def _get_address(struct sockaddr_in sock_addr, char *address):
+    if sock_addr.sin_addr.s_addr == INADDR_ANY:
+            sprintf(address, "*.*.*.*")
+    else:
+        char *ip = (char *)&sock_addr.sin_addr.s_addr
+        sprintf(address, "%d.%d.%d.%d", (unsigned char)ip[0],
+            (unsigned char)ip[1], (unsigned char)ip[2],
+            (unsigned char)ip[3])
+
+    sprintf(address + strlen(address), ":%d", ntohs(sock_addr.sin_port))
+
 char *def land_net_get_address(LandNet *self, int remote):
+    """
+    Return either the local or remote address of the connection.
+    """
     int s
     static char address[256]
     struct sockaddr_in sock_addr
     size_t addrlength = sizeof sock_addr
-    char *ip
+
     s = (remote ? getpeername : getsockname)(self->sock,
         (struct sockaddr *)&sock_addr, &addrlength)
     if s == 0:
-        if sock_addr.sin_addr.s_addr == INADDR_ANY:
-            sprintf(address, "*.*.*.*")
-
-        else:
-            ip = (char *)&sock_addr.sin_addr.s_addr
-            sprintf(address, "%d.%d.%d.%d", (unsigned char)ip[0],
-                (unsigned char)ip[1], (unsigned char)ip[2],
-                (unsigned char)ip[3])
-
-        sprintf(address + strlen(address), ":%d", ntohs(sock_addr.sin_port))
-
+        _get_address(sock_addr, address)
     else:
         sprintf(address, "?:?")
     return address
@@ -198,8 +203,8 @@ def land_net_listen(LandNet *self, char const *address):
     struct hostent *hostinfo
 
     if not (hostinfo = gethostbyname(host)):
-        land_free(host)
         sockerror("gethostbyname")
+        land_free(host)
         return
 
     #ifdef WINDOWS
@@ -287,8 +292,8 @@ def land_net_connect(LandNet *self, char const *address):
     split_address(address, &host, &port)
 
     if not (hostinfo = gethostbyname(host)):
-        land_free(host)
         sockerror("gethostbyname")
+        land_free(host)
         return
 
     # Address to connect to. 
@@ -419,6 +424,108 @@ def land_net_lag_simulator(LandNet *self, double delay, double jitter):
 
 def land_net_limit_receive_rate(LandNet *self, int rate):
     self->max_rate = rate
+
+static int def _create_datagram_socket(LandNet *self):
+    # Create socket
+    if not self->sockd:
+        int r
+        r = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)
+        if r >= 0:
+            self->sockd = r
+        else:
+            return 1
+
+        #if defined WINDOWS
+        u_long b = 1
+        r = ioctlsocket(self->sockd, FIONBIO, &b)
+        #else
+        int b = 1
+        r = ioctl(self->sockd, FIONBIO, &b)
+        #endif
+        if r < 0:
+            sockerror("ioctl")
+
+        #ifdef WINDOWS
+        char a = 1;
+        #else
+        int a = 1
+        #endif
+        r = setsockopt(self->sockd, SOL_SOCKET, SO_BROADCAST, &a, sizeof(a))
+        if r < 0:
+            sockerror("setsockopt")
+
+    return 0
+
+
+static int def _send_datagram(LandNet *self, char const *address, *packet, int size):
+
+    # Resolve hostname.
+    char *host
+    int port
+    split_address(address, &host, &port)
+    struct hostent *hostinfo = gethostbyname(host)
+    if not hostinfo:
+        land_free(host)
+        return 0
+
+    struct sockaddr_in sock_address
+    # Address to connect to. 
+    sock_address.sin_family = AF_INET
+    # Fill in IP (returned in network byte order by gethostbyname). 
+    sock_address.sin_addr = *(struct in_addr *) hostinfo->h_addr
+    # Fill in port (and convert to network byte order). 
+    sock_address.sin_port = htons(port)
+
+    int r = sendto(self->sockd, packet, size, 0,
+        (struct sockaddr *) &sock_address, sizeof sock_address);
+
+    land_free(host)
+    return r
+
+int def land_net_send_datagram(LandNet *self, char const *address, *packet,
+    int size):
+    """
+    [experimental]
+    This is to directly send a datagram to some address. This is an experimental
+    feature and for now, you should use land_net_send when possible.
+    """
+    _create_datagram_socket(self)
+
+    return _send_datagram(self, address, packet, size)
+
+int def land_net_recv_datagram(LandNet *self, int port,
+    char **address, *packet, int size):
+    """
+    [experimental]
+    Receives a datagram. Returns the number of received bytes (less than or
+    equal to size), or 0 if there's no datagram to be received. If address is
+    not None and the return value is > 0, it will point to a static buffer
+    containing the source address. (If you need that address for anything,
+    copy it to your own buffer immediately.)
+    """
+    _create_datagram_socket(self)
+
+    if port:
+        struct sockaddr_in laddr
+        laddr.sin_family = AF_INET
+        laddr.sin_port = htons(port)
+        laddr.sin_addr.s_addr = INADDR_ANY
+
+        bind(self->sockd, (struct sockaddr *)&laddr, sizeof laddr)
+
+    struct sockaddr_in sock_address
+    socklen_t addrsize = sizeof sock_address
+    int r = recvfrom(self->sockd, packet, size, 0,
+        (struct sockaddr *) &sock_address, &addrsize);
+
+    if r > 0:
+        if address:
+            static char static_address[256]
+            _get_address(sock_address, static_address)
+            *address = static_address
+        return r
+
+    return 0
 
 # FIXME: for big sends (say, some MB), this will spinloop
 def land_net_send(LandNet *self, char const *buffer, size_t size):
