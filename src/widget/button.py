@@ -265,6 +265,7 @@ def land_widget_button_multiline(LandWidget *self, int style):
         land_array_destroy(button->lines)
     if style and button->text:
         float x, y, w, h
+        land_widget_theme_font(self)
         land_widget_inner(self, &x, &y, &w, &h)
         if style == 1:
             button->lines = land_text_splitlines(button->text)
