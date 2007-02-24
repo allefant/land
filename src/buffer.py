@@ -24,6 +24,9 @@ def land_buffer_add(LandBuffer *self, char const *buffer, int n):
         self->buffer = land_realloc(self->buffer, self->size)
     memcpy(self->buffer + self->n - n, buffer, n)
 
+def land_buffer_add_char(LandBuffer *self, char c):
+    land_buffer_add(self, &c, 1)
+
 def land_buffer_cat(LandBuffer *self, char const *string):
     land_buffer_add(self, string, strlen(string))
 
