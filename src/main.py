@@ -67,6 +67,9 @@ def land_init():
         land_log_message("Allegro initialization failed: %s\n", allegro_error)
         land_exception("Error in allegro_init: %s", allegro_error)
 
+    if install_timer():
+        land_exception("Error in install_timer: %s", allegro_error)
+
     _png_screen_gamma = 0
     loadpng_init()
     jpgalleg_init()
@@ -185,8 +188,6 @@ int def land_main():
         land_exception("Error in install_keyboard: %s", allegro_error)
     if install_mouse() <= 0:
         land_exception("Error in install_mouse: %s", allegro_error)
-    if install_timer():
-        land_exception("Error in install_timer: %s", allegro_error)
     if install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL):
         land_exception("Error in install_sound: %s", allegro_error)
 
