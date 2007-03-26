@@ -47,9 +47,9 @@ static import global land
 macro LAND_RANDOM_N 624
 static macro N LAND_RANDOM_N
 static macro M 397
-static macro MATRIX_A 0x9908b0dfUL   # constant vector a 
-static macro UPPER_MASK 0x80000000UL # most significant w-r bits 
-static macro LOWER_MASK 0x7fffffffUL # least significant r bits 
+static macro MATRIX_A 0x9908b0dfUL   // constant vector a 
+static macro UPPER_MASK 0x80000000UL // most significant w-r bits 
+static macro LOWER_MASK 0x7fffffffUL // least significant r bits 
 
 class LandRandom:
     uint32_t mt[LAND_RANDOM_N] # the array for the state vector  

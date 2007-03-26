@@ -156,17 +156,17 @@ delete one of its widgets, and why it is like that.
 import ../hash, gul
 
 # A widget ID must contain the hex digits of the parent.
-macro LAND_WIDGET_ID_BASE           0x00000001 # no visual, no layout
-macro LAND_WIDGET_ID_CONTAINER      0x00000011 # no visual, no layout
-macro LAND_WIDGET_ID_SCROLLING      0x00000111 # visual, layout
+macro LAND_WIDGET_ID_BASE           0x00000001 // no visual, no layout
+macro LAND_WIDGET_ID_CONTAINER      0x00000011 // no visual, no layout
+macro LAND_WIDGET_ID_SCROLLING      0x00000111 // visual, layout
 macro LAND_WIDGET_ID_SCROLLING_TEXT 0x00001111
-macro LAND_WIDGET_ID_VBOX           0x00000211 # no visual, layout
-macro LAND_WIDGET_ID_LIST           0x00001211 # visual, layout
-macro LAND_WIDGET_ID_HBOX           0x00000311 # no visual, layout
-macro LAND_WIDGET_ID_TABBAR         0x00001311 # visual, layout
-macro LAND_WIDGET_ID_SPIN           0x00002311 # visual, layout
-macro LAND_WIDGET_ID_PANEL          0x00000411 # visual, layout
-macro LAND_WIDGET_ID_BOARD          0x00000511 # visual, no layout
+macro LAND_WIDGET_ID_VBOX           0x00000211 // no visual, layout
+macro LAND_WIDGET_ID_LIST           0x00001211 // visual, layout
+macro LAND_WIDGET_ID_HBOX           0x00000311 // no visual, layout
+macro LAND_WIDGET_ID_TABBAR         0x00001311 // visual, layout
+macro LAND_WIDGET_ID_SPIN           0x00002311 // visual, layout
+macro LAND_WIDGET_ID_PANEL          0x00000411 // visual, layout
+macro LAND_WIDGET_ID_BOARD          0x00000511 // visual, no layout
 macro LAND_WIDGET_ID_MENU           0x00000611
 macro LAND_WIDGET_ID_MENUBAR        0x00001611
 macro LAND_WIDGET_ID_BOOK           0x00000711

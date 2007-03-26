@@ -4,7 +4,7 @@ macro land_alloc(self); self = land_calloc(sizeof *self)
 
 static import global stdio
 
-#static macro LOGALL
+# static macro LOGALL
 
 static import log
 
