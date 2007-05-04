@@ -20,4 +20,3 @@ char *def land_read_text(char const *filename):
     n++
     buf = land_realloc(buf, n)
     return buf
-    

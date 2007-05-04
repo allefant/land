@@ -167,7 +167,8 @@ void *def land_hash_get(LandHash *self, char const *thekey):
 LandArray *def land_hash_keys(LandHash *hash):
     """Return an array containing all the keys in the hash. The strings are
     direct pointers into the hash - so you must not modify or free them, and
-    they will get invalid if the hash is destroyed.
+    they will get invalid if the hash is destroyed. You are responsible for
+    destroying the array with land_array_destroy when you are done using it.
     """
     LandArray *array = land_array_new()
     int i
@@ -190,6 +191,7 @@ LandArray *def land_hash_data(LandHash *hash):
     for i = 0; i < land_array_count(data); i++:
         void *entry = land_array_get_nth(data, i)
         land_free(entry)
+    land_array_destroy(data)
     land_hash_destroy(hash)
     }}}
     """
