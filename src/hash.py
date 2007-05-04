@@ -146,6 +146,32 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
 
     return None
 
+static LandHashEntry *def land_hash_get_entry(LandHash *self,
+    char const *thekey):
+    if !self->size: return None
+    int i = self->hash_function(self, thekey)
+    if !self->entries[i]: return None
+    int j
+    for j = 0; j < self->entries[i][0].n; j++:
+        if not ustrcmp(self->entries[i][j].thekey, thekey):
+            return &self->entries[i][j]
+
+    return None
+
+void *def land_hash_replace(LandHash *self, char const *thekey, void *data):
+    """
+    If an association to the given key exists, replace it with the given data,
+    and return the old data.
+    Else, do the same as land_hash_insert, and return None.
+    """
+    LandHashEntry *entry = land_hash_get_entry(self, thekey)
+    if entry:
+        void *old = entry->data
+        entry->data = data
+        return old
+    land_hash_insert(self, thekey, data)
+    return None
+
 void *def land_hash_get(LandHash *self, char const *thekey):
     """Return the data associated with a hash key. If the key exists multiple
     times, it can not relied on a certain one being returned. It might always
@@ -154,14 +180,8 @@ void *def land_hash_get(LandHash *self, char const *thekey):
     
     If the key is not found, None is returned.
     """
-    if !self->size: return NULL
-    int i = self->hash_function(self, thekey)
-    if !self->entries[i]: return NULL
-    int j
-    for j = 0; j < self->entries[i][0].n; j++:
-        if not ustrcmp(self->entries[i][j].thekey, thekey):
-            return self->entries[i][j].data
-
+    LandHashEntry *entry = land_hash_get_entry(self, thekey)
+    if entry: return entry->data
     return None
 
 LandArray *def land_hash_keys(LandHash *hash):
