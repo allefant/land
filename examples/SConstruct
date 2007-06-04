@@ -13,29 +13,29 @@ for ex in examples:
     cfiles = []
     pyfiles = glob.glob(os.path.join(srcdir, "*.py"))
 
+    env = Environment(ENV = {'PATH' : os.environ['PATH']})
+
+    BUILDDIR = os.path.join("scons", "build")
+
     for py in pyfiles:
-        pyenv = Environment()
-        pyenv.BuildDir(cdir, srcdir, duplicate = False)
         h = cdir + "/" + py[len(srcdir) + 1:-3] + ".h"
         c = cdir + "/" + py[len(srcdir) + 1:-3] + ".c"
         name = py[len(srcdir) + 1:-3]
-        pyenv.Command([c, h], py, "scramble.py -i %s -c %s -h %s -n %s" % (py, c, h, name))
+        com = "scramble.py -i %s -c %s -h %s -n %s" % (py, c, h, name)
+        env.BuildDir(cdir, srcdir)
+        env.Command([c, h], py, com)
         cfiles += [c]
-
-    env = Environment()
-
-    BUILDDIR = os.path.join("scons", "build")
 
     env.Append(CPPPATH = ["../include/land"])
     env.Append(LIBPATH = ["../lib/posix"])
 
     if ARGUMENTS.get("debug", 0):
         env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
-        env.Append(LIBS = ["landd", "agld", "fudgefontd", "apeg", "ogg", "vorbis", "theora"])
+        env.Append(LIBS = ["landd", "agld", "fudgefontd"])
         env.ParseConfig("allegro-config --shared debug")
         BUILDDIR = os.path.join(BUILDDIR, "debug")
     else:
-        env.Append(LIBS = ["land", "agl", "fudgefont", "apeg", "ogg", "vorbis", "theora"])
+        env.Append(LIBS = ["land", "agl", "fudgefont"])
         env.ParseConfig("allegro-config --shared release")
         BUILDDIR = os.path.join(BUILDDIR, "release")
 
@@ -44,10 +44,12 @@ for ex in examples:
     env.Append(CCFLAGS = "--std=gnu99")
     env.Append(LIBS = ["ldpng", "png",
         "freetype", "GL", "GLU", "dumb", "jpgal"])
+    env.Append(LIBS = ["logg", "ogg", "vorbis", "vorbisfile"])
 
     env.SConsignFile("scons/signatures")
 
-    env.BuildDir(BUILDDIR, cdir, duplicate = False)
+    env.BuildDir(BUILDDIR, cdir)
     sources = [os.path.join(BUILDDIR, os.path.split(x)[1]) for x in cfiles]
     prog = env.Program(os.path.join(ex, ex), sources)
+    env.Default([srcdir, prog])
 
