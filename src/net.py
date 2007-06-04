@@ -140,7 +140,7 @@ char *def land_net_get_address(LandNet *self, int remote):
     int s
     static char address[256]
     struct sockaddr_in sock_addr
-    size_t addrlength = sizeof sock_addr
+    socklen_t addrlength = sizeof sock_addr
 
     s = (remote ? getpeername : getsockname)(self->sock,
         (struct sockaddr *)&sock_addr, &addrlength)
