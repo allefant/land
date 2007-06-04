@@ -1,10 +1,16 @@
 static import global stdio, stdlib, string, zlib
-static import memory, global allegro
+static import memory
+import global allegro
 
 class LandBuffer:
     int size
     int n
     char *buffer
+
+class LandBufferAsFile:
+    LandBuffer *landbuffer
+    int pos
+    int ungetc
 
 LandBuffer *def land_buffer_new():
     LandBuffer *self
@@ -63,7 +69,12 @@ def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     pack_fclose(pf)
 
 LandBuffer *def land_buffer_read_from_file(char const *filename):
+    """
+    Read a buffer from the given file. If the file cannot be read, return None.
+    """
     PACKFILE *pf = pack_fopen(filename, "r")
+    if not pf:
+        return None
     LandBuffer *self = land_buffer_new()
     while 1:
         int c = pack_getc(pf)
@@ -94,3 +105,85 @@ int def land_buffer_compare(LandBuffer *self, *other):
     if self->n < other->n: return -1
     if self->n > other->n: return 1
     return memcmp(self->buffer, other->buffer, self->n)
+
+static int def pf_fclose(void *userdata):
+    LandBufferAsFile *self = userdata
+    land_free(self)
+    return 0
+
+static int def pf_getc(void *userdata):
+    LandBufferAsFile *self = userdata
+    if self->ungetc | 256:
+        int c = self->ungetc & 255
+        self->ungetc = 0
+        return c
+    if self->pos >= self->landbuffer->n: return EOF
+    int c = self->landbuffer->buffer[self->pos]
+    self->pos++
+    return c
+
+static int def pf_ungetc(int c, void *userdata):
+    LandBufferAsFile *self = userdata
+    self->ungetc = c | 256
+    return 0
+
+static long def pf_fread(void *p, long n, void *userdata):
+    LandBufferAsFile *self = userdata
+    if self->pos + n > self->landbuffer->n:
+        n = self->landbuffer->n - self->pos
+    memcpy(p, self->landbuffer->buffer + self->pos, n)
+    self->pos += n
+    return n
+
+static int def pf_putc(int c, void *userdata):
+    LandBufferAsFile *self = userdata
+    land_buffer_add_char(self->landbuffer, c)
+    return c
+
+static long def pf_fwrite(const void *p, long n, void *userdata):
+    LandBufferAsFile *self = userdata
+    land_buffer_add(self->landbuffer, p, n)
+    return n
+
+static int def pf_fseek(void *userdata, int offset):
+    return 0
+
+static int def pf_feof(void *userdata):
+    LandBufferAsFile *self = userdata
+    if self->pos >= self->landbuffer->n: return True
+    return False
+
+static int def pf_ferror(void *userdata):
+    return 0
+
+static struct PACKFILE_VTABLE vt = {
+    pf_fclose,
+    pf_getc,
+    pf_ungetc,
+    pf_fread,
+    pf_putc,
+    pf_fwrite,
+    pf_fseek,
+    pf_feof,
+    pf_ferror
+}
+
+PACKFILE *def land_buffer_read_packfile(LandBuffer *self):
+    """
+    Returns a packfile to read from the given buffer. The buffer must not be
+    destroyed as long as the packfile is open.
+    """
+    LandBufferAsFile *lbaf; land_alloc(lbaf)
+    lbaf->landbuffer = self
+    PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
+    return pf
+
+PACKFILE *def land_buffer_write_packfile(LandBuffer *self):
+    """
+    Returns a packfile to write to the given buffer. The buffer must not be
+    destroyed as long as the packfile is open.
+    """
+    LandBufferAsFile *lbaf; land_alloc(lbaf)
+    lbaf->landbuffer = self
+    PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
+    return pf
