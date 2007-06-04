@@ -6,8 +6,11 @@ class LandHashEntry:
     int n
 
 class LandHash:
-    int count
-    int size
+    """
+    A hash stores a number of objects, which can be accessed by a named key.
+    """
+    int count # Actual number of elements.
+    int size # Size of table.
     int bits
     unsigned int (*hash_function)(LandHash *self, char const *thekey)
     LandHashEntry **entries
