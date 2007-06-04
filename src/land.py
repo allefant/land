@@ -181,17 +181,21 @@ import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, memory, widget, net, queue, sound, buffer
 
 static LandArray *exit_functions
+static int _exitcode
 
 macro land_begin() static void _land_main(); int main(int argc, char **argv) {
     land_argc = argc; land_argv = argv; _land_main();
-    return 0;} END_OF_MAIN() static void _land_main()
+    land_log_message("Return code is %d.\n", land_get_exitcode());
+    return land_get_exitcode();
+    } END_OF_MAIN() static void _land_main()
     
 macro land_use_main(m) int main(int argc,
     char **argv) {
     land_argc = argc;
     land_argv = argv;
     m();
-    return 0;} END_OF_MAIN()
+    land_log_message("Return code is %d.\n", land_get_exitcode());
+    return land_get_exitcode();} END_OF_MAIN()
 
 macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw, leave,
     destroy) int main(int argc, char **argv) { land_argc = argc;
@@ -201,7 +205,15 @@ macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw, leave,
     land_runner_register(shortcut_runner);
     land_set_display_parameters(w, h, bpp, hz, flags);
     land_set_initial_runner(shortcut_runner);
-    land_set_frequency(hz); land_main(); return 0; } END_OF_MAIN()
+    land_set_frequency(hz); land_main();
+    land_log_message("Return code is %d.\n", land_get_exitcode());
+    return land_get_exitcode();} END_OF_MAIN()
+
+def land_set_exitcode(int code):
+    _exitcode = code
+
+int def land_get_exitcode():
+    return _exitcode
 
 def land_exit_function(void (*function)(void)):
     land_array_add_data(&exit_functions, function)
