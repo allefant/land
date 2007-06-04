@@ -163,7 +163,7 @@ def land_skip_frames():
     current time - this is when you would call this function."""
     frames = ticks
 
-int def land_main():
+def land_main():
     """Run Land. This function will use all the parameters set before to
     initialize everything, then run the initial runner. It will return when
     you call land_quit() inside the tick function of the active runner.
@@ -234,7 +234,6 @@ int def land_main():
     land_exit_functions()
 
     land_log_message("exit\n")
-    return 0
 
 def land_reprogram_timer():
     frequency = parameters->frequency
