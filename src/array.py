@@ -1,4 +1,4 @@
-import global stdlib
+import global stdlib, allegro, stdio
 class LandArray:
     int count
     int size
@@ -120,8 +120,29 @@ def land_array_destroy(LandArray *self):
     if self->data: land_free(self->data)
     land_free(self)
 
-def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a, void const *b)):
+def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
+    void const *b)):
+    """
+    Sorts the entries in the array. The given callback function gets passed
+    two direct pointers to two array elements, and expects a return value
+    determining the order:
+    < 0: a is before b
+    = 0: order is arbitrary
+    > 0: a is after b
+    """
     qsort(self->data, self->count, sizeof(void *), cmpfnc)
+
+static int def alphacomp(void const *a, void const *b):
+    char const * const *as = a
+    char const * const *bs = b
+    int r = ustrcmp(*as, *bs)
+    return r
+
+def land_array_sort_alphabetical(LandArray *self):
+    """
+    Expects all array members to be strings and sorts alphabetically.
+    """
+    land_array_sort(self, alphacomp)
 
 int def land_array_count(LandArray *self):
     if not self: return 0
