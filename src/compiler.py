@@ -472,6 +472,98 @@ static int def compile_conditional(LM_Compiler *c, Node *n):
 
     return 0   
 
+static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
+    int *first, LandArray *paramnames):
+    # TODO: Clarify if we want a limit of 256 params
+    Token *t = n->data
+    int params[256]
+    int got_required[256]
+    if paramnames:
+        for int i = 0; i < 256; i++:
+            got_required[i] = 0
+    Node *param = n->first
+    int nparams = 0
+    int got_named = 0
+    # What we do is, we compile all the parameter expressions and remember
+    # into which local variables the resulting values go.
+    while param:
+        int positional = 1
+        if param->type == NODE_OPERATION:
+            Token *ptoken = param->data
+            if not strcmp(ptoken->string, ","):
+                param = param->first
+                continue
+            if not strcmp(ptoken->string, "("):
+                param = param->first
+                continue
+            # An assignement here means a named parameter
+            if not strcmp(ptoken->string, "="):
+                Node *name = param->first
+                Token *token = name->data
+                int i = 0
+                if paramnames:
+                    for i = 0; i < paramnames->count; i++:
+                        char const *str = land_array_get_nth(paramnames, i)
+                        if not ustrcmp(token->string, str):
+                            params[i] = compile_node(c, name->next)
+                            got_required[i] = 1
+                            if i + 1 > nparams:
+                                nparams = i + 1
+                            got_named++
+                            break
+                    if i == paramnames->count:
+                        i = 0
+                if i == 0:
+                    pass
+                    # TODO: additional named parameters
+                positional = 0
+
+        if positional:
+            if got_named:
+                fprintf(stderr, "Error: "
+                    "Cannot use positional parameters after named parametes.\n")
+            int result = compile_node(c, param)
+            params[nparams] = result
+            if paramnames and nparams < paramnames->count:
+                got_required[nparams] = 1
+            nparams++
+
+        Node *parent = param->parent
+        param = param->next
+        while not param:
+            if parent and parent != n:
+                param = parent
+                parent = param->parent
+                param = param->next
+            else:
+                break
+
+    if paramnames and nparams < paramnames->count:
+        fprintf(stderr, "Error: "
+            "Function \"%s\" has %d required parameters, "
+            "but only %d of them %s provided!\n", t->string, paramnames->count,
+            nparams, nparams == 1 ? "is" : "are")
+
+    # Check if the arguments already are in the right order for passing on.
+    int need_args = 0
+    *first = params[0]
+    for int i = 0; i < nparams; i++:
+        if paramnames and i < paramnames->count and not got_required[i]:
+            fprintf(stderr, "Error: "
+                "Missing required parameter for index %d!\n", i)
+        if params[i] < 1 or params[i] > 127 or params[i] != *first + i:
+            need_args = 1
+            break
+
+    # If not, assign them all to consecutive locals.
+    if need_args:
+        *first = c->current->locals_count
+        for int i = 0; i < nparams; i++:
+            int num = create_new_temporary(c)
+            add_code(c, OPCODE_ARG, num, params[i], 0)
+
+    return nparams
+
 static int def compile_operation(LM_Compiler *c, Node *n):
     """
     Compile an operation, and return the local which has the result, or
@@ -545,70 +637,27 @@ static int def compile_operation(LM_Compiler *c, Node *n):
         add_code(c, OPCODE_RET, result, 0, 0)
         return 0
     else: # function call
-
-        # TODO: Clarify if we want a limit of 256 params
-        int params[256]
-        Node *param = n->first
-        int nparams = 0
-        # What we do is, we compile all the parameter expressions and remember
-        # into which local variables the resulting values go.
-        while param:
-            if param->type == NODE_OPERATION:
-                Token *ptoken = param->data
-                if not strcmp(ptoken->string, ","):
-                    param = param->first
-                    continue
-                if not strcmp(ptoken->string, "("):
-                    param = param->first
-                    continue
-
-            int result = compile_node(c, param)
-            params[nparams] = result
-            nparams++
-
-            Node *parent = param->parent
-            param = param->next
-            while not param:
-                if parent and parent != n:
-                    param = parent
-                    parent = param->parent
-                    param = param->next
-                else:
-                    break
-
-        # TODO: When would args be needed?
-        int need_args = 0
-        int first = params[0]
-        for int i = 0; i < nparams; i++:
-            if params[i] < 1 or params[i] > 127 or params[i] != first + i:
-                need_args = 1
-                break
-
-        if need_args:
-            first = c->current->locals_count
-            for int i = 0; i < nparams; i++:
-                int num = create_new_temporary(c)
-                add_code(c, OPCODE_ARG, num, params[i], 0)
-
-        n->type = NODE_OPERAND
+        int first, nparams
 
         if not strcmp(token->string, "print"):
+            nparams = parse_function_call_parameters(c, n, &first, None)
             add_code(c, OPCODE_FLU, first, nparams, 0)
         else:
             int *using = land_hash_get(c->using, token->string)
             if using:
+                nparams = parse_function_call_parameters(c, n, &first, None)
                 int constant = add_string_constant(c, token->string)
                 add_code(c, OPCODE_USE, constant, first, nparams)
                 return 0
-            # TODO: what is the fixme below about? was it already fixed?
-            # FIXME: instead of string lookup, must do variable lookup
+
+            n->type = NODE_OPERAND
             int result = compile_node(c, n)
             if not result:
                 token_err(c->sa->tokenizer, token,
                     "Could not compile call to unknown function \"%s\".\n",
                     token->string)
             LM_CompilerFunction *f = land_array_get_nth(c->functions,  result)
-            printf("Function %d: %d parameters\n", result, f->parameters->count)
+            nparams = parse_function_call_parameters(c, n, &first, f->parameters)
             add_code(c, OPCODE_FUN, result, first, nparams)
             return 0
     return 0

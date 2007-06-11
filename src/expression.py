@@ -48,19 +48,10 @@ static int def operator_precedence(Node *left, Node *right):
     Token *tok1 = left->data
     Token *tok2 = right->data
 
-    # a = b = c -> a = (b = c)
-    # a = b, c -> a = (b, c)
-    # a = b + c -> a = (b + c)
-    if not strcmp(tok1->string, "="): # a = b ?
-        return 0
-
     # a, b, c -> a, (b, c)
     # a, b + c -> a, (b + c)
-    # special cased:
-    # a, b = c -> (a, b) = c
+    # a, b = c -> a, (b = c)
     if not strcmp(tok1->string, ","): # a , b ?
-        if not ustrcmp(tok2->string, "="): # a , b =
-            return 1
         return 0
 
     if not strcmp(tok2->string, "("): # a ? b (
