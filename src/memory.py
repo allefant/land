@@ -79,6 +79,8 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
 
         return
 
+    if _num >= MAX_BLOCKS: return
+
     not_freed[_num].ptr = ptr
     not_freed[_num].file = f
     not_freed[_num].line = l
