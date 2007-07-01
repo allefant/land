@@ -113,7 +113,7 @@ static int def pf_fclose(void *userdata):
 
 static int def pf_getc(void *userdata):
     LandBufferAsFile *self = userdata
-    if self->ungetc | 256:
+    if self->ungetc & 256:
         int c = self->ungetc & 255
         self->ungetc = 0
         return c
