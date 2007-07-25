@@ -1,7 +1,9 @@
 import global land
 import token, parser, syntax, compiler
 
-def test(LM_Machine *m, int first, count):
+def test(LM_Machine *m):
+    int first = m->param_first
+    int count = m->param_count
     printf("test")
     for int i = 0; i < count; i++:
         printf(" ")
