@@ -139,6 +139,14 @@ static def get_string(Tokenizer *self, char delimiter):
 
         if escape:
             escape = 0
+            if c == 'n':
+                c = 10
+            elif c == 'r':
+                c = 13
+            elif c == 't':
+                c = 9
+            elif c == '0':
+                c = 0
         else:
             if c == '\\':
                 escape = 1
@@ -170,7 +178,7 @@ def tokenizer_tokenize(Tokenizer *self):
     """
     Comments: Anything after #
     Tokens: alphanumeric and _
-    Strings: single and double quotes, backslash escapes
+    Strings: single and double quotes, backslash escapes, may contain newlines
     """
     find_token(self)
     Token *t = self->first
