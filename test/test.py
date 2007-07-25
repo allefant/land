@@ -40,6 +40,19 @@ helloworld
 
 helloworld""",
             "Aia Ilu\n")
+    
+    def test_string(self):
+        self.execute("string", r"""
+    print "'quotes'"
+    print '"quotes"'
+    print '\'quotes\''
+    print "\"quotes\""
+    print "\\backslash"
+    print "new
+line"
+    print "new\nline"
+""",
+            """'quotes'\n"quotes"\n'quotes'\n"quotes"\n\\backslash\nnew\nline\nnew\nline\n""")
 
     def test_argument(self):
         self.execute("argument", """
