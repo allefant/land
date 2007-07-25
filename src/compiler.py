@@ -93,7 +93,7 @@ LM_Compiler *def lm_compiler_new_from_file(char const *filename):
 int def add_string_constant(LM_Compiler *c, char const *string):
     int i = new_constant(c)
     LM_Object *val = c->current->constants->data[i]
-    val->header.type = TYPE_STR
+    val->header.type = LM_TYPE_STR
     val->value.pointer = land_strdup(string)
     return i | 128
 
@@ -102,7 +102,7 @@ int def add_constant(LM_Compiler *c, Token *token, LM_DataType type):
     LM_Object *val = c->current->constants->data[i]
 
     val->header.type = type
-    if type == TYPE_NUM:
+    if type == LM_TYPE_NUM:
         val->value.num = ustrtod(token->string, NULL)
     else:
         val->value.pointer = land_strdup(token->string)
@@ -204,7 +204,7 @@ static int def compile_dot(LM_Compiler *c, Node *n, int set, what):
         if right->type == NODE_OPERAND:
             token = right->data
             if set:
-                attribute = add_constant(c, token, TYPE_STR)
+                attribute = add_constant(c, token, LM_TYPE_STR)
                 add_code(c, OPCODE_SET, parent, attribute, what)
                 return what
             else:
@@ -212,7 +212,7 @@ static int def compile_dot(LM_Compiler *c, Node *n, int set, what):
         else:
             left = right->first
             token = left->data
-        attribute = add_constant(c, token, TYPE_STR)
+        attribute = add_constant(c, token, LM_TYPE_STR)
         add_code(c, OPCODE_DOT, result, parent, attribute)
         if not left: return result
         parent = result
@@ -725,7 +725,7 @@ static int def compile_operand(LM_Compiler *c, Node *n):
     Token *token = n->data
     if token->type == TOKEN_ALPHANUM:
         if token->string[0] >= '0' and token->string[0] <= '9':
-            return add_constant(c, token, TYPE_NUM)
+            return add_constant(c, token, LM_TYPE_NUM)
         else:
             int result = get_variable(c, token->string)
             if not result:
@@ -734,7 +734,7 @@ static int def compile_operand(LM_Compiler *c, Node *n):
                 fprintf(stderr, "Variable %s treated as None.\n", token->string)
             return result
     elif token->type == TOKEN_STRING:
-        return add_constant(c, token, TYPE_STR)
+        return add_constant(c, token, LM_TYPE_STR)
     elif token->type == TOKEN_SYMBOL:
         if not strcmp(token->string, "{"):
             int x = create_new_local(c)
@@ -786,8 +786,8 @@ def lm_compiler_debug(LM_Compiler *c, FILE *out):
         for int j = 0; j < f->constants->count; j++:
             fprintf(out, " constant %d: ", j | 128)
             LM_Object *val = f->constants->data[j]
-            if (val->header.type == TYPE_NUM) fprintf(out, "%.1f", val->value.num)
-            if (val->header.type == TYPE_STR) fprintf(out, "%s", (char *)val->value.pointer)
+            if (val->header.type == LM_TYPE_NUM) fprintf(out, "%.1f", val->value.num)
+            if (val->header.type == LM_TYPE_STR) fprintf(out, "%s", (char *)val->value.pointer)
             printf("\n")
 
         fprintf(out, " code:\n")
@@ -813,8 +813,8 @@ def lm_compiler_output(LM_Compiler *c, PACKFILE *out):
         for int j = 0; j < f->constants->count; j++:
             LM_Object *val = f->constants->data[j]
             pack_iputl(val->header.type, out)
-            if val->header.type == TYPE_NUM: pack_iputl(val->value.num, out)
-            if val->header.type == TYPE_STR: pack_fwrite(val->value.pointer,
+            if val->header.type == LM_TYPE_NUM: pack_iputl(val->value.num, out)
+            if val->header.type == LM_TYPE_STR: pack_fwrite(val->value.pointer,
                 strlen(val->value.pointer) + 1, out)
         land_array_destroy(keys)
 
