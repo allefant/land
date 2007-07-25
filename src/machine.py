@@ -40,19 +40,19 @@ For garbage collection, the following could be done from time to time:
 """
 
 enum LM_DataType:
-    TYPE_NON
-    TYPE_BOO
-    TYPE_INT
-    TYPE_NUM # A number.
-    TYPE_DAT
-    TYPE_STR
-    TYPE_DEF # A definition.
-    TYPE_FUN # A frame.
-    TYPE_ARR
-    TYPE_LIS
-    TYPE_DIC # A dictionary.
-    TYPE_QUE
-    TYPE_USE # A user provided object.
+    LM_TYPE_NON
+    LM_TYPE_BOO
+    LM_TYPE_INT
+    LM_TYPE_NUM # A number.
+    LM_TYPE_DAT
+    LM_TYPE_STR
+    LM_TYPE_DEF # A definition.
+    LM_TYPE_FUN # A frame.
+    LM_TYPE_ARR
+    LM_TYPE_LIS
+    LM_TYPE_DIC # A dictionary.
+    LM_TYPE_QUE
+    LM_TYPE_USE # A user provided object.
 
 # x y z is registers (1..127), constants (-128..-1), or None (0)
 # A B C is inline values
@@ -109,7 +109,8 @@ enum LM_Opcode:
 
 class LM_ObjectHeader:
     LM_DataType type
-    int garbage : 1
+    unsigned int garbage : 1
+    unsigned int permanent : 1
 
 class LM_Object:
     """
@@ -167,14 +168,20 @@ class LM_Machine:
     LM_Frame *current
     int error
 
+    int param_first
+    int param_count
+
+    int stats_objects_allocated
+    int stats_objects_destroyed
+
 static macro OB_STR(com, obh) {
-    if (obh->type != TYPE_STR) {
+    if (obh->type != LM_TYPE_STR) {
         machine_error(self, com ": String expected");
         return;
     }
 }
 static macro OB_NUM(com, obh) {
-    if (obh->type != TYPE_NUM) {
+    if (obh->type != LM_TYPE_NUM) {
         machine_error(self, com ": Number expected");
         return;
     }
@@ -185,12 +192,49 @@ LM_Object *def lm_machine_alloc(LM_Machine *self):
     LM_Object *x
     land_alloc(x)
     land_array_add(self->objects, x)
+    self->stats_objects_allocated++
+    return x
+
+def lm_machine_destroy(LM_Machine *self, LM_ObjectHeader *h):
+    LM_Object *o = (void *)h
+    switch h->type:
+        case LM_TYPE_NUM:
+            break
+        case LM_TYPE_STR:
+            land_free(o->value.pointer)
+            break
+        case LM_TYPE_DIC:
+            # We do not care about the contained data.
+            land_hash_destroy(o->value.pointer)
+            break
+        case LM_TYPE_DEF:
+            break
+        case LM_TYPE_FUN:
+            LM_Frame *f = (void *)h
+            # We do not care about the individual objects references by locals -
+            # those are garbage collected on an individual basis.
+            land_array_destroy(f->locals)
+            break
+        default:
+            fprintf(stderr, "Fatal: Don't know how to destroy %p.\n", h)
+    land_free(h)
+    self->stats_objects_destroyed++
+
+LM_Object *def lm_machine_alloc_permanent(LM_Machine *self):
+    """Like lm_machine_alloc, but the object is not added to the list of
+    objects, and the objcet is marked as permanent. This means that even if
+    some variable references the object and then goes out of scope, the
+    object won't be destroyed.
+    """
+    LM_Object *x
+    land_alloc(x)
+    x->header.permanent = 1
     return x
 
 LM_Object *def lm_machine_alloc_dic(LM_Machine *self):
     LM_Object *o
     land_alloc(o)
-    o->header.type = TYPE_DIC
+    o->header.type = LM_TYPE_DIC
     o->value.pointer = land_hash_new()
     land_array_add(self->objects, o)
     return o
@@ -198,14 +242,14 @@ LM_Object *def lm_machine_alloc_dic(LM_Machine *self):
 LM_Definition *def lm_machine_alloc_def(LM_Machine *self):
     LM_Definition *d
     land_alloc(d)
-    d->header.type = TYPE_DEF
+    d->header.type = LM_TYPE_DEF
     land_array_add(self->objects, d)
     return d
 
 LM_Frame *def lm_machine_alloc_frame(LM_Machine *self):
     LM_Frame *f
     land_alloc(f)
-    f->header.type = TYPE_FUN
+    f->header.type = LM_TYPE_FUN
     land_array_add(self->objects, f)
     return f
 
@@ -219,16 +263,17 @@ static def machine_error(LM_Machine *self, char const *blah, ...):
     self->error = 1
 
 def lm_machine_use(LM_Machine *self, char const *name,
-    void (*cb)(LM_Machine *, int a, int b)):
+    void (*cb)(LM_Machine *)):
     land_hash_insert(self->external, name, cb)
 
 static def machine_opcode_use(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, a)
-    OB_STR("USE", ob)
     char const *name = ((LM_Object *)ob)->value.pointer
-    void (*cb)(LM_Machine *, int, int) = land_hash_get(self->external, name)
+    void (*cb)(LM_Machine *) = land_hash_get(self->external, name)
+    self->param_first = b
+    self->param_count = c
     if cb:
-        cb(self, b, c)
+        cb(self)
     else:
         machine_error(self, "Cannot call %s.", name)
 
@@ -248,6 +293,26 @@ def lm_machine_set_value(LM_Machine *self, int i, LM_ObjectHeader *o):
     # The previous value (if any) will be dealt with by the GC.
     self->current->locals->data[i] = o
 
+LM_ObjectHeader *def lm_machine_get_variable(LM_Machine *self, char const *name):
+    LM_Frame *f = self->current
+    while f:
+        int *i = land_hash_get(f->definition->function->variables, name)
+        if i:
+            return f->locals->data[*i]
+        f = f->definition->parent
+    return None
+
+def lm_machine_put_variable(LM_Machine *self, char const *name,
+    LM_ObjectHeader *v):
+
+    LM_Frame *f = self->current
+    while f:
+        int *i = land_hash_get(f->definition->function->variables, name)
+        if i:
+            f->locals->data[*i] = v
+            return
+        f = f->definition->parent
+
 static def machine_opcode_def(LM_Machine *self, int a, b, c):
     
     LM_Definition *d = lm_machine_alloc_def(self)
@@ -263,13 +328,13 @@ static def machine_opcode_new(LM_Machine *self, int a, b, c):
 
 static def machine_opcode_dot(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-    if ob->type != TYPE_DIC:
+    if ob->type != LM_TYPE_DIC:
         machine_error(self, "DOT: Dictionary expected")
         return
     LandHash *dict = ((LM_Object *)ob)->value.pointer
 
     LM_ObjectHeader *oc = lm_machine_get_value(self, c)
-    if oc->type != TYPE_STR:
+    if oc->type != LM_TYPE_STR:
         machine_error(self, "DOT: String expected")
         return
     char const *keyname = ((LM_Object *)oc)->value.pointer
@@ -282,13 +347,13 @@ static def machine_opcode_dot(LM_Machine *self, int a, b, c):
 
 static def machine_opcode_set(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *oa = lm_machine_get_value(self, a)
-    if oa->type != TYPE_DIC:
+    if oa->type != LM_TYPE_DIC:
         machine_error(self, "SET: Dictionary expected")
         return
     LandHash *dict = ((LM_Object *)oa)->value.pointer
 
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-    if ob->type != TYPE_STR:
+    if ob->type != LM_TYPE_STR:
         machine_error(self, "SET: String expected")
         return
     char const *keyname = ((LM_Object *)ob)->value.pointer
@@ -306,9 +371,9 @@ int def lm_machine_get_integer(LM_Machine *self, int i):
         o = self->current->locals->data[i]
     else:
         o = self->current->definition->function->constants->data[128 + i]
-    if o->type == TYPE_NUM:
+    if o->type == LM_TYPE_NUM:
         return ((LM_Object *)o)->value.num
-    if o->type == TYPE_STR:
+    if o->type == LM_TYPE_STR:
         return ustrtod(((LM_Object *)o)->value.pointer, None)
     return 0
 
@@ -341,7 +406,7 @@ static def machine_opcode_fun(LM_Machine *self, int a, b, c):
         machine_error(self, "Cannot call a constant.")
         return
     LM_ObjectHeader *defob = self->current->locals->data[a]
-    if defob->type != TYPE_DEF:
+    if defob->type != LM_TYPE_DEF:
         machine_error(self, "Can only call a function.")
         return
 
@@ -375,7 +440,7 @@ static def machine_opcode_ret(LM_Machine *self, int a, b, c):
 static def machine_binary_op(LM_Machine *self, int a, b, c,
     double (*cb)(double x, double y)):
     LM_Object *oa = lm_machine_alloc(self)
-    oa->header.type = TYPE_NUM
+    oa->header.type = LM_TYPE_NUM
     LM_ObjectHeader *obh = lm_machine_get_value(self, b)
     LM_ObjectHeader *och = lm_machine_get_value(self, c)
     # FIXME: Check type
@@ -416,34 +481,22 @@ static def machine_opcode_get(LM_Machine *self, int a, b, c):
     OB_STR("GET", ob)
     char const *name = ((LM_Object *)ob)->value.pointer
 
-    LM_Frame *f = self->current
-    while f:
-        int *i = land_hash_get(f->definition->function->variables, name)
-        if i:
-            self->current->locals->data[a] = f->locals->data[*i]
-            # The previous value of the variable eventually will go to the GC.
-            break
-        f = f->definition->parent
+    LM_ObjectHeader *v = lm_machine_get_variable(self, name)
+    self->current->locals->data[a] = v
+    # The previous value of the variable eventually will go to the GC.
 
 static def machine_opcode_put(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *oa = lm_machine_get_value(self, a)
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
 
     # FIXME
-    if oa->type != TYPE_STR:
+    if oa->type != LM_TYPE_STR:
         machine_error(self, "FIXME: Only string lookup supported right now.")
         return
 
     char const *name = ((LM_Object *)oa)->value.pointer
 
-    LM_Frame *f = self->current
-    while f:
-        int *i = land_hash_get(f->definition->function->variables, name)
-        if i:
-            LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-            f->locals->data[*i] = ob
-            # The previous value of the variable eventually will go to the GC.
-            break
-        f = f->definition->parent
+    lm_machine_put_variable(self, name, ob)
 
 static def machine_opcode_hop(LM_Machine *self, int a, b, c):
     self->current->ip += b
@@ -461,17 +514,17 @@ static def machine_opcode_and(LM_Machine *self, int a, b, c):
         self->current->ip += b
 
 def lm_machine_output(LM_Machine *self, LM_ObjectHeader *oh):
-    if oh->type == TYPE_NUM:
+    if oh->type == LM_TYPE_NUM:
         LM_Object *o = (void *)oh
         int integer = o->value.num
         if fabs(o->value.num - integer) < 0.00001:
             printf("%d", integer)
         else:
             printf("%f", o->value.num)
-    elif oh->type == TYPE_STR:
+    elif oh->type == LM_TYPE_STR:
         LM_Object *o = (void *)oh
         printf("%s", (char *)o->value.pointer)
-    elif oh->type == TYPE_DIC:
+    elif oh->type == LM_TYPE_DIC:
         LM_Object *o = (void *)oh
         LandHash *dict = o->value.pointer
         LandArray *keys = land_hash_keys(dict)
@@ -501,20 +554,24 @@ static def machine_opcode_flu(LM_Machine *self, int a, b, c):
     machine_opcode_out(self, a, b, c)
     printf("\n")
 
+static def machine_opcode_end(LM_Machine *self, int a, b, c):
+    lm_garbage_collector(self)
+    self->current->ip = 0
+
 static def debug_object(LM_Machine *self, LM_ObjectHeader *obh):
     if not obh:
         printf("<missing>")
     else:
         LM_Object *ob = (void *)obh
-        if obh->type == TYPE_NON:
+        if obh->type == LM_TYPE_NON:
             printf("none")
-        elif obh->type == TYPE_STR:
+        elif obh->type == LM_TYPE_STR:
             printf("%s", (char *)ob->value.pointer)
-        elif obh->type == TYPE_NUM:
+        elif obh->type == LM_TYPE_NUM:
             printf("%f", ob->value.num)
-        elif obh->type == TYPE_DEF:
+        elif obh->type == LM_TYPE_DEF:
             printf("def[%p]", ob)
-        elif obh->type == TYPE_FUN:
+        elif obh->type == LM_TYPE_FUN:
             printf("fun[%p]", ob)
         else:
             printf("0x%p(%d)", obh, obh->type)
@@ -581,7 +638,7 @@ static def object_reachable(LM_Machine *self, LM_ObjectHeader *o):
     if not o->garbage: return
     o->garbage = 0
 
-    if o->type == TYPE_DIC:
+    if o->type == LM_TYPE_DIC:
         # If the dictionary is reachable, so are all of the data in it.
         LandHash *hash = ((LM_Object *)o)->value.pointer
         for int i = 0; i < hash->size; i++:
@@ -590,11 +647,11 @@ static def object_reachable(LM_Machine *self, LM_ObjectHeader *o):
                 int n = entry->n
                 for int j = 0; j < n; j++:
                     object_reachable(self, entry[j].data)
-    elif o->type == TYPE_DEF:
+    elif o->type == LM_TYPE_DEF:
         # If the definition is reachable, so is the frame it was defined in.
         LM_Definition *d = (void *)o
         object_reachable(self, &d->parent->header)
-    elif o->type == TYPE_FUN:
+    elif o->type == LM_TYPE_FUN:
         # If a frame is reachable, so are all its variables, its calling parent,
         # and its definition.
         # TODO: Explain why the definition is reachable - our caller must have
@@ -611,10 +668,28 @@ def lm_garbage_collector(LM_Machine *self):
     # First, mark everything as garbage.
     for int i = 0; i < self->objects->count; i++:
         LM_ObjectHeader *h = self->objects->data[i]
-        h->garbage = 1
+        if h->permanent: h->garbage = 0
+        else: h->garbage = 1
 
     # Then, recursively unmark reachable objects.
     object_reachable(self, &self->current->header)
+
+    # Finally, go through everything again and destroy objects who didn't get
+    # unmarked.
+    for int i = 0; i < self->objects->count; i++:
+        LM_ObjectHeader *h = self->objects->data[i]
+        if h->garbage:
+            lm_machine_destroy(self, h)
+            void *last = land_array_pop(self->objects)
+            if last != h:
+                land_array_replace_nth(self->objects, i, last)
+                i--
+
+    # %d/%d\n",
+    #    self->stats_objects_allocated,
+    #    self->stats_objects_destroyed)
+    self->stats_objects_allocated = 0
+    self->stats_objects_destroyed = 0
 
 def lm_machine_status(LM_Machine *self):
 
@@ -676,7 +751,9 @@ def lm_machine_continue(LM_Machine *self):
                 frame = self->current
                 code = frame->definition->function->code
                 break
-            case OPCODE_END: return
+            case OPCODE_END:
+                machine_opcode_end(self, a, b, c);
+                return
             case OPCODE_OUT: machine_opcode_out(self, a, b, c); break
             case OPCODE_FLU: machine_opcode_flu(self, a, b, c); break
             case OPCODE_DEF: machine_opcode_def(self, a, b, c); break
@@ -693,6 +770,17 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_NEW: machine_opcode_new(self, a, b, c); break
             case OPCODE_DOT: machine_opcode_dot(self, a, b, c); break
             case OPCODE_SET: machine_opcode_set(self, a, b, c); break
+
+def lm_machine_global(LM_Machine *self, char const *name):
+    """
+    Adds a new global variable. This must be called before executing the VM.
+    """
+    LM_Function *f = self->functions->data[0]
+    int *val
+    land_alloc(val)
+    *val = f->locals_count
+    f->locals_count++
+    land_hash_insert(f->variables, name, val)
 
 def lm_machine_reset(LM_Machine *self):
 
@@ -720,9 +808,9 @@ def lm_machine_debug(LM_Machine *self, FILE *out):
         for int j = 0; j < f->constants->count; j++:
             LM_ObjectHeader *obh = land_array_get_nth(f->constants, j)
             LM_Object *ob = (void *)obh
-            if obh->type == TYPE_NUM:
+            if obh->type == LM_TYPE_NUM:
                 fprintf(out, "  %d: number: %f\n", 128 + j, ob->value.num)
-            if obh->type == TYPE_STR:
+            if obh->type == LM_TYPE_STR:
                 fprintf(out, "  %d: string: %s\n", 128 + j, (char *)ob->value.pointer)
 
         LandArray *keys = land_hash_keys(f->variables)
@@ -782,13 +870,10 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         f->constants = land_array_new()
         n = pack_igetl(pf)
         for int i = 0; i < n; i++:
-            #LM_Object *ob = lm_machine_alloc(self)
-            # We do not want constants to appear in the garbage collector
-            LM_Object *ob
-            land_alloc(ob)
+            LM_Object *ob = lm_machine_alloc_permanent(self)
             int t = ob->header.type = pack_igetl(pf)
-            if t == TYPE_NUM: ob->value.num = pack_igetl(pf)
-            if t == TYPE_STR: ob->value.pointer = land_strdup(read_name(pf))
+            if t == LM_TYPE_NUM: ob->value.num = pack_igetl(pf)
+            if t == LM_TYPE_STR: ob->value.pointer = land_strdup(read_name(pf))
             land_array_add(f->constants, ob)
 
         f->code_length = n = pack_igetl(pf)
