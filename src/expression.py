@@ -61,6 +61,10 @@ static int def operator_precedence(Node *left, Node *right):
         if not ustrcmp(tok2->string, "."): # a . b . c = a . (b . c)
             return 0
 
+    if not strcmp(tok1->string, "="): # a = b ?
+        if strcmp(tok2->string, ","):
+            return 0
+
     if not strcmp(tok1->string, "+"): # a + b ?
         if not ustrcmp(tok2->string, "*"): # a + b * c
             return 0
