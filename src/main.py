@@ -66,14 +66,18 @@ def usage():
 def start():
     land_init()
     if land_argc >= 2:
-        if not ustrcmp(land_argv[1], "compile"):
+        if not ustrcmp(land_argv[1], "compile") or\
+            not ustrcmp(land_argv[1], "com") or\
+            not ustrcmp(land_argv[1], "c"):
             if land_argc == 3:
                 compile(land_argv[2], None)
             elif land_argc == 4:
                 compile(land_argv[2], land_argv[3])
             else:
                 usage()
-        elif not ustrcmp(land_argv[1], "execute"):
+        elif not ustrcmp(land_argv[1], "execute") or\
+            not ustrcmp(land_argv[1], "exe") or\
+            not ustrcmp(land_argv[1], "e"):
             if land_argc == 3:
                 execute(land_argv[2])
             else:
