@@ -73,6 +73,12 @@ static char def next(Tokenizer *self):
         self->linestart = self->pos
     return c
 
+static char def peek(Tokenizer *self, int i):
+    if self->pos + i < self->text->n:
+        return self->text->buffer[self->pos + i]
+    else:
+        return 0
+
 static char const *multichar_symbol_tokens[] = {
     "<<=",
     ">>=",
@@ -128,23 +134,42 @@ static def get_token(Tokenizer *self):
 
     token_add(self, TOKEN_ALPHANUM, self->line, start - self->linestart, string)
 
-static def get_string(Tokenizer *self, char delimiter):
+static def get_string_triple(Tokenizer *self, char delimiter, int triple):
     int linenum = self->line
     int column = self->pos - self->linestart
 
+    int dpos = 0
     int escape = 0
     LandBuffer *buffer = land_buffer_new()
     while not self->end:
         char c = next(self)
 
+        if dpos:
+            if c == delimiter:
+                dpos++
+                if dpos == 3: break
+                continue
+            else:
+                if dpos == 1: land_buffer_add_char(buffer, delimiter)
+                if dpos == 2: land_buffer_add_char(buffer, delimiter)
+                dpos = 0
+
         if escape:
             escape = 0
-            if c == 'n':
-                c = 10
-            elif c == 'r':
-                c = 13
+            if c == 'a':
+                c = 7
+            elif c == 'b':
+                c = 8
             elif c == 't':
                 c = 9
+            elif c == 'n':
+                c = 10
+            elif c == 'v':
+                c = 11
+            elif c == 'f':
+                c = 12
+            elif c == 'r':
+                c = 13
             elif c == '0':
                 c = 0
         else:
@@ -152,11 +177,22 @@ static def get_string(Tokenizer *self, char delimiter):
                 escape = 1
                 continue
             elif c == delimiter:
-                break
+                if triple:
+                    dpos++
+                    continue
+                else: break
 
         land_buffer_add_char(buffer, c)
 
     token_add(self, TOKEN_STRING, linenum, column, land_buffer_finish(buffer))
+
+static def get_string(Tokenizer *self, char delimiter):
+    if peek(self, 0) == delimiter and peek(self, 1) == delimiter:
+        next(self)
+        next(self)
+        get_string_triple(self, delimiter, 1)
+    else:
+        get_string_triple(self, delimiter, 0)
 
 static def find_token(Tokenizer *self):
     while not self->end:
@@ -179,6 +215,7 @@ def tokenizer_tokenize(Tokenizer *self):
     Comments: Anything after #
     Tokens: alphanumeric and _
     Strings: single and double quotes, backslash escapes, may contain newlines
+    Triple Strings: same, but no need to escape quotes themselves
     """
     find_token(self)
     Token *t = self->first
