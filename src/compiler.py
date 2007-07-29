@@ -3,6 +3,9 @@ import syntax, machine
 class LM_Compiler:
     SyntaxAnalyzer *sa
 
+    # Contains the names of all external functions. External functions are
+    # called differently than normal code, so they must be known at compile
+    # time.
     LandHash *using
     LandArray *functions
     LM_CompilerFunction *global_function
@@ -89,6 +92,11 @@ LM_Compiler *def lm_compiler_new_from_file(char const *filename):
     LM_Compiler *c = lm_compiler_new_from_syntax_analyzer(sa)
 
     return c
+
+def lm_compiler_use(LM_Compiler *c, char const *string):
+    static int used = 1
+    land_hash_insert(c->using, string, &used)
+    printf("Now using %s.\n", string)
 
 int def add_string_constant(LM_Compiler *c, char const *string):
     int i = new_constant(c)
@@ -433,7 +441,7 @@ static int def compile_conditional(LM_Compiler *c, Node *n):
     Node *ifnode = n->first
     while ifnode:
         if ifnode->type != NODE_OPERATION:
-            fprintf(stderr, "Hu? need if/else/elif here..\n")
+            fprintf(stderr, "Hu? need if/else/elif/while here..\n")
             ifnode = ifnode->next
             continue
         Token *token = ifnode->data
@@ -472,15 +480,14 @@ static int def compile_conditional(LM_Compiler *c, Node *n):
 
     return 0   
 
+# Note: The paramnames are not generally available at compile time. Only in
+# cases where they trivially are, we do an optimization step here and translate
+# them to normal, ordered parameters.
 static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
-    int *first, LandArray *paramnames):
+    int *first):
     # TODO: Clarify if we want a limit of 256 params
-    Token *t = n->data
     int params[256]
-    int got_required[256]
-    if paramnames:
-        for int i = 0; i < 256; i++:
-            got_required[i] = 0
+
     Node *param = n->first
     int nparams = 0
     int got_named = 0
@@ -498,24 +505,6 @@ static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
                 continue
             # An assignement here means a named parameter
             if not strcmp(ptoken->string, "="):
-                Node *name = param->first
-                Token *token = name->data
-                int i = 0
-                if paramnames:
-                    for i = 0; i < paramnames->count; i++:
-                        char const *str = land_array_get_nth(paramnames, i)
-                        if not ustrcmp(token->string, str):
-                            params[i] = compile_node(c, name->next)
-                            got_required[i] = 1
-                            if i + 1 > nparams:
-                                nparams = i + 1
-                            got_named++
-                            break
-                    if i == paramnames->count:
-                        i = 0
-                if i == 0:
-                    pass
-                    # TODO: additional named parameters
                 positional = 0
 
         if positional:
@@ -524,8 +513,6 @@ static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
                     "Cannot use positional parameters after named parametes.\n")
             int result = compile_node(c, param)
             params[nparams] = result
-            if paramnames and nparams < paramnames->count:
-                got_required[nparams] = 1
             nparams++
 
         Node *parent = param->parent
@@ -538,19 +525,10 @@ static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
             else:
                 break
 
-    if paramnames and nparams < paramnames->count:
-        fprintf(stderr, "Error: "
-            "Function \"%s\" has %d required parameters, "
-            "but only %d of them %s provided!\n", t->string, paramnames->count,
-            nparams, nparams == 1 ? "is" : "are")
-
     # Check if the arguments already are in the right order for passing on.
     int need_args = 0
     *first = params[0]
     for int i = 0; i < nparams; i++:
-        if paramnames and i < paramnames->count and not got_required[i]:
-            fprintf(stderr, "Error: "
-                "Missing required parameter for index %d!\n", i)
         if params[i] < 1 or params[i] > 127 or params[i] != *first + i:
             need_args = 1
             break
@@ -622,10 +600,8 @@ static int def compile_operation(LM_Compiler *c, Node *n):
         Node *param = n->first
         while param:
             if param->type == NODE_OPERAND:
-                static int used = 1
                 Token *paramtoken = param->data
-                land_hash_insert(c->using, paramtoken->string, &used)
-                printf("Now using %s.\n", paramtoken->string)
+                lm_compiler_use(c, paramtoken->string)
                 param = param->next
             else:
                 param = param->first
@@ -640,12 +616,20 @@ static int def compile_operation(LM_Compiler *c, Node *n):
         int first, nparams
 
         if not strcmp(token->string, "print"):
-            nparams = parse_function_call_parameters(c, n, &first, None)
+            nparams = parse_function_call_parameters(c, n, &first)
             add_code(c, OPCODE_FLU, first, nparams, 0)
+        elif not strcmp(token->string, "str"):
+            nparams = parse_function_call_parameters(c, n, &first)
+            int x = create_new_temporary(c)
+            add_code(c, OPCODE_STR, x, first, 0)
+            return x
+        elif not strcmp(token->string, "pause"):
+            add_code(c, OPCODE_PAU, 0, 0, 0)
+            return 0
         else:
             int *using = land_hash_get(c->using, token->string)
             if using:
-                nparams = parse_function_call_parameters(c, n, &first, None)
+                nparams = parse_function_call_parameters(c, n, &first)
                 int constant = add_string_constant(c, token->string)
                 add_code(c, OPCODE_USE, constant, first, nparams)
                 return 0
@@ -656,8 +640,9 @@ static int def compile_operation(LM_Compiler *c, Node *n):
                 token_err(c->sa->tokenizer, token,
                     "Could not compile call to unknown function \"%s\".\n",
                     token->string)
-            LM_CompilerFunction *f = land_array_get_nth(c->functions,  result)
-            nparams = parse_function_call_parameters(c, n, &first, f->parameters)
+                return 0
+
+            nparams = parse_function_call_parameters(c, n, &first)
             add_code(c, OPCODE_FUN, result, first, nparams)
             return 0
     return 0
