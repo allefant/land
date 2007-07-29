@@ -45,7 +45,7 @@ enum LM_DataType:
     LM_TYPE_INT
     LM_TYPE_NUM # A number.
     LM_TYPE_DAT
-    LM_TYPE_STR
+    LM_TYPE_STR # A string.
     LM_TYPE_DEF # A definition.
     LM_TYPE_FUN # A frame.
     LM_TYPE_ARR
@@ -54,7 +54,8 @@ enum LM_DataType:
     LM_TYPE_QUE
     LM_TYPE_USE # A user provided object.
 
-# x y z is registers (1..127), constants (-128..-1), or None (0)
+# x y z is registers (0..127) or constants (-128..-1)
+#       Note: 0 is reserved as return-register, -128 as none constant.
 # A B C is inline values
 #
 enum LM_Opcode:
@@ -62,6 +63,7 @@ enum LM_Opcode:
     OPCODE_NOP # NOP ? ? ? does nothing
     OPCODE_USE # USE x y C Calls a user callback named x (y and C like FUN)
     OPCODE_END # END ? ? ? stops the virtual machine
+    OPCODE_PAU # PAU ? ? ? pauses the virtual machine
 
     # output
     OPCODE_OUT # OUT x ? ? outputs x
@@ -106,6 +108,9 @@ enum LM_Opcode:
     OPCODE_BIN
     OPCODE_ABS
     OPCODE_SGN
+
+    # conversion
+    OPCODE_STR # STR x y ? put new string initialized from y into x
 
 class LM_ObjectHeader:
     LM_DataType type
@@ -231,6 +236,12 @@ LM_Object *def lm_machine_alloc_permanent(LM_Machine *self):
     x->header.permanent = 1
     return x
 
+LM_Object *def lm_machine_alloc_str(LM_Machine *self, char const *val):
+    LM_Object *o = lm_machine_alloc(self)
+    o->header.type = LM_TYPE_STR
+    o->value.pointer = land_strdup(val)
+    return o
+
 LM_Object *def lm_machine_alloc_dic(LM_Machine *self):
     LM_Object *o
     land_alloc(o)
@@ -326,6 +337,23 @@ static def machine_opcode_new(LM_Machine *self, int a, b, c):
     LM_Object *o = lm_machine_alloc_dic(self)
     lm_machine_set_value(self, a, &o->header)
 
+static def machine_opcode_str(LM_Machine *self, int a, b, c):
+    LM_ObjectHeader *obh = lm_machine_get_value(self, b)
+    LM_Object *ret
+    if obh->type == LM_TYPE_NUM:
+        LM_Object *ob = (void *)obh
+        int integer = ob->value.num
+        char str[256]
+        if fabs(ob->value.num - integer) < 0.00001:
+            snprintf(str, 256, "%d", integer)
+        else:
+            snprintf(str, 256, "%f", ob->value.num)
+        ret = lm_machine_alloc_str(self, str)
+    elif obh->type == LM_TYPE_STR:
+        LM_Object *ob = (void *)obh
+        ret = lm_machine_alloc_str(self, ob->value.pointer)
+    lm_machine_set_value(self, a, &ret->header)
+
 static def machine_opcode_dot(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
     if ob->type != LM_TYPE_DIC:
@@ -401,7 +429,6 @@ static def machine_call(LM_Machine *self, LM_Definition *definition, int b, c):
     self->current = frame
 
 static def machine_opcode_fun(LM_Machine *self, int a, b, c):
-    if a == 0: return # Calling none does.. nothing
     if a < 0:
         machine_error(self, "Cannot call a constant.")
         return
@@ -558,6 +585,9 @@ static def machine_opcode_end(LM_Machine *self, int a, b, c):
     lm_garbage_collector(self)
     self->current->ip = 0
 
+static def machine_opcode_pau(LM_Machine *self, int a, b, c):
+    lm_garbage_collector(self)
+
 static def debug_object(LM_Machine *self, LM_ObjectHeader *obh):
     if not obh:
         printf("<missing>")
@@ -605,6 +635,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(USE)
         D(RET)
         D(END)
+        D(PAU)
         D(PUT)
         D(GET)
         D(OUT)
@@ -628,6 +659,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(BIG)
         D(LOW)
         D(SAM)
+        D(STR)
         default: fprintf(out, " ??? ")
     unsigned char *b = (unsigned char *)buffer
     fprintf(out, "%d %d %d\n", b[1], b[2], b[3])
@@ -754,6 +786,9 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_END:
                 machine_opcode_end(self, a, b, c);
                 return
+            case OPCODE_PAU:
+                machine_opcode_pau(self, a, b, c);
+                return
             case OPCODE_OUT: machine_opcode_out(self, a, b, c); break
             case OPCODE_FLU: machine_opcode_flu(self, a, b, c); break
             case OPCODE_DEF: machine_opcode_def(self, a, b, c); break
@@ -770,6 +805,7 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_NEW: machine_opcode_new(self, a, b, c); break
             case OPCODE_DOT: machine_opcode_dot(self, a, b, c); break
             case OPCODE_SET: machine_opcode_set(self, a, b, c); break
+            case OPCODE_STR: machine_opcode_str(self, a, b, c); break
 
 def lm_machine_global(LM_Machine *self, char const *name):
     """
