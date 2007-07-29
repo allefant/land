@@ -47,12 +47,14 @@ helloworld""",
     print '"quotes"'
     print '\'quotes\''
     print "\"quotes\""
+    print ''''quotes\''''""" + """
+    print \"\"\"\"quotes\\\"\"\"\"""" + r"""
     print "\\backslash"
     print "new
 line"
     print "new\nline"
 """,
-            """'quotes'\n"quotes"\n'quotes'\n"quotes"\n\\backslash\nnew\nline\nnew\nline\n""")
+            """'quotes'\n"quotes"\n'quotes'\n"quotes"\n'quotes'\n"quotes"\n\\backslash\nnew\nline\nnew\nline\n""")
 
     def test_argument(self):
         self.execute("argument", """
@@ -239,6 +241,29 @@ test 1
 test(1, 2, "Hola.", "¿Cómo estás?")
 """, "test\ntest 1\ntest 1 2 Hola. ¿Cómo estás?\n")
 
+    def test_truth(self):
+        self.execute("truth", """
+if 1
+    print "yes"
+if 0
+    print "no"
+""", "yes\n")
+
+    def test_funcvar(self):
+        self.execute("funcvar", """
+foo:
+    print "foo"
+bar
+    print "bar"
+goo: print "goo"
+i = 0
+while i < 3
+    if i == 0: x = foo
+    if i == 1: x = bar
+    if i == 2: x = goo
+    x()
+    i = i + 1
+""", "foo\nbar\ngoo\n")
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)
