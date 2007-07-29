@@ -131,7 +131,7 @@ int def expression(SyntaxAnalyzer *self, Node *node):
     elif is_operand(node): # x
         Node *left = node
         node = node->next
-        if not node:
+        if not node or node->type == NODE_BLOCK:
             # Just an identifier on its own - treat it as variable
             # So e.g. "x = foobar" will not call foobar, only "x = foobar()"
             # will.
