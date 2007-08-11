@@ -1,34 +1,34 @@
 import global land
 static import token
 
-enum NodeType:
-    NODE_INVALID
+enum LM_NodeType:
+    LM_NODE_INVALID
 
-    NODE_BLOCK
-    NODE_STATEMENT
-    NODE_TOKEN
+    LM_NODE_BLOCK
+    LM_NODE_STATEMENT
+    LM_NODE_TOKEN
 
-    NODE_OPERAND
-    NODE_OPERATION
-    NODE_FUNCTION
+    LM_NODE_OPERAND
+    LM_NODE_OPERATION
+    LM_NODE_FUNCTION
 
-    NODE_STATEMENT_CONDITIONAL
+    LM_NODE_STATEMENT_CONDITIONAL
 
-class Node:
-    NodeType type
+class LM_Node:
+    LM_NodeType type
     void *data
-    Node *first, *last
-    Node *next, *prev
-    Node *parent
+    LM_Node *first, *last
+    LM_Node *next, *prev
+    LM_Node *parent
 
-Node *def node_new(NodeType type, void *data):
-    Node *self
+LM_Node *def lm_node_new(LM_NodeType type, void *data):
+    LM_Node *self
     land_alloc(self)
     self->type = type
     self->data = data
     return self
 
-def node_add_child(Node *self, Node *child):
+def lm_node_add_child(LM_Node *self, LM_Node *child):
     child->parent = self
     child->next = None
     child->prev = self->last
@@ -38,7 +38,7 @@ def node_add_child(Node *self, Node *child):
         self->first = child
     self->last = child
 
-def node_remove(Node *self):
+def lm_node_remove(LM_Node *self):
     if not self->parent: return
     if self->next:
         self->next->prev = self->prev
@@ -49,25 +49,25 @@ def node_remove(Node *self):
     else:
         self->parent->first = self->next
 
-char const *def node_print(Node *self):
+char const *def lm_node_print(LM_Node *self):
     static char str[256]
-    if self->type == NODE_BLOCK:
+    if self->type == LM_NODE_BLOCK:
         uszprintf(str, sizeof str, "BLOCK")
-    elif self->type == NODE_STATEMENT:
+    elif self->type == LM_NODE_STATEMENT:
         uszprintf(str, sizeof str, "STATEMENT")
-    elif self->type == NODE_STATEMENT_CONDITIONAL:
+    elif self->type == LM_NODE_STATEMENT_CONDITIONAL:
         uszprintf(str, sizeof str, "NODE_STATEMENT_CONDITIONAL")
-    elif self->type == NODE_FUNCTION:
+    elif self->type == LM_NODE_FUNCTION:
         uszprintf(str, sizeof str, "FUNCTION")
-    elif self->type == NODE_OPERAND:
+    elif self->type == LM_NODE_OPERAND:
         Token *token = self->data
         uszprintf(str, sizeof str, "OPERAND «%s» (%d)", token->string,
             token->type)
-    elif self->type == NODE_OPERATION:
+    elif self->type == LM_NODE_OPERATION:
         Token *token = self->data
         uszprintf(str, sizeof str, "NODE_OPERATION «%s» (%d)", token->string,
             token->type)
-    elif self->type == NODE_TOKEN:
+    elif self->type == LM_NODE_TOKEN:
         Token *token = self->data
         uszprintf(str, sizeof str, "TOKEN «%s» (%d)", token->string,
             token->type)
@@ -75,13 +75,13 @@ char const *def node_print(Node *self):
         uszprintf(str, sizeof str, "(node %d)", self->type)
     return str
 
-def node_debug(Node *self, int indent):
+def lm_node_debug(LM_Node *self, int indent):
     for int i = 0; i < indent; i++:
         printf("    ")
-    char const *s = node_print(self)
+    char const *s = lm_node_print(self)
     printf("%s\n", s)
-    if self->first: node_debug(self->first, indent + 1)
+    if self->first: lm_node_debug(self->first, indent + 1)
 
     if self->next:
-        node_debug(self->next, indent)
+        lm_node_debug(self->next, indent)
     

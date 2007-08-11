@@ -9,12 +9,15 @@ import global land
 import node, token
 
 class Parser:
-    Node *root
+    LM_Node *root
     Token *token
 
-static Node *parse_block(Parser *self);
+static LM_Node *parse_block(Parser *self);
 
-Parser *def parser_new_from_tokenizer(Tokenizer *tokenizer):
+Parser *def parser_new_from_tokenizer(Tokenizer const *tokenizer):
+    """
+    You must keep the tokenizer around until the parser is destroyed first.
+    """
     Parser *self
     land_alloc(self)
     self->token = tokenizer->first
@@ -22,12 +25,13 @@ Parser *def parser_new_from_tokenizer(Tokenizer *tokenizer):
 
 def parser_del(Parser *self):
     """
-    The generated nodes are not deleted, they are owned by the caller now.
+    The generated nodes are not deleted, they are owned by the caller now. And
+    the tokens are still owned by the tokenizer.
     """
     land_free(self)
 
-static Node *def parse_statement(Parser *self):
-    Node *statement_node = node_new(NODE_STATEMENT, None)
+static LM_Node *def parse_statement(Parser *self):
+    LM_Node *statement_node = lm_node_new(LM_NODE_STATEMENT, None)
     Token *first_token = self->token
     if not strcmp(self->token->string, ";"):
         self->token = self->token->next
@@ -35,8 +39,8 @@ static Node *def parse_statement(Parser *self):
     if not strcmp(self->token->string, "end"):
         self->token = self->token->next
         return None
-    Node *first_node = node_new(NODE_TOKEN, first_token)
-    node_add_child(statement_node, first_node)
+    LM_Node *first_node = lm_node_new(LM_NODE_TOKEN, first_token)
+    lm_node_add_child(statement_node, first_node)
     self->token = self->token->next
     while self->token:
         if self->token->line > first_token->line: break
@@ -49,27 +53,27 @@ static Node *def parse_statement(Parser *self):
             self->token = self->token->next
             break
 
-        Node *token_node = node_new(NODE_TOKEN, self->token)
-        node_add_child(statement_node, token_node)
+        LM_Node *token_node = lm_node_new(LM_NODE_TOKEN, self->token)
+        lm_node_add_child(statement_node, token_node)
 
         self->token = self->token->next
 
     if self->token:
         if self->token->column > first_token->column:
-            node_add_child(statement_node, parse_block(self))
+            lm_node_add_child(statement_node, parse_block(self))
 
     return statement_node
 
-static Node *def parse_block(Parser *self):
-    Node *node = node_new(NODE_BLOCK, None)
+static LM_Node *def parse_block(Parser *self):
+    LM_Node *node = lm_node_new(LM_NODE_BLOCK, None)
 
     if self->token:
         int indent = self->token->column
         while self->token:
             if self->token->column < indent: break
-            Node *statement = parse_statement(self)
+            LM_Node *statement = parse_statement(self)
             if statement:
-                node_add_child(node, statement)
+                lm_node_add_child(node, statement)
             else:
                 break
     return node
@@ -80,5 +84,5 @@ def parser_parse(Parser *self):
     """
     self->root = parse_block(self)
 
-    Node *n = self->root
-    if n: node_debug(n, 0)
+    LM_Node *n = self->root
+    if n: lm_node_debug(n, 0)

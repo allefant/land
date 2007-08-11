@@ -3,8 +3,8 @@ The expression parser. This is a crucial part of the syntax analyzer.
 """
 import compiler, node, token
 
-static int def is_operator(Node *node):
-    if node->type == NODE_TOKEN:
+static int def is_operator(LM_Node *node):
+    if node->type == LM_NODE_TOKEN:
         Token *token = node->data
         if token->type == TOKEN_SYMBOL:
             return 1
@@ -14,12 +14,12 @@ static int def is_operator(Node *node):
             return 1
     return 0
 
-static int def is_operand(Node *node):
-    if node->type == NODE_OPERATION:
+static int def is_operand(LM_Node *node):
+    if node->type == LM_NODE_OPERATION:
         return 1
-    if node->type == NODE_OPERAND:
+    if node->type == LM_NODE_OPERAND:
         return 1
-    if node->type == NODE_TOKEN:
+    if node->type == LM_NODE_TOKEN:
         Token *token = node->data
         if token->type == TOKEN_ALPHANUM:
             return 1
@@ -27,21 +27,21 @@ static int def is_operand(Node *node):
             return 1
     return 0
 
-static int def is_symbol(Node *node, char const *symbol):
-    if node->type == NODE_TOKEN:
+static int def is_symbol(LM_Node *node, char const *symbol):
+    if node->type == LM_NODE_TOKEN:
         Token *token = node->data
         if token->type == TOKEN_SYMBOL:
             if not ustrcmp(token->string, symbol):
                 return 1
     return 0
 
-static int def is_opening_parenthesis(Node *node):
+static int def is_opening_parenthesis(LM_Node *node):
     return is_symbol(node, "(")
 
-static int def is_closing_parenthesis(Node *node):
+static int def is_closing_parenthesis(LM_Node *node):
     return is_symbol(node, ")")
 
-static int def operator_precedence(Node *left, Node *right):
+static int def operator_precedence(LM_Node *left, LM_Node *right):
     """
     Returns 1 if left has precedence over right.
     """
@@ -92,95 +92,95 @@ static int def operator_precedence(Node *left, Node *right):
 
     return 1 
 
-int def expression(SyntaxAnalyzer *self, Node *node):
+int def expression(SyntaxAnalyzer *self, LM_Node *node):
     if is_symbol(node, "{"):
-        Node *opening = node
+        LM_Node *opening = node
         node = node->next
         if is_symbol(node, "}"):
-            node_remove(node)
+            lm_node_remove(node)
         else:
             token_err(self->tokenizer, node->data,
                 "Sorry, dictionary syntax not supported yet in this version.")
             return 0
-        opening->type = NODE_OPERAND
+        opening->type = LM_NODE_OPERAND
         return 1
 
     if is_opening_parenthesis(node):
         while 1:
             if not expression(self, node->next): break
         if is_closing_parenthesis(node->next):
-            node_remove(node->next)
-            node->type = NODE_OPERATION
+            lm_node_remove(node->next)
+            node->type = LM_NODE_OPERATION
             return 1
-        Node *inside = node->next;
-        Node *closing = node->next->next;
+        LM_Node *inside = node->next;
+        LM_Node *closing = node->next->next;
         if not closing or not is_closing_parenthesis(closing):
             token_err(self->tokenizer, node->data,
                 "No matching closing parenthesis found.")
             return 0
-        node_remove(closing)
-        node_remove(inside)
-        if inside->type == NODE_TOKEN:
-            inside->type = NODE_OPERAND
-        node->type = NODE_OPERATION
-        node_add_child(node, inside)
+        lm_node_remove(closing)
+        lm_node_remove(inside)
+        if inside->type == LM_NODE_TOKEN:
+            inside->type = LM_NODE_OPERAND
+        node->type = LM_NODE_OPERATION
+        lm_node_add_child(node, inside)
         # FIXME: Do we need to free closing here, or is it still referenced
         # somewhere else?
         return 1
     
     elif is_operand(node): # x
-        Node *left = node
+        LM_Node *left = node
         node = node->next
-        if not node or node->type == NODE_BLOCK:
+        if not node or node->type == LM_NODE_BLOCK:
             # Just an identifier on its own - treat it as variable
             # So e.g. "x = foobar" will not call foobar, only "x = foobar()"
             # will.
-            if left->type == NODE_TOKEN:
-                left->type = NODE_OPERAND
+            if left->type == LM_NODE_TOKEN:
+                left->type = LM_NODE_OPERAND
             return 0
-        elif node->type == NODE_STATEMENT: return 0
+        elif node->type == LM_NODE_STATEMENT: return 0
         elif is_closing_parenthesis(node): return 0
         elif is_opening_parenthesis(node): # x (
             expression(self, node)
-            node_remove(node)
-            left->type = NODE_OPERATION
-            node_add_child(left, node)
+            lm_node_remove(node)
+            left->type = LM_NODE_OPERATION
+            lm_node_add_child(left, node)
             return 1
         elif is_operator(node): # x +
-            Node *operator = node
+            LM_Node *operator = node
             node = node->next
             if is_opening_parenthesis(node): # x + (
                 return expression(self, node)
             elif is_symbol(node, "{"): # x + {
                 return expression(self, node)
             elif is_operand(node): # x + y
-                Node *right = node
+                LM_Node *right = node
                 node = node->next
                 int reduce = 0
                 if not node: reduce = 1
-                elif node->type == NODE_STATEMENT: reduce = 1
-                elif node->type == NODE_BLOCK: reduce = 1
+                elif node->type == LM_NODE_STATEMENT: reduce = 1
+                elif node->type == LM_NODE_BLOCK: reduce = 1
                 elif is_closing_parenthesis(node): reduce = 1
                 elif is_operator(node): # x + y +
                     if operator_precedence(operator, node):
                         reduce = 1
                 if reduce:
-                    node_remove(left)
-                    if left->type == NODE_TOKEN:
-                        left->type = NODE_OPERAND
-                    node_remove(right)
-                    if right->type == NODE_TOKEN:
-                        right->type = NODE_OPERAND
-                    operator->type = NODE_OPERATION
-                    node_add_child(operator, left)
-                    node_add_child(operator, right)
+                    lm_node_remove(left)
+                    if left->type == LM_NODE_TOKEN:
+                        left->type = LM_NODE_OPERAND
+                    lm_node_remove(right)
+                    if right->type == LM_NODE_TOKEN:
+                        right->type = LM_NODE_OPERAND
+                    operator->type = LM_NODE_OPERATION
+                    lm_node_add_child(operator, left)
+                    lm_node_add_child(operator, right)
                     return 1
                 else:
                     return expression(self, right)
         elif is_operand(node): # x y
             # We always reduce.
-            node_remove(node)
-            left->type = NODE_OPERATION
-            node_add_child(left, node)
+            lm_node_remove(node)
+            left->type = LM_NODE_OPERATION
+            lm_node_add_child(left, node)
             return 1
     return 0

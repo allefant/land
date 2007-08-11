@@ -32,7 +32,7 @@ class Tokenizer:
     Token *first
     Token *token
 
-def token_err(Tokenizer *self, Token *t, char const *str, ...):
+def token_err(Tokenizer const *self, Token *t, char const *str, ...):
     fprintf(stderr, "%s: %d: %d: ", self->filename, t->line, t->column)
     va_list arg
     va_start(arg, str)
@@ -63,6 +63,16 @@ Tokenizer *def tokenizer_new_from_file(char const *filename):
     self->filename = land_strdup(filename)
     self->text = buffer
     return self
+
+def tokenizer_destroy(Tokenizer *self):
+    for Token *t = self->first; t;:
+        Token *next = t->next
+        land_free(t->string)
+        land_free(t)
+        t = next
+    land_buffer_del(self->text)
+    land_free(self->filename)
+    land_free(self)
 
 static char def next(Tokenizer *self):
     char c = self->text->buffer[self->pos++]

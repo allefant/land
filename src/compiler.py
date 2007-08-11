@@ -42,8 +42,8 @@ macro JUMP_WHILE 4
 macro JUMP_BARRIER 5
 macro JUMP_BREAK 6
 
-static void compile_or(LM_Compiler *c, Node *n);
-static void compile_and(LM_Compiler *c, Node *n);
+static void compile_or(LM_Compiler *c, LM_Node *n);
+static void compile_and(LM_Compiler *c, LM_Node *n);
 
 int def new_constant(LM_Compiler *c):
     LM_Object *val
@@ -92,6 +92,18 @@ LM_Compiler *def lm_compiler_new_from_file(char const *filename):
     LM_Compiler *c = lm_compiler_new_from_syntax_analyzer(sa)
 
     return c
+
+def lm_compiler_destroy(LM_Compiler *c):
+
+    # Need to cast away constness, as we will destroy the tokenizer, having
+    # created it outselves earlier.
+    Tokenizer *t = (Tokenizer *)c->sa->tokenizer
+    syntax_analyzer_destroy(c->sa)
+    tokenizer_destroy(t)
+
+    land_array_destroy(c->functions)
+    land_hash_destroy(c->using)
+    land_free(c)
 
 def lm_compiler_use(LM_Compiler *c, char const *string):
     static int used = 1
@@ -196,20 +208,20 @@ static int def get_variable(LM_Compiler *c, char const *string):
 
     return 0
 
-static int def compile_dot(LM_Compiler *c, Node *n, int set, what):
+static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
     """
     Compile code to get the attribute of a variable into a register.
     """
-    Node *left = n->first
+    LM_Node *left = n->first
     Token *ltoken = left->data
     int parent = get_variable(c, ltoken->string)
     int result = create_new_temporary(c)
 
     while True:
-        Node *right = left->next
+        LM_Node *right = left->next
         Token *token
         int attribute
-        if right->type == NODE_OPERAND:
+        if right->type == LM_NODE_OPERAND:
             token = right->data
             if set:
                 attribute = add_constant(c, token, LM_TYPE_STR)
@@ -262,7 +274,7 @@ static def finish_assignement(LM_Compiler *c, int *what, int slot, target):
         c->current->locals_count++
     if *what != slot: add_code(c, OPCODE_ASS, *what, slot, 0)
 
-static int def compile_binary_operation(LM_Compiler *c, Node *n, int opcode):
+static int def compile_binary_operation(LM_Compiler *c, LM_Node *n, int opcode):
     int result = create_new_temporary(c)
     int temps = c->current->temporaries_count
     c->current->locals_count-- # can re-use the target temp
@@ -273,22 +285,22 @@ static int def compile_binary_operation(LM_Compiler *c, Node *n, int opcode):
     add_code(c, opcode, result, op1, op2)
     return result
 
-static int def is_parenthesis(LM_Compiler *c, Node *n):
-    if n->type == NODE_OPERATION:
+static int def is_parenthesis(LM_Compiler *c, LM_Node *n):
+    if n->type == LM_NODE_OPERATION:
         Token *t = n->data
         if not strcmp(t->string, "("):
             return True
     return False
 
-static int def is_or(LM_Compiler *c, Node *n):
-    if n->type == NODE_OPERATION:
+static int def is_or(LM_Compiler *c, LM_Node *n):
+    if n->type == LM_NODE_OPERATION:
         Token *t = n->data
         if not strcmp(t->string, "or"):
             return True
     return False
 
-static int def is_and(LM_Compiler *c, Node *n):
-    if n->type == NODE_OPERATION:
+static int def is_and(LM_Compiler *c, LM_Node *n):
+    if n->type == LM_NODE_OPERATION:
         Token *t = n->data
         if not strcmp(t->string, "and"):
             return True
@@ -348,7 +360,7 @@ static def resolve_remove_last(LM_Compiler *c, int tag):
                 land_array_replace_nth(c->resolve, i, last)
             return
 
-static def compile_or_child(LM_Compiler *c, Node *n):
+static def compile_or_child(LM_Compiler *c, LM_Node *n):
     while is_parenthesis(c, n):
         n = n->first
     if is_or(c, n):
@@ -374,7 +386,7 @@ static def compile_or_child(LM_Compiler *c, Node *n):
         c->current->locals_count -= c->current->temporaries_count
         c->current->temporaries_count = 0
 
-static def compile_and_child(LM_Compiler *c, Node *n):
+static def compile_and_child(LM_Compiler *c, LM_Node *n):
     while is_parenthesis(c, n):
         n = n->first
     if is_or(c, n):
@@ -395,7 +407,7 @@ static def compile_and_child(LM_Compiler *c, Node *n):
         c->current->locals_count -= c->current->temporaries_count
         c->current->temporaries_count = 0
 
-static def compile_and(LM_Compiler *c, Node *n):
+static def compile_and(LM_Compiler *c, LM_Node *n):
     """
     Compiles an and. If a condition is not met, branches. If it runs through,
     all conditions have been met.
@@ -403,7 +415,7 @@ static def compile_and(LM_Compiler *c, Node *n):
     compile_and_child(c, n->first)
     compile_and_child(c, n->first->next)
 
-static def compile_or(LM_Compiler *c, Node *n):
+static def compile_or(LM_Compiler *c, LM_Node *n):
     """
     Compiles an or. This will compile code to do a branch if any condition is
     true. The code compiled directly afterwards is executed if no condition
@@ -412,8 +424,8 @@ static def compile_or(LM_Compiler *c, Node *n):
     compile_or_child(c, n->first)
     compile_or_child(c, n->first->next)
 
-static def compile_if(LM_Compiler *c, Node *n):
-    Node *opnode = n->first
+static def compile_if(LM_Compiler *c, LM_Node *n):
+    LM_Node *opnode = n->first
     while is_parenthesis(c, opnode):
         opnode = opnode->first
     if is_and(c, opnode):
@@ -430,17 +442,17 @@ static def compile_if(LM_Compiler *c, Node *n):
         c->current->locals_count -= c->current->temporaries_count
         c->current->temporaries_count = 0
 
-    Node *block = n->first->next
-    if block->type == NODE_BLOCK:
+    LM_Node *block = n->first->next
+    if block->type == LM_NODE_BLOCK:
         compile_node(c, block)
 
-static int def compile_conditional(LM_Compiler *c, Node *n):
+static int def compile_conditional(LM_Compiler *c, LM_Node *n):
 
     remember_here(c, JUMP_BARRIER)
 
-    Node *ifnode = n->first
+    LM_Node *ifnode = n->first
     while ifnode:
-        if ifnode->type != NODE_OPERATION:
+        if ifnode->type != LM_NODE_OPERATION:
             fprintf(stderr, "Hu? need if/else/elif/while here..\n")
             ifnode = ifnode->next
             continue
@@ -483,19 +495,19 @@ static int def compile_conditional(LM_Compiler *c, Node *n):
 # Note: The paramnames are not generally available at compile time. Only in
 # cases where they trivially are, we do an optimization step here and translate
 # them to normal, ordered parameters.
-static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
+static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
     int *first):
     # TODO: Clarify if we want a limit of 256 params
     int params[256]
 
-    Node *param = n->first
+    LM_Node *param = n->first
     int nparams = 0
     int got_named = 0
     # What we do is, we compile all the parameter expressions and remember
     # into which local variables the resulting values go.
     while param:
         int positional = 1
-        if param->type == NODE_OPERATION:
+        if param->type == LM_NODE_OPERATION:
             Token *ptoken = param->data
             if not strcmp(ptoken->string, ","):
                 param = param->first
@@ -515,7 +527,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
             params[nparams] = result
             nparams++
 
-        Node *parent = param->parent
+        LM_Node *parent = param->parent
         param = param->next
         while not param:
             if parent and parent != n:
@@ -542,7 +554,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, Node *n,
 
     return nparams
 
-static int def compile_operation(LM_Compiler *c, Node *n):
+static int def compile_operation(LM_Compiler *c, LM_Node *n):
     """
     Compile an operation, and return the local which has the result, or
     0 if none.
@@ -597,9 +609,9 @@ static int def compile_operation(LM_Compiler *c, Node *n):
         to_be_resolved(c, JUMP_BREAK)
         return 0
     elif not strcmp(token->string, "use"):
-        Node *param = n->first
+        LM_Node *param = n->first
         while param:
-            if param->type == NODE_OPERAND:
+            if param->type == LM_NODE_OPERAND:
                 Token *paramtoken = param->data
                 lm_compiler_use(c, paramtoken->string)
                 param = param->next
@@ -634,7 +646,7 @@ static int def compile_operation(LM_Compiler *c, Node *n):
                 add_code(c, OPCODE_USE, constant, first, nparams)
                 return 0
 
-            n->type = NODE_OPERAND
+            n->type = LM_NODE_OPERAND
             int result = compile_node(c, n)
             if not result:
                 token_err(c->sa->tokenizer, token,
@@ -647,17 +659,17 @@ static int def compile_operation(LM_Compiler *c, Node *n):
             return 0
     return 0
 
-static int def compile_statement(LM_Compiler *c, Node *n):
+static int def compile_statement(LM_Compiler *c, LM_Node *n):
     if n->first:
         compile_node(c, n->first)
         c->current->locals_count -= c->current->temporaries_count
         c->current->temporaries_count = 0
     return 0
 
-static int def compile_function(LM_Compiler *c, Node *n):
+static int def compile_function(LM_Compiler *c, LM_Node *n):
     LM_CompilerFunction *current = c->current
 
-    Node *name = n->first
+    LM_Node *name = n->first
     Token *nametoken = name->data
 
     int what
@@ -675,15 +687,15 @@ static int def compile_function(LM_Compiler *c, Node *n):
     land_array_add(c->functions, c->current)
 
     # Add parameters as named locals.
-    Node *n2 = name->next
-    while n2 and n2->type == NODE_TOKEN:
+    LM_Node *n2 = name->next
+    while n2 and n2->type == LM_NODE_TOKEN:
         Token *token = n2->data
         if token->type != TOKEN_SYMBOL:
             find_or_create_local(c, token->string)
             land_array_add(c->current->parameters, land_strdup(token->string))
         n2 = n2->next
 
-    if n2->type == NODE_BLOCK:
+    if n2->type == LM_NODE_BLOCK:
         compile_node(c, n2)
 
     # If no possible codepath can reach here (most commonly because there is
@@ -699,14 +711,14 @@ static int def compile_function(LM_Compiler *c, Node *n):
 
     return slot
 
-static int def compile_block(LM_Compiler *c, Node *n):
-    Node *n2 = n->first
+static int def compile_block(LM_Compiler *c, LM_Node *n):
+    LM_Node *n2 = n->first
     while n2:
         compile_node(c, n2)
         n2 = n2->next
     return 0
 
-static int def compile_operand(LM_Compiler *c, Node *n):
+static int def compile_operand(LM_Compiler *c, LM_Node *n):
     Token *token = n->data
     if token->type == TOKEN_ALPHANUM:
         if token->string[0] >= '0' and token->string[0] <= '9':
@@ -727,18 +739,18 @@ static int def compile_operand(LM_Compiler *c, Node *n):
             return x
     return 0
 
-int def compile_node(LM_Compiler *c, Node *n):
-    if n->type == NODE_BLOCK:
+int def compile_node(LM_Compiler *c, LM_Node *n):
+    if n->type == LM_NODE_BLOCK:
         return compile_block(c, n)
-    elif n->type == NODE_STATEMENT:
+    elif n->type == LM_NODE_STATEMENT:
         return compile_statement(c, n)
-    elif n->type == NODE_STATEMENT_CONDITIONAL:
+    elif n->type == LM_NODE_STATEMENT_CONDITIONAL:
         return compile_conditional(c, n)
-    elif n->type == NODE_FUNCTION:
+    elif n->type == LM_NODE_FUNCTION:
         return compile_function(c, n)
-    elif n->type == NODE_OPERATION:
+    elif n->type == LM_NODE_OPERATION:
         return compile_operation(c, n)
-    elif n->type == NODE_OPERAND:
+    elif n->type == LM_NODE_OPERAND:
         return compile_operand(c, n)
     return 0
 

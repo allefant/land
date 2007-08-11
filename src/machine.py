@@ -161,6 +161,7 @@ class LM_Frame:
     LandArray *locals
     int ip
     LM_Frame *parent
+    int noreturn
 
 class LM_Machine:
     # An array of all known functions.
@@ -582,11 +583,10 @@ static def machine_opcode_flu(LM_Machine *self, int a, b, c):
     printf("\n")
 
 static def machine_opcode_end(LM_Machine *self, int a, b, c):
-    lm_garbage_collector(self)
     self->current->ip = 0
 
 static def machine_opcode_pau(LM_Machine *self, int a, b, c):
-    lm_garbage_collector(self)
+    pass
 
 static def debug_object(LM_Machine *self, LM_ObjectHeader *obh):
     if not obh:
@@ -778,16 +778,20 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_AND: machine_opcode_and(self, a, b, c); break
             case OPCODE_HOP: machine_opcode_hop(self, a, b, c); break
             case OPCODE_RET:
-                if not frame->parent: return
                 machine_opcode_ret(self, a, b, c)
+                if frame->noreturn:
+                    lm_garbage_collector(self)
+                    return
                 frame = self->current
                 code = frame->definition->function->code
                 break
             case OPCODE_END:
-                machine_opcode_end(self, a, b, c);
+                machine_opcode_end(self, a, b, c)
+                lm_garbage_collector(self)
                 return
             case OPCODE_PAU:
-                machine_opcode_pau(self, a, b, c);
+                machine_opcode_pau(self, a, b, c)
+                lm_garbage_collector(self)
                 return
             case OPCODE_OUT: machine_opcode_out(self, a, b, c); break
             case OPCODE_FLU: machine_opcode_flu(self, a, b, c); break
@@ -806,6 +810,29 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_DOT: machine_opcode_dot(self, a, b, c); break
             case OPCODE_SET: machine_opcode_set(self, a, b, c); break
             case OPCODE_STR: machine_opcode_str(self, a, b, c); break
+
+int def lm_machine_call_top(LM_Machine *self, char const *name):
+    """
+    Call a top-level funcion given by its name. Returns True on success, False
+    if the named function cannot be found.
+    """
+    # First go to topmost frame.
+    while self->current->parent:
+        self->current = self->current->parent
+
+    int *vi = land_hash_get(self->current->definition->function->variables, name)
+    if not vi: return False
+    LM_ObjectHeader *h = land_array_get_nth(self->current->locals, *vi)
+    if h->type != LM_TYPE_DEF:
+        return False
+    LM_Definition *d = (void *)h
+    # TODO: If we want to pass parameters, we should not use machine_call
+    # (which expects them in registers of the current frame), but instead
+    # just set up our frame here, filling in the parameters as the initial
+    # locals.
+    machine_call(self, d, 0, 0)
+    self->current->noreturn = 1
+    return True
 
 def lm_machine_global(LM_Machine *self, char const *name):
     """

@@ -33,6 +33,8 @@ def compile(char const *input, char const *output):
         lm_compiler_output(c, f)
         pack_fclose(f)
 
+    lm_compiler_destroy(c)
+
 def execute(char const *input):
 
     LM_Machine *m
