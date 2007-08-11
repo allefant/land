@@ -59,6 +59,8 @@ def execute(char const *input):
     lm_machine_reset(m)
     lm_machine_continue(m)
 
+    lm_machine_destroy_completely(m)
+
 def usage():
     fprintf(stderr, "usage:\n")
     fprintf(stderr, "spell compile input.spell [output.code]\n")

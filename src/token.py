@@ -40,7 +40,7 @@ def token_err(Tokenizer const *self, Token *t, char const *str, ...):
     va_end(arg)
     fprintf(stderr, "\n")
 
-def token_add(Tokenizer *self, TokenType type, int linenum, column,
+static def token_add(Tokenizer *self, TokenType type, int linenum, column,
     char *string):
     Token *token
     land_alloc(token)
@@ -123,7 +123,7 @@ static def add_operator(Tokenizer *self):
             break
 
     token_add(self, TOKEN_SYMBOL,
-        self->line, self->pos - self->linestart - 1, ustrdup(string))
+        self->line, self->pos - self->linestart - 1, land_strdup(string))
 
 static def skip_comment(Tokenizer *self):
     while not self->end:

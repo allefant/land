@@ -9,6 +9,8 @@ static import parser, expression
 class SyntaxAnalyzer:
     LM_Node *root
     Tokenizer const *tokenizer
+    # The parser keeps track of all allocated nodes, so we keep it around.
+    void *parser
 
 SyntaxAnalyzer *def syntax_analyzer_new_from_tokenizer(Tokenizer const *tokenizer):
     SyntaxAnalyzer *self
@@ -17,14 +19,14 @@ SyntaxAnalyzer *def syntax_analyzer_new_from_tokenizer(Tokenizer const *tokenize
     return self
 
 def syntax_analyzer_destroy(SyntaxAnalyzer *self):
-    # Fixme: what about the nodes?
+    parser_del(self->parser)
     land_free(self)
 
 def syntax_analyzer_parse(SyntaxAnalyzer *self):
     Parser *p = parser_new_from_tokenizer(self->tokenizer)
     parser_parse(p)
     self->root = p->root
-    parser_del(p)
+    self->parser = p
 
 static void block(SyntaxAnalyzer *sa, LM_Node *node);
 

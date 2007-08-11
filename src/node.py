@@ -28,6 +28,9 @@ LM_Node *def lm_node_new(LM_NodeType type, void *data):
     self->data = data
     return self
 
+def lm_node_del(LM_Node *self):
+    land_free(self)
+
 def lm_node_add_child(LM_Node *self, LM_Node *child):
     child->parent = self
     child->next = None

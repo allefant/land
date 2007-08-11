@@ -45,14 +45,14 @@ macro JUMP_BREAK 6
 static void compile_or(LM_Compiler *c, LM_Node *n);
 static void compile_and(LM_Compiler *c, LM_Node *n);
 
-int def new_constant(LM_Compiler *c):
+static int def new_constant(LM_Compiler *c):
     LM_Object *val
     land_alloc(val)
 
     land_array_add(c->current->constants, val)
-    return (c->current->constants->count - 1)
+    return c->current->constants->count - 1
 
-LM_CompilerFunction *def function_new(LM_CompilerFunction *parent):
+static LM_CompilerFunction *def function_new(LM_CompilerFunction *parent):
     LM_CompilerFunction *self
     land_alloc(self)
 
@@ -69,6 +69,26 @@ LM_CompilerFunction *def function_new(LM_CompilerFunction *parent):
     self->locals_count = 1
 
     return self
+
+static def function_del(LM_CompilerFunction *self):
+    for int i = 0; i < self->parameters->count; i++:
+        land_free(land_array_get_nth(self->parameters, i))
+    land_array_destroy(self->parameters)
+
+    for int i = 0; i < self->constants->count; i++:
+        LM_ObjectHeader *h = land_array_get_nth(self->constants, i)
+        lm_machine_destroy_object(None, h)
+    land_array_destroy(self->constants)
+
+    land_buffer_del(self->code)
+
+    LandArray *a = land_hash_data(self->locals)
+    for int i = 0; i < a->count; i++:
+        land_free(land_array_get_nth(a, i))
+    land_array_destroy(a)
+    land_hash_destroy(self->locals)
+
+    land_free(self)
 
 LM_Compiler *def lm_compiler_new_from_syntax_analyzer(SyntaxAnalyzer *sa):
     LM_Compiler *self
@@ -101,7 +121,13 @@ def lm_compiler_destroy(LM_Compiler *c):
     syntax_analyzer_destroy(c->sa)
     tokenizer_destroy(t)
 
+    for int i = 0; i < c->functions->count; i++:
+        LM_CompilerFunction *f = land_array_get_nth(c->functions, i)
+        function_del(f)
     land_array_destroy(c->functions)
+
+    land_array_destroy(c->resolve)
+
     land_hash_destroy(c->using)
     land_free(c)
 

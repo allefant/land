@@ -164,11 +164,18 @@ class LM_Frame:
     int noreturn
 
 class LM_Machine:
-    # An array of all known functions.
+    # An array of all known functions. Functions are global and shared by all
+    # instances of the virtual machine. Basically, an LM_Function is the static
+    # aspect of a function, and shared among all instances. LM_Definition is
+    # the dynamic part, owned by each individual instance.
     LandArray *functions
-    # A mapping of names of external function to C function pointers.
+
+    # A mapping of names of external functions to C function pointers. This
+    # also is shared by everyone.
     LandHash *external
-    # An array of all currently allocated objects
+
+    # An array of all currently allocated objects. This is not shared, each copy
+    # of an LM_Machine will allocate its own objects.
     LandArray *objects
 
     LM_Frame *current
@@ -193,7 +200,7 @@ static macro OB_NUM(com, obh) {
     }
 }
 
-LM_Object *def lm_machine_alloc(LM_Machine *self):
+LM_Object *def lm_machine_allocate_object(LM_Machine *self):
     """Allocate a new object."""
     LM_Object *x
     land_alloc(x)
@@ -201,7 +208,7 @@ LM_Object *def lm_machine_alloc(LM_Machine *self):
     self->stats_objects_allocated++
     return x
 
-def lm_machine_destroy(LM_Machine *self, LM_ObjectHeader *h):
+def lm_machine_destroy_object(LM_Machine *self, LM_ObjectHeader *h):
     LM_Object *o = (void *)h
     switch h->type:
         case LM_TYPE_NUM:
@@ -221,13 +228,18 @@ def lm_machine_destroy(LM_Machine *self, LM_ObjectHeader *h):
             # those are garbage collected on an individual basis.
             land_array_destroy(f->locals)
             break
+        case LM_TYPE_NON:
+            # Oh yes. Let's destroy the global none value. Very good idea.
+            break
         default:
-            fprintf(stderr, "Fatal: Don't know how to destroy %p.\n", h)
+            fprintf(stderr, "Fatal: Don't know how to destroy %p (%d).\n", h,
+                h->type)
+            return
     land_free(h)
-    self->stats_objects_destroyed++
+    if self: self->stats_objects_destroyed++
 
 LM_Object *def lm_machine_alloc_permanent(LM_Machine *self):
-    """Like lm_machine_alloc, but the object is not added to the list of
+    """Like lm_machine_allocate_object, but the object is not added to the list of
     objects, and the objcet is marked as permanent. This means that even if
     some variable references the object and then goes out of scope, the
     object won't be destroyed.
@@ -238,7 +250,7 @@ LM_Object *def lm_machine_alloc_permanent(LM_Machine *self):
     return x
 
 LM_Object *def lm_machine_alloc_str(LM_Machine *self, char const *val):
-    LM_Object *o = lm_machine_alloc(self)
+    LM_Object *o = lm_machine_allocate_object(self)
     o->header.type = LM_TYPE_STR
     o->value.pointer = land_strdup(val)
     return o
@@ -467,7 +479,7 @@ static def machine_opcode_ret(LM_Machine *self, int a, b, c):
 
 static def machine_binary_op(LM_Machine *self, int a, b, c,
     double (*cb)(double x, double y)):
-    LM_Object *oa = lm_machine_alloc(self)
+    LM_Object *oa = lm_machine_allocate_object(self)
     oa->header.type = LM_TYPE_NUM
     LM_ObjectHeader *obh = lm_machine_get_value(self, b)
     LM_ObjectHeader *och = lm_machine_get_value(self, c)
@@ -704,22 +716,19 @@ def lm_garbage_collector(LM_Machine *self):
         else: h->garbage = 1
 
     # Then, recursively unmark reachable objects.
-    object_reachable(self, &self->current->header)
+    if self->current: object_reachable(self, &self->current->header)
 
     # Finally, go through everything again and destroy objects who didn't get
     # unmarked.
     for int i = 0; i < self->objects->count; i++:
         LM_ObjectHeader *h = self->objects->data[i]
         if h->garbage:
-            lm_machine_destroy(self, h)
+            lm_machine_destroy_object(self, h)
             void *last = land_array_pop(self->objects)
             if last != h:
                 land_array_replace_nth(self->objects, i, last)
                 i--
 
-    # %d/%d\n",
-    #    self->stats_objects_allocated,
-    #    self->stats_objects_destroyed)
     self->stats_objects_allocated = 0
     self->stats_objects_destroyed = 0
 
@@ -902,6 +911,49 @@ LM_Machine *def lm_machine_new_machine():
     self->external = land_hash_new()
     self->objects = land_array_new()
     return self
+
+def lm_machine_destroy(LM_Machine *self):
+    """
+    Completely destroys the virtual machine instance. Data which are possibly
+    shared among other virtual machine instances are not destroyed, use
+    lm_machine_destroy_completely for that.
+    """
+    # Cut our reference to anything.
+    self->current = None
+    # Which should prompt the GC to collect everything.
+    lm_garbage_collector(self)
+
+    land_array_destroy(self->objects)
+    land_hash_destroy(self->external)
+    
+    land_free(self)
+
+def lm_machine_destroy_completely(LM_Machine *self):
+    """
+    Destroys the currently running machine with lm_machine_destroy, and also
+    destroys the function definition and everything referenced.
+    """
+
+    # Destroy all the compiled code and static variable name mappings and
+    # constants.
+    for int i = 0; i < self->functions->count; i++:
+        LM_Function *f = land_array_get_nth(self->functions, i)
+        for int j = 0; j < f->constants->count; j++:
+            LM_ObjectHeader *h = land_array_get_nth(f->constants, j)
+            lm_machine_destroy_object(self, h)
+        land_array_destroy(f->constants)
+
+        LandArray *va = land_hash_data(f->variables)
+        for int j = 0; j < va->count; j++: land_free(land_array_get_nth(va, j))
+        land_array_destroy(va)
+        land_hash_destroy(f->variables)
+
+        land_free(f->code)
+
+        land_free(f)
+    land_array_destroy(self->functions)
+
+    lm_machine_destroy(self)
 
 LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
     """
