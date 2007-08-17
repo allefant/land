@@ -56,7 +56,10 @@ LandHash *def land_hash_new():
     return self
 
 def land_hash_destroy(LandHash *self):
-    """Destroy a LandHash. The data inside the hash are not freed"""
+    """
+    Destroy a LandHash. The data inside the hash are not freed (just
+    everything else, like key names and internal data structures).
+    """
     int i
     for i = 0; i < self->size; i++:
         LandHashEntry *entry = self->entries[i]
@@ -74,9 +77,10 @@ def land_hash_destroy(LandHash *self):
 void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     """Insert data into a LandHash.
     
-    A LandHash simply is a mapping of keys to
-    data pointers - it will never touch the passed data in any way. E.g. you
-    need to make sure to delete any pointers you add to a hash.
+    A LandHash simply is a mapping of keys to data pointers - it will never
+    touch the passed data in any way. E.g. you need to make sure to delete any
+    pointers you add to a hash. A copy of the passed key is made so you need
+    not keep it around.
     
     If the key already exists, there will be two entries with the same key
     from now on, and it is undefined behavior which one will get returned when
@@ -177,15 +181,20 @@ void *def land_hash_replace(LandHash *self, char const *thekey, void *data):
 
 void *def land_hash_get(LandHash *self, char const *thekey):
     """Return the data associated with a hash key. If the key exists multiple
-    times, it can not relied on a certain one being returned. It might always
+    times, it can be not relied on a certain one being returned. It might always
     be the same, but it might not be - this is especially true if other entries
-    are added which could lead to a re-hashing when it gets to full.
-    
+    are added which could lead to a re-hashing when it gets too full.
+
     If the key is not found, None is returned.
     """
     LandHashEntry *entry = land_hash_get_entry(self, thekey)
     if entry: return entry->data
     return None
+
+int def land_hash_has(LandHash *self, char const *thekey):
+    LandHashEntry *entry = land_hash_get_entry(self, thekey)
+    if entry: return True
+    return False
 
 LandArray *def land_hash_keys(LandHash *hash):
     """Return an array containing all the keys in the hash. The strings are
