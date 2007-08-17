@@ -44,7 +44,7 @@ def land_buffer_clear(LandBuffer *self):
 
 def land_buffer_crop(LandBuffer *self):
     """
-    Make the buffer use up only the minimum required amount.
+    Make the buffer use up only the minimum required amount of memory.
     """
     self->buffer = realloc(self->buffer, self->n)
     self->size = self->n
@@ -118,17 +118,22 @@ static int def pf_getc(void *userdata):
         self->ungetc = 0
         return c
     if self->pos >= self->landbuffer->n: return EOF
-    int c = self->landbuffer->buffer[self->pos]
+    int c = ((unsigned char *)self->landbuffer->buffer)[self->pos]
     self->pos++
     return c
 
 static int def pf_ungetc(int c, void *userdata):
     LandBufferAsFile *self = userdata
     self->ungetc = c | 256
-    return 0
+    return c
 
 static long def pf_fread(void *p, long n, void *userdata):
     LandBufferAsFile *self = userdata
+    if self->ungetc & 256:
+        *(char *)p = self->ungetc & 255
+        self->ungetc = 0
+        n--
+        p = (char *)p + 1
     if self->pos + n > self->landbuffer->n:
         n = self->landbuffer->n - self->pos
     memcpy(p, self->landbuffer->buffer + self->pos, n)
