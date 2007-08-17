@@ -10,6 +10,7 @@ static import array, memory
 
 #undef land_array_new
 #undef land_array_destroy
+#undef land_array_add
 
 LandArray *def land_array_new_memlog(char const *f, int l):
     LandArray *array = land_array_new()
@@ -20,9 +21,17 @@ def land_array_destroy_memlog(LandArray *self, char const *f, int l):
     land_memory_remove(self, "array", 1, f, l)
     land_array_destroy(self)
 
+def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
+    land_array_add(self, data)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self->size, f, l)
+
 #endif
 
 LandArray *def land_array_new():
+    """
+    Create a new empty array.
+    """
     LandArray *self
     land_alloc(self)
     return self
@@ -99,6 +108,16 @@ def land_array_add_data(LandArray **array, void *data):
 
     land_array_add(self, data)
 
+int def land_array_find(LandArray *self, void *data):
+    """
+    Searches the array for the given data. If they are contained, return the
+    first index i so that land_array_get_nth(array, i) == data. If the data
+    cannot be found, -1 is returned.
+    """
+    for int i = 0; i < self->count; i++:
+        if self->data[i] == data: return i
+    return -1
+
 void *def land_array_get_nth(LandArray *array, int i):
     return array->data[i]
 
@@ -173,5 +192,6 @@ def land_array_clear(LandArray *self):
 
 macro land_array_new() land_array_new_memlog(__FILE__, __LINE__)
 macro land_array_destroy(x) land_array_destroy_memlog(x, __FILE__, __LINE__)
+macro land_array_add(x, y) land_array_add_memlog(x, y, __FILE__, __LINE__)
 
 #endif
