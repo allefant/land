@@ -69,8 +69,10 @@ def land_display_allegrogl_set(LandDisplay *super):
     mode = GFX_OPENGL
     if super->flags & LAND_WINDOWED:
         mode = GFX_OPENGL_WINDOWED
+    #ifdef GFX_OPENGL_FULLSCREEN
     elif super->flags & LAND_FULLSCREEN:
         mode = GFX_OPENGL_FULLSCREEN
+    #endif
 
     set_color_depth(cd)
     # TODO: seems to have bad effects on some windows machines
