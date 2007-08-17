@@ -46,7 +46,7 @@ def land_queue_add(LandQueue *q, void *data):
 
     while i > 0:
         int parent = (i - 1) / 2
-        # Parent is smaller, then everything is ok.
+        # Parent is smaller (or equal), then everything is ok.
         if q->cmp_cb(q->array.data[parent], q->array.data[i]) <= 0: break
         # We are smaller, so we need to bubble up.
         void *temp = q->array.data[parent]

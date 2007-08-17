@@ -266,6 +266,7 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     Add a widget to the scrolling widget. The child widget can be bigger than
     the parent, and scrollbars will appear to allow scrolling around.
     """
+
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandListItem *item = container->children->first
     LandWidget *contents = LAND_WIDGET(item->data)

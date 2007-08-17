@@ -38,12 +38,12 @@ static def done():
     fprintf(lf, "Memory statistics:\n")
     fprintf(lf, "Maximum number of simultanously allocated blocks: %d\n",
             _maxnum)
-    fprintf(lf, "Maximum number of simultanously allocated bytes: %d\n",
+    fprintf(lf, "Maximum number of simultanously allocated elements: %d\n",
             _maxsize)
 
     fprintf(lf, "Memory leaks: %d\n", _num)
     for n = 0; n < _num; n++:
-        fprintf(lf, "%s: %d: %d bytes [%s] not freed: %p\n",
+        fprintf(lf, "%s: %d: %d elements [%s] not freed: %p\n",
                 not_freed[n].file, not_freed[n].line,
                 not_freed[n].size, not_freed[n].id, not_freed[n].ptr)
         int i
@@ -73,7 +73,7 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     if !ptr:
         if size:
             FILE *lf = fopen(LOGFILE, "a")
-            fprintf(lf, "%s: %d: allocation of %d bytes [%s] failed\n", f, l,
+            fprintf(lf, "%s: %d: allocation of %d elements [%s] failed\n", f, l,
                 size, id)
             fclose(lf)
 
@@ -92,7 +92,7 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     if _size > _maxsize: _maxsize = _size
         #ifdef LOGALL
         FILE *lf = fopen(LOGFILE, "a")
-        fprintf(lf, "%s: %d: allocated: %d bytes [%s] at %p\n",
+        fprintf(lf, "%s: %d: allocated: %d elements [%s] at %p\n",
             f, l, size, id, ptr)
         fclose(lf)
         #endif
@@ -121,7 +121,7 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
         if not_freed[n].ptr == ptr:
             #ifdef LOGALL
             FILE *lf = fopen(LOGFILE, "a")
-            fprintf(lf, "%s: %d: freed: %d bytes [%s] at %p\n",
+            fprintf(lf, "%s: %d: freed: %d elements [%s] at %p\n",
                 f, l, not_freed[n].size, id, ptr)
             fclose(lf)
             #endif

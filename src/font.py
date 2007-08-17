@@ -40,6 +40,11 @@ int def land_font_active():
     return active
 
 LandFont *def land_font_load(char const *filename, float size):
+    """
+    Load the given font file, with the given size. The size usually is the pixel
+    height of a line in the font. But some fonts, e.g. bitmap fonts, will
+    ignore it. The font also us made the current font if successfully loaded.
+    """
     LandFont *self
     if land_get_flags() & LAND_OPENGL:
         self = land_font_allegrogl_load(filename, size)
