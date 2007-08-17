@@ -224,11 +224,13 @@ def land_net_listen(LandNet *self, char const *address):
     r = bind(self->sock, (struct sockaddr *) &sock_address, sizeof sock_address)
     if r < 0:
         sockerror("bind")
+        land_free(host)
         return
 
     r = listen(self->sock, SOMAXCONN)
     if r < 0:
         sockerror("listen")
+        land_free(host)
         return
 
     self->state = LAND_NET_LISTENING
