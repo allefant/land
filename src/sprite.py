@@ -72,6 +72,9 @@ class LandSpritesGrid:
     LandGrid super
     LandList **sprites # 2D-array of sprite lists
 
+    # keep all sprites sorted by their y coordinate
+    int ysorted
+
     # Maximum sprite extents. This is the maximum values of the x/y/w/h of
     # the sprite type above, relative to the sprite position.
     # E.g. if a sprite has: (5, 5, 20, 20), then the max values would be
@@ -240,6 +243,10 @@ int def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other):
     LAND_SPRITE_TYPE_IMAGE(other->type)->image,
     other->x, other->y, other->angle)
 
+def land_sprite_grid_ysorted(LandGrid *self):
+    LandSpritesGrid *sg = (void *)self
+    sg->ysorted = 1
+
 LandList *def land_sprites_grid_overlap(LandSprite *self,
     LandGrid *sprites_grid):
     """
@@ -362,6 +369,61 @@ LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
 
     return retlist
 
+static int def is_left(float ax, ay, bx, by):
+    return ax * by - ay * bx < 0
+
+static int def is_in_triangle(float x, y, p1x, p1y, p2x, p2y, p3x, p3y):
+    if is_left(x - p1x, y - p1y, p2x - p1x, p2y - p1y) and\
+        is_left(x - p2x, y - p2y, p3x - p2x, p3y - p2y) and\
+        is_left(x - p3x, y - p3y, p1x - p3x, p1y - p3y): return True
+    return False
+
+LandList *def land_sprites_get_triangle(LandGrid *sprites_grid,
+    float p1x, p1y, p2x, p2y, p3x, p3y):
+    """
+    Return a list of all sprites in the given triangle. This only considers
+    center positions, the size/shape of sprites is completely ignored.
+    """
+
+    LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
+
+    # get bounding box
+    int l = p1x, t = p1y, r = p1y, b = p1y
+    if p2x < l: l = p2x
+    if p3x < l: l = p3x
+    if p2x > r: r = p2x
+    if p3x > r: r = p3x
+    if p2y < t: t = p2y
+    if p3y < t: t = p3y
+    if p2y > b: b = p2y
+    if p3y > b: b = p3y
+
+    # get cell bounding box
+    int tl = l / grid->super.cell_w
+    int tt = t / grid->super.cell_h
+    int tr = r / grid->super.cell_w
+    int tb = b / grid->super.cell_h
+    if tl < 0: tl = 0
+    if tt < 0: tt = 0
+    if tr >= grid->super.x_cells: tr = grid->super.x_cells - 1
+    if tb >= grid->super.y_cells: tb = grid->super.y_cells - 1
+
+    # check sprites in all cells
+    LandList *retlist = NULL
+    for int ty = tt; ty <= tb; ty++:
+        for int tx = tl; tx <= tr; tx++:
+            LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
+            if not list: continue
+            LandListItem *item = list->first
+            while item:
+                LandSprite *other = item->data
+                # FIXME: have to re-order triangle points if not anti-clockwise
+                if is_in_triangle(other->x, other->y,
+                    p1x, p1y, p2x, p2y, p3x, p3y):
+                    land_add_list_data(&retlist, other)
+                item = item->next
+    return retlist
+
 # Return a list of all sprites in the given view and overlap. The overlap
 # increases when negative for t and l and positive for r and l.
 LandList *def land_sprites_grid_get_in_view(LandGrid *sprites_grid,
@@ -393,8 +455,28 @@ def grid_place(LandSprite *self, LandSpritesGrid *grid):
         grid->max_b = self->type->h - self->type->y
 
     # FIXME: need proper sprites container, without allocating a new ListItem
-    land_add_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
-        self)
+    if grid->ysorted:
+        LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
+        if not list:
+            list = land_list_new()
+            grid->sprites[ty * grid->super.x_cells + tx] = list
+        LandListItem *item = land_listitem_new(self)
+        LandListItem *i = list->first
+        while i:
+            LandSprite *ls = i->data
+            if ls->y > self->y:
+                land_list_insert_item_before(list, item, i)
+                goto done
+            if ls->y == self->y:
+                if ls->x > self->x:
+                    land_list_insert_item_before(list, item, i)
+                    goto done
+            i = i->next
+        land_list_insert_item(list, item)
+        label done
+    else:
+        land_add_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
+            self)
 
 def grid_unplace(LandSprite *self, LandSpritesGrid *grid):
     """
@@ -487,7 +569,6 @@ def land_sprites_init():
     land_grid_vtable_sprites->draw = land_sprites_grid_draw
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell
     land_grid_vtable_sprites->del = land_sprites_grid_del
-
 
 def land_sprites_exit():
 
