@@ -52,7 +52,10 @@ enum LM_DataType:
     LM_TYPE_LIS
     LM_TYPE_DIC # A dictionary.
     LM_TYPE_QUE
-    LM_TYPE_USE # A user provided object.
+    LM_TYPE_USE # A user provided object. When a user object is garbage
+                # collected, there is currently no mechanism to call a
+                # user provided destructor, so for now use this only to pass
+                # in static data.
 
 # x y z is registers (0..127) or constants (-128..-1)
 #       Note: 0 is reserved as return-register, -128 as none constant.
@@ -62,6 +65,8 @@ enum LM_Opcode:
     # miscellaneous
     OPCODE_NOP # NOP ? ? ? does nothing
     OPCODE_USE # USE x y C Calls a user callback named x (y and C like FUN)
+    OPCODE_GEU # SEU x y z Set x.y to z, where x names a user callback
+    OPCODE_SEU # GEU x y z Set x to y.z, where y names a user callback
     OPCODE_END # END ? ? ? stops the virtual machine
     OPCODE_PAU # PAU ? ? ? pauses the virtual machine
 
@@ -80,7 +85,7 @@ enum LM_Opcode:
     OPCODE_NEW # NEW x ? ? create a new dictionay and put it into x
 
     # jumps
-    OPCODE_HOP # HOP x <B> do a relative jump
+    OPCODE_HOP # HOP ? <B> do a relative jump
     OPCODE_BRA # BRA x <B> do a relative jump if x is true
     OPCODE_AND # AND x <B> do a relative jump if x is false
     OPCODE_FUN # FUN x y C calls function in x with C parameters, first is y
@@ -115,6 +120,8 @@ enum LM_Opcode:
 class LM_ObjectHeader:
     LM_DataType type
     unsigned int garbage : 1
+    # FIXME: permanent is dangerous, as things references by a permanent object
+    # still are garbage collected. What is this used for anyway?
     unsigned int permanent : 1
 
 class LM_Object:
@@ -177,12 +184,22 @@ class LM_Machine:
     # An array of all currently allocated objects. This is not shared, each copy
     # of an LM_Machine will allocate its own objects.
     LandArray *objects
+    # An array of objects used from the outside (so the GC won't collect
+    # anything references by them)
+    LandArray *used
 
     LM_Frame *current
     int error
 
-    int param_first
-    int param_count
+    # Do these belong to the frame? (think multi-threading, where our machine
+    # has multiple threads, which run on multiple OS threads..)
+    # For user callbacks:
+    int param_first # Number of local for first parameter.
+    int param_count # Number of consecutive locals being parameters.
+    int set # Whether to set or get.
+    int target # The target register to assign the retrieved value to.
+    LM_ObjectHeader *name # Name of named parameter (for setter/getter)
+    LM_ObjectHeader *value # Value of named parameter (for setter/getter)
 
     int stats_objects_allocated
     int stats_objects_destroyed
@@ -196,6 +213,12 @@ static macro OB_STR(com, obh) {
 static macro OB_NUM(com, obh) {
     if (obh->type != LM_TYPE_NUM) {
         machine_error(self, com ": Number expected");
+        return;
+    }
+}
+static macro OB_DIC(com, obh) {
+    if (obh->type != LM_TYPE_DIC) {
+        machine_error(self, com ": Dictionary expected");
         return;
     }
 }
@@ -231,6 +254,11 @@ def lm_machine_destroy_object(LM_Machine *self, LM_ObjectHeader *h):
         case LM_TYPE_NON:
             # Oh yes. Let's destroy the global none value. Very good idea.
             break
+        case LM_TYPE_USE:
+            # TODO: Likely, we should have a way to call a user supplied
+            # destructor for the data of the user object here. For now, we
+            # ask the user to keep track of those data themselves.
+            break
         default:
             fprintf(stderr, "Fatal: Don't know how to destroy %p (%d).\n", h,
                 h->type)
@@ -253,6 +281,12 @@ LM_Object *def lm_machine_alloc_str(LM_Machine *self, char const *val):
     LM_Object *o = lm_machine_allocate_object(self)
     o->header.type = LM_TYPE_STR
     o->value.pointer = land_strdup(val)
+    return o
+
+LM_Object *def lm_machine_alloc_num(LM_Machine *self, double val):
+    LM_Object *o = lm_machine_allocate_object(self)
+    o->header.type = LM_TYPE_NUM
+    o->value.num = val
     return o
 
 LM_Object *def lm_machine_alloc_dic(LM_Machine *self):
@@ -291,11 +325,49 @@ def lm_machine_use(LM_Machine *self, char const *name,
     land_hash_insert(self->external, name, cb)
 
 static def machine_opcode_use(LM_Machine *self, int a, b, c):
-    LM_ObjectHeader *ob = lm_machine_get_value(self, a)
-    char const *name = ((LM_Object *)ob)->value.pointer
+    LM_ObjectHeader *oa = lm_machine_get_value(self, a)
+    char const *name = ((LM_Object *)oa)->value.pointer
     void (*cb)(LM_Machine *) = land_hash_get(self->external, name)
     self->param_first = b
     self->param_count = c
+    if cb:
+        cb(self)
+    else:
+        machine_error(self, "Cannot call %s.", name)
+
+static def machine_opcode_seu(LM_Machine *self, int a, b, c):
+
+    LM_ObjectHeader *oa = lm_machine_get_value(self, a)
+    OB_STR("SEU", oa)
+    char const *name = ((LM_Object *)oa)->value.pointer
+    void (*cb)(LM_Machine *) = land_hash_get(self->external, name)
+
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+    self->name = ob
+    self->value = oc
+    self->set = 1
+    self->target = c # should not be used, the index we assign from
+
+    if cb:
+        cb(self)
+    else:
+        machine_error(self, "Cannot call %s.", name)
+
+static def machine_opcode_geu(LM_Machine *self, int a, b, c):
+
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    OB_STR("GEU", ob)
+    char const *name = ((LM_Object *)ob)->value.pointer
+    void (*cb)(LM_Machine *) = land_hash_get(self->external, name)
+
+    LM_ObjectHeader *oa = lm_machine_get_value(self, a)
+    LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+    self->name = oc
+    self->value = oa # should not be used, the value we overwrite
+    self->set = 0
+    self->target = a
+
     if cb:
         cb(self)
     else:
@@ -343,7 +415,7 @@ static def machine_opcode_def(LM_Machine *self, int a, b, c):
 
     d->function = self->functions->data[b]
     d->parent = self->current
-  
+
     self->current->locals->data[a] = d
 
 static def machine_opcode_new(LM_Machine *self, int a, b, c):
@@ -368,16 +440,13 @@ static def machine_opcode_str(LM_Machine *self, int a, b, c):
     lm_machine_set_value(self, a, &ret->header)
 
 static def machine_opcode_dot(LM_Machine *self, int a, b, c):
+
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-    if ob->type != LM_TYPE_DIC:
-        machine_error(self, "DOT: Dictionary expected")
-        return
+    OB_DIC("DOT", ob)
     LandHash *dict = ((LM_Object *)ob)->value.pointer
 
     LM_ObjectHeader *oc = lm_machine_get_value(self, c)
-    if oc->type != LM_TYPE_STR:
-        machine_error(self, "DOT: String expected")
-        return
+    OB_STR("DOT", oc)
     char const *keyname = ((LM_Object *)oc)->value.pointer
 
     LM_ObjectHeader *o = land_hash_get(dict, keyname)
@@ -387,16 +456,13 @@ static def machine_opcode_dot(LM_Machine *self, int a, b, c):
         machine_error(self, "DOT: Attribute not found")
 
 static def machine_opcode_set(LM_Machine *self, int a, b, c):
+
     LM_ObjectHeader *oa = lm_machine_get_value(self, a)
-    if oa->type != LM_TYPE_DIC:
-        machine_error(self, "SET: Dictionary expected")
-        return
+    OB_DIC("SET", oa)
     LandHash *dict = ((LM_Object *)oa)->value.pointer
 
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-    if ob->type != LM_TYPE_STR:
-        machine_error(self, "SET: String expected")
-        return
+    OB_STR("SET", ob)
     char const *keyname = ((LM_Object *)ob)->value.pointer
 
     LM_ObjectHeader *oc = lm_machine_get_value(self, c)
@@ -645,6 +711,8 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(NOP)
         D(FUN)
         D(USE)
+        D(SEU)
+        D(GEU)
         D(RET)
         D(END)
         D(PAU)
@@ -718,6 +786,9 @@ def lm_garbage_collector(LM_Machine *self):
     # Then, recursively unmark reachable objects.
     if self->current: object_reachable(self, &self->current->header)
 
+    for int i = 0; i < self->used->count; i++:
+        object_reachable(self, land_array_get_nth(self->used, i))
+
     # Finally, go through everything again and destroy objects who didn't get
     # unmarked.
     for int i = 0; i < self->objects->count; i++:
@@ -731,6 +802,16 @@ def lm_garbage_collector(LM_Machine *self):
 
     self->stats_objects_allocated = 0
     self->stats_objects_destroyed = 0
+
+def lm_machine_consider_used(LM_Machine *self, LM_ObjectHeader *oh):
+    land_array_add(self->used, oh)
+
+def lm_machine_consider_unused(LM_Machine *self, LM_ObjectHeader *oh):
+    int i = land_array_find(self->used, oh)
+    if i >= 0:
+        void *data = land_array_pop(self->used)
+        if i < self->used->count:
+            land_array_replace_nth(self->used, i, data)
 
 def lm_machine_status(LM_Machine *self):
 
@@ -813,6 +894,8 @@ def lm_machine_continue(LM_Machine *self):
                 code = frame->definition->function->code
                 break
             case OPCODE_USE: machine_opcode_use(self, a, b, c); break
+            case OPCODE_SEU: machine_opcode_seu(self, a, b, c); break
+            case OPCODE_GEU: machine_opcode_geu(self, a, b, c); break
             case OPCODE_GET: machine_opcode_get(self, a, b, c); break
             case OPCODE_PUT: machine_opcode_put(self, a, b, c); break
             case OPCODE_NEW: machine_opcode_new(self, a, b, c); break
@@ -825,25 +908,62 @@ int def lm_machine_call_top(LM_Machine *self, char const *name):
     Call a top-level funcion given by its name. Returns True on success, False
     if the named function cannot be found.
     """
+    return lm_machine_call_top_params(self, name, 0)
+
+
+def lm_machine_call_va(LM_Machine *self, LM_Definition *d, int n, va_list args):
+    # Create the new frame to execute in.
+    LM_Frame *frame = lm_machine_alloc_frame(self)
+    frame->definition = d
+    frame->locals = land_array_new()
+    frame->noreturn = 1
+    land_array_add(frame->locals, None) # TODO: what about the 0 position?
+
+    # Function call arguments.
+    for int i = 0; i < n; i++:
+        LM_ObjectHeader *ob = va_arg(args, LM_ObjectHeader *)
+        land_array_add(frame->locals, ob)
+
+    # Initialize locals to None.
+    for int i = 1 + n; i < d->function->locals_count; i++:
+        land_array_add(frame->locals, None)
+
+    frame->parent = self->current
+    frame->ip = 0
+    self->current = frame
+
+def lm_machine_call_params(LM_Machine *self, LM_Definition *d, int n, ...):
+    va_list args
+    va_start(args, n)
+    lm_machine_call_va(self, d, n, args)
+    va_end(args)
+
+int def lm_machine_call_top_params(LM_Machine *self, char const *name,
+    int n, ...):
     # First go to topmost frame.
+    # TODO: Is this really what should be done? If we are currently inside
+    # some function, then maybe the call should be made from within..
     while self->current->parent:
         self->current = self->current->parent
 
+    # Find the global variable holding the function.
     int *vi = land_hash_get(self->current->definition->function->variables, name)
+    # TODO: Note: We still may have jumped to the topmost frame above.
+
     if not vi: return False
     LM_ObjectHeader *h = land_array_get_nth(self->current->locals, *vi)
     if h->type != LM_TYPE_DEF:
         return False
     LM_Definition *d = (void *)h
-    # TODO: If we want to pass parameters, we should not use machine_call
-    # (which expects them in registers of the current frame), but instead
-    # just set up our frame here, filling in the parameters as the initial
-    # locals.
-    machine_call(self, d, 0, 0)
-    self->current->noreturn = 1
+
+    va_list args
+    va_start(args, n)
+    lm_machine_call_va(self, d, n, args)
+    va_end(args)
+
     return True
 
-def lm_machine_global(LM_Machine *self, char const *name):
+int def lm_machine_add_global(LM_Machine *self, char const *name):
     """
     Adds a new global variable. This must be called before executing the VM.
     """
@@ -853,6 +973,7 @@ def lm_machine_global(LM_Machine *self, char const *name):
     *val = f->locals_count
     f->locals_count++
     land_hash_insert(f->variables, name, val)
+    return *val
 
 def lm_machine_reset(LM_Machine *self):
 
@@ -880,10 +1001,15 @@ def lm_machine_debug(LM_Machine *self, FILE *out):
         for int j = 0; j < f->constants->count; j++:
             LM_ObjectHeader *obh = land_array_get_nth(f->constants, j)
             LM_Object *ob = (void *)obh
+            fprintf(out, "  %d: ", 128 + j)
             if obh->type == LM_TYPE_NUM:
-                fprintf(out, "  %d: number: %f\n", 128 + j, ob->value.num)
-            if obh->type == LM_TYPE_STR:
-                fprintf(out, "  %d: string: %s\n", 128 + j, (char *)ob->value.pointer)
+                fprintf(out, "number: %f\n", ob->value.num)
+            elif obh->type == LM_TYPE_STR:
+                fprintf(out, "string: %s\n", (char *)ob->value.pointer)
+            elif obh->type == LM_TYPE_NON:
+                fprintf(out, "none\n")
+            else:
+                fprintf(out, "?\n")
 
         LandArray *keys = land_hash_keys(f->variables)
         fprintf(out, " variables: %d\n", keys->count)
@@ -895,28 +1021,33 @@ def lm_machine_debug(LM_Machine *self, FILE *out):
         fprintf(out, " code:\n")
         lm_machine_debug_code(f->code, f->code_length, "  ", out)
 
-static char const *def read_name(PACKFILE *pf):
-    static char blah[1024]
+static char *def read_name(PACKFILE *pf):
+    int s = 32
+    char *blah = land_malloc(s)
     int i
-    for i = 0; i < (int)sizeof(blah) - 1; i++:
+    for i = 0; ; i++:
         int c = pack_getc(pf)
         if c <= 0: break
+        if i >= s:
+            s *= 2
+            blah = land_realloc(blah, s)
         blah[i] = c
     blah[i] = 0
+    blah = land_realloc(blah, i + 1)
     return blah  
 
 LM_Machine *def lm_machine_new_machine():
     LM_Machine *self
     land_alloc(self)
-    self->external = land_hash_new()
     self->objects = land_array_new()
+    self->used = land_array_new()
     return self
 
-def lm_machine_destroy(LM_Machine *self):
+def lm_machine_destroy_instance(LM_Machine *self):
     """
     Completely destroys the virtual machine instance. Data which are possibly
     shared among other virtual machine instances are not destroyed, use
-    lm_machine_destroy_completely for that.
+    lm_machine_destroy for that.
     """
     # Cut our reference to anything.
     self->current = None
@@ -924,15 +1055,17 @@ def lm_machine_destroy(LM_Machine *self):
     lm_garbage_collector(self)
 
     land_array_destroy(self->objects)
-    land_hash_destroy(self->external)
-    
+    land_array_destroy(self->used)
+
     land_free(self)
 
-def lm_machine_destroy_completely(LM_Machine *self):
+def lm_machine_destroy(LM_Machine *self):
     """
-    Destroys the currently running machine with lm_machine_destroy, and also
-    destroys the function definition and everything referenced.
+    Destroys the currently running machine with lm_machine_destroy_instance,
+    and also destroys all static data like function definitions.
     """
+
+    land_hash_destroy(self->external)
 
     # Destroy all the compiled code and static variable name mappings and
     # constants.
@@ -953,7 +1086,7 @@ def lm_machine_destroy_completely(LM_Machine *self):
         land_free(f)
     land_array_destroy(self->functions)
 
-    lm_machine_destroy(self)
+    lm_machine_destroy_instance(self)
 
 LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
     """
@@ -961,6 +1094,7 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
     """
     LM_Machine *self = lm_machine_new_machine()
 
+    self->external = land_hash_new()
     self->functions = land_array_new()
 
     while 1:
@@ -975,11 +1109,12 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         f->variables = land_hash_new()
         n = pack_igetl(pf)
         for int i = 0; i < n; i++:
-            char const *name = read_name(pf)
+            char *name = read_name(pf)
             int *val
             land_alloc(val)
             *val = pack_igetl(pf)
             land_hash_insert(f->variables, name, val)
+            land_free(name)
 
         # Read constants.
         f->constants = land_array_new()
@@ -988,7 +1123,7 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
             LM_Object *ob = lm_machine_alloc_permanent(self)
             int t = ob->header.type = pack_igetl(pf)
             if t == LM_TYPE_NUM: ob->value.num = pack_igetl(pf)
-            if t == LM_TYPE_STR: ob->value.pointer = land_strdup(read_name(pf))
+            if t == LM_TYPE_STR: ob->value.pointer = read_name(pf)
             land_array_add(f->constants, ob)
 
         f->code_length = n = pack_igetl(pf)
@@ -1019,3 +1154,15 @@ LM_Machine *def lm_machine_new_from_buffer(LandBuffer *buffer):
     LM_Machine *m = lm_machine_new_from_packfile(pf)
     pack_fclose(pf)
     return m
+
+LM_Machine *def lm_machine_new_instance(LM_Machine *machine):
+    """
+    Create a new virtual machine, which shares static data with the given
+    machine. Usually, you can just create a new machine from code, all this
+    will do is safe a little time and memory in case you are making very many
+    virtual machines sharing the same code.
+    """
+    LM_Machine *self = lm_machine_new_machine()
+    self->external = machine->external
+    self->functions = machine->functions
+    return self
