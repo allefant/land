@@ -89,11 +89,11 @@ static LM_Node *def parse_block(Parser *self):
                 break
     return node
 
-def parser_parse(Parser *self):
+def parser_parse(Parser *self, int debug):
     """
     Converts a flat list of tokens into a tree of functions and statements.
     """
     self->root = parse_block(self)
 
     LM_Node *n = self->root
-    if n: lm_node_debug(n, 0)
+    if n and debug: lm_node_debug(n, 0)

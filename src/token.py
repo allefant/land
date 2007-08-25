@@ -220,7 +220,7 @@ static def find_token(Tokenizer *self):
         else:
             pass # Ignore anything else.
 
-def tokenizer_tokenize(Tokenizer *self):
+def tokenizer_tokenize(Tokenizer *self, int debug):
     """
     Comments: Anything after #
     Tokens: alphanumeric and _
@@ -230,5 +230,5 @@ def tokenizer_tokenize(Tokenizer *self):
     find_token(self)
     Token *t = self->first
     while t:
-        printf("%3d:%3d: «%s»\n", t->line + 1, t->column + 1, t->string)
+        if debug: printf("%3d:%3d: «%s»\n", t->line + 1, t->column + 1, t->string)
         t = t->next

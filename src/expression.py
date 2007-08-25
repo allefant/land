@@ -149,6 +149,10 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
         elif is_operator(node): # x +
             LM_Node *operator = node
             node = node->next
+            if not node:
+                token_err(self->tokenizer, operator->data,
+                    "No right operand found.")
+                return 0
             if is_opening_parenthesis(node): # x + (
                 return expression(self, node)
             elif is_symbol(node, "{"): # x + {

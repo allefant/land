@@ -22,9 +22,9 @@ def syntax_analyzer_destroy(SyntaxAnalyzer *self):
     parser_del(self->parser)
     land_free(self)
 
-def syntax_analyzer_parse(SyntaxAnalyzer *self):
+def syntax_analyzer_parse(SyntaxAnalyzer *self, int debug):
     Parser *p = parser_new_from_tokenizer(self->tokenizer)
-    parser_parse(p)
+    parser_parse(p, debug)
     self->root = p->root
     self->parser = p
 
@@ -114,11 +114,11 @@ static def block(SyntaxAnalyzer *sa, LM_Node *node):
         statement(sa, node)
         node = next
 
-def syntax_analyzer_analyze(SyntaxAnalyzer *self):
+def syntax_analyzer_analyze(SyntaxAnalyzer *self, int debug):
     """
     Converts a parse tree into a syntax tree. That is, expressions and operator
     precedences are considered.
     """
     block(self, self->root)
 
-    lm_node_debug(self->root, 0)
+    if debug: lm_node_debug(self->root, 0)
