@@ -27,6 +27,10 @@ class LM_CompilerFunction:
     int locals_needed # How many locals need to be reserved at runtime, when
     # calling this function.
 
+    # TODO: If done properly, this likely wouldn't be needed.. it's more a
+    # hack to quickly get forward calls working :P
+    LandHash *defs # A set of the names of function definitions.
+
     LandHash *locals # A mapping of parameter names to indices.
     LandArray *constants
     LandBuffer *code
@@ -60,6 +64,7 @@ static LM_CompilerFunction *def function_new(LM_CompilerFunction *parent):
     self->constants = land_array_new()
     self->code = land_buffer_new()
     self->locals = land_hash_new()
+    self->defs = land_hash_new()
     self->parent = parent
 
     # TODO: Hm, main reason is so a return of 0 always can mean failure. Maybe
@@ -87,6 +92,7 @@ static def function_del(LM_CompilerFunction *self):
         land_free(land_array_get_nth(a, i))
     land_array_destroy(a)
     land_hash_destroy(self->locals)
+    land_hash_destroy(self->defs)
 
     land_free(self)
 
@@ -100,14 +106,17 @@ LM_Compiler *def lm_compiler_new_from_syntax_analyzer(SyntaxAnalyzer *sa):
 
     return self
 
-LM_Compiler *def lm_compiler_new_from_file(char const *filename):
+LM_Compiler *def lm_compiler_new_from_file(char const *filename, int verbose):
 
     Tokenizer *t = tokenizer_new_from_file(filename)
-    tokenizer_tokenize(t)
+    if not t:
+        printf("Could not tokenize file %s.\n", filename)
+        return None
+    tokenizer_tokenize(t, verbose)
 
     SyntaxAnalyzer *sa = syntax_analyzer_new_from_tokenizer(t)
-    syntax_analyzer_parse(sa)
-    syntax_analyzer_analyze(sa)
+    syntax_analyzer_parse(sa, verbose)
+    syntax_analyzer_analyze(sa, verbose)
 
     LM_Compiler *c = lm_compiler_new_from_syntax_analyzer(sa)
 
@@ -126,6 +135,12 @@ def lm_compiler_destroy(LM_Compiler *c):
         function_del(f)
     land_array_destroy(c->functions)
 
+    # TODO: Actually, there should be no entries left to be resolved at this
+    # point.. unless maybe if there was an error. Error handling needs to be
+    # improved a lot as of adding this comment though anyway.
+    for int i = 0; i < c->resolve->count; i++:
+        JumpResolve *r = land_array_get_nth(c->resolve, i)
+        land_free(r)
     land_array_destroy(c->resolve)
 
     land_hash_destroy(c->using)
@@ -230,6 +245,11 @@ static int def get_variable(LM_Compiler *c, char const *string):
     int i = get_local_variable(c, string)
     if i: return i
 
+    # Is it a forward declaration?
+    if c->current->parent and\
+        land_hash_has(c->current->parent->defs, string):
+        return compile_named_variable_lookup(c, string)
+
     # Dang. The script to be compiled accesses a variable which we cannot find.
 
     return 0
@@ -240,18 +260,34 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
     """
     LM_Node *left = n->first
     Token *ltoken = left->data
-    int parent = get_variable(c, ltoken->string)
+
+    # Are we setting/getting the attribute of a user object?
+    int *using = land_hash_get(c->using, ltoken->string)
+    int parent = 0
     int result = create_new_temporary(c)
 
+    if not using:
+        parent = get_variable(c, ltoken->string)
+
+    # If we have a.b.c.d = 2, this should result in:
+    # x = get a, b
+    # x = get x, c
+    # set x, d, 2
     while True:
         LM_Node *right = left->next
         Token *token
         int attribute
+
+        # Arrived at the end?
         if right->type == LM_NODE_OPERAND:
             token = right->data
             if set:
                 attribute = add_constant(c, token, LM_TYPE_STR)
-                add_code(c, OPCODE_SET, parent, attribute, what)
+                if using:
+                    int constant = add_string_constant(c, ltoken->string)
+                    add_code(c, OPCODE_SEU, constant, attribute, what)
+                else:
+                    add_code(c, OPCODE_SET, parent, attribute, what)
                 return what
             else:
                 left = None
@@ -259,9 +295,22 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
             left = right->first
             token = left->data
         attribute = add_constant(c, token, LM_TYPE_STR)
-        add_code(c, OPCODE_DOT, result, parent, attribute)
+        if using:
+            int constant = add_string_constant(c, ltoken->string)
+            add_code(c, OPCODE_GEU, result, constant, attribute)
+        else:
+            add_code(c, OPCODE_DOT, result, parent, attribute)
+        using = None
         if not left: return result
         parent = result
+
+static def declare_forward(LM_Compiler *c, char const *string):
+    """
+    This is just to declare a name for forward declarations.
+    FIXME: This is not needed, just create all functions/variables as soon as
+    we know about it, then fix code generation properly.
+    """
+    land_hash_insert(c->current->defs, string, None)
 
 static int def prepare_assignement(LM_Compiler *c, char const *string, int *what):
     """
@@ -355,6 +404,7 @@ static def resolve_to_here(LM_Compiler *c, int tag, int stop):
             void *last = land_array_pop(c->resolve)
             if i < c->resolve->count:
                 land_array_replace_nth(c->resolve, i, last)
+            land_free(r)
 
 static def remember_here(LM_Compiler *c, int tag):
     """
@@ -384,6 +434,7 @@ static def resolve_remove_last(LM_Compiler *c, int tag):
             void *last = land_array_pop(c->resolve)
             if i < c->resolve->count:
                 land_array_replace_nth(c->resolve, i, last)
+            land_free(r)
             return
 
 static def compile_or_child(LM_Compiler *c, LM_Node *n):
@@ -525,6 +576,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
     int *first):
     # TODO: Clarify if we want a limit of 256 params
     int params[256]
+    params[0] = 0
 
     LM_Node *param = n->first
     int nparams = 0
@@ -650,6 +702,8 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
             result = compile_node(c, n->first)
         add_code(c, OPCODE_RET, result, 0, 0)
         return 0
+    elif not strcmp(token->string, "pass"):
+        return 0
     else: # function call
         int first, nparams
 
@@ -737,8 +791,28 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
 
     return slot
 
+def scan_node(LM_Compiler *c, LM_Node *n):
+    # FIXME: Forward scanning only makes sense in global scope so far, as the
+    # function cal be looked up by name in that case. For functions inside
+    # other functions, need to clarify how they can be looked up at runtime.
+    if n->type == LM_NODE_FUNCTION:
+        LM_Node *name = n->first
+        Token *nametoken = name->data
+        char *string = nametoken->string
+        if land_hash_has(c->current->defs, string):
+            token_err(c->sa->tokenizer, nametoken,
+                "Function \"%s\" already exists.\n", string)
+        else:
+            declare_forward(c, string)
+
 static int def compile_block(LM_Compiler *c, LM_Node *n):
+    # Scan for any function declarations, so we can forward reference them.
     LM_Node *n2 = n->first
+    while n2:
+        scan_node(c, n2)
+        n2 = n2->next
+    # Actually compile the block.
+    n2 = n->first
     while n2:
         compile_node(c, n2)
         n2 = n2->next
@@ -750,11 +824,13 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
         if token->string[0] >= '0' and token->string[0] <= '9':
             return add_constant(c, token, LM_TYPE_NUM)
         else:
+            if not ustrcmp(token->string, "none"):
+                return 128
             int result = get_variable(c, token->string)
             if not result:
                 fprintf(stderr, "%s: %d: %d: ", c->sa->tokenizer->filename,
                     token->line, token->column)
-                fprintf(stderr, "Variable %s treated as None.\n", token->string)
+                fprintf(stderr, "Variable %s treated as none.\n", token->string)
             return result
     elif token->type == TOKEN_STRING:
         return add_constant(c, token, LM_TYPE_STR)
@@ -847,7 +923,7 @@ def lm_compiler_output(LM_Compiler *c, PACKFILE *out):
             char opcode = f->code->buffer[j]
             pack_putc(opcode, out)
 
-def lm_compiler_compile(LM_Compiler *c):
+def lm_compiler_compile(LM_Compiler *c, int debug):
     """
     Given a syntax tree, produce machine code.
     """
@@ -863,4 +939,4 @@ def lm_compiler_compile(LM_Compiler *c):
     compile_node(c, c->sa->root)
     add_code(c, OPCODE_END, 0, 0, 0)
 
-    lm_compiler_debug(c, stderr)
+    if debug: lm_compiler_debug(c, stderr)
