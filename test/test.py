@@ -211,20 +211,20 @@ x = 0; while x < 10: print x; if x == 7: break; ; elif x == 3: x = x * 2; contin
 """, "0\n1\n2\n3\n6\n7\n")
 
     def test_oneline2(self):
-        self.execute("oneline", """
+        self.execute("oneline2", """
 x = 0; while x < 10: print x; if x == 7: break; end elif x == 3: x = x * 2; continue; end x = x + 1
 """, "0\n1\n2\n3\n6\n7\n")
 
     def test_dict(self):
         self.execute("dict", """
 x = {}
-x.a = "A"
+x."a " = "A"
 x.b = {}
 print x
 x.b.c = "C"
 print x
-print x.a
-""", "{a = A, b = {}}\n{a = A, b = {c = C}}\nA\n")
+print x."a "
+""", "{a  = A, b = {}}\n{a  = A, b = {c = C}}\nA\n")
 
     def test_return(self):
         self.execute("return", """
@@ -264,6 +264,42 @@ while i < 3
     x()
     i = i + 1
 """, "foo\nbar\ngoo\n")
+
+    def test_pass(self):
+        self.execute("pass", """
+foo:
+    pass
+foo
+""", "")
+
+    def test_none(self):
+        self.execute("none", """
+empty: pass
+x = none
+y = empty
+z = y()
+if x == z: print "none"
+""", "none\n")
+
+    def test_forward(self):
+        self.execute("forward", """
+main:
+    forward
+
+forward:
+    print "forward"
+
+main
+""", "forward\n")
+
+    def test_userdict(self):
+        self.execute("userdict", """
+use userdict
+
+userdict.x = "a"
+y = userdict.y
+""", "set x a\nget y\n")
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)
