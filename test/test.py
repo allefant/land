@@ -226,6 +226,17 @@ print x
 print x."a "
 """, "{a  = A, b = {}}\n{a  = A, b = {c = C}}\nA\n")
 
+    def test_dict2(self):
+        self.execute("dict2", """
+x = {}
+x["a "] = "A"
+x["b"] = {}
+print x
+x["b"]["c"] = "C"
+print x
+print x["a "]
+""", "{a  = A, b = {}}\n{a  = A, b = {c = C}}\nA\n")
+
     def test_return(self):
         self.execute("return", """
 add a, b
@@ -299,6 +310,20 @@ use userdict
 userdict.x = "a"
 y = userdict.y
 """, "set x a\nget y\n")
+
+    def test_floatliteral(self):
+        self.execute("floatliteral", """
+print 0.2 / 5
+""", "0.040000\n")
+
+    def test_in(self):
+        self.execute("in", """
+x = {}
+x.a = 1
+print "a" in x
+print "b" in x
+""", "1\n0\n")
+
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
