@@ -52,6 +52,28 @@ def lm_node_remove(LM_Node *self):
     else:
         self->parent->first = self->next
 
+def lm_node_cutoff(LM_Node *self):
+    if not self->parent: return
+    if self->prev:
+        self->prev->next = None
+    else:
+        self->parent->first = None
+    self->parent->last = self->prev
+    self->prev = None
+    self->parent = None
+
+def lm_node_append(LM_Node *self, LM_Node *child):
+    child->parent = self
+    child->prev = self->last
+    if self->last:
+        self->last->next = child
+    else:
+        self->first = child
+    self->last = child
+    while self->last->next:
+        self->last = self->last->next
+        self->last->parent = self
+
 char const *def lm_node_print(LM_Node *self):
     static char str[256]
     if self->type == LM_NODE_BLOCK:
