@@ -149,7 +149,6 @@ def lm_compiler_destroy(LM_Compiler *c):
 def lm_compiler_use(LM_Compiler *c, char const *string):
     static int used = 1
     land_hash_insert(c->using, string, &used)
-    printf("Now using %s.\n", string)
 
 int def add_string_constant(LM_Compiler *c, char const *string):
     int i = new_constant(c)
@@ -261,6 +260,11 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
     LM_Node *left = n->first
     Token *ltoken = left->data
 
+    Token *dott = n->data
+    int is_dot = 0
+    if not strcmp(dott->string, "."):
+        is_dot = 1
+
     # Are we setting/getting the attribute of a user object?
     int *using = land_hash_get(c->using, ltoken->string)
     int parent = 0
@@ -275,14 +279,14 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
     # set x, d, 2
     while True:
         LM_Node *right = left->next
-        Token *token
+        LM_Node *token_node
         int attribute
 
         # Arrived at the end?
         if right->type == LM_NODE_OPERAND:
-            token = right->data
+            token_node = right
             if set:
-                attribute = add_constant(c, token, LM_TYPE_STR)
+                attribute = add_constant(c, token_node->data, LM_TYPE_STR)
                 if using:
                     int constant = add_string_constant(c, ltoken->string)
                     add_code(c, OPCODE_SEU, constant, attribute, what)
@@ -293,16 +297,27 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
                 left = None
         else:
             left = right->first
-            token = left->data
-        attribute = add_constant(c, token, LM_TYPE_STR)
+            token_node = left
+
+        if token_node->type == LM_NODE_OPERAND and is_dot:
+            attribute = add_string_constant(c, ((Token *)token_node->data)->string)
+        else:
+            attribute = compile_node(c, token_node)
+
         if using:
             int constant = add_string_constant(c, ltoken->string)
             add_code(c, OPCODE_GEU, result, constant, attribute)
         else:
             add_code(c, OPCODE_DOT, result, parent, attribute)
+
         using = None
         if not left: return result
         parent = result
+
+        dott = right->data
+        is_dot = 0
+        if not strcmp(dott->string, "."):
+            is_dot = 1
 
 static def declare_forward(LM_Compiler *c, char const *string):
     """
@@ -530,7 +545,8 @@ static int def compile_conditional(LM_Compiler *c, LM_Node *n):
     LM_Node *ifnode = n->first
     while ifnode:
         if ifnode->type != LM_NODE_OPERATION:
-            fprintf(stderr, "Hu? need if/else/elif/while here..\n")
+            token_err(c->sa->tokenizer, ifnode->data,
+                "Hu? need if/else/elif/while here..\n")
             ifnode = ifnode->next
             continue
         Token *token = ifnode->data
@@ -653,12 +669,20 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return compile_binary_operation(c, n, OPCODE_BIG)
     elif not strcmp(token->string, "=="):
         return compile_binary_operation(c, n, OPCODE_SAM)
+    elif not strcmp(token->string, "<="):
+        return compile_binary_operation(c, n, OPCODE_SOL)
+    elif not strcmp(token->string, ">="):
+        return compile_binary_operation(c, n, OPCODE_SOB)
+    elif not strcmp(token->string, "in"):
+        return compile_binary_operation(c, n, OPCODE_GOT)
     elif not strcmp(token->string, "."):
+        return compile_dot(c, n, 0, 0)
+    elif not strcmp(token->string, "["):
         return compile_dot(c, n, 0, 0)
 
     elif not strcmp(token->string, "="):
         Token *target = n->first->data
-        if not strcmp(target->string, "."):
+        if not strcmp(target->string, ".") or not strcmp(target->string, "["):
             # This is not an assignement to a variable, but to an attribute
             # thereof.
             int slot = compile_node(c, n->first->next)
@@ -704,7 +728,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return 0
     elif not strcmp(token->string, "pass"):
         return 0
-    else: # function call
+    else: # function call or attribute access
         int first, nparams
 
         if not strcmp(token->string, "print"):
@@ -885,7 +909,7 @@ def lm_compiler_debug(LM_Compiler *c, FILE *out):
         for int j = 0; j < f->constants->count; j++:
             fprintf(out, " constant %d: ", j | 128)
             LM_Object *val = f->constants->data[j]
-            if (val->header.type == LM_TYPE_NUM) fprintf(out, "%.1f", val->value.num)
+            if (val->header.type == LM_TYPE_NUM) fprintf(out, "%.2f", val->value.num)
             if (val->header.type == LM_TYPE_STR) fprintf(out, "%s", (char *)val->value.pointer)
             printf("\n")
 
@@ -912,7 +936,10 @@ def lm_compiler_output(LM_Compiler *c, PACKFILE *out):
         for int j = 0; j < f->constants->count; j++:
             LM_Object *val = f->constants->data[j]
             pack_iputl(val->header.type, out)
-            if val->header.type == LM_TYPE_NUM: pack_iputl(val->value.num, out)
+            if val->header.type == LM_TYPE_NUM:
+                float xf = val->value.num
+                uint32_t x = *(uint32_t *)&xf
+                pack_iputl(x, out)
             if val->header.type == LM_TYPE_STR: pack_fwrite(val->value.pointer,
                 strlen(val->value.pointer) + 1, out)
         land_array_destroy(keys)
