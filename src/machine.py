@@ -83,6 +83,7 @@ enum LM_Opcode:
     OPCODE_DOT # DOT x y z set x to y.z
     OPCODE_DEF # DEF x B ? put definition B into x
     OPCODE_NEW # NEW x ? ? create a new dictionay and put it into x
+    OPCODE_GOT # GOT x y z set x to true/false if y is in z
 
     # jumps
     OPCODE_HOP # HOP ? <B> do a relative jump
@@ -106,6 +107,8 @@ enum LM_Opcode:
     OPCODE_LOW
     OPCODE_BIG
     OPCODE_SAM
+    OPCODE_SOL # SAM or LOW
+    OPCODE_SOB # SAM or BIG
 
     # unary operations
     OPCODE_NEG # NEG x y ? does x = -y
@@ -455,6 +458,19 @@ static def machine_opcode_dot(LM_Machine *self, int a, b, c):
     else:
         machine_error(self, "DOT: Attribute not found")
 
+static def machine_opcode_got(LM_Machine *self, int a, b, c):
+
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    OB_STR("GOT", ob)
+    char const *keyname = ((LM_Object *)ob)->value.pointer
+
+    LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+    OB_DIC("GOT", oc)
+    LandHash *dict = ((LM_Object *)oc)->value.pointer
+
+    LM_Object *num = lm_machine_alloc_num(self, land_hash_has(dict, keyname))
+    lm_machine_set_value(self, a, &num->header)
+
 static def machine_opcode_set(LM_Machine *self, int a, b, c):
 
     LM_ObjectHeader *oa = lm_machine_get_value(self, a)
@@ -563,6 +579,10 @@ static double def mul_cb(double x, y):
     return x * y
 static double def div_cb(double x, y):
     return x / y
+static double def sol_cb(double x, y):
+    return x <= y
+static double def sob_cb(double x, y):
+    return x >= y
 static double def low_cb(double x, y):
     return x < y
 static double def big_cb(double x, y):
@@ -581,6 +601,8 @@ binop(div)
 binop(low)
 binop(big)
 binop(sam)
+binop(sol)
+binop(sob)
 
 static def machine_opcode_get(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
@@ -731,6 +753,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(ASS)
         D(DOT)
         D(SET)
+        D(GOT)
 
         D(ADD)
         D(SUB)
@@ -739,6 +762,8 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(BIG)
         D(LOW)
         D(SAM)
+        D(SOL)
+        D(SOB)
         D(STR)
         default: fprintf(out, " ??? ")
     unsigned char *b = (unsigned char *)buffer
@@ -864,6 +889,8 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_BIG: machine_opcode_big(self, a, b, c); break
             case OPCODE_LOW: machine_opcode_low(self, a, b, c); break
             case OPCODE_SAM: machine_opcode_sam(self, a, b, c); break
+            case OPCODE_SOB: machine_opcode_sob(self, a, b, c); break
+            case OPCODE_SOL: machine_opcode_sol(self, a, b, c); break
             case OPCODE_BRA: machine_opcode_bra(self, a, b, c); break
             case OPCODE_AND: machine_opcode_and(self, a, b, c); break
             case OPCODE_HOP: machine_opcode_hop(self, a, b, c); break
@@ -900,6 +927,7 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_PUT: machine_opcode_put(self, a, b, c); break
             case OPCODE_NEW: machine_opcode_new(self, a, b, c); break
             case OPCODE_DOT: machine_opcode_dot(self, a, b, c); break
+            case OPCODE_GOT: machine_opcode_got(self, a, b, c); break
             case OPCODE_SET: machine_opcode_set(self, a, b, c); break
             case OPCODE_STR: machine_opcode_str(self, a, b, c); break
 
@@ -1122,7 +1150,9 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         for int i = 0; i < n; i++:
             LM_Object *ob = lm_machine_alloc_permanent(self)
             int t = ob->header.type = pack_igetl(pf)
-            if t == LM_TYPE_NUM: ob->value.num = pack_igetl(pf)
+            if t == LM_TYPE_NUM:
+                uint32_t x = pack_igetl(pf)
+                ob->value.num = *(float *)&x
             if t == LM_TYPE_STR: ob->value.pointer = read_name(pf)
             land_array_add(f->constants, ob)
 
