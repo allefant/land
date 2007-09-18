@@ -33,7 +33,7 @@ class Tokenizer:
     Token *token
 
 def token_err(Tokenizer const *self, Token *t, char const *str, ...):
-    fprintf(stderr, "%s: %d: %d: ", self->filename, t->line, t->column)
+    fprintf(stderr, "%s: %d: %d: ", self->filename, 1 + t->line, 1 + t->column)
     va_list arg
     va_start(arg, str)
     vfprintf(stderr, str, arg)
@@ -90,9 +90,12 @@ static char def peek(Tokenizer *self, int i):
         return 0
 
 static char const *multichar_symbol_tokens[] = {
+    "==",
+    ">=",
+    "<=",
+    "<>",
     "<<=",
     ">>=",
-    "==",
     "->",
     "<<",
     ">>",
@@ -131,10 +134,12 @@ static def skip_comment(Tokenizer *self):
 
 static def get_token(Tokenizer *self):
     int start = self->pos - 1
+    char first = self->text->buffer[start]
     while self->pos < self->text->n:
         char c = self->text->buffer[self->pos]
         if not isalnum(c) and  c != '_':
-            break
+            if not isdigit(first) or c != '.':
+                break
         next(self) # would return the same c we already handled above
 
     int n = self->pos - start
