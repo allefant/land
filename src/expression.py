@@ -61,6 +61,11 @@ static int def operator_precedence(LM_Node *left, LM_Node *right):
             return 1
         return 0
 
+    if not strcmp(tok1->string, "in"):
+        if not strcmp(tok2->string, "and"): return 1
+        if not strcmp(tok2->string, "or"): return 1
+        return 0
+
     if not strcmp(tok2->string, "("): # a ? b (
         return 0
 
