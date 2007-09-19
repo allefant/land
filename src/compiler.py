@@ -861,7 +861,7 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
         return add_constant(c, token, LM_TYPE_STR)
     elif token->type == TOKEN_SYMBOL:
         if not strcmp(token->string, "{"):
-            int x = create_new_local(c)
+            int x = create_new_temporary(c)
             add_code(c, OPCODE_NEW, x, 0, 0)
             return x
     return 0
