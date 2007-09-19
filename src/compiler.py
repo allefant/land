@@ -253,63 +253,54 @@ static int def get_variable(LM_Compiler *c, char const *string):
 
     return 0
 
-static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
-    """
-    Compile code to get the attribute of a variable into a register.
-    """
-    LM_Node *left = n->first
-    Token *ltoken = left->data
-
-    Token *dott = n->data
-
-    # Are we setting/getting the attribute of a user object?
-    int *using = land_hash_get(c->using, ltoken->string)
-    int parent = 0
+static int def compile_dot(LM_Compiler *c, LM_Node *n):
     int result = create_new_temporary(c)
+    int temps = c->current->temporaries_count
+    c->current->locals_count-- # can re-use the target temp
 
+    LM_Node *pn = n->first
+    LM_Node *an = n->first->next
+    int parent = 0
+
+    int *using = None
+    if pn->type == LM_NODE_OPERAND:
+        using = land_hash_get(c->using, ((Token *)pn->data)->string)
     if not using:
-        parent = get_variable(c, ltoken->string)
+        parent = compile_node(c, pn)
+    
+    c->current->locals_count = result + 1
+    c->current->temporaries_count = temps   
 
-    # If we have a.b.c.d = 2, this should result in:
-    # x = get a, b
-    # x = get x, c
-    # set x, d, 2
-    while True:
-        LM_Node *right = left->next
-        LM_Node *token_node
-        int attribute
+    int attribute = add_string_constant(c, ((Token *)an->data)->string)    
 
-        # Arrived at the end?
-        if right->type == LM_NODE_OPERAND:
-            token_node = right
-            if set:
-                attribute = add_constant(c, token_node->data, LM_TYPE_STR)
-                if using:
-                    int constant = add_string_constant(c, ltoken->string)
-                    add_code(c, OPCODE_SEU, constant, attribute, what)
-                else:
-                    add_code(c, OPCODE_SET, parent, attribute, what)
-                return what
-            else:
-                left = None
-        else:
-            left = right->first
-            token_node = left
+    if using:
+        int constant = add_string_constant(c, ((Token *)pn->data)->string)
+        add_code(c, OPCODE_GEU, result, constant, attribute)
+    else:
+        add_code(c, OPCODE_DOT, result, parent, attribute)
 
-        if token_node->type == LM_NODE_OPERAND:
-            attribute = add_string_constant(c, ((Token *)token_node->data)->string)
+    return result
 
-        if using:
-            int constant = add_string_constant(c, ltoken->string)
-            add_code(c, OPCODE_GEU, result, constant, attribute)
-        else:
-            add_code(c, OPCODE_DOT, result, parent, attribute)
+static int def compile_assign_dot(LM_Compiler *c, LM_Node *n, int what):
+    LM_Node *pn = n->first
+    LM_Node *an = n->first->next
+    int parent = 0
 
-        using = None
-        if not left: return result
-        parent = result
+    int *using = None
+    if pn->type == LM_NODE_OPERAND:
+        using = land_hash_get(c->using, ((Token *)pn->data)->string)
+    if not using:
+        parent = compile_node(c, pn)
 
-        dott = right->data
+    int attribute = add_string_constant(c, ((Token *)an->data)->string)    
+
+    if using:
+        int constant = add_string_constant(c, ((Token *)pn->data)->string)
+        add_code(c, OPCODE_SEU, constant, attribute, what)
+    else:
+        add_code(c, OPCODE_SET, parent, attribute, what)
+
+    return what
 
 static def compile_assign_bracket(LM_Compiler *c, LM_Node *n, int what):
     int parent = compile_node(c, n->first)
@@ -673,7 +664,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
     elif not strcmp(token->string, "in"):
         return compile_binary_operation(c, n, OPCODE_GOT)
     elif not strcmp(token->string, "."):
-        return compile_dot(c, n, 0, 0)
+        return compile_dot(c, n)
     elif not strcmp(token->string, "["):
         return compile_binary_operation(c, n, OPCODE_DOT)
 
@@ -683,7 +674,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
             # This is not an assignement to a variable, but to an attribute
             # thereof.
             int slot = compile_node(c, n->first->next)
-            compile_dot(c, n->first, 1, slot)
+            compile_assign_dot(c, n->first, slot)
             return slot
         if not strcmp(target->string, "["):
             int slot = compile_node(c, n->first->next)
