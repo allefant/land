@@ -56,13 +56,16 @@ static int def operator_precedence(LM_Node *left, LM_Node *right):
     if not strcmp(tok1->string, ","): # a , b ?
         return 0
 
+    if not strcmp(tok1->string, "["): # a [ b ?
+        if not strcmp(tok2->string, "]"): # a [ b ] ?
+            return 1
+        return 0
+
     if not strcmp(tok2->string, "("): # a ? b (
         return 0
 
     if not ustrcmp(tok1->string, "."): # a . b ?
         if not ustrcmp(tok2->string, "."): # a . b . c = a . (b . c)
-            return 0
-        if not ustrcmp(tok2->string, "["): # a . b [ c = a . (b [ c)
             return 0
 
     if not strcmp(tok1->string, "="): # a = b ?
@@ -97,6 +100,10 @@ static int def operator_precedence(LM_Node *left, LM_Node *right):
     return 1 
 
 int def expression(SyntaxAnalyzer *self, LM_Node *node):
+    """
+    Parses at the given node. Returns 0 if the given node cannot be reduced,
+    or 1 if it will reduce further.
+    """
     if is_symbol(node, "{"):
         LM_Node *opening = node
         node = node->next
@@ -110,23 +117,8 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
         return 1
 
     if is_symbol(node, "["):
-        while 1:
-            if not expression(self, node->next): break
-        if is_symbol(node->next, "]"):
-            lm_node_remove(node->next)
-            node->type = LM_NODE_OPERATION
-            return 1
-        LM_Node *inside = node->next;
-        LM_Node *closing = node->next->next;
-        if not closing or not is_symbol(closing, "]"):
-            token_err(self->tokenizer, node->data,
-                "No matching closing bracket found.")
-            return 0
-        lm_node_remove(closing)
-        lm_node_remove(inside)
-        node->type = LM_NODE_OPERATION
-        lm_node_add_child(node, inside)
-        return 1
+        token_err(self->tokenizer, node->data, "Invalid [ found.")
+        return 0
 
     if is_opening_parenthesis(node):
         while 1:
@@ -151,7 +143,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
         # somewhere else?
         return 1
     
-    elif is_operand(node): # x
+    elif is_operand(node): # x (x may be an operation)
         LM_Node *left = node
         node = node->next
         if not node or node->type == LM_NODE_BLOCK:
@@ -173,42 +165,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
             left->type = LM_NODE_OPERATION
             lm_node_add_child(left, node)
             return 1
-        elif is_symbol(node, "["): # x [
-            if node->type == LM_NODE_TOKEN:
-                expression(self, node)
 
-            if node->next and is_symbol(node->next, "["):
-                LM_Node *second = node->next
-
-                lm_node_cutoff(second)
-                lm_node_append(node, second)
-
-                expression(self, node->first)
-
-                if node->first->next:
-                    LM_Node *wrong = node->first->next
-                    
-                    lm_node_cutoff(wrong)
-                    lm_node_append(node->parent, wrong)
-
-                second = node->first
-                lm_node_remove(left)
-                lm_node_remove(second)
-                lm_node_add_child(node, left)
-                lm_node_add_child(node, second)
-
-                return 1
-
-            LM_Node *right = node->first
-            lm_node_remove(left)
-            lm_node_remove(right)
-            lm_node_add_child(node, left)
-            lm_node_add_child(node, right)
-
-            if left->type == LM_NODE_TOKEN:
-                left->type = LM_NODE_OPERAND
-
-            return 1
         elif is_operator(node): # x +
             LM_Node *operator = node
             node = node->next
@@ -232,6 +189,12 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
                     if operator_precedence(operator, node):
                         reduce = 1
                 if reduce:
+                    if is_symbol(operator, "["):
+                        if node and is_symbol(node, "]"):
+                            lm_node_remove(node)
+                        else:
+                            token_err(self->tokenizer, operator->data,
+                                "Missing closing bracket.")
                     lm_node_remove(left)
                     if left->type == LM_NODE_TOKEN:
                         left->type = LM_NODE_OPERAND

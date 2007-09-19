@@ -261,9 +261,6 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
     Token *ltoken = left->data
 
     Token *dott = n->data
-    int is_dot = 0
-    if not strcmp(dott->string, "."):
-        is_dot = 1
 
     # Are we setting/getting the attribute of a user object?
     int *using = land_hash_get(c->using, ltoken->string)
@@ -299,10 +296,8 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
             left = right->first
             token_node = left
 
-        if token_node->type == LM_NODE_OPERAND and is_dot:
+        if token_node->type == LM_NODE_OPERAND:
             attribute = add_string_constant(c, ((Token *)token_node->data)->string)
-        else:
-            attribute = compile_node(c, token_node)
 
         if using:
             int constant = add_string_constant(c, ltoken->string)
@@ -315,9 +310,11 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n, int set, what):
         parent = result
 
         dott = right->data
-        is_dot = 0
-        if not strcmp(dott->string, "."):
-            is_dot = 1
+
+static def compile_assign_bracket(LM_Compiler *c, LM_Node *n, int what):
+    int parent = compile_node(c, n->first)
+    int attribute = compile_node(c, n->first->next)
+    add_code(c, OPCODE_SET, parent, attribute, what)
 
 static def declare_forward(LM_Compiler *c, char const *string):
     """
@@ -678,15 +675,19 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
     elif not strcmp(token->string, "."):
         return compile_dot(c, n, 0, 0)
     elif not strcmp(token->string, "["):
-        return compile_dot(c, n, 0, 0)
+        return compile_binary_operation(c, n, OPCODE_DOT)
 
     elif not strcmp(token->string, "="):
         Token *target = n->first->data
-        if not strcmp(target->string, ".") or not strcmp(target->string, "["):
+        if not strcmp(target->string, "."):
             # This is not an assignement to a variable, but to an attribute
             # thereof.
             int slot = compile_node(c, n->first->next)
             compile_dot(c, n->first, 1, slot)
+            return slot
+        if not strcmp(target->string, "["):
+            int slot = compile_node(c, n->first->next)
+            compile_assign_bracket(c, n->first, slot)
             return slot
         else:
             int what
