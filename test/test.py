@@ -324,6 +324,16 @@ print "a" in x
 print "b" in x
 """, "1\n0\n")
 
+    def test_bracket(self):
+        self.execute("bracket", """
+x = {}
+x.a = "b"
+y = {}
+y.b = {}
+y[x.a].c = "d"
+y.b.d = "ok"
+print y[x["a"]][y[x["a"]]["c"]]
+""", "ok\n")
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
