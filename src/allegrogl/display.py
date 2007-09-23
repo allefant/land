@@ -57,11 +57,16 @@ def land_display_allegrogl_set(LandDisplay *super):
     allegro_gl_set(AGL_DOUBLEBUFFER, 1)
     allegro_gl_set(AGL_SUGGEST, AGL_DOUBLEBUFFER)
 
-    allegro_gl_set(AGL_SAMPLE_BUFFERS, 0)
-    allegro_gl_set(AGL_SUGGEST, AGL_SAMPLE_BUFFERS)
-
-    allegro_gl_set(AGL_SAMPLES, 0)
-    allegro_gl_set(AGL_SUGGEST, AGL_SAMPLES)
+    if super->flags & LAND_ANTIALIAS:
+        allegro_gl_set(AGL_SAMPLE_BUFFERS, 16)
+        allegro_gl_set(AGL_SUGGEST, AGL_SAMPLE_BUFFERS)
+        allegro_gl_set(AGL_SAMPLES, 16)
+        allegro_gl_set(AGL_SUGGEST, AGL_SAMPLES)
+    else:
+        allegro_gl_set(AGL_SAMPLE_BUFFERS, 0)
+        allegro_gl_set(AGL_SUGGEST, AGL_SAMPLE_BUFFERS)
+        allegro_gl_set(AGL_SAMPLES, 0)
+        allegro_gl_set(AGL_SUGGEST, AGL_SAMPLES)
 
     allegro_gl_set(AGL_RENDERMETHOD, 1)
     allegro_gl_set(AGL_SUGGEST, AGL_RENDERMETHOD)
