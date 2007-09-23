@@ -4,7 +4,7 @@ class LandAnimation:
     float fps
     LandArray *frames
 
-static import animation, memory
+static import animation, mem
 
 LandAnimation *def land_animation_new(LandArray *frames):
     LandAnimation *self

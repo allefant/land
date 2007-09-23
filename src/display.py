@@ -93,12 +93,13 @@ Like circle, but filled.
 
 
 import global allegro, alleggl, stdlib
-import list, image, log, memory, font
+import list, image, log, mem, font
 
 macro LAND_WINDOWED 1
 macro LAND_FULLSCREEN 2
 macro LAND_OPENGL 4
 macro LAND_CLOSE_LINES 8
+macro LAND_ANTIALIAS 16
 
 class LandDisplayInterface:
     land_method(void, set, (LandDisplay *self))

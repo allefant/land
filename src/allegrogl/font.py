@@ -1,5 +1,9 @@
-import global allegro, fudgefont
+import global allegro
 import ../array, ../font, ../log
+
+#ifndef LAND_NO_TTF
+import global fudgefont
+#endif
 
 # To be able to write out the range->texture mapping in the logs, we include
 # below 2 internal structs from AllegroGL. This is likely to break, but can
@@ -161,7 +165,9 @@ static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
             alpha = 1
         else:
             paletted = 1
+            #ifndef LAND_NO_TTF
             fudgefont_color_range(0, 0, 0, 255, 255, 255)
+            #endif
     else:
         select_palette(pal)
         paletted = 1
@@ -173,9 +179,9 @@ static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
 
     self->font = allegro_gl_convert_allegro_font_ex(af,
         AGL_FONT_TYPE_TEXTURED, -1, paletted ? GL_ALPHA : GL_RGBA8)
-    self->super.size = text_height(self->font)
-    self->super.vt = vtable
     if self->font:
+        self->super.size = text_height(self->font)
+        self->super.vt = vtable
         land_log_message(" font of height %d loaded\n", text_height(af))
         #int n = allegro_gl_list_font_textures(self->font, NULL, 0)
         #GLuint ids[n]

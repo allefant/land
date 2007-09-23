@@ -1,6 +1,18 @@
 import runner
-static import global allegro, sys/time, loadpng, jpgalleg, fudgefont
+static import global allegro, sys/time,
 static import land
+
+#ifndef LAND_NO_PNG
+import global loadpng
+#endif
+
+#ifndef LAND_NO_JPG
+import global jpgalleg,
+#endif
+
+#ifndef LAND_NO_TTF
+import global fudgefont
+#endif
 
 class LandParameters:
     int w, h, bpp, hz
@@ -70,11 +82,18 @@ def land_init():
     if install_timer():
         land_exception("Error in install_timer: %s", allegro_error)
 
+    #ifndef LAND_NO_PNG
     _png_screen_gamma = 0
     loadpng_init()
-    jpgalleg_init()
+    #endif
 
+    #ifndef LAND_NO_JPG
+    jpgalleg_init()
+    #endif
+
+    #ifndef LAND_NO_TTF
     install_fudgefont()
+    #endif
 
 static def land_tick():
     land_mouse_tick()

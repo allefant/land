@@ -4,7 +4,7 @@ class LandTileGrid:
     LandGrid super
     LandImage **tiles
 
-static import view, display, log, memory
+static import view, display, log, mem
 
 macro LAND_TILE_GRID(_) ((LandTileGrid *)(_))
 

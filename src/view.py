@@ -5,7 +5,7 @@ class LandView:
     # (origin of view relative to origin of map) 
     int x, y, w, h; # screen area 
 
-static import memory
+static import mem
 
 LandView *def land_view_new(int x, int y, int w, int h):
     """

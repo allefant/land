@@ -1,5 +1,5 @@
 import global allegro
-static import memory
+static import mem
 static import global logg
 
 class LandSound:

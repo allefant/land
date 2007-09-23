@@ -61,7 +61,7 @@ class LandLayoutBox:
 import base
 static import widget/container, widget/theme
 static import global stdio, stdlib, assert, string, stdarg, allegro
-static import log, memory
+static import log, mem
 
 #static macro D(_); _
 static macro D(_); (void)0;

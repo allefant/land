@@ -1,5 +1,5 @@
 import global allegro, stdio
-import array, log, memory
+import array, log, mem
 
 class LandDataEntry:
     char *name

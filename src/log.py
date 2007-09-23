@@ -1,5 +1,5 @@
 static import global stdio, stdarg, stdlib, string, allegro, time, sys/time
-static import memory
+static import mem
 
 static char *logname = NULL
 

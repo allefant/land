@@ -1,5 +1,9 @@
-import global allegro, fudgefont
+import global allegro
 import ../array, ../font, ../log
+
+#ifndef LAND_NO_TTF
+import global fudgefont
+#endif
 
 class LandFontAllegro:
     struct LandFont super
@@ -42,15 +46,20 @@ def land_font_allegro_print(LandFontState *state, LandDisplay *display,
     elif alignement == 2: # center 
         x -= w / 2
     if !state->off:
+        #ifndef LAND_NO_TTF
         int r = display->color_r * 255
         int g = display->color_g * 255
         int b = display->color_b * 255
+    
         # FIXME: This makes only sense for paletted fonts on black background..
         # TODO: properly support different kinds of fonts, ideally with
         # anti aliasing
         # If FudgeFont would output 32-bit glyphs, we couldn't recolor the
         # palette. So there certainly is no easy solution.
+
         fudgefont_color_range(0, 0, 0, r, g, b)
+        #endif
+
         textout_ex(LAND_DISPLAY_IMAGE(display)->bitmap, self->font, text, x, y,
             -1, -1)
         if bitmap_color_depth(LAND_DISPLAY_IMAGE(display)->bitmap) == 32:

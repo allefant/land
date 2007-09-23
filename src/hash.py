@@ -17,7 +17,7 @@ class LandHash:
 
 import array
 
-static import hash, memory
+static import hash, mem
 
 #ifdef LAND_MEMLOG
 

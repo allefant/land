@@ -8,7 +8,7 @@ class LandList:
     int count
     LandListItem *first, *last
 
-static import memory
+static import mem
 
 #ifdef LAND_MEMLOG
 

@@ -1,5 +1,5 @@
 static import global stdio, stdlib, string, zlib
-static import memory
+static import mem
 import global allegro
 
 class LandBuffer:
@@ -54,7 +54,8 @@ char *def land_buffer_finish(LandBuffer *self):
     Destroys the buffer, but returns a C-string constructed from it by appending
     a 0 character. You may not access the pointer you pass to this function
     anymore after it returns. Also, you have to make sure it does not already
-    contain any 0 characters.
+    contain any 0 characters. When no longer needed, you should free the string
+    with land_free.
     """
     char c[] = "";
     land_buffer_add(self, c, 1)
@@ -83,6 +84,7 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
     pack_fclose(pf)
     return self
 
+#ifndef LAND_NO_COMPRESS
 def land_buffer_compress(LandBuffer *self):
     uLongf destlen = self->n * 1.1 + 12
     Bytef *dest = land_malloc(4 + destlen)
@@ -100,6 +102,7 @@ def land_buffer_decompress(LandBuffer *self):
     land_free(self->buffer)
     self->buffer = (void *)dest
     self->size = self->n = destlen
+#endif
 
 int def land_buffer_compare(LandBuffer *self, *other):
     if self->n < other->n: return -1

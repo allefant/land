@@ -1,5 +1,13 @@
-import global allegro, jpgalleg, loadpng
+import global allegro
 import array, log, pixelmask, util
+
+#ifndef LAND_NO_PNG
+import global loadpng
+#endif
+
+#ifndef LAND_NO_JPG
+import global jpgalleg
+#endif
 
 macro LAND_SUBIMAGE 1
 
@@ -73,11 +81,14 @@ LandImage *def land_image_load(char const *filename):
             &size)
         if buffer:
             land_log_message_nostamp(" [memory %d] ", size)
+            #ifndef LAND_NO_JPG
             if !ustrcmp(get_extension(filename), "jpg"):
                 bmp = load_memory_jpg(buffer, size, NULL)
-
-            elif !strcmp(get_extension(filename), "png"):
+            #endif
+            #ifndef LAND_NO_PNG
+            if !strcmp(get_extension(filename), "png"):
                 bmp = load_memory_png(buffer, size, NULL)
+            #endif
 
             land_free(buffer)
 

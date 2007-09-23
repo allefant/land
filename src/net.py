@@ -1,3 +1,4 @@
+#ifndef LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
 import global land, unistd
@@ -671,3 +672,4 @@ def land_net_poll(LandNet *self):
             if self->lag_simulator: lag_simulator_add(self, None, 0)
             land_net_poll_recv(self);
             break
+#endif

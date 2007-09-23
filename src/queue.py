@@ -13,7 +13,7 @@ class LandQueue:
     LandArray array
     int (*cmp_cb)(void *data1, void *data2)
 
-static import memory
+static import mem
 
 LandQueue *def land_queue_new(int (*cmp_cb)(void *data1, void *data2)):
     """
