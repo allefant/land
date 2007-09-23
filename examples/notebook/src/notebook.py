@@ -20,6 +20,7 @@ static def game_init(LandRunner *self):
 
     land_widget_theme_set_default(land_widget_theme_new("../../data/classic.cfg"))
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)
+    land_widget_reference(desktop)
 
     LandWidget *notebook = land_widget_book_new(desktop, 50, 50, 200, 200)
 
