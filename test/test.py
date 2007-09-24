@@ -335,6 +335,15 @@ y.b.d = "ok"
 print y[x["a"]][y[x["a"]]["c"]]
 """, "ok\n")
 
+    def test_keywords(self):
+        self.execute("keywords", """
+test a, keywords:
+    print a, keywords.a
+test(1, a = 2)
+""", "1 2\n")
+
+
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)

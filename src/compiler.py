@@ -617,6 +617,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
             if not strcmp(ptoken->string, ","):
                 param = param->first
                 continue
+            # FIXME: should create a tuple
             if not strcmp(ptoken->string, "("):
                 param = param->first
                 continue
@@ -631,6 +632,18 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
             int result = compile_node(c, param)
             params[nparams] = result
             nparams++
+        else:
+            if not got_named:
+                # Create a new dictionary for the named parameters
+                got_named = create_new_temporary(c)
+                add_code(c, OPCODE_NEW, got_named, 0, 0)
+
+            LM_Node *paramkey = param->first
+            LM_Node *paramval = paramkey->next
+            LM_Token *keytok = paramkey->data
+            int result = compile_node(c, paramval)
+            int attribute = add_string_constant(c, keytok->string)
+            add_code(c, OPCODE_SET, got_named, attribute, result)
 
         LM_Node *parent = param->parent
         param = param->next
@@ -641,6 +654,10 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
                 param = param->next
             else:
                 break
+
+    # Named parameters are just passed as an extra dictionary at the end.
+    if got_named:
+        params[nparams++] = got_named
 
     # Check if the arguments already are in the right order for passing on.
     int need_args = 0
