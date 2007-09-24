@@ -676,6 +676,37 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
 
     return nparams
 
+int def parse_dictionary_constant(LM_Compiler *c, LM_Node *n):
+    int x = create_new_temporary(c)
+    add_code(c, OPCODE_NEW, x, 0, 0)
+
+    LM_Node *param = n->first
+    while param:
+        if param->type == LM_NODE_OPERATION:
+            LM_Token *ptoken = param->data
+            if not strcmp(ptoken->string, ","):
+                param = param->first
+                continue
+            if not strcmp(ptoken->string, "="):
+                LM_Node *paramkey = param->first
+                LM_Node *paramval = paramkey->next
+                LM_Token *keytok = paramkey->data
+                int result = compile_node(c, paramval)
+                int attribute = add_string_constant(c, keytok->string)
+                add_code(c, OPCODE_SET, x, attribute, result)
+
+        LM_Node *parent = param->parent
+        param = param->next
+        while not param:
+            if parent and parent != n:
+                param = parent
+                parent = param->parent
+                param = param->next
+            else:
+                break
+
+    return x
+
 static int def compile_operation(LM_Compiler *c, LM_Node *n):
     """
     Compile an operation, and return the local which has the result, or
@@ -707,7 +738,8 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return compile_dot(c, n)
     elif not strcmp(token->string, "["):
         return compile_binary_operation(c, n, OPCODE_DOT)
-
+    elif not strcmp(token->string, "{"):
+        return parse_dictionary_constant(c, n)
     elif not strcmp(token->string, "="):
         LM_Token *target = n->first->data
         if not strcmp(target->string, "."):
@@ -897,11 +929,6 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
             return result
     elif token->type == TOKEN_STRING:
         return add_constant(c, token, LM_TYPE_STR)
-    elif token->type == TOKEN_SYMBOL:
-        if not strcmp(token->string, "{"):
-            int x = create_new_temporary(c)
-            add_code(c, OPCODE_NEW, x, 0, 0)
-            return x
     return 0
 
 int def compile_node(LM_Compiler *c, LM_Node *n):

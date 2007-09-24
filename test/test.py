@@ -342,7 +342,13 @@ test a, keywords:
 test(1, a = 2)
 """, "1 2\n")
 
-
+    def test_dictionary(self):
+        self.execute("dictionary", """
+x = {a = 1,
+    b = 2,
+    c = 3 * 3, d = 4}
+print x
+""", "{a = 1, b = 2, c = 9, d = 4}\n")
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)

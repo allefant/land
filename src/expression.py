@@ -109,15 +109,27 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
     or 1 if it will reduce further.
     """
     if is_symbol(node, "{"):
-        LM_Node *opening = node
-        node = node->next
-        if is_symbol(node, "}"):
-            lm_node_remove(node)
-        else:
+        while expression(self, node->next): pass
+            
+        if is_symbol(node->next, "}"):
+            lm_node_remove(node->next)
+            node->type = LM_NODE_OPERATION
+            return 1
+        LM_Node *inside = node->next
+        LM_Node *closing = node->next->next
+        if not closing or not is_symbol(closing, "}"):
             token_err(node->data,
-                "Sorry, dictionary syntax not supported yet in this version.")
+                "No matching closing brace found.")
             return 0
-        opening->type = LM_NODE_OPERAND
+
+        lm_node_remove(closing)
+        lm_node_remove(inside)
+
+        if inside->type == LM_NODE_TOKEN:
+            inside->type = LM_NODE_OPERAND
+        node->type = LM_NODE_OPERATION
+        lm_node_add_child(node, inside)
+        
         return 1
 
     if is_symbol(node, "["):
@@ -131,8 +143,8 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
             lm_node_remove(node->next)
             node->type = LM_NODE_OPERATION
             return 1
-        LM_Node *inside = node->next;
-        LM_Node *closing = node->next->next;
+        LM_Node *inside = node->next
+        LM_Node *closing = node->next->next
         if not closing or not is_closing_parenthesis(closing):
             token_err(node->data,
                 "No matching closing parenthesis found.")
@@ -159,6 +171,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
             return 0
         elif node->type == LM_NODE_STATEMENT: return 0
         elif is_closing_parenthesis(node): return 0
+        elif is_symbol(node, "}"): return 0
         elif is_symbol(node, "]"):
             if left->type == LM_NODE_TOKEN:
                 left->type = LM_NODE_OPERAND
@@ -189,6 +202,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
                 elif node->type == LM_NODE_STATEMENT: reduce = 1
                 elif node->type == LM_NODE_BLOCK: reduce = 1
                 elif is_closing_parenthesis(node): reduce = 1
+                elif is_symbol(node, "}"): reduce = 1
                 elif is_operator(node): # x + y +
                     if operator_precedence(operator, node):
                         reduce = 1

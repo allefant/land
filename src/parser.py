@@ -60,10 +60,12 @@ static LM_Node *def parse_statement(Parser *self):
     self->token = self->token->next
     while self->token:
         if not strcmp(self->token->string, "("): in_parenthesis++
+        if not strcmp(self->token->string, "{"): in_parenthesis++
 
         if not in_parenthesis and self->token->line > first_token->line: break
 
         if not strcmp(self->token->string, ")"): in_parenthesis--
+        if not strcmp(self->token->string, "}"): in_parenthesis--
         
         if not strcmp(self->token->string, ";"):
             self->token = self->token->next
