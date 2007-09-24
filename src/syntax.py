@@ -8,11 +8,11 @@ static import parser, expression
 
 class SyntaxAnalyzer:
     LM_Node *root
-    Tokenizer const *tokenizer
+    LM_Tokenizer *tokenizer
     # The parser keeps track of all allocated nodes, so we keep it around.
     void *parser
 
-SyntaxAnalyzer *def syntax_analyzer_new_from_tokenizer(Tokenizer const *tokenizer):
+SyntaxAnalyzer *def syntax_analyzer_new_from_tokenizer(LM_Tokenizer *tokenizer):
     SyntaxAnalyzer *self
     land_alloc(self)
     self->tokenizer = tokenizer
@@ -34,7 +34,7 @@ static def statement(SyntaxAnalyzer *sa, LM_Node *node):
     # Check if this is a block statement.
     if node->last->type == LM_NODE_BLOCK:
         if node->first->type == LM_NODE_TOKEN:
-            Token *token = node->first->data
+            LM_Token *token = node->first->data
             if token->type == TOKEN_ALPHANUM:
                 int isif = !strcmp(token->string, "if")
                 int iselse = !strcmp(token->string, "else")
@@ -83,7 +83,7 @@ static def statement(SyntaxAnalyzer *sa, LM_Node *node):
     # expression mechanism.
     int is_statement = 0
     if node->first->type == LM_NODE_TOKEN:
-        Token *token = node->first->data
+        LM_Token *token = node->first->data
         if token->type == TOKEN_ALPHANUM:
             LM_Node *next = node->first->next
             if not next:
@@ -119,6 +119,10 @@ def syntax_analyzer_analyze(SyntaxAnalyzer *self, int debug):
     Converts a parse tree into a syntax tree. That is, expressions and operator
     precedences are considered.
     """
-    block(self, self->root)
+    LM_Node *node = self->root->first
+    while node:
+        LM_Node *next = node->next
+        block(self, node)
+        node = next
 
     if debug: lm_node_debug(self->root, 0)

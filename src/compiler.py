@@ -96,19 +96,24 @@ static def function_del(LM_CompilerFunction *self):
 
     land_free(self)
 
-LM_Compiler *def lm_compiler_new_from_syntax_analyzer(SyntaxAnalyzer *sa):
+LM_Compiler *def lm_compiler_new():
     LM_Compiler *self
     land_alloc(self)
-    self->sa = sa
 
     self->functions = land_array_new()
     self->using = land_hash_new()
 
     return self
 
+LM_Compiler *def lm_compiler_new_from_syntax_analyzer(SyntaxAnalyzer *sa):
+    LM_Compiler *self = lm_compiler_new()
+    self->sa = sa
+
+    return self
+
 LM_Compiler *def lm_compiler_new_from_file(char const *filename, int verbose):
 
-    Tokenizer *t = tokenizer_new_from_file(filename)
+    LM_Tokenizer *t = tokenizer_new_from_file(filename)
     if not t:
         printf("Could not tokenize file %s.\n", filename)
         return None
@@ -120,13 +125,31 @@ LM_Compiler *def lm_compiler_new_from_file(char const *filename, int verbose):
 
     LM_Compiler *c = lm_compiler_new_from_syntax_analyzer(sa)
 
-    return c
+    return c    
+
+def lm_compiler_append_file(LM_Compiler *c, char const *filename, int verbose):
+
+    LM_Tokenizer *t = tokenizer_new_from_file(filename)
+    if not t:
+        printf("Could not tokenize file %s.\n", filename)
+        return
+    tokenizer_tokenize(t, verbose)
+
+    if not c->sa: c->sa = syntax_analyzer_new_from_tokenizer(t)
+    else:
+        LM_Tokenizer *st = c->sa->tokenizer
+        while st->appended: st = st->appended
+        st->appended = t
+
+def lm_compiler_files_done(LM_Compiler *c, int verbose):
+    syntax_analyzer_parse(c->sa, verbose)
+    syntax_analyzer_analyze(c->sa, verbose)
 
 def lm_compiler_destroy(LM_Compiler *c):
 
-    # Need to cast away constness, as we will destroy the tokenizer, having
+    # Need to cast away constness, as we will destroy the LM_Tokenizer, having
     # created it outselves earlier.
-    Tokenizer *t = (Tokenizer *)c->sa->tokenizer
+    LM_Tokenizer *t = (LM_Tokenizer *)c->sa->tokenizer
     syntax_analyzer_destroy(c->sa)
     tokenizer_destroy(t)
 
@@ -157,7 +180,7 @@ int def add_string_constant(LM_Compiler *c, char const *string):
     val->value.pointer = land_strdup(string)
     return i | 128
 
-int def add_constant(LM_Compiler *c, Token *token, LM_DataType type):
+int def add_constant(LM_Compiler *c, LM_Token *token, LM_DataType type):
     int i = new_constant(c)
     LM_Object *val = c->current->constants->data[i]
 
@@ -264,17 +287,17 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n):
 
     int *using = None
     if pn->type == LM_NODE_OPERAND:
-        using = land_hash_get(c->using, ((Token *)pn->data)->string)
+        using = land_hash_get(c->using, ((LM_Token *)pn->data)->string)
     if not using:
         parent = compile_node(c, pn)
     
     c->current->locals_count = result + 1
     c->current->temporaries_count = temps   
 
-    int attribute = add_string_constant(c, ((Token *)an->data)->string)    
+    int attribute = add_string_constant(c, ((LM_Token *)an->data)->string)    
 
     if using:
-        int constant = add_string_constant(c, ((Token *)pn->data)->string)
+        int constant = add_string_constant(c, ((LM_Token *)pn->data)->string)
         add_code(c, OPCODE_GEU, result, constant, attribute)
     else:
         add_code(c, OPCODE_DOT, result, parent, attribute)
@@ -288,14 +311,14 @@ static int def compile_assign_dot(LM_Compiler *c, LM_Node *n, int what):
 
     int *using = None
     if pn->type == LM_NODE_OPERAND:
-        using = land_hash_get(c->using, ((Token *)pn->data)->string)
+        using = land_hash_get(c->using, ((LM_Token *)pn->data)->string)
     if not using:
         parent = compile_node(c, pn)
 
-    int attribute = add_string_constant(c, ((Token *)an->data)->string)    
+    int attribute = add_string_constant(c, ((LM_Token *)an->data)->string)    
 
     if using:
-        int constant = add_string_constant(c, ((Token *)pn->data)->string)
+        int constant = add_string_constant(c, ((LM_Token *)pn->data)->string)
         add_code(c, OPCODE_SEU, constant, attribute, what)
     else:
         add_code(c, OPCODE_SET, parent, attribute, what)
@@ -365,21 +388,21 @@ static int def compile_binary_operation(LM_Compiler *c, LM_Node *n, int opcode):
 
 static int def is_parenthesis(LM_Compiler *c, LM_Node *n):
     if n->type == LM_NODE_OPERATION:
-        Token *t = n->data
+        LM_Token *t = n->data
         if not strcmp(t->string, "("):
             return True
     return False
 
 static int def is_or(LM_Compiler *c, LM_Node *n):
     if n->type == LM_NODE_OPERATION:
-        Token *t = n->data
+        LM_Token *t = n->data
         if not strcmp(t->string, "or"):
             return True
     return False
 
 static int def is_and(LM_Compiler *c, LM_Node *n):
     if n->type == LM_NODE_OPERATION:
-        Token *t = n->data
+        LM_Token *t = n->data
         if not strcmp(t->string, "and"):
             return True
     return False
@@ -533,11 +556,11 @@ static int def compile_conditional(LM_Compiler *c, LM_Node *n):
     LM_Node *ifnode = n->first
     while ifnode:
         if ifnode->type != LM_NODE_OPERATION:
-            token_err(c->sa->tokenizer, ifnode->data,
+            token_err(ifnode->data,
                 "Hu? need if/else/elif/while here..\n")
             ifnode = ifnode->next
             continue
-        Token *token = ifnode->data
+        LM_Token *token = ifnode->data
         if not strcmp(token->string, "if"):
             compile_if(c, ifnode)
             # Any else or elif following?
@@ -590,7 +613,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
     while param:
         int positional = 1
         if param->type == LM_NODE_OPERATION:
-            Token *ptoken = param->data
+            LM_Token *ptoken = param->data
             if not strcmp(ptoken->string, ","):
                 param = param->first
                 continue
@@ -641,7 +664,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
     Compile an operation, and return the local which has the result, or
     0 if none.
     """
-    Token *token = n->data
+    LM_Token *token = n->data
 
     if not strcmp(token->string, "+"):
         return compile_binary_operation(c, n, OPCODE_ADD)
@@ -669,7 +692,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return compile_binary_operation(c, n, OPCODE_DOT)
 
     elif not strcmp(token->string, "="):
-        Token *target = n->first->data
+        LM_Token *target = n->first->data
         if not strcmp(target->string, "."):
             # This is not an assignement to a variable, but to an attribute
             # thereof.
@@ -706,7 +729,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         LM_Node *param = n->first
         while param:
             if param->type == LM_NODE_OPERAND:
-                Token *paramtoken = param->data
+                LM_Token *paramtoken = param->data
                 lm_compiler_use(c, paramtoken->string)
                 param = param->next
             else:
@@ -745,7 +768,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
             n->type = LM_NODE_OPERAND
             int result = compile_node(c, n)
             if not result:
-                token_err(c->sa->tokenizer, token,
+                token_err(token,
                     "Could not compile call to unknown function \"%s\".\n",
                     token->string)
                 return 0
@@ -766,7 +789,7 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
     LM_CompilerFunction *current = c->current
 
     LM_Node *name = n->first
-    Token *nametoken = name->data
+    LM_Token *nametoken = name->data
 
     int what
     int where = prepare_assignement(c, nametoken->string, &what)
@@ -785,7 +808,7 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
     # Add parameters as named locals.
     LM_Node *n2 = name->next
     while n2 and n2->type == LM_NODE_TOKEN:
-        Token *token = n2->data
+        LM_Token *token = n2->data
         if token->type != TOKEN_SYMBOL:
             find_or_create_local(c, token->string)
             land_array_add(c->current->parameters, land_strdup(token->string))
@@ -813,10 +836,10 @@ def scan_node(LM_Compiler *c, LM_Node *n):
     # other functions, need to clarify how they can be looked up at runtime.
     if n->type == LM_NODE_FUNCTION:
         LM_Node *name = n->first
-        Token *nametoken = name->data
+        LM_Token *nametoken = name->data
         char *string = nametoken->string
         if land_hash_has(c->current->defs, string):
-            token_err(c->sa->tokenizer, nametoken,
+            token_err(nametoken,
                 "Function \"%s\" already exists.\n", string)
         else:
             declare_forward(c, string)
@@ -834,8 +857,15 @@ static int def compile_block(LM_Compiler *c, LM_Node *n):
         n2 = n2->next
     return 0
 
+static int def compile_root(LM_Compiler *c, LM_Node *n):
+    LM_Node *n2 = n->first
+    while n2:
+        compile_node(c, n2)
+        n2 = n2->next
+    return 0
+
 static int def compile_operand(LM_Compiler *c, LM_Node *n):
-    Token *token = n->data
+    LM_Token *token = n->data
     if token->type == TOKEN_ALPHANUM:
         if token->string[0] >= '0' and token->string[0] <= '9':
             return add_constant(c, token, LM_TYPE_NUM)
@@ -858,7 +888,9 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
     return 0
 
 int def compile_node(LM_Compiler *c, LM_Node *n):
-    if n->type == LM_NODE_BLOCK:
+    if n->type == LM_NODE_ROOT:
+        return compile_root(c, n)
+    elif n->type == LM_NODE_BLOCK:
         return compile_block(c, n)
     elif n->type == LM_NODE_STATEMENT:
         return compile_statement(c, n)

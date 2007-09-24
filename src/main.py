@@ -23,7 +23,7 @@ def userdict(LM_Machine *m):
 
 def compile(char const *input, char const *output, int debug):
     fprintf(stderr, "Compiling %s.\n", input)
-    Tokenizer *t = tokenizer_new_from_file(input)
+    LM_Tokenizer *t = tokenizer_new_from_file(input)
     if not t:
         fprintf(stderr, "Cannot read %s.\n", input)
         land_set_exitcode(1)

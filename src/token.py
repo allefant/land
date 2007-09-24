@@ -1,5 +1,5 @@
 """
-The tokenizer reads in text and outputs a list of tokens. This removes
+The LM_Tokenizer reads in text and outputs a list of tokens. This removes
 whitespace and comments and groups names, number and strings into single
 tokens.
 """
@@ -12,42 +12,49 @@ enum TokenType:
     TOKEN_SYMBOL
     TOKEN_STRING
 
-class Token:
+class LM_Token:
     """
     Represents one token in a file.
     """
     char *string
+    LM_Tokenizer *tokenizer
     int line
     int column
     TokenType type
-    Token *next
+    LM_Token *next
 
-class Tokenizer:
+class LM_Tokenizer:
     char *filename
     LandBuffer *text
     int line
     int linestart
     int pos
     int end
-    Token *first
-    Token *token
+    LM_Token *first
+    LM_Token *token
 
-def token_err(Tokenizer const *self, Token *t, char const *str, ...):
-    fprintf(stderr, "%s: %d: %d: ", self->filename, 1 + t->line, 1 + t->column)
+    # FIXME
+    # Hack: Since we've got no proper modules yet, we allow appending multiple
+    # tokenizers, so can at least append common code to multiple scripts.
+    LM_Tokenizer *appended
+
+def token_err(LM_Token *t, char const *str, ...):
+    fprintf(stderr, "%s: %d: %d: ", t->tokenizer->filename, 1 + t->line, 1 + t->column)
     va_list arg
     va_start(arg, str)
     vfprintf(stderr, str, arg)
     va_end(arg)
     fprintf(stderr, "\n")
 
-static def token_add(Tokenizer *self, TokenType type, int linenum, column,
+static def token_add(LM_Tokenizer *self, TokenType type, int linenum, column,
     char *string):
-    Token *token
+    LM_Token *token
     land_alloc(token)
     token->line = linenum
     token->column = column
     token->type = type
     token->string = string
+    token->tokenizer = self
     token->next = None
     if self->token:
         self->token->next = token
@@ -55,18 +62,18 @@ static def token_add(Tokenizer *self, TokenType type, int linenum, column,
         self->first = token
     self->token = token
 
-Tokenizer *def tokenizer_new_from_file(char const *filename):
+LM_Tokenizer *def tokenizer_new_from_file(char const *filename):
     LandBuffer *buffer = land_buffer_read_from_file(filename)
     if not buffer: return None
-    Tokenizer *self
+    LM_Tokenizer *self
     land_alloc(self)
     self->filename = land_strdup(filename)
     self->text = buffer
     return self
 
-def tokenizer_destroy(Tokenizer *self):
-    for Token *t = self->first; t;:
-        Token *next = t->next
+def tokenizer_destroy(LM_Tokenizer *self):
+    for LM_Token *t = self->first; t;:
+        LM_Token *next = t->next
         land_free(t->string)
         land_free(t)
         t = next
@@ -74,7 +81,7 @@ def tokenizer_destroy(Tokenizer *self):
     land_free(self->filename)
     land_free(self)
 
-static char def next(Tokenizer *self):
+static char def next(LM_Tokenizer *self):
     char c = self->text->buffer[self->pos++]
     if self->pos == self->text->n:
         self->end = 1
@@ -83,7 +90,7 @@ static char def next(Tokenizer *self):
         self->linestart = self->pos
     return c
 
-static char def peek(Tokenizer *self, int i):
+static char def peek(LM_Tokenizer *self, int i):
     if self->pos + i < self->text->n:
         return self->text->buffer[self->pos + i]
     else:
@@ -112,7 +119,7 @@ static char const *multichar_symbol_tokens[] = {
     None
     }
 
-static def add_operator(Tokenizer *self):
+static def add_operator(LM_Tokenizer *self):
     char string[16]
     for int i = 0; ; i++:
         char const *mc = multichar_symbol_tokens[i]
@@ -128,11 +135,11 @@ static def add_operator(Tokenizer *self):
     token_add(self, TOKEN_SYMBOL,
         self->line, self->pos - self->linestart - 1, land_strdup(string))
 
-static def skip_comment(Tokenizer *self):
+static def skip_comment(LM_Tokenizer *self):
     while not self->end:
         if next(self) == 10: break
 
-static def get_token(Tokenizer *self):
+static def get_token(LM_Tokenizer *self):
     int start = self->pos - 1
     char first = self->text->buffer[start]
     while self->pos < self->text->n:
@@ -149,7 +156,7 @@ static def get_token(Tokenizer *self):
 
     token_add(self, TOKEN_ALPHANUM, self->line, start - self->linestart, string)
 
-static def get_string_triple(Tokenizer *self, char delimiter, int triple):
+static def get_string_triple(LM_Tokenizer *self, char delimiter, int triple):
     int linenum = self->line
     int column = self->pos - self->linestart
 
@@ -201,7 +208,7 @@ static def get_string_triple(Tokenizer *self, char delimiter, int triple):
 
     token_add(self, TOKEN_STRING, linenum, column, land_buffer_finish(buffer))
 
-static def get_string(Tokenizer *self, char delimiter):
+static def get_string(LM_Tokenizer *self, char delimiter):
     if peek(self, 0) == delimiter and peek(self, 1) == delimiter:
         next(self)
         next(self)
@@ -209,7 +216,7 @@ static def get_string(Tokenizer *self, char delimiter):
     else:
         get_string_triple(self, delimiter, 0)
 
-static def find_token(Tokenizer *self):
+static def find_token(LM_Tokenizer *self):
     while not self->end:
         char c = next(self)
         if isalnum(c) or c == '_':
@@ -225,7 +232,7 @@ static def find_token(Tokenizer *self):
         else:
             pass # Ignore anything else.
 
-def tokenizer_tokenize(Tokenizer *self, int debug):
+def tokenizer_tokenize(LM_Tokenizer *self, int debug):
     """
     Comments: Anything after #
     Tokens: alphanumeric and _
@@ -233,7 +240,7 @@ def tokenizer_tokenize(Tokenizer *self, int debug):
     Triple Strings: same, but no need to escape quotes themselves
     """
     find_token(self)
-    Token *t = self->first
+    LM_Token *t = self->first
     while t:
         if debug: printf("%3d:%3d: «%s»\n", t->line + 1, t->column + 1, t->string)
         t = t->next

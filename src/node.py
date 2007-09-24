@@ -4,6 +4,7 @@ static import token
 enum LM_NodeType:
     LM_NODE_INVALID
 
+    LM_NODE_ROOT
     LM_NODE_BLOCK
     LM_NODE_STATEMENT
     LM_NODE_TOKEN
@@ -76,7 +77,9 @@ def lm_node_append(LM_Node *self, LM_Node *child):
 
 char const *def lm_node_print(LM_Node *self):
     static char str[256]
-    if self->type == LM_NODE_BLOCK:
+    if self->type == LM_NODE_ROOT:
+        uszprintf(str, sizeof str, "ROOT")
+    elif self->type == LM_NODE_BLOCK:
         uszprintf(str, sizeof str, "BLOCK")
     elif self->type == LM_NODE_STATEMENT:
         uszprintf(str, sizeof str, "STATEMENT")
@@ -85,15 +88,15 @@ char const *def lm_node_print(LM_Node *self):
     elif self->type == LM_NODE_FUNCTION:
         uszprintf(str, sizeof str, "FUNCTION")
     elif self->type == LM_NODE_OPERAND:
-        Token *token = self->data
+        LM_Token *token = self->data
         uszprintf(str, sizeof str, "OPERAND «%s» (%d)", token->string,
             token->type)
     elif self->type == LM_NODE_OPERATION:
-        Token *token = self->data
+        LM_Token *token = self->data
         uszprintf(str, sizeof str, "NODE_OPERATION «%s» (%d)", token->string,
             token->type)
     elif self->type == LM_NODE_TOKEN:
-        Token *token = self->data
+        LM_Token *token = self->data
         uszprintf(str, sizeof str, "TOKEN «%s» (%d)", token->string,
             token->type)
     else:

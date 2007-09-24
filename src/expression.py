@@ -5,7 +5,7 @@ import compiler, node, token
 
 static int def is_operator(LM_Node *node):
     if node->type == LM_NODE_TOKEN:
-        Token *token = node->data
+        LM_Token *token = node->data
         if token->type == TOKEN_SYMBOL:
             return 1
         if not strcmp(token->string, "or"):
@@ -22,7 +22,7 @@ static int def is_operand(LM_Node *node):
     if node->type == LM_NODE_OPERAND:
         return 1
     if node->type == LM_NODE_TOKEN:
-        Token *token = node->data
+        LM_Token *token = node->data
         if token->type == TOKEN_ALPHANUM:
             return 1
         if token->type == TOKEN_STRING:
@@ -31,7 +31,7 @@ static int def is_operand(LM_Node *node):
 
 static int def is_symbol(LM_Node *node, char const *symbol):
     if node->type == LM_NODE_TOKEN:
-        Token *token = node->data
+        LM_Token *token = node->data
         if token->type == TOKEN_SYMBOL:
             if not ustrcmp(token->string, symbol):
                 return 1
@@ -47,8 +47,8 @@ static int def operator_precedence(LM_Node *left, LM_Node *right):
     """
     Returns 1 if left has precedence over right.
     """
-    Token *tok1 = left->data
-    Token *tok2 = right->data
+    LM_Token *tok1 = left->data
+    LM_Token *tok2 = right->data
 
     # a, b, c -> a, (b, c)
     # a, b + c -> a, (b + c)
@@ -114,14 +114,14 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
         if is_symbol(node, "}"):
             lm_node_remove(node)
         else:
-            token_err(self->tokenizer, node->data,
+            token_err(node->data,
                 "Sorry, dictionary syntax not supported yet in this version.")
             return 0
         opening->type = LM_NODE_OPERAND
         return 1
 
     if is_symbol(node, "["):
-        token_err(self->tokenizer, node->data, "Invalid [ found.")
+        token_err(node->data, "Invalid [ found.")
         return 0
 
     if is_opening_parenthesis(node):
@@ -134,7 +134,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
         LM_Node *inside = node->next;
         LM_Node *closing = node->next->next;
         if not closing or not is_closing_parenthesis(closing):
-            token_err(self->tokenizer, node->data,
+            token_err(node->data,
                 "No matching closing parenthesis found.")
             return 0
         lm_node_remove(closing)
@@ -174,7 +174,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
             LM_Node *operator = node
             node = node->next
             if not node:
-                token_err(self->tokenizer, operator->data,
+                token_err(operator->data,
                     "No right operand found.")
                 return 0
             if is_opening_parenthesis(node): # x + (
@@ -197,7 +197,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
                         if node and is_symbol(node, "]"):
                             lm_node_remove(node)
                         else:
-                            token_err(self->tokenizer, operator->data,
+                            token_err(operator->data,
                                 "Missing closing bracket.")
                     lm_node_remove(left)
                     if left->type == LM_NODE_TOKEN:
