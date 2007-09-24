@@ -45,17 +45,26 @@ def parser_del(Parser *self):
 static LM_Node *def parse_statement(Parser *self):
     LM_Node *statement_node = node_new(self, LM_NODE_STATEMENT, None)
     LM_Token *first_token = self->token
+    int in_parenthesis = 0
+
     if not strcmp(self->token->string, ";"):
         self->token = self->token->next
         return None
+
     if not strcmp(self->token->string, "end"):
         self->token = self->token->next
         return None
+
     LM_Node *first_node = node_new(self, LM_NODE_TOKEN, first_token)
     lm_node_add_child(statement_node, first_node)
     self->token = self->token->next
     while self->token:
-        if self->token->line > first_token->line: break
+        if not strcmp(self->token->string, "("): in_parenthesis++
+
+        if not in_parenthesis and self->token->line > first_token->line: break
+
+        if not strcmp(self->token->string, ")"): in_parenthesis--
+        
         if not strcmp(self->token->string, ";"):
             self->token = self->token->next
             if self->token:
