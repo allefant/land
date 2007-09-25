@@ -1191,6 +1191,7 @@ LM_Machine *def lm_machine_new_instance(LM_Machine *machine):
     machine. Usually, you can just create a new machine from code, all this
     will do is safe a little time and memory in case you are making very many
     virtual machines sharing the same code.
+    No variables or any data are shared, only static function code.
     """
     LM_Machine *self = lm_machine_new_machine()
     self->external = machine->external
