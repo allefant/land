@@ -343,8 +343,13 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
     push_config_state()
     set_config_file(filename)
 
+    LandBuffer *prefix = land_buffer_new()
+    land_buffer_add(prefix, filename, get_filename(filename) - filename)
+    land_buffer_cat(prefix, "/")
+    land_buffer_cat(prefix, get_config_string("agup.cfg", "prefix", ""))
+
     self->name = land_strdup(get_config_string("agup.cfg", "name", ""))
-    self->prefix = land_strdup(get_config_string("agup.cfg", "prefix", ""))
+    self->prefix = land_buffer_finish(prefix)
     self->suffix = land_strdup(get_config_string("agup.cfg", "suffix", ""))
 
     char const **entries = NULL
