@@ -43,7 +43,7 @@ for ex in examples:
 
     env.Append(CCFLAGS = "--std=gnu99")
     env.Append(LIBS = ["ldpng", "png",
-        "freetype", "GL", "GLU", "dumb", "jpgal"])
+        "freetype", "GL", "GLU", "dumb", "jpeg"])
     env.Append(LIBS = ["logg", "ogg", "vorbis", "vorbisfile"])
 
     env.SConsignFile("scons/signatures")
