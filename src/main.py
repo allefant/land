@@ -1,13 +1,10 @@
 import runner
 static import global allegro, sys/time,
 static import land
+static import jpg
 
 #ifndef LAND_NO_PNG
 import global loadpng
-#endif
-
-#ifndef LAND_NO_JPG
-import global jpgalleg,
 #endif
 
 #ifndef LAND_NO_TTF
@@ -87,9 +84,7 @@ def land_init():
     loadpng_init()
     #endif
 
-    #ifndef LAND_NO_JPG
-    jpgalleg_init()
-    #endif
+    register_bitmap_file_type("jpg", load_jpg, None)
 
     #ifndef LAND_NO_TTF
     install_fudgefont()
