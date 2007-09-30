@@ -47,6 +47,10 @@ def land_widget_layout_set_minimum_size(LandWidget *self, int w, h):
     if self->box.h < h:
         self->box.h = h
 
+def land_widget_layout_set_maximum_size(LandWidget *self, int w, h):
+    self->box.max_width = w
+    self->box.max_height = h
+
 def land_widget_layout_set_shrinking(LandWidget *self, int x, int y):
     if x:
         self->box.flags |= GUL_SHRINK_X

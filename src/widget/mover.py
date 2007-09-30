@@ -17,7 +17,6 @@ def land_widget_mover_mouse_tick(LandWidget *super):
         if land_mouse_b() & 1:
             self->target->send_to_top = 1
             self->dragged = 1
-
         else:
             self->dragged = 0
 

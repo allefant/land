@@ -46,10 +46,12 @@ def land_widget_book_initialize(LandWidget *base,
     
     land_widget_theme_initialize(base)
 
+    land_call_method(parent, update, (parent))
+
 def land_widget_book_show_page(LandWidget *self, LandWidget *page):
     """
     Change the visible page of the notebook. If ''page'' is None or not a
-    children of the notebook, then an empty tab will be shown.
+    child of the notebook, then an empty tab will be shown.
     """
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
@@ -72,7 +74,13 @@ def land_widget_book_show_page(LandWidget *self, LandWidget *page):
     # Then unhide the active one.
     while panelitem:
         if panelitem->data == page:
-            land_widget_unhide(panelitem->data)
+            LandWidget *tab = panelitem->data
+            land_widget_unhide(tab)
+
+            # Kind of a hack, so if it's a scrolling window, it updates itself
+            # on first view.
+            land_call_method(tab, update, (tab))
+
             LAND_WIDGET(tabitem->data)->selected = 1
             break
 
@@ -100,7 +108,6 @@ static def clicked(LandWidget *button):
 
         item = item->next
         panelitem = panelitem->next
-
 
 def land_widget_book_add(LandWidget *widget, LandWidget *add):
     """

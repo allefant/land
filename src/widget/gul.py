@@ -21,6 +21,8 @@ macro GUL_LEAVE_Y  (16 * 256)
 macro GUL_HIDDEN (1 * 65536)
 macro GUL_NO_LAYOUT (2 * 65536)
 
+macro GUL_RESIZE (4 * 65536)
+
 # EQUAL_X:
 # bottom-up: Try to use width of largest column, until parent->max_width / n
 # top-down: use parent->w / n
@@ -33,6 +35,9 @@ macro GUL_NO_LAYOUT (2 * 65536)
 # The widget's children are not to be affected by the layout. The widget itself
 # is affected though. (Use LEAVE_X to make the widget itself not be affected.)
 #
+# GUL_RESIZE:
+# The widget is being resizes - if not enough space, go ahead and modify its
+# minimum dimensions to fit.
 
 class LandLayoutBox:
     int x, y, w, h # outer box 
@@ -269,6 +274,28 @@ static int def min_width(LandWidget *self):
 
     return v
 
+static int def adjust_resize_width(LandWidget *self, int dx):
+    int i
+    for i = 0; i < self->box.cols; i++:
+        int j
+        for j = 0; j < self->box.rows; j++:
+            LandWidget *c = lookup_box_in_grid(self, i, j)
+            if c and c->box.flags & GUL_RESIZE:
+                c->box.current_min_width += dx
+                return 1
+    return 0
+
+static int def adjust_resize_height(LandWidget *self, int dx):
+    int j
+    for j = 0; j < self->box.rows; j++:
+        int i
+        for i = 0; i < self->box.cols; i++:
+            LandWidget *c = lookup_box_in_grid(self, i, j)
+            if c and c->box.flags & GUL_RESIZE:
+                c->box.current_min_height += dx
+                return 1
+    return 0
+
 # Recursively calculate the minimum size of all children of the given widget,
 # starting with the children. Basically, current_min_width/height is calculated
 # for each box, based on the min_width/height of the bottom-most boxes.
@@ -317,12 +344,14 @@ static def gul_box_top_down(LandWidget *self):
     int minh = min_height(self)
 
     if self->box.max_width and minw > self->box.max_width:
-        ERR("Fatal: Minimum width of children (%d) "
-            "exceeds available space (%d).", minw, self->box.max_width)
+        if not adjust_resize_width(self, self->box.max_width - minw):
+            ERR("Fatal: Minimum width of children (%d) "
+                "exceeds available space (%d).", minw, self->box.max_width)
 
     if self->box.max_height and minh > self->box.max_height:
-        ERR("Fatal: Minimum height of children (%d) "
-            "exceeds available space (%d).", minh, self->box.max_height)
+        if not adjust_resize_height(self, self->box.max_height - minh):
+            ERR("Fatal: Minimum height of children (%d) "
+                "exceeds available space (%d).", minh, self->box.max_height)
 
     LandWidgetThemeElement *element = self->element
 

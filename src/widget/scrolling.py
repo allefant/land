@@ -294,6 +294,9 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item2->data)
     bottombar->target = add
 
+    # There is no point in updating here, as the widget to be added likely is
+    # not fully created yet.
+
 LandWidget *def land_widget_scrolling_get_child(LandWidget *base):
     """
     Return the child window of the scrolling window. Usually, a scrolling
@@ -415,6 +418,7 @@ def land_widget_scrolling_interface_initialize():
     land_widget_scrolling_interface->id |= LAND_WIDGET_ID_SCROLLING
     land_widget_scrolling_interface->tick = land_widget_scrolling_tick
     land_widget_scrolling_interface->add = land_widget_scrolling_add
+    land_widget_scrolling_interface->update = land_widget_scrolling_update
     land_widget_scrolling_interface->move = land_widget_scrolling_move
     land_widget_scrolling_interface->size = land_widget_scrolling_size
     land_widget_scrolling_interface->mouse_tick =\

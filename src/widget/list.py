@@ -36,6 +36,8 @@ def land_widget_list_initialize(LandWidget *base, LandWidget *parent,
 
     land_widget_theme_initialize(base)
 
+    land_call_method(parent, update, (parent))
+
 # Create a new List widget. A list is simply a container with a layout in
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.

@@ -439,7 +439,7 @@ def land_widget_container_interface_initialize():
     land_widget_interface_register(land_widget_container_interface)
     land_widget_container_interface->id = LAND_WIDGET_ID_BASE |\
         LAND_WIDGET_ID_CONTAINER
-    land_widget_container_interface->name = "container"
+    land_widget_container_interface->name = land_strdup("container")
     land_widget_container_interface->destroy = land_widget_container_destroy
     land_widget_container_interface->draw = land_widget_container_draw
     land_widget_container_interface->tick = land_widget_container_tick

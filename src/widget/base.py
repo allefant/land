@@ -185,7 +185,7 @@ macro LAND_WIDGET_ID_USER           0x80000000
 
 class LandWidgetInterface:
     int id
-    char const *name
+    char *name
 
     void (*init)(LandWidget *self)
     void (*enter)(LandWidget *self)
@@ -205,9 +205,14 @@ class LandWidgetInterface:
     void (*keyboard_tick)(LandWidget *self)
     void (*keyboard_leave)(LandWidget *self)
 
+    # The add and remove methods are called to add/remove a widget from a
+    # containe widget. Adding is done in two steps, the add method just adds a
+    # widget without doing any layout updates, and the update method then
+    # instructs the container to adjust itself to the new children.
     void (*add)(LandWidget *self, LandWidget *add)
+    void (*update)(LandWidget *self)
     void (*remove)(LandWidget *self, LandWidget *rem)
-    
+
     # Called whenever the widget's absolute position changes. It is called
     # after the movement has been done.
     void (*move)(LandWidget *self, float dx, float dy)
@@ -225,7 +230,7 @@ class LandWidget:
     """
     The base widget class.
 
-    Event the most basic widget already is a quite heavy object:
+    Even the most basic widget already is a quite heavy object:
     * It has a parent.
     * It has an on-screen position.
     * It has layout parameters.
@@ -361,7 +366,9 @@ def land_widget_interfaces_destroy_all():
     land_log_message("land_widget_interfaces_destroy_all (%d)\n", n)
     int i
     for i = 0; i < n; i++:
-        land_free(land_array_get_nth(land_widget_interfaces, i))
+        LandWidgetInterface *f = land_array_get_nth(land_widget_interfaces, i)
+        land_free(f->name)
+        land_free(f)
 
     land_array_destroy(land_widget_interfaces)
 
@@ -381,7 +388,7 @@ LandWidgetInterface *def land_widget_copy_interface(LandWidgetInterface *basevt,
     LandWidgetInterface *vt
     land_alloc(vt)
     memcpy(vt, basevt, sizeof *vt)
-    vt->name = name
+    vt->name = land_strdup(name)
 
     land_widget_interface_register(vt)
 
@@ -446,7 +453,7 @@ def land_widget_size(LandWidget *self, float dx, dy):
     self->box.w += dx
     self->box.h += dy
     land_call_method(self, size, (self, dx, dy))
-    
+
 def land_widget_resize(LandWidget *self, float dx, dy):
     """
     Changes the minimum size of the widget to its current size modified by the
@@ -565,6 +572,6 @@ def land_widget_base_interface_initialize(void):
     land_alloc(land_widget_base_interface)
     land_widget_interface_register(land_widget_base_interface)
     land_widget_base_interface->id = LAND_WIDGET_ID_BASE
-    land_widget_base_interface->name = "base"
+    land_widget_base_interface->name = land_strdup("base")
     land_widget_base_interface->size = land_widget_base_size
     land_widget_base_interface->destroy = land_widget_base_destroy
