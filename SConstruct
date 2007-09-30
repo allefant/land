@@ -12,6 +12,8 @@ debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
 optimization = ARGUMENTS.get("optimization", "")
 
+exportcode = ARGUMENTS.get("exportcode", "")
+
 static = ARGUMENTS.get("static", "")
 
 pyfiles = glob.glob("src/*.py")
@@ -36,7 +38,10 @@ for py in pyfiles:
     c = "c/" + py[4:-3] + ".c"
     doc = "docstrings/" + py[4:-3] + ".txt"
     name = py[4:-3]
-    includeenv.Command([c, h, doc], py, "scramble.py -i %s -c %s -h %s -d %s -n %s -p _LAND_HEADER" % (py, c, h, doc, name))
+    extra = ""
+    if exportcode: extra = "-N"
+    includeenv.Command([c, h, doc], py, "scramble.py %s -i %s -c %s -h %s -d %s -n %s -p _LAND_HEADER" % (
+    	extra, py, c, h, doc, name))
 
 includeenv.Command("include/land.h", [],
     "echo '#include \"land/land.h\"' > include/land.h")
@@ -82,7 +87,7 @@ if debug:
     if env["PLATFORM"] != "win32":
         env.ParseConfig("allegro-config --cflags debug")
 elif profile:
-    env.Append(CCFLAGS = "-g -pg -fprofile-arcs")
+    env.Append(CCFLAGS = "-g -DLAND_MEMLOG -pg -fprofile-arcs")
     env.Append(LINKFLAGS = "-pg")
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
@@ -114,7 +119,7 @@ if env["PLATFORM"] == "win32":
     env.Append(CPPPATH = ["dependencies/mingw-include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
     env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "ldpng",
-        "jpgal", "alleg_s", "freetype", "apeg_s", "theora", "vorbis", "ogg"])
+        "jpeg", "alleg_s", "freetype", "apeg_s", "theora", "vorbis", "ogg"])
 
     if debug or profile: env.Append(LIBS = ["agld_s"])
     else: env.Append(LIBS = ["agl_s"])
