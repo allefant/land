@@ -11,6 +11,7 @@ crosscompile = ARGUMENTS.get("crosscompile", "")
 debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
 optimization = ARGUMENTS.get("optimization", "")
+memlog = ARGUMENTS.get("memlog", "")
 
 exportcode = ARGUMENTS.get("exportcode", "")
 
@@ -79,15 +80,17 @@ env.Append(CCFLAGS = "--std=gnu99")
 env.Append(CPPPATH = ["include/land"])
 
 if debug:
-    if optimization != "0":
-        env.Append(CCFLAGS = "-O2")
-    env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
+    if optimization:
+        env.Append(CCFLAGS = "-O%d" % optimization)
+    env.Append(CCFLAGS = "-g")
+    if memlog: env.Append(CCFLAGS = "-DLAND_MEMLOG")
     BUILDDIR = "scons/build/%s/debug" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landd" % (env["PLATFORM"])
     if env["PLATFORM"] != "win32":
         env.ParseConfig("allegro-config --cflags debug")
 elif profile:
-    env.Append(CCFLAGS = "-g -DLAND_MEMLOG -pg -fprofile-arcs")
+    env.Append(CCFLAGS = "-g -pg -fprofile-arcs")
+    if memlog: env.Append(CCFLAGS = "-DLAND_MEMLOG")
     env.Append(LINKFLAGS = "-pg")
     BUILDDIR = "scons/build/%s/profile" % (env["PLATFORM"])
     LIBNAME = "lib/%s/landp" % (env["PLATFORM"])
