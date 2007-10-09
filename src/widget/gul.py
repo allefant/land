@@ -40,7 +40,8 @@ macro GUL_RESIZE (4 * 65536)
 # minimum dimensions to fit.
 
 class LandLayoutBox:
-    int x, y, w, h # outer box 
+    int x, y, w, h # outer box
+    int ow, oh # temporary dimensions
 
     # to speed up locating a child (think of a list with 100000 items)
     struct LandWidget **lookup_grid
@@ -157,24 +158,6 @@ static LandWidget *def lookup_box_in_grid(LandWidget *self,
     assert(col < self->box.cols && row < self->box.rows)
 
     return self->box.lookup_grid[row * self->box.cols + col]
-
-# TODO: provide functions for changing grid-size and cell-position, and do
-# optimized lookup of the lookup table in all cases.
-def gul_layout_updated(LandWidget *self):
-    # If the parent has NO_LAYOUT set, then our own layout change also does
-    # not trigger propagation of the layout change over this barrier. For
-    # example, a button inside a window changes its size. Its parent uses
-    # layout, so we recurse upwards to the window. The window sees that its
-    # parent is a desktop with NO_LAYOUT, so now we call gul_box_fit_children
-    # on the window, not propagating anything to the desktop.
-    # TODO: The window's size may change though, so maybe the desktop would like
-    # to know nevertheless? This has to be done outside the layout algorithm
-    # though.
-    update_lookup_grid(self)
-    if self->parent and not (self->parent->box.flags & GUL_NO_LAYOUT):
-        gul_layout_updated(self->parent)
-    else:
-        gul_box_fit_children(self)
 
 # Get minimum height of the specified row. 
 static int def row_min_height(LandWidget *self, int row):
@@ -326,8 +309,10 @@ static def gul_box_bottom_up(LandWidget *self):
     self->box.current_min_width = self->box.min_width
     self->box.current_min_height = self->box.min_height
 
-# Starting with the given box, recursively fit in all children.
 static def gul_box_top_down(LandWidget *self):
+    """
+    Recursively fit in all child widgets into the given widget.
+    """
     # A hidden box needs no layout since it gets assigned no space. A box
     # without layout is fully affected by the layout of its parent - but does
     # not allow the layout algorithm to run on its children.
@@ -398,25 +383,13 @@ static def gul_box_top_down(LandWidget *self):
         # Place all rows in the column accordingly 
         for j = 0; j < self->box.rows; j++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
-
+            # Multi-row cells already were handled.
             if c and c->box.row == j:
-                # Prevent recursive layout updates. The layout algorithm itself
-                # is recursive already. Maybe this needs to be re-thought (i.e.
-                # make child widgets update their layout in resize handlers
-                # independently, and this function gets non-recursive instead).
-                int f = land_widget_layout_freeze(c)
-
-                # Multi-row cells already were handled.
                 if c->box.col == i:
-                    int dx = cx - c->box.x
-                    int dw = cw - c->box.w
-                    land_widget_move(c, dx, 0)
-                    land_widget_size(c, dw, 0)
-                else:
-                    int dw = cw + hgap
-                    land_widget_size(c, dw, 0)
-                    
-                if f: land_widget_layout_unfreeze(c)
+                    c->box.w = cw
+                    land_widget_move(c, cx - c->box.x, 0)
+                else: # Multi-column cell.
+                    c->box.w += cw + hgap
 
     D(printf("\n");)
 
@@ -453,20 +426,13 @@ static def gul_box_top_down(LandWidget *self):
         # Place all columns in the row accordingly. 
         for i = 0; i < self->box.cols; i++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
-
+            # Multi-column cells already were handled.
             if c and c->box.col == i:
-                int f = land_widget_layout_freeze(c)
-                # Multi-column cells already were handled.
                 if c->box.row == j:
-                    int dy = cy - c->box.y
-                    int dh = ch - c->box.h
-                    land_widget_move(c, 0, dy)
-                    land_widget_size(c, 0, dh)
-                else:
-                    int dh = ch + vgap
-                    land_widget_size(c, 0, dh)
-                    
-                if f: land_widget_layout_unfreeze(c)
+                    c->box.h = ch
+                    land_widget_move(c, 0, cy - c->box.y)
+                else: # Multi-row cell.
+                    c->box.h += ch + vgap
 
     D(printf("\n");)
 
@@ -476,21 +442,64 @@ static def gul_box_top_down(LandWidget *self):
             LandListItem *li = container->children->first
             for ; li; li = li->next:
                 LandWidget *c = li->data
+
+                if c->box.w != c->box.ow or c->box.h != c->box.oh:
+                    land_call_method(c, layout_changing, (c))
+
                 gul_box_top_down(c)
+
+                if c->box.w != c->box.ow or c->box.h != c->box.oh:
+                    land_call_method(c, layout_changed, (c))
+                    c->box.ow = c->box.w
+                    c->box.oh = c->box.h
+
+                if c->layout_hack:
+                    # In case the size change induced a layout change, for example
+                    # scrollbars appearing or disappearing, we repeat the
+                    # calculations.
+                    c->layout_hack = 0
+                    gul_box_top_down(c)
 
 # Given a box, (recursively) fit its children into it.
 def gul_box_fit_children(LandWidget *self):
     D(printf("gul_box_fit_children %s[%p]\n", self->vt->name, self);)
 
     gul_box_bottom_up(self)
-    int dw = self->box.current_min_width - self->box.w
-    int dh = self->box.current_min_height - self->box.h
-    self->box.w = self->box.current_min_width 
+
+    self->box.w = self->box.current_min_width
     self->box.h = self->box.current_min_height
 
-    # Prevent recursive layout updates.
-    int f = land_widget_layout_freeze(self)
-    land_call_method(self, size, (self, dw, dh))
-    if f: land_widget_layout_unfreeze(self)
-
+    land_call_method(self, layout_changing, (self))
     gul_box_top_down(self)
+    land_call_method(self, layout_changed, (self))
+
+# TODO: provide functions for changing grid-size and cell-position, and do
+# optimized lookup of the lookup table in all cases.
+def gul_layout_updated(LandWidget *self):
+    """
+    This is used if the size of a widget may have changed and therefore its own
+    as well as its parent's layout needs updating.
+    """
+    # If the parent has NO_LAYOUT set, then our own layout change also does
+    # not trigger propagation of the layout change over this barrier. For
+    # example, a button inside a window changes its size. Its parent uses
+    # layout, so we recurse upwards to the window. The window sees that its
+    # parent is a desktop with NO_LAYOUT, so now we call gul_box_fit_children
+    # on the window, not propagating anything to the desktop.
+    # TODO: The window's size may change though, so maybe the desktop would like
+    # to know nevertheless? This has to be done outside the layout algorithm
+    # though.
+    update_lookup_grid(self)
+    if self->parent and not (self->parent->box.flags & GUL_NO_LAYOUT):
+        gul_layout_updated(self->parent)
+    else:
+        gul_box_fit_children(self)
+
+def gul_layout_updated_during_layout(LandWidget *self):
+    """
+    FIXME: What the hell is this? Can't we do it the proper way?
+    If widgets are added or removed in the middle of a layout algorithm run,
+    this function should be called from within the layout_changed event.
+    """
+    update_lookup_grid(self)
+    gul_box_bottom_up(self)

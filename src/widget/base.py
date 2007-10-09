@@ -165,6 +165,7 @@ macro LAND_WIDGET_ID_LIST           0x00001211 // visual, layout
 macro LAND_WIDGET_ID_HBOX           0x00000311 // no visual, layout
 macro LAND_WIDGET_ID_TABBAR         0x00001311 // visual, layout
 macro LAND_WIDGET_ID_SPIN           0x00002311 // visual, layout
+macro LAND_WIDGET_ID_BOOKPAGE       0x00003311 // visual, layout
 macro LAND_WIDGET_ID_PANEL          0x00000411 // visual, layout
 macro LAND_WIDGET_ID_BOARD          0x00000511 // visual, no layout
 macro LAND_WIDGET_ID_MENU           0x00000611
@@ -213,6 +214,12 @@ class LandWidgetInterface:
     void (*update)(LandWidget *self)
     void (*remove)(LandWidget *self, LandWidget *rem)
 
+    # Called whenever the layout algorithm is applied involving the widget.
+    # The first one is called befor updating child widgets, the second
+    # afterwards.
+    void (*layout_changing)(LandWidget *self)
+    void (*layout_changed)(LandWidget *self)
+
     # Called whenever the widget's absolute position changes. It is called
     # after the movement has been done.
     void (*move)(LandWidget *self, float dx, float dy)
@@ -255,6 +262,9 @@ class LandWidget:
     unsigned int hidden : 1 
     # inhibit layout updates, for performance reasons
     unsigned int no_layout : 1
+
+    unsigned int layout_hack : 1 # signals that the layout calculation needs to
+                                    # start over
 
     # user state
     unsigned int selected : 1 # e.g. checked checkbox or pressed button

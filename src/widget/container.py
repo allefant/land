@@ -397,6 +397,19 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
     # reference to it, which it has to give up now.
     land_widget_unreference(rem)
 
+def land_widget_container_update(LandWidget *widget):
+    """
+    The update method is called after the add method. We simply defer it to
+    our children.
+    """
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
+    if not container->children: return
+    LandListItem *item = container->children->first
+    while item:
+        LandWidget *child = item->data
+        land_call_method(child, update, (child))
+        item = item->next
+
 LandWidget *def land_widget_container_child(LandWidget *super):
     """
     Return the first child of the container or None.
@@ -447,6 +460,7 @@ def land_widget_container_interface_initialize():
     land_widget_container_interface->remove = land_widget_container_remove
     land_widget_container_interface->move = land_widget_container_move
     land_widget_container_interface->size = land_widget_container_size
+    land_widget_container_interface->update = land_widget_container_update
     land_widget_container_interface->mouse_tick =\
         land_widget_container_mouse_tick
     land_widget_container_interface->mouse_enter =\

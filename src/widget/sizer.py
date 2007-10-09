@@ -51,8 +51,9 @@ def land_widget_sizer_mouse_tick(LandWidget *super):
         self->drag_x += sx - mx * sx
         self->drag_y += sy - my * sy
 
-        if self->target->parent:
-            land_widget_layout(self->target->parent)
+        # TODO: do we really want that? What if the parent doesn't use layout?
+        # if self->target->parent:
+        #    land_widget_layout(self->target->parent)
         self->target->box.flags &= ~GUL_RESIZE
 
 LandWidget *def land_widget_sizer_new(LandWidget *parent, int position,

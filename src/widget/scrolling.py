@@ -68,27 +68,36 @@ def land_widget_scrolling_autohide(LandWidget *widget, int hori, vert, empty):
 
     land_widget_scrolling_update(widget)
 
-def land_widget_scrolling_autobars(LandWidget *widget):
+int def land_widget_scrolling_autobars(LandWidget *widget):
+    """
+    Returns 0 if nothing changed or 1 if something changed.
+    """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
 
-    if (self->autohide & 3) == 0: return
+    if (self->autohide & 3) == 0: return 0
+
+    int f = land_widget_layout_freeze(widget)
 
     LandWidget *container = land_widget_scrolling_get_container(widget)
     LandWidget *empty = land_widget_scrolling_get_empty(widget)
     LandWidget *vbox = land_widget_scrolling_get_vertical(widget)
     LandWidget *hbox = land_widget_scrolling_get_horizontal(widget)
 
+    int before = 0
     # Hide the bars and empty.
     if not vbox->hidden or not hbox->hidden or not empty->hidden:
-        int f = land_widget_layout_freeze(widget)
-        if not vbox->hidden: land_widget_hide(vbox)
-        if not hbox->hidden: land_widget_hide(hbox)
-        if not empty->hidden: land_widget_hide(empty)
+        if not vbox->hidden:
+            before += 1
+            land_widget_hide(vbox)
+        if not hbox->hidden:
+            before += 2
+            land_widget_hide(hbox)
+        if not empty->hidden:
+            before += 4
+            land_widget_hide(empty)
         land_widget_layout_set_grid_extra(container, 1, 1)
         land_widget_layout_set_grid_extra(hbox, 0, 0)
         land_widget_layout_set_grid_extra(vbox, 0, 0)
-        if f: land_widget_layout_unfreeze(widget)
-        land_widget_layout(widget)
 
     LandWidget *vslider = land_widget_container_child(vbox)
     LandWidget *hslider = land_widget_container_child(hbox)
@@ -114,36 +123,28 @@ def land_widget_scrolling_autobars(LandWidget *widget):
 
     if not needh and not needv and not neede:
         # Keep them all hidden.
-        return
+        goto done
 
     if not needh and not needv:
         # Show empty only.
-        int f = land_widget_layout_freeze(widget)
         land_widget_unhide(empty)
         land_widget_layout_set_grid_extra(container, 0, 0)
-        if f: land_widget_layout_unfreeze(widget)
-        land_widget_layout(widget)
-        return
+        goto done
 
     if needh and needv:
         # Show both bars and empty.
-        int f = land_widget_layout_freeze(widget)
         land_widget_unhide(hbox)
         land_widget_unhide(vbox)
         land_widget_unhide(empty)
         land_widget_layout_set_grid_extra(container, 0, 0)
-        if f: land_widget_layout_unfreeze(widget)
-        land_widget_layout(widget)
-        return
+        goto done
 
-    int f = land_widget_layout_freeze(widget)
     if needh:
         land_widget_unhide(hbox)
         if neede: land_widget_unhide(empty)
         else: land_widget_layout_set_grid_extra(hbox, 1, 0)
         land_widget_layout_set_grid_extra(container, 1, 0)
-        if f: land_widget_layout_unfreeze(widget)
-        land_widget_layout(widget)
+
         # This has reduced the vertical space, so check again.
         LAND_WIDGET_SCROLLBAR(vslider)->callback(vslider, 0, &ya, &yb, &yr, &yp)
         if yp > ya or 1 + yb - ya > yr:
@@ -151,37 +152,46 @@ def land_widget_scrolling_autobars(LandWidget *widget):
             land_widget_unhide(vbox)
             land_widget_layout_set_grid_extra(container, 0, 0)
         else:
-            return
+            goto done
     else:
         land_widget_unhide(vbox)
         if neede: land_widget_unhide(empty)
         else: land_widget_layout_set_grid_extra(vbox, 0, 1)
         land_widget_layout_set_grid_extra(container, 0, 1)
-        if f: land_widget_layout_unfreeze(widget)
-        land_widget_layout(widget)
+
         LAND_WIDGET_SCROLLBAR(hslider)->callback(hslider, 0, &xa, &xb, &xr, &xp)
         if xp > xa or 1 + xb - xa > xr:
             f = land_widget_layout_freeze(widget)
             land_widget_unhide(hbox)
             land_widget_layout_set_grid_extra(container, 0, 0)
         else:
-            return
+            goto done
 
+    label done
     if f: land_widget_layout_unfreeze(widget)
     land_widget_layout(widget)
 
-def land_widget_scrolling_update(LandWidget *widget):
+    int after = 0
+    if not vbox->hidden: after += 1
+    if not hbox->hidden: after += 2
+    if not empty->hidden: after += 4
+    if after == before: return 0
+    return 1
+
+static int def scrolling_update_layout(LandWidget *widget):
     """
-    Update the scrolling window after it was resized or scrolled.
+    Update the scrolling window after it was resized or scrolled. Returns 1
+    if any bars were hidden or unhidden.
     """
 
-    land_widget_scrolling_autobars(widget)
+    int r = land_widget_scrolling_autobars(widget)
 
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandListItem *item = container->children->first
 
     item = item->next
     LandWidget *right = LAND_WIDGET(item->data)
+
     LandListItem *item2 = LAND_WIDGET_CONTAINER(right)->children->first
     LandWidgetScrollbar *rightbar = LAND_WIDGET_SCROLLBAR(item2->data)
     land_widget_scrollbar_update(LAND_WIDGET(rightbar), 0)
@@ -191,6 +201,11 @@ def land_widget_scrolling_update(LandWidget *widget):
     LandListItem *item3 = LAND_WIDGET_CONTAINER(bottom)->children->first
     LandWidgetScrollbar *bottombar = LAND_WIDGET_SCROLLBAR(item3->data)
     land_widget_scrollbar_update(LAND_WIDGET(bottombar), 0)
+
+    return r
+
+def land_widget_scrolling_update(LandWidget *widget):
+    scrolling_update_layout(widget)
 
 def land_widget_scrolling_size(LandWidget *widget, float dx, float dy):
     if not (dx or dy): return
@@ -408,6 +423,17 @@ LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
 
     return widget
 
+def land_widget_scrolling_layout_changed(LandWidget *widget):
+    if widget->box.w != widget->box.ow or widget->box.h != widget->box.oh:
+        int f = land_widget_layout_freeze(widget)
+        int r = scrolling_update_layout(widget)
+        if f: land_widget_layout_unfreeze(widget)
+        gul_layout_updated_during_layout(widget)
+        if r: widget->layout_hack = 1
+
+def land_widget_scrolling_layout_changing(LandWidget *widget):
+    pass
+
 def land_widget_scrolling_interface_initialize():
     if land_widget_scrolling_interface: return
 
@@ -421,6 +447,10 @@ def land_widget_scrolling_interface_initialize():
     land_widget_scrolling_interface->update = land_widget_scrolling_update
     land_widget_scrolling_interface->move = land_widget_scrolling_move
     land_widget_scrolling_interface->size = land_widget_scrolling_size
+    land_widget_scrolling_interface->layout_changed =\
+        land_widget_scrolling_layout_changed
+    land_widget_scrolling_interface->layout_changing =\
+        land_widget_scrolling_layout_changing
     land_widget_scrolling_interface->mouse_tick =\
         land_widget_scrolling_mouse_tick
 
