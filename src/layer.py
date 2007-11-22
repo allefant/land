@@ -1,19 +1,21 @@
 import array, grid, sprite
 
 class LandLayer:
-    float x, y; # position inside the map (origin of layer relative to origin of map) 
+    # position inside the map (origin of layer relative to origin of map) 
+    float x, y
 
     # For parallax scrolling, given the above fixed position, this is the speed
     # with which the layer scrolls compared to the main map. 1 would mean, it
     # scrolls with the main map. 0.5 would mean, if the main map scrolls 10
     # pixels, this layer will only have scrolled 5.
-      
     float scrolling_x, scrolling_y
 
     # This allows adding an offset to the view area. For example if you have a
     # layer with objects who can overlap to the tiles above, it might make sense
     # to increase view_h so additional tiles which could be visible are drawn.
     float view_x, view_y, view_w, view_h
+
+    char *name
 
     LandGrid *grid
 
@@ -39,10 +41,16 @@ LandLayer *def land_layer_new():
     land_alloc(self)
     self->scrolling_x = 1
     self->scrolling_y = 1
+    self->name = None
     return self
+
+def land_layer_set_name(LandLayer *self, char const *name):
+    if self->name: land_free(self->name)
+    self->name = land_strdup(name)
 
 def land_layer_del(LandLayer *self):
     land_grid_del(self->grid)
+    if self->name: land_free(self->name)
     land_free(self)
 
 LandLayer *def land_layer_new_with_grid(LandGrid *grid):
