@@ -2,11 +2,14 @@ import global land
 
 LandMap *map
 LandView *view
-int wrap
+int wrap, clip
 LandImage *tile
+LandImage *tiles[8]
+LandGridIsometric *iso
+int gridselection = 1
 
 static def draw(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
-    land_image_draw(tile, x - 32, y)
+    land_image_draw(tile, x - iso->cell_w1, y)
     land_color(0, 0, 0, 1)
     land_text_pos(x, y + 4)
     if cell_x == 0 and cell_y == 0:
@@ -26,17 +29,23 @@ static def restart():
     layer->x = 0
     layer->y = 0
 
-    layer->grid = land_isometric_custom_grid(64, 32, 50, 50, wrap, draw)
+    iso = (void *)land_isometric_custom_grid(32, 16, 32, 16, 30, 30, wrap, draw)
+    layer->grid = (void *)iso
 
     land_map_add_layer(map, layer)
 
 static def game_init(LandRunner *self):
     land_font_load("../../data/galaxy.ttf", 20)
-    tile = land_image_load("../../data/isotile.png")
+    tiles[0] = land_image_load("../../data/isotile1.png")
+    tiles[1] = land_image_load("../../data/isotile2.png")
+    tiles[2] = land_image_load("../../data/isotile3.png")
+    tiles[3] = land_image_load("../../data/isotile4.png")
+    tiles[4] = land_image_load("../../data/isotile5.png")
+    tile = tiles[0]
 
     restart()
 
-    view = land_view_new(50, 50, land_display_width() - 100, land_display_height() - 100)
+    view = land_view_new(100, 100, land_display_width() - 200, land_display_height() - 200)
 
 static def game_tick(LandRunner *self):
     int kx = 0, ky = 0
@@ -53,6 +62,23 @@ static def game_tick(LandRunner *self):
     if land_key_pressed(KEY_F1):
         wrap ^= 1
         restart()
+    if land_key_pressed(KEY_F2):
+        int i = gridselection++
+        if gridselection == 5: gridselection = 0
+        float grids[][4] = {
+            {32, 16, 32, 16},
+            {32, 16, 64, 32},
+            {64, 32, 32, 16},
+            {8, 24, 24, 8},
+            {24, 8, 8, 24},
+            }
+        iso->cell_w1 = grids[i][0]
+        iso->cell_h1 = grids[i][1]
+        iso->cell_w2 = grids[i][2]
+        iso->cell_h2 = grids[i][3]
+        tile = tiles[i]
+    if land_key_pressed(KEY_F3):
+        clip ^= 1
 
     if land_mouse_b() & 2:
         view->scroll_x -= land_mouse_delta_x()
@@ -63,11 +89,15 @@ static def game_tick(LandRunner *self):
 
 static def game_draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
+    if clip:
+        land_clip(view->x, view->y, view->x + view->w, view->y + view->h)
     land_map_draw(map, view)
     land_color(0, 0, 1, 0.5)
     land_rectangle(view->x - 1, view->y - 1, view->x + view->w, view->y + view->h)
 
-    land_text_pos(view->x, view->y)
+    if clip: land_unclip()
+
+    land_text_pos(0, 0)
     land_color(1, 0, 0, 1)
     float x, y
     land_grid_pixel_to_cell_isometric(map->first_layer->grid, view,
