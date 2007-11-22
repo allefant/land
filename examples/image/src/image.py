@@ -87,9 +87,10 @@ static def draw(LandRunner *self):
             int ch = land_rand(h / 2, h)
             int cx = land_rand(0, w - cw)
             int cy = land_rand(0, h - ch)
-            land_image_clip(image, cx, cy, cx + cw, cy + ch)
 
-        else
+            land_image_clip(image, cx, cy, cx + cw, cy + ch)
+    
+        else:
             land_image_unclip(image)
 
     land_clear(0.2, 0, 0, 0)
@@ -116,6 +117,16 @@ static def draw(LandRunner *self):
     land_image_draw(image_parts[1], 40 + w / 2 + s, 240 - s)
     land_image_draw(image_parts[2], 40 + w / 2 + s, 240 + h / 2 + s)
     land_image_draw(image_parts[3], 40 - s, 240 + h / 2 + s)
+    
+    #land_image_clip(image, 0, 0, w / 2, h / 2)
+    #land_image_draw(image, 40 - s, 240 - s)
+    #land_image_clip(image, w / 2, 0, w, h / 2)
+    #land_image_draw(image, 40 + s, 240 - s)
+    #land_image_clip(image, w / 2, h / 2, w, h)
+    #land_image_draw(image, 40 + s, 240 + s)
+    #land_image_clip(image, 0, h / 2, w / 2, h)
+    #land_image_draw(image, 40 - s, 240 + s)
+    #land_image_unclip(image)
 
     angle += 1.0 * AL_PI / 180.0
     angle /= AL_PI * 2
