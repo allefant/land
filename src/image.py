@@ -88,8 +88,15 @@ LandImage *def land_image_load(char const *filename):
 
             land_free(buffer)
 
-
-    if !bmp: bmp = load_bitmap(filename, pal)
+    if !bmp:
+        if !strcmp(get_extension(filename), "png") or\
+            !strcmp(get_extension(filename), "jpg") or\
+            !strcmp(get_extension(filename), "bmp") or\
+            !strcmp(get_extension(filename), "tga") or\
+            !strcmp(get_extension(filename), "pcx"):
+            bmp = load_bitmap(filename, pal)
+        else:
+            bmp = load_png(filename, pal)
     if bmp:
         self = land_display_new_image()
         self->filename = land_strdup(filename)
@@ -464,9 +471,10 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
         char *filename = land_array_get_nth(filenames, i)
         LandImage *image = land_image_load(filename)
         land_free(filename)
-        if center: land_image_center(image)
-        if optimize: land_image_optimize(image)
-        land_array_add_data(&array, image)
+        if image:
+            if center: land_image_center(image)
+            if optimize: land_image_optimize(image)
+            land_array_add_data(&array, image)
 
     land_array_destroy(filenames)
     return array
