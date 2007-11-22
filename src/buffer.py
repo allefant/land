@@ -1,10 +1,11 @@
 static import global stdio, stdlib, string, zlib
 static import mem
 import global allegro
+import array
 
 class LandBuffer:
-    int size
-    int n
+    int size # reserved memory
+    int n # number of bytes in the buffer
     char *buffer
 
 class LandBufferAsFile:
@@ -63,6 +64,36 @@ char *def land_buffer_finish(LandBuffer *self):
     self->buffer = None
     land_buffer_del(self)
     return s
+
+LandArray *def land_buffer_split(LandBuffer const *self, char delim):
+    """
+    Creates an array of buffers. If there are n occurences of character delim
+    in the buffer, the array contains n + 1 entries. No buffer in the array
+    contains the delim character.
+    """
+    LandArray *a = land_array_new()
+    int start = 0
+    for int i = 0; i < self->n; i++:
+        if self->buffer[i] == delim:
+            LandBuffer *l = land_buffer_new()
+            land_buffer_add(l, self->buffer + start, i - start)
+            land_array_add(a, l)
+            start = i + 1
+    LandBuffer *l = land_buffer_new()
+    land_buffer_add(l, self->buffer + start, self->n - start)
+    land_array_add(a, l)
+    return a
+
+def land_buffer_strip(LandBuffer *self, char const *what):
+    if self->n == 0: return
+    int i = 0
+    while ustrchr(what, self->buffer[i]):
+        i++
+    int j = self->n - 1
+    while ustrchr(what, self->buffer[j]):
+        j--
+    memmove(self->buffer, self->buffer + i, 1 + j - i)
+    self->size = 1 + j - i
 
 def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     PACKFILE *pf = pack_fopen(filename, "w")
