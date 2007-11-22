@@ -86,8 +86,8 @@ class LandGridInterface:
 
 class LandGrid:
     LandGridInterface *vt
-    int x_cells, y_cells; # in cells 
-    int cell_w, cell_h; # in pixels 
+    int x_cells, y_cells # in cells 
+    int cell_w, cell_h # in pixels
 
 static import grid, log, tilegrid, isometric, sprite
 
@@ -120,7 +120,8 @@ def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
     cell_y, *view_x, float *view_y):
     self->vt->get_cell_position(self, view, cell_x, cell_y, view_x, view_y)
 
-def land_grid_initialize(LandGrid *self, int cell_w, int cell_h, int x_cells, int y_cells):
+def land_grid_initialize(LandGrid *self,
+    int cell_w, cell_h, int x_cells, y_cells):
     self->x_cells = x_cells
     self->y_cells = y_cells
     self->cell_w = cell_w
