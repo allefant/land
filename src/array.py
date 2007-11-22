@@ -4,7 +4,7 @@ class LandArray:
     int size
     void **data
 
-static import array, mem
+static import mem
 
 #ifdef LAND_MEMLOG
 
