@@ -285,6 +285,12 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                         ch += land_image_height(img)
                     self->bmp = land_image_new_from(img, cx, cy, cw, ch)
 
+                elif (!strcmp (argv[a], "halign")):
+                    self->flags |= ALIGN_H
+
+                elif (!strcmp (argv[a], "valign")):
+                    self->flags |= ALIGN_V
+
                 elif (!strcmp (argv[a], "min")):
                     read_int_arg(argc, argv, &a, &self->minw)
                     read_int_arg(argc, argv, &a, &self->minh)
