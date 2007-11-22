@@ -4,6 +4,7 @@ import global string
 import global land/land
 
 LandWidget *desktop
+LandWidget *notebook
 
 class LandWidgetColored:
     LandWidget super
@@ -22,7 +23,7 @@ static def game_init(LandRunner *self):
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
 
-    LandWidget *notebook = land_widget_book_new(desktop, 50, 50, 200, 200)
+    notebook = land_widget_book_new(desktop, 50, 50, 200, 200)
 
     LandWidgetInterface *my_own = land_widget_copy_interface(land_widget_base_interface, "mine")
     my_own->draw = colored
@@ -60,11 +61,38 @@ static def game_init(LandRunner *self):
 static def game_tick(LandRunner *self):
     if land_key_pressed(KEY_ESC) || land_closebutton():
         land_quit()
+        
+    if land_key_pressed(KEY_DEL):
+        LandWidget *page = land_widget_book_get_current_page(notebook)
+        land_widget_book_remove_page(notebook, page)
 
     land_widget_tick(desktop)
 
+static def debug(LandWidget *w):
+    land_print("* %p [%s(%d): %s%s%s%s]", w, w->vt->name, w->reference,
+        w->no_layout ? "N" : "",
+        w->hidden ? "H" : "",
+        w->box.flags & GUL_SHRINK_X ? "X" : "",
+        w->box.flags & GUL_SHRINK_Y ? "Y" : "")
+    if land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
+        LandList *l = LAND_WIDGET_CONTAINER(w)->children
+        land_text_pos(land_text_x_pos() + 10, land_text_y_pos())
+        if not land_widget_container_is_empty(w):
+            LandListItem *i = l->first
+            while i:
+                LandWidget *w = i->data
+                debug(w)
+                i = i->next
+        else:
+            land_print("(empty)")
+        land_text_pos(land_text_x_pos() - 10, land_text_y_pos())
+
 static def game_draw(LandRunner *self):
     land_widget_draw(desktop)
+    
+    land_text_pos(300, 50)
+    land_color(0, 0, 0, 0.75)
+    debug(desktop)
 
 static def game_exit(LandRunner *self):
     land_widget_theme_destroy(land_widget_theme_default())
