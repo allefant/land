@@ -53,7 +53,7 @@ static def init(LandRunner *self):
     scrolling1 = land_widget_scrolling_new(panel, 0, 0, 100, 100)
     land_widget_scrolling_autohide(scrolling1, 1, 0, 2)
     LandWidget *sizer = land_widget_sizer_new(
-        land_widget_scrolling_get_empty(scrolling1), 0, 0, 10, 10)
+        land_widget_scrolling_get_empty(scrolling1), 3, 0, 0, 10, 10)
     land_widget_layout_set_expanding(sizer, 1, 1)
     LAND_WIDGET_SIZER(sizer)->target = window
     outside = land_widget_box_new(scrolling1, 102, 202, 200, 200)
