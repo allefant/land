@@ -23,6 +23,10 @@ static def game_draw(LandRunner *self):
     land_color(0.5, 0.5, 0.5, 1)
     land_filled_rectangle(1, 1, 639, 479)
     
+    # Going from left to right, the clip position is shifted to the right from 8
+    # (exact middle) to 9.5.
+    # Going top to bottom, the image itself is shifted to the right from 0 to
+    # 1.5.
     int i, j
     for j = 0; j < 15; j++:
         for i = 0; i < 15; i++:
