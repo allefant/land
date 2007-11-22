@@ -14,7 +14,7 @@ macro LAND_FONT_ALLEGRO(_x_) ((LandFontAllegro *)_x_)
 static LandFontInterface *vtable
 
 LandFont *def land_font_allegro_load(char const *filename, int size):
-    land_log_message("land_font_allegr_load %s %d..", filename, size)
+    land_log_message("land_font_allegro_load %s %d..", filename, size)
     LandFontAllegro *self
     land_alloc(self)
     PALETTE pal
