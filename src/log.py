@@ -46,22 +46,22 @@ def land_log_new(char const *base, int unique):
         fprintf(f, "******* new log *******\n")
         fclose(f)
 
-def land_log_message_nostamp (char const *template, ...):
+def land_log_message_nostamp (char const *format, ...):
     if !logname: land_log_new("land", 0)
     FILE *logfile
     va_list va_args
-    va_start(va_args, template)
+    va_start(va_args, format)
     logfile = fopen(logname, "a")
-    vfprintf(logfile, template, va_args)
+    vfprintf(logfile, format, va_args)
     fclose(logfile)
     #vprintf(template, va_args)
     va_end(va_args)
 
-def land_log_message(char const *template, ...):
+def land_log_message(char const *format, ...):
     if !logname: land_log_new("land", 0)
     FILE *logfile
     va_list va_args
-    va_start(va_args, template)
+    va_start(va_args, format)
     logfile = fopen(logname, "a")
     struct timeval tv
     #ifdef ALLEGRO_WINDOWS
@@ -81,7 +81,7 @@ def land_log_message(char const *template, ...):
         tm.tm_min,
         tm.tm_sec,
         tv.tv_usec)
-    vfprintf(logfile, template, va_args)
+    vfprintf(logfile, format, va_args)
     fclose(logfile)
     # vprintf(template, va_args)
     va_end(va_args)
