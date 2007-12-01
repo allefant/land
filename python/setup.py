@@ -7,9 +7,8 @@ from Pyrex.Distutils import build_ext
 platform = "linux"
 if "mingw" in sys.argv: platform = "mingw"
 
-libraries = ["landd", "ldpng", "png", "jpgal", "fudgefontd", "agld",
-    "apeg", "ogg", "theora", "vorbis",
-    "freetype", "m"]
+libraries = ["landd", "ldpng", "png", "jpeg", "fudgefontd", "agld",
+    "logg", "ogg", "vorbis", "freetype", "m", "vorbisfile"]
 
 library_dirs = [".."]
 extra_link_args = []

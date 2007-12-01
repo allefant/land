@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import land, random
 
 land.init()
@@ -29,6 +30,7 @@ class Game(land.runner.Runner):
         w = 640 / 32
         h = 480 / 32
 
+      
         for k in range(w * h):
             x, y = self.jitter[k]
             self.jitter[k] = (x + random.random() - 0.5, y + random.random() - 0.5)
@@ -41,7 +43,8 @@ class Game(land.runner.Runner):
         k = 0
         for i in range(640 / 32):
             for j in range(480 / 32):
-                self.image.draw(i * 32 + self.jitter[k][0], j * 32 + self.jitter[k][1])
+                self.image.draw(i * 32 + self.jitter[k][0], j * 32 + self.jitter[k][1], a = 0.1)
+                self.image.draw(320 + self.jitter[k][0], 240 + self.jitter[k][1], a = 0.5)
                 k += 1
 
     def leave(self):

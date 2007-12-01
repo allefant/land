@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import land
 
 land.init()
