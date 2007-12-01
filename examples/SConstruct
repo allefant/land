@@ -30,7 +30,7 @@ for ex in examples:
     env.Append(LIBPATH = ["../lib/posix"])
 
     if ARGUMENTS.get("debug", 0):
-        env.Append(CCFLAGS = "-g -DLAND_MEMLOG")
+        env.Append(CCFLAGS = "-g") # -DLAND_MEMLOG
         env.Append(LIBS = ["landd", "agld", "fudgefontd"])
         env.ParseConfig("allegro-config --shared debug")
         BUILDDIR = os.path.join(BUILDDIR, "debug")

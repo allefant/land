@@ -11,7 +11,7 @@ static LandMap * def land_create_map(int cw, int ch, int w, int h, int layers, i
     for l = 0; l < layers; l++:
         LandLayer *layer = land_layer_new()
         if flags & LAND_MAP_ISOMETRIC:
-            layer->grid = land_isometric_wrap_new(cw, ch, w, h)
+            layer->grid = land_isometric_wrap_new(cw, ch, cw, ch, w, h)
         layer->x = 0
         layer->y = 0
         land_map_add_layer(self, layer)

@@ -19,10 +19,10 @@ def create_dialog():
     scrolling = land_widget_scrolling_text_new(window,
         text, 2,
         100, 100, 200, 200)
-    land_widget_scrolling_autohide(scrolling, 1, 1, 2)
+    land_widget_scrolling_autohide(scrolling, 1, 1, 1)
 
     LandWidget *empty = land_widget_scrolling_get_empty(scrolling)
-    LandWidget *sizer = land_widget_sizer_new(empty, 0, 0, 10, 10)
+    LandWidget *sizer = land_widget_sizer_new(empty, 3, 0, 0, 10, 10)
     land_widget_layout_set_expanding(sizer, 1, 1)
     land_widget_sizer_set_target(sizer, scrolling)
 
