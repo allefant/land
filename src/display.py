@@ -100,6 +100,7 @@ macro LAND_FULLSCREEN 2
 macro LAND_OPENGL 4
 macro LAND_CLOSE_LINES 8
 macro LAND_ANTIALIAS 16
+macro LAND_STENCIL 32
 
 class LandDisplayInterface:
     land_method(void, set, (LandDisplay *self))

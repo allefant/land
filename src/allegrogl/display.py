@@ -68,6 +68,9 @@ def land_display_allegrogl_set(LandDisplay *super):
         allegro_gl_set(AGL_SAMPLES, 0)
         allegro_gl_set(AGL_SUGGEST, AGL_SAMPLES)
 
+    if super->flags & LAND_STENCIL:
+        allegro_gl_set(AGL_STENCIL_DEPTH, 8)
+
     allegro_gl_set(AGL_RENDERMETHOD, 1)
     allegro_gl_set(AGL_SUGGEST, AGL_RENDERMETHOD)
 
@@ -87,7 +90,8 @@ def land_display_allegrogl_set(LandDisplay *super):
         super->flags & LAND_FULLSCREEN ? "fullscreen" :
         super->flags & LAND_WINDOWED ? "windowed" : "auto",
         super->w, super->h, cd, super->hz)
-    set_gfx_mode(mode, super->w, super->h, 0, 0)
+    if set_gfx_mode(mode, super->w, super->h, 0, 0):
+        land_exception("set_gfx_mode")
     land_log_message(" gfx mode switch successfull.\n")
 
     glDisable(GL_CULL_FACE)
