@@ -76,12 +76,15 @@ int def land_widget_scrolling_autobars(LandWidget *widget):
 
     if (self->autohide & 3) == 0: return 0
 
-    int f = land_widget_layout_freeze(widget)
-
     LandWidget *container = land_widget_scrolling_get_container(widget)
     LandWidget *empty = land_widget_scrolling_get_empty(widget)
     LandWidget *vbox = land_widget_scrolling_get_vertical(widget)
     LandWidget *hbox = land_widget_scrolling_get_horizontal(widget)
+
+    # FIXME: should we already freeze the layout here? it means the contents
+    # box doesn't have a chance to update, so of course need to fix that
+    # somehow. But right now I'm worried about triggering an infinite
+    # recursion if things go bad..
 
     int before = 0
     # Hide the bars and empty.
@@ -98,6 +101,8 @@ int def land_widget_scrolling_autobars(LandWidget *widget):
         land_widget_layout_set_grid_extra(container, 1, 1)
         land_widget_layout_set_grid_extra(hbox, 0, 0)
         land_widget_layout_set_grid_extra(vbox, 0, 0)
+
+    int f = land_widget_layout_freeze(widget)
 
     LandWidget *vslider = land_widget_container_child(vbox)
     LandWidget *hslider = land_widget_container_child(hbox)
@@ -357,7 +362,8 @@ def land_widget_scrolling_initialize(LandWidget *widget,
 
     # child 1: container 
     LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0)
-    contents->only_border = 1
+    # FIXME: shouldn't the theme handle this?
+    # contents->only_border = 1
     contents->vt = land_widget_scrolling_contents_container_interface
     land_widget_theme_initialize(contents)
 
