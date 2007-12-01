@@ -31,6 +31,7 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
     LandWidget *target = bar->target
     if target:
         LandWidget *viewport = target->parent
+
         if set:
             int ty = viewport->box.y + viewport->element->it
             if target->box.y > ty: ty = target->box.y
