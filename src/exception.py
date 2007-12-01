@@ -25,10 +25,10 @@ def land_exception_handler_set(int (*handler)(char const *str)):
     land_exception_handler = handler
 
 #__attribute__((noreturn))
-def land_exception(char const *template, ...):
+def land_exception(char const *format, ...):
     va_list args
-    va_start(args, template)
-    vsnprintf(exception_string, 1024, template, args)
+    va_start(args, format)
+    vsnprintf(exception_string, 1024, format, args)
     va_end(args)
     
     fprintf(stderr, "%s", exception_string)
