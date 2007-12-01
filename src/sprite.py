@@ -81,6 +81,7 @@ class LandSpritesGrid:
     # 5, 5, 15, 15, since a sprite on sx/sy could collide with anything
     # overlapping (sx - 5, sy - 5, sx + 15, sy + 15).
 
+    # FIXME: not needed with multi-grid
     int max_l, max_t, max_r, max_b
 
 LandGridInterface *land_grid_vtable_sprites
@@ -125,19 +126,19 @@ def land_sprites_grid_del(LandGrid *super):
 
 static def dummy(LandSprite *self, LandView *view):
 
-    float x = self->x - self->type->x - view->scroll_x + view->x
-    float y = self->y - self->type->y - view->scroll_y + view->y
+    float x = (self->x - view->scroll_x) * view->scale_x + view->x
+    float y = (self->y - view->scroll_y) * view->scale_y + view->y
     land_color(1, 0, 0, 1)
-    land_rectangle(x, y, x + self->type->w,
-        y + self->type->h)
+    land_rectangle(x, y, x + self->type->w * view->scale_x,
+        y + self->type->h * view->scale_y)
 
 
 static def dummy_image(LandSprite *self, LandView *view):
 
-    float x = self->x - view->scroll_x + view->x
-    float y = self->y - view->scroll_y + view->y
-    land_image_draw_rotated(LAND_SPRITE_TYPE_IMAGE(self->type)->image, x, y,
-        self->angle)
+    float x = (self->x - view->scroll_x) * view->scale_x + view->x
+    float y = (self->y - view->scroll_y) * view->scale_y + view->y
+    land_image_draw_scaled_rotated(LAND_SPRITE_TYPE_IMAGE(self->type)->image,
+        x, y, view->scale_x, view->scale_y, self->angle)
     # if self->type->image->mask:
     #    land_image_debug_pixelmask(self->type->image, x, y, 0)
 

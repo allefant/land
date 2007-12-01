@@ -40,7 +40,8 @@ static def land_tilegrid_draw_cell(LandGrid *self, LandView *view,
 
 
 # Convert a view position inside the grid into cell and pixel position. 
-static def view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, int *pixel_x):
+static def view_x_to_cell_and_pixel_x(LandGrid *self, float view_x, int *cell_x,
+    float *pixel_x):
     #FIXME
     # if self->wrap_x:
     #    # wrap around -> there's always a cell at the left border 
@@ -60,7 +61,8 @@ static def view_x_to_cell_and_pixel_x(LandGrid *self, int view_x, int *cell_x, i
 
 
 # Convert a view position inside the grid into cell and pixel position. 
-static def view_y_to_cell_and_pixel_y(LandGrid *self, int view_y, int *cell_y, int *pixel_y):
+static def view_y_to_cell_and_pixel_y(LandGrid *self, float view_y, int *cell_y,
+    float *pixel_y):
     #FIXME
     # if self->wrap_y:
     #    # wrap around -> there's always a cell at the top border 
@@ -77,19 +79,18 @@ static def view_y_to_cell_and_pixel_y(LandGrid *self, int view_y, int *cell_y, i
         *cell_y = (unsigned int)view_y / self->cell_h
         *pixel_y = *cell_y * self->cell_h - view_y
 
-
-
 def land_grid_draw_normal(LandGrid *self, LandView *view):
     int cell_x, cell_y
-    int pixel_x, pixel_y
+    float pixel_x, pixel_y
 
     float view_x = view->scroll_x
     float view_y = view->scroll_y
 
     view_y_to_cell_and_pixel_y(self, view_y, &cell_y, &pixel_y)
-    pixel_y += view->y
+    pixel_y += view->y * view->scale_y
 
-    for ; pixel_y < view->y + view->h; cell_y++, pixel_y += self->cell_h:
+    for ; pixel_y < view->y + view->h; cell_y++,\
+        pixel_y += self->cell_h * view->scale_y:
         if cell_y >= self->y_cells:
             #FIXME
             # if self->wrap_y: cell_y -= self->y_cells
@@ -97,9 +98,10 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
             break
 
         view_x_to_cell_and_pixel_x(self, view_x, &cell_x, &pixel_x)
-        pixel_x += view->x
+        pixel_x += view->x * view->scale_x
 
-        for ; pixel_x < view->x + view->w; cell_x++, pixel_x += self->cell_w:
+        for ; pixel_x < view->x + view->w; cell_x++,\
+            pixel_x += self->cell_w * view->scale_x:
             if cell_x >= self->x_cells:
                 #FIXME
                 # if self->wrap_x: cell_x -= self->x_cells
@@ -107,8 +109,6 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
                 break
 
             self->vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
-
-
 
 def land_tilemap_init():
     land_log_message("land_tilemap_init\n")

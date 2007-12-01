@@ -91,8 +91,6 @@ class LandGrid:
 
 static import grid, log, tilegrid, isometric, sprite
 
-static LandGrid *active_grid = 0
-
 def land_grid_draw(LandGrid *self, LandView *view):
     self->vt->draw(self, view)
 
@@ -126,8 +124,6 @@ def land_grid_initialize(LandGrid *self,
     self->y_cells = y_cells
     self->cell_w = cell_w
     self->cell_h = cell_h
-
-    active_grid = self
 
 def land_grid_init():
     land_log_message("land_grid_init\n")

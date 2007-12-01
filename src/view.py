@@ -1,7 +1,8 @@
 import grid, array
 
 class LandView:
-    float scroll_x, scroll_y; # position inside the map
+    float scroll_x, scroll_y; # position of upper left corner inside the map
+    float scale_x, scale_y
     # (origin of view relative to origin of map) 
     int x, y, w, h; # screen area 
 
@@ -17,6 +18,8 @@ LandView *def land_view_new(int x, int y, int w, int h):
     self->y = y
     self->w = w
     self->h = h
+    self->scale_x = 1
+    self->scale_y = 1
     return self
 
 def land_view_destroy(LandView *self):
@@ -32,6 +35,14 @@ def land_view_scroll(LandView *self, float dx, float dy):
 def land_view_scroll_to(LandView *self, float x, float y):
     self->scroll_x = x
     self->scroll_y = y
+
+def land_view_scale(LandView *self, float sx, float sy):
+    self->scale_x *= sx
+    self->scale_y *= sy
+
+def land_view_zoom(LandView *self, float zx, float zy):
+    self->scale_x = zx
+    self->scale_y = zy
 
 def land_view_scroll_center(LandView *self, float x, y):
     """
