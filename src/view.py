@@ -6,7 +6,7 @@ class LandView:
     # (origin of view relative to origin of map) 
     int x, y, w, h; # screen area 
 
-static import mem
+static import mem, display
 
 LandView *def land_view_new(int x, int y, int w, int h):
     """
@@ -89,3 +89,6 @@ def land_view_ensure_inside_grid(LandView *self, LandGrid *grid):
     if self->scroll_y < 0: self->scroll_y = 0
     if self->scroll_x > w - self->w: self->scroll_x = w - self->w
     if self->scroll_y > h - self->h: self->scroll_y = h - self->h
+
+def land_view_clip(LandView *self):
+    land_clip(self->x, self->y, self->x + self->w, self->y + self->h)

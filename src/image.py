@@ -555,6 +555,9 @@ def land_image_draw_scaled(LandImage *self, float x, float y, float sx, float sy
 def land_image_draw_rotated(LandImage *self, float x, float y, float a):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, 1, 1, 1, 1)
 
+def land_image_draw_rotated_tinted(LandImage *self, float x, y, a, r, g, b, alpha):
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, r, g, b, alpha)
+
 def land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, float sy,
     float r, float g, float b, float alpha):
     land_image_draw_scaled_rotated_tinted(self, x, y, sx, sy, 0, r, g, b, alpha)
