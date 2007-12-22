@@ -158,6 +158,9 @@ LandImage *def land_image_new(int w, int h):
     return self
 
 LandImage *def land_image_create(int w, int h):
+    """
+    Like land_image_new, but clears the image to all 0 initially.
+    """
     BITMAP *bmp = create_bitmap(w, h)
     clear_to_color(bmp, 0)
     LandImage *self = land_display_new_image()
@@ -454,7 +457,7 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
     Load all images matching the file name pattern, and create an array
     referencing them all.
     """
-    LandArray *filenames = NULL
+    LandArray *filenames = None
     int count = 0
     if _land_datafile:
         count = land_datafile_for_each_entry(_land_datafile, pattern, callback,
@@ -465,7 +468,7 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
 
     qsort(filenames->data, count, sizeof (void *), compar)
     
-    LandArray *array = NULL
+    LandArray *array = None
     int i
     for i = 0; i < filenames->count; i++:
         char *filename = land_array_get_nth(filenames, i)
@@ -670,4 +673,21 @@ def land_image_optimize(LandImage *self):
 
     # FIXME: source clip rect?
 
+    self->vt->prepare(self)
+
+def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+
+    destroy_bitmap(self->memory_cache)
+    if self->bitmap == self->memory_cache: self->bitmap = None
+    self->memory_cache = create_bitmap(w, h)
+    if not self->bitmap: self->bitmap = self->memory_cache
+    for int y = 0; y < h; y++:
+        unsigned char *row = self->memory_cache->line[y]
+        for int x = 0; x < w; x++:
+            row[4 * x + 0] = rgba[y * w * 4 + x * 4 + 0]
+            row[4 * x + 1] = rgba[y * w * 4 + x * 4 + 1]
+            row[4 * x + 2] = rgba[y * w * 4 + x * 4 + 2]
+            row[4 * x + 3] = rgba[y * w * 4 + x * 4 + 3]
     self->vt->prepare(self)
