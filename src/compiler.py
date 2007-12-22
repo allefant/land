@@ -791,6 +791,9 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         add_code(c, OPCODE_RET, result, 0, 0)
         return 0
     elif not strcmp(token->string, "pass"):
+        # Probably only needed when deciding on implicit return based on last
+        # code. A NOP causes a return of none.
+        add_code(c, OPCODE_NOP, 0, 0, 0)
         return 0
     else: # function call or attribute access
         int first, nparams
@@ -814,8 +817,10 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
                 add_code(c, OPCODE_USE, constant, first, nparams)
                 return 0
 
+            # Compile the function name as operand
             n->type = LM_NODE_OPERAND
             int result = compile_node(c, n)
+            n->type = LM_NODE_OPERATION
             if not result:
                 token_err(token,
                     "Could not compile call to unknown function \"%s\".\n",
@@ -824,6 +829,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
 
             nparams = parse_function_call_parameters(c, n, &first)
             add_code(c, OPCODE_FUN, result, first, nparams)
+            
             return 0
     return 0
 
@@ -863,14 +869,26 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
             land_array_add(c->current->parameters, land_strdup(token->string))
         n2 = n2->next
 
+    # Constant 128 is perpetual nothingness (None).
+    int need_return = 1, return_what = 128
     if n2->type == LM_NODE_BLOCK:
         compile_node(c, n2)
+        if n2->last->type == LM_NODE_STATEMENT:
+            LM_Node *statement = n2->last
+            lm_node_debug(statement, 0)
+            if statement->first->type == LM_NODE_OPERATION:
+                int opcode = c->current->code->buffer[c->current->code->n - 4]
+                if opcode == OPCODE_RET:
+                    need_return = 0
+                elif opcode == OPCODE_FUN or opcode == OPCODE_USE:
+                    # Implicitly return the return value of the last statement
+                    # if there is no explicit return and the last statement in
+                    # the function is a FUN or USE.
+                    # FIXME: does that really work out?
+                    return_what = 0
 
-    # If no possible codepath can reach here (most commonly because there is
-    # an unconditional return-with-value statement just before), we could
-    # leave this out.
-    # Constant 128 is perpetual nothingness (None).
-    add_code(c, OPCODE_RET, 128, 0, 0)
+    if need_return:
+        add_code(c, OPCODE_RET, return_what, 0, 0)
 
     c->current = current
 

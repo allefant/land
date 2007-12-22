@@ -350,6 +350,13 @@ x = {a = 1,
 print x
 """, "{a = 1, b = 2, c = 9, d = 4}\n")
 
+    def test_implicit_return(self):
+        self.execute("implicit-return", """
+foo: return 7
+bar: foo
+print bar()
+""", "7\n")
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)
