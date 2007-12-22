@@ -137,13 +137,13 @@ static def dummy_animation(LandSprite *self, LandView *view):
 
     LandSpriteTypeAnimation *animation = (LandSpriteTypeAnimation *)self->type
     LandSpriteAnimated *animated = (LandSpriteAnimated *)self
-    float x = self->x - view->scroll_x + view->x
-    float y = self->y - view->scroll_y + view->y
+    float x = (self->x - view->scroll_x) * view->scale_x + view->x
+    float y = (self->y - view->scroll_y) * view->scale_y + view->y
     LandImage *image = land_animation_get_frame(animation->animation,
         animated->frame)
-    land_image_draw_scaled_rotated_tinted(image, x, y, animated->sx,
-        animated->sy, self->angle, animated->r, animated->g, animated->b,
-        animated->a)
+    land_image_draw_scaled_rotated_tinted(image, x, y,
+        animated->sx * view->scale_x, animated->sy * view->scale_y, self->angle,
+        animated->r, animated->g, animated->b, animated->a)
     # land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
     #    self->angle)
     # if animation->super.image->mask:
