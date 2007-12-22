@@ -87,7 +87,8 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
     float view_y = view->scroll_y
 
     view_y_to_cell_and_pixel_y(self, view_y, &cell_y, &pixel_y)
-    pixel_y += view->y * view->scale_y
+    pixel_y *= view->scale_y
+    pixel_y += view->y
 
     for ; pixel_y < view->y + view->h; cell_y++,\
         pixel_y += self->cell_h * view->scale_y:
@@ -98,7 +99,8 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
             break
 
         view_x_to_cell_and_pixel_x(self, view_x, &cell_x, &pixel_x)
-        pixel_x += view->x * view->scale_x
+        pixel_x *= view->scale_x
+        pixel_x += view->x
 
         for ; pixel_x < view->x + view->w; cell_x++,\
             pixel_x += self->cell_w * view->scale_x:
