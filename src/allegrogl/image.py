@@ -101,16 +101,16 @@ static def quad(LandImage *self):
 
     glBegin(GL_QUADS)
 
-    glTexCoord2f(r / w, (h - b) / h)
+    glTexCoord2f(r / w, (b) / h)
     glVertex2d(r - mx, b - my)
 
-    glTexCoord2f(l / w, (h - b) / h)
+    glTexCoord2f(l / w, (b) / h)
     glVertex2d(l - mx, b - my)
 
-    glTexCoord2f(l / w, (h - t) / h)
+    glTexCoord2f(l / w, (t) / h)
     glVertex2d(l - mx, t - my)
 
-    glTexCoord2f(r / w, (h - t) / h)
+    glTexCoord2f(r / w, (t) / h)
     glVertex2d(r - mx, t - my)
 
     glEnd()
@@ -313,8 +313,6 @@ def land_image_allegrogl_prepare(LandImage *self):
             for x = 0; x < w; x++:
                 ((unsigned char *)temp->line[y])[x * 4 + 3] = 255
 
-
-
     # Repeat border pixels across padding area of texture.
     int i
     for i = w; i < w + pad_w; i++:
@@ -326,16 +324,24 @@ def land_image_allegrogl_prepare(LandImage *self):
     int c = getpixel(self->memory_cache, w - 1, h - 1)
     rectfill(temp, w, h, w + pad_w, h + pad_h, c)
 
-    sub->gl_texture = allegro_gl_make_texture_ex(AGL_TEXTURE_FLIP, temp, GL_RGBA8)
+    glGenTextures(1, &sub->gl_texture)
+    glBindTexture(GL_TEXTURE_2D, sub->gl_texture)
+
+    land_log_message("Calling: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, %d, %d, 0, "
+        "GL_RGBA, GL_UNSIGNED_BYTE, %p\n", temp->w, temp->h, temp->dat)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, temp->w, temp->h, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, temp->dat)
+    land_log_message(" glGetError says: %d\n", glGetError())
+
     destroy_bitmap(temp)
 
-    glBindTexture(GL_TEXTURE_2D, sub->gl_texture)
+    #sub->gl_texture = allegro_gl_make_texture_ex(AGL_TEXTURE_FLIP, temp, GL_RGBA8)
     # FIXME:
     # For some reason, textures get some odd blur effect applied as returned
     # by AGL. The below command somehow fixes it???
     # Most probably a driver bug..
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, GL_RGBA,
-        GL_UNSIGNED_INT_8_8_8_8_REV, NULL)
+    #glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, GL_RGBA,
+    #    GL_UNSIGNED_INT_8_8_8_8_REV, NULL)
 
     land_log_message(" texture %d: %.1fMB %d = %d + %d x %d = %d + %d\n",
         sub->gl_texture,
