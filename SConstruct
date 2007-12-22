@@ -120,7 +120,9 @@ if env["PLATFORM"] == "win32":
     env.Append(CCFLAGS = ["-DWINDOWS"])
 
     env.Append(CPPPATH = ["dependencies/mingw-include"])
+    env.Append(CPPPATH = ["dependencies/include"])
     env.Append(LIBPATH = ["dependencies/mingw-lib"])
+    env.Append(LIBPATH = ["dependencies/lib"])
     env.Append(LIBS = ["aldmb", "dumb", "fudgefont", "ldpng",
         "jpeg", "alleg_s", "freetype", "apeg_s", "theora", "vorbis", "ogg"])
 
