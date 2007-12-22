@@ -37,12 +37,15 @@ def land_view_scroll_to(LandView *self, float x, float y):
     self->scroll_y = y
 
 def land_view_scale(LandView *self, float sx, float sy):
+    float cx = self->scroll_x + (self->w / 2 / self->scale_x)
+    float cy = self->scroll_y + (self->h / 2 / self->scale_y)
     self->scale_x *= sx
     self->scale_y *= sy
+    self->scroll_x = cx - (self->w / 2 / self->scale_x)
+    self->scroll_y = cy - (self->h / 2 / self->scale_y)
 
 def land_view_zoom(LandView *self, float zx, float zy):
-    self->scale_x = zx
-    self->scale_y = zy
+    land_view_scale(self, zx / self->scale_x, zy / self->scale_y)
 
 def land_view_scroll_center(LandView *self, float x, y):
     """
