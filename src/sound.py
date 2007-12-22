@@ -20,6 +20,13 @@ def land_sound_play(LandSound *s, float volume, pan, frequency):
     play_sample(s->sample, 255 * volume, 127.5 + 127.5 * pan, 1000 * frequency,
         0)
 
+def land_sound_loop(LandSound *s, float volume, pan, frequency):
+    play_sample(s->sample, 255 * volume, 127.5 + 127.5 * pan, 1000 * frequency,
+        1)
+
+def land_sound_stop(LandSound *s):
+    stop_sample(s->sample)
+
 def land_sound_destroy(LandSound *s):
     land_free(s->filename)
     land_free(s)
