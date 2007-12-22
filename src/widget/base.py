@@ -473,6 +473,9 @@ def land_widget_resize(LandWidget *self, float dx, dy):
     self->box.min_height = self->box.h + dy
     land_widget_size(self, dx, dy)
 
+def land_widget_set_size(LandWidget *self, float w, float h):
+    land_widget_resize(self, w - self->box.w, h - self->box.h)
+
 def land_widget_retain_mouse_focus(LandWidget *self):
     """
     Called inside mouse_leave, will keep the mouse focus, and no other widget

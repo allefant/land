@@ -228,6 +228,10 @@ def land_widget_scrolling_get_scroll_position(LandWidget *base, float *x, *y):
     *y = child->box.y - contents->box.y - contents->element->it
 
 def land_widget_scrolling_get_scroll_extents(LandWidget *base, float *x, *y):
+    """
+    Determines the "scrollable area", that is how much overlap there is in
+    horizontal and vertical direction.
+    """
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
     if not children:
@@ -239,6 +243,13 @@ def land_widget_scrolling_get_scroll_extents(LandWidget *base, float *x, *y):
     *y = child->box.h - contents->box.h + contents->element->it + contents->element->ib
     if *x < 0: *x = 0
     if *y < 0: *y = 0
+
+def land_widget_scrolling_get_view(LandWidget *base, float *l, *t, *r, *b):
+    """
+    Determine pixel coordinates of the viewable area.
+    """
+    LandWidget *contents = land_widget_scrolling_get_container(base)
+    land_widget_inner_extents(contents, l, t, r, b)
 
 def land_widget_scrolling_scrollto(LandWidget *base, float x, y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
