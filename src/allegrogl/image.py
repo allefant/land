@@ -101,17 +101,17 @@ static def quad(LandImage *self):
 
     glBegin(GL_QUADS)
 
-    glTexCoord2f(r / w, (b) / h)
-    glVertex2d(r - mx, b - my)
-
-    glTexCoord2f(l / w, (b) / h)
+    glTexCoord2f(l / w, (h - b) / h)
     glVertex2d(l - mx, b - my)
 
-    glTexCoord2f(l / w, (t) / h)
+    glTexCoord2f(l / w, (h - t) / h)
     glVertex2d(l - mx, t - my)
 
-    glTexCoord2f(r / w, (t) / h)
+    glTexCoord2f(r / w, (h - t) / h)
     glVertex2d(r - mx, t - my)
+
+    glTexCoord2f(r / w, (h - b) / h)
+    glVertex2d(r - mx, b - my)
 
     glEnd()
 
@@ -314,15 +314,22 @@ def land_image_allegrogl_prepare(LandImage *self):
                 ((unsigned char *)temp->line[y])[x * 4 + 3] = 255
 
     # Repeat border pixels across padding area of texture.
-    int i
-    for i = w; i < w + pad_w; i++:
+
+    for int i = w; i < w + pad_w; i++:
         blit(self->memory_cache, temp, w - 1, 0, i, 0, 1, h)
 
-    for i = h; i < h + pad_h; i++:
+    for int i = h; i < h + pad_h; i++:
         blit(self->memory_cache, temp, 0, h - 1, 0, i, w, 1)
 
     int c = getpixel(self->memory_cache, w - 1, h - 1)
     rectfill(temp, w, h, w + pad_w, h + pad_h, c)
+
+    # flip it upside down
+    for int i = 0; i < temp->h / 2; i++:
+        char row[temp->w * 4]
+        memcpy(row, temp->line[i], temp->w * 4)
+        memcpy(temp->line[i], temp->line[temp->h - 1 - i], temp->w * 4)
+        memcpy(temp->line[temp->h - 1 - i], row, temp->w * 4)
 
     glGenTextures(1, &sub->gl_texture)
     glBindTexture(GL_TEXTURE_2D, sub->gl_texture)
