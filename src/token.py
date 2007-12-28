@@ -131,6 +131,8 @@ static def add_operator(LM_Tokenizer *self):
         if not strncmp(mc, self->text->buffer + self->pos - 1, strlen(mc)):
             strcpy(string, mc)
             self->pos += strlen(mc) - 1
+            if self->pos == self->text->n:
+                self->end = 1
             break
 
     token_add(self, TOKEN_SYMBOL,
