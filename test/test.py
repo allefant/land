@@ -337,7 +337,8 @@ print y[x["a"]][y[x["a"]]["c"]]
 
     def test_keywords(self):
         self.execute("keywords", """
-test a, keywords:
+test a, ...:
+    keywords = ...
     print a, keywords.a
 test(1, a = 2)
 """, "1 2\n")
@@ -367,6 +368,17 @@ foo 1, 2,
     3
 print x, y
 """, "6 6\n")
+
+    def test_varargs(self):
+        self.execute("varargs", """
+foo a, ...
+    b = ...
+    print a, b
+foo
+foo 0
+foo x = 2
+foo 0, x = 2
+""", "none none\n0 none\nnone {x = 2}\n0 {x = 2}\n")
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
