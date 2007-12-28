@@ -656,8 +656,14 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
             LM_Node *paramval = paramkey->next
             LM_Token *keytok = paramkey->data
             int result = compile_node(c, paramval)
-            int attribute = add_string_constant(c, keytok->string)
-            add_code(c, OPCODE_SET, got_named, attribute, result)
+            # Assigning to ... is a special syntax for appending a dictionary to
+            # the variable arguments dictionary.
+            if not strcmp(keytok->string, "..."):
+                add_code(c, OPCODE_ADD, got_named, got_named, result)
+            else:
+                int attribute = add_string_constant(c, keytok->string)
+                attribute = access_constant(c, attribute)
+                add_code(c, OPCODE_SET, got_named, attribute, result)
 
         LM_Node *parent = param->parent
         param = param->next

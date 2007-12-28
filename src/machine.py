@@ -284,6 +284,7 @@ def lm_machine_destroy_object(LM_Machine *self, LM_ObjectHeader *h):
             break
         case LM_TYPE_NON:
             # Oh yes. Let's destroy the global none value. Very good idea.
+            # FIXME: cause runtime error?
             break
         case LM_TYPE_USE:
             # TODO: Likely, we should have a way to call a user supplied
@@ -722,13 +723,15 @@ static def machine_opcode_add(LM_Machine *self, int a, int b, int c):
         LandHash *hc = oc->value.pointer
         LM_Object *oa = lm_machine_alloc_dic(self)
         LandHash *ha = oa->value.pointer
+
         LandArray *kb = land_hash_keys(hb)
-        LandArray *kc = land_hash_keys(hc)
         for int i = 0; i < kb->count; i++:
             char const *k = land_array_get_nth(kb, i)
             void *data = land_hash_get(hb, k)
             land_hash_replace(ha, k, data)
         land_array_destroy(kb)
+
+        LandArray *kc = land_hash_keys(hc)
         for int i = 0; i < kc->count; i++:
             char const *k = land_array_get_nth(kc, i)
             void *data = land_hash_get(hc, k)
@@ -1274,7 +1277,8 @@ def lm_machine_destroy(LM_Machine *self):
     # constants.
     for int i = 0; i < self->functions->count; i++:
         LM_Function *f = land_array_get_nth(self->functions, i)
-        for int j = 0; j < f->constants->count; j++:
+        # The constant 0 should be a reference to none, so ignore it.
+        for int j = 1; j < f->constants->count; j++:
             LM_ObjectHeader *h = land_array_get_nth(f->constants, j)
             lm_machine_destroy_object(self, h)
         land_array_destroy(f->constants)
@@ -1288,6 +1292,8 @@ def lm_machine_destroy(LM_Machine *self):
 
         land_free(f)
     land_array_destroy(self->functions)
+
+    land_free(self->none)
 
     lm_machine_destroy_instance(self)
 
