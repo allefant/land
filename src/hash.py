@@ -211,8 +211,7 @@ LandArray *def land_hash_keys(LandHash *hash):
             for j = 0; j < n; j++:
                 land_array_add_data(&array, hash->entries[i][j].thekey)
 
-
-    return array
+    return array   
 
 LandArray *def land_hash_data(LandHash *hash):
     """Return an array with all the data pointers in the hash. If you want to

@@ -337,7 +337,7 @@ def land_image_allegrogl_prepare(LandImage *self):
     land_log_message("Calling: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, %d, %d, 0, "
         "GL_RGBA, GL_UNSIGNED_BYTE, %p\n", temp->w, temp->h, temp->dat)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, temp->w, temp->h, 0, GL_RGBA,
-        GL_UNSIGNED_BYTE, temp->dat)
+        GL_UNSIGNED_INT_8_8_8_8_REV, temp->dat)
     land_log_message(" glGetError says: %d\n", glGetError())
 
     destroy_bitmap(temp)
