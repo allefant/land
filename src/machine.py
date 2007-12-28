@@ -91,6 +91,7 @@ enum LM_Opcode:
     OPCODE_BRA # BRA x <B> do a relative jump if x is true
     OPCODE_AND # AND x <B> do a relative jump if x is false
     OPCODE_FUN # FUN x y C calls function in x with C parameters, first is y
+    OPCODE_FUV # FUV x y C same as FUN but last parameter is varargs
     OPCODE_RET # RET x ? ? return from the current function, with value x
 
     # binary operations
@@ -110,6 +111,7 @@ enum LM_Opcode:
     OPCODE_SAM
     OPCODE_SOL # SAM or LOW
     OPCODE_SOB # SAM or BIG
+    OPCODE_NOS # not SAM
 
     # unary operations
     OPCODE_NEG # NEG x y ? does x = -y
@@ -154,6 +156,8 @@ class LM_Function:
     of constants, and a mapping of variable names to index positions.
     """
     int locals_count
+    int params_count
+    bool varargs
     LandArray *constants
     LandHash *variables
     int code_length
@@ -551,7 +555,8 @@ char const *def lm_machine_get_string(LM_Machine *self, int i):
         return ((LM_Object *)o)->value.pointer
     return None
 
-static def machine_call(LM_Machine *self, LM_Definition *definition, int b, c):
+static def machine_call(LM_Machine *self, LM_Definition *definition, int b, c,
+    bool varargs):
     # TODO: We can re-use an old frame. Locals need not be initialized as the
     # compiler will never create code to access a local before it was assigned
     # to.
@@ -561,20 +566,52 @@ static def machine_call(LM_Machine *self, LM_Definition *definition, int b, c):
 
     frame->definition = definition
     frame->locals = land_array_new()
-    land_array_add(frame->locals, None) # TODO: what about the 0 position?
+
+    int i = 0
+
+    # Initialize return register to none.
+    land_array_add(frame->locals, None) 
+
+    # We cannot pass more arguments to the function than it expects.
+    if count > definition->function->params_count:
+        count = definition->function->params_count
+        # FIXME: Generate run-time error?
+
+    if varargs: count -= 1
+
     # Function call arguments.
-    for int i = 0; i < count; i++:
+    for ; i < count; i++:
         LM_ObjectHeader *ob = lm_machine_get_value(self, b + i)
         land_array_add(frame->locals, ob)
+
+    count = definition->function->params_count
+    if definition->function->varargs: count -= 1
+
+    # Pad missing parameters with None.
+    # TODO: We could look for the missing parameters in varargs, at least if
+    # we would know the parameter names.
+    for ; i < count; i++:
+        LM_ObjectHeader *ob = lm_machine_get_value(self, -128)
+        land_array_add(frame->locals, ob)
+
+    # Fill in varargs (if any).
+    if definition->function->varargs:
+        LM_ObjectHeader *ob
+        if varargs:
+             ob = lm_machine_get_value(self, b + c - 1)
+        else:
+             ob = lm_machine_get_value(self, -128)
+        land_array_add(frame->locals, ob)
+
     # Initialize locals to None.
-    for int i = 1 + count; i < definition->function->locals_count; i++:
+    for ; i < definition->function->locals_count; i++:
         land_array_add(frame->locals, None)
 
     frame->parent = self->current
     frame->ip = 0
     self->current = frame
 
-static def machine_opcode_fun(LM_Machine *self, int a, b, c):
+static def _opcode_fu(LM_Machine *self, int a, b, c, bool varargs):
     if a < 0:
         machine_error(self, "Cannot call a constant.")
         return
@@ -585,7 +622,13 @@ static def machine_opcode_fun(LM_Machine *self, int a, b, c):
 
     LM_Definition *definition = (LM_Definition *)defob
 
-    machine_call(self, definition, b, c)
+    machine_call(self, definition, b, c, varargs)
+
+static def machine_opcode_fun(LM_Machine *self, int a, b, c):
+    _opcode_fu(self, a, b, c, false)
+
+static def machine_opcode_fuv(LM_Machine *self, int a, b, c):
+    _opcode_fu(self, a, b, c, true)
 
 static def machine_opcode_arg(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
@@ -646,6 +689,8 @@ static double def big_cb(double x, y):
     return x > y
 static double def sam_cb(double x, y):
     return x == y
+static double def nos_cb(double x, y):
+    return x != y
 
 static macro binop(name) static void machine_opcode_##name(
     LM_Machine *self, int a, int b, int c) {
@@ -660,6 +705,7 @@ binop(big)
 binop(sam)
 binop(sol)
 binop(sob)
+binop(nos)
 
 static def machine_opcode_get(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
@@ -725,6 +771,8 @@ def lm_machine_output(LM_Machine *self, LM_ObjectHeader *oh):
                 printf(", ")
         printf("}")
         land_array_destroy(keys)
+    elif oh->type == LM_TYPE_NON:
+        printf("none")
 
 static def machine_opcode_out(LM_Machine *self, int a, b, c):
     for int i = 0; i < b; i++:
@@ -789,6 +837,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
     switch opcode:
         D(NOP)
         D(FUN)
+        D(FUV)
         D(USE)
         D(SEU)
         D(GEU)
@@ -822,6 +871,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(SAM)
         D(SOL)
         D(SOB)
+        D(NOS)
         D(STR)
         default: fprintf(out, " ??? ")
     unsigned char *b = (unsigned char *)buffer
@@ -949,6 +999,7 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_SAM: machine_opcode_sam(self, a, b, c); break
             case OPCODE_SOB: machine_opcode_sob(self, a, b, c); break
             case OPCODE_SOL: machine_opcode_sol(self, a, b, c); break
+            case OPCODE_NOS: machine_opcode_nos(self, a, b, c); break
             case OPCODE_BRA: machine_opcode_bra(self, a, b, c); break
             case OPCODE_AND: machine_opcode_and(self, a, b, c); break
             case OPCODE_HOP: machine_opcode_hop(self, a, b, c); break
@@ -975,6 +1026,11 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_ASS: machine_opcode_ass(self, a, b, c); break
             case OPCODE_FUN:
                 machine_opcode_fun(self, a, b, c)
+                frame = self->current
+                code = frame->definition->function->code
+                break
+            case OPCODE_FUV:
+                machine_opcode_fuv(self, a, b, c)
                 frame = self->current
                 code = frame->definition->function->code
                 break
@@ -1071,7 +1127,7 @@ def lm_machine_reset(LM_Machine *self):
     definition->parent = None
 
     # And call it.
-    machine_call(self, definition, 0, 0)
+    machine_call(self, definition, 0, 0, false)
 
 def lm_machine_debug_code(char *buffer, int n, char const *indent, FILE *out):
     for int j = 0; j < n; j++:
@@ -1082,7 +1138,8 @@ def lm_machine_debug(LM_Machine *self, FILE *out):
     for int i = 0; i < self->functions->count; i++:
         fprintf(out, "Function (%d/%d):\n", i, self->functions->count)
         LM_Function *f = land_array_get_nth(self->functions, i)
-        fprintf(out, " locals: %d\n", f->locals_count)
+        fprintf(out, " locals: %d (%d parameters, %s)\n", f->locals_count,
+            f->params_count, f->varargs ? "varargs" : "fix")
 
         fprintf(out, " constants: %d\n", f->constants->count)
         for int j = 0; j < f->constants->count; j++:
@@ -1191,6 +1248,8 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         LM_Function *f
         land_alloc(f)
         f->locals_count = n
+        f->params_count = pack_igetl(pf)
+        f->varargs = pack_igetl(pf)
 
         # Read named variables.
         f->variables = land_hash_new()

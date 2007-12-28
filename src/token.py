@@ -116,6 +116,7 @@ static char const *multichar_symbol_tokens[] = {
     "|=",
     "&=",
     "^=",
+    "...",
     None
     }
 

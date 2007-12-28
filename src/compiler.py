@@ -23,6 +23,7 @@ class LM_CompilerFunction:
     LM_CompilerFunction *parent # A function inside a function has a parent.
 
     LandArray *parameters # An array with the parameter names.
+    bool varargs
 
     int locals_needed # How many locals need to be reserved at runtime, when
     # calling this function.
@@ -609,10 +610,12 @@ static int def compile_conditional(LM_Compiler *c, LM_Node *n):
 # cases where they trivially are, we do an optimization step here and translate
 # them to normal, ordered parameters.
 static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
-    int *first):
+    int *first, bool *varargs):
     # TODO: Clarify if we want a limit of 256 params
     int params[256]
     params[0] = 0
+
+    *varargs = false
 
     LM_Node *param = n->first
     int nparams = 0
@@ -638,6 +641,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
             if got_named:
                 fprintf(stderr, "Error: "
                     "Cannot use positional parameters after named parametes.\n")
+                # FIXME: properly handle errors
             int result = compile_node(c, param)
             params[nparams] = result
             nparams++
@@ -646,6 +650,7 @@ static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
                 # Create a new dictionary for the named parameters
                 got_named = create_new_temporary(c)
                 add_code(c, OPCODE_NEW, got_named, 0, 0)
+                *varargs = true
 
             LM_Node *paramkey = param->first
             LM_Node *paramval = paramkey->next
@@ -737,6 +742,8 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return compile_binary_operation(c, n, OPCODE_BIG)
     elif not strcmp(token->string, "=="):
         return compile_binary_operation(c, n, OPCODE_SAM)
+    elif not strcmp(token->string, "!="):
+        return compile_binary_operation(c, n, OPCODE_NOS)
     elif not strcmp(token->string, "<="):
         return compile_binary_operation(c, n, OPCODE_SOL)
     elif not strcmp(token->string, ">="):
@@ -806,12 +813,13 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         return 0
     else: # function call or attribute access
         int first, nparams
+        bool varargs
 
         if not strcmp(token->string, "print"):
-            nparams = parse_function_call_parameters(c, n, &first)
+            nparams = parse_function_call_parameters(c, n, &first, &varargs)
             add_code(c, OPCODE_FLU, first, nparams, 0)
         elif not strcmp(token->string, "str"):
-            nparams = parse_function_call_parameters(c, n, &first)
+            nparams = parse_function_call_parameters(c, n, &first, &varargs)
             int x = create_new_temporary(c)
             add_code(c, OPCODE_STR, x, first, 0)
             return x
@@ -821,7 +829,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
         else:
             int *using = land_hash_get(c->using, token->string)
             if using:
-                nparams = parse_function_call_parameters(c, n, &first)
+                nparams = parse_function_call_parameters(c, n, &first, &varargs)
                 int constant = add_string_constant(c, token->string)
                 add_code(c, OPCODE_USE, constant, first, nparams)
                 return 0
@@ -836,8 +844,8 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
                     token->string)
                 return 0
 
-            nparams = parse_function_call_parameters(c, n, &first)
-            add_code(c, OPCODE_FUN, result, first, nparams)
+            nparams = parse_function_call_parameters(c, n, &first, &varargs)
+            add_code(c, varargs ? OPCODE_FUV : OPCODE_FUN, result, first, nparams)
             
             return 0
     return 0
@@ -850,6 +858,9 @@ static int def compile_statement(LM_Compiler *c, LM_Node *n):
     return 0
 
 static int def compile_function(LM_Compiler *c, LM_Node *n):
+    """
+    Compile a function definition.
+    """
     LM_CompilerFunction *current = c->current
 
     LM_Node *name = n->first
@@ -876,6 +887,10 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
         if token->type != TOKEN_SYMBOL:
             find_or_create_local(c, token->string)
             land_array_add(c->current->parameters, land_strdup(token->string))
+        elif not strcmp(token->string, "..."):
+            find_or_create_local(c, token->string)
+            land_array_add(c->current->parameters, land_strdup(token->string))
+            c->current->varargs = true
         n2 = n2->next
 
     # Constant 128 is perpetual nothingness (None).
@@ -891,10 +906,11 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
                     opcode = c->current->code->buffer[c->current->code->n - 4]
                 if opcode == OPCODE_RET:
                     need_return = 0
-                elif opcode == OPCODE_FUN or opcode == OPCODE_USE:
+                elif opcode == OPCODE_FUN or opcode == OPCODE_FUV or\
+                    opcode == OPCODE_USE:
                     # Implicitly return the return value of the last statement
                     # if there is no explicit return and the last statement in
-                    # the function is a FUN or USE.
+                    # the function is a FUN or FUV or USE.
                     # FIXME: does that really work out?
                     return_what = 0
 
@@ -960,6 +976,10 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
     elif token->type == TOKEN_STRING:
         int constant = add_constant(c, token, LM_TYPE_STR)
         return access_constant(c, constant)
+    elif token->type == TOKEN_SYMBOL:
+        if not strcmp(token->string, "..."):
+            int result = get_variable(c, token->string)
+            return result
     return 0
 
 int def compile_node(LM_Compiler *c, LM_Node *n):
@@ -982,7 +1002,8 @@ int def compile_node(LM_Compiler *c, LM_Node *n):
 def lm_compiler_debug(LM_Compiler *c, FILE *out):
     for int i = 0; i < c->functions->count; i++:
         LM_CompilerFunction *f = c->functions->data[i]
-        fprintf(out, "function %d (%d locals, %d constants):\n", i, f->locals_needed,
+        fprintf(out, "function %d (%d locals, %d parameters, %d constants):\n",
+            i, f->locals_needed, f->parameters->count,
             f->constants->count)
 
         fprintf(out, " parameters:")
@@ -1018,8 +1039,11 @@ def lm_compiler_debug(LM_Compiler *c, FILE *out):
 def lm_compiler_output(LM_Compiler *c, PACKFILE *out):
     for int i = 0; i < c->functions->count; i++:
         LM_CompilerFunction *f = c->functions->data[i]
-        # write required memory
+        # write required locals count
         pack_iputl(f->locals_needed, out)
+        # write parameters count
+        pack_iputl(land_array_count(f->parameters), out)
+        pack_iputl(f->varargs, out)
 
         # write variable names
         LandArray *keys = land_hash_keys(f->locals)

@@ -357,6 +357,17 @@ bar: foo
 print bar()
 """, "7\n")
 
+    def test_line_continuation(self):
+        self.execute("line-continuation", """
+y = 0
+foo a b c: y = a + b + c
+x = (1 + 2
+    + 3)
+foo 1, 2,
+    3
+print x, y
+""", "6 6\n")
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)

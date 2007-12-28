@@ -27,6 +27,8 @@ static int def is_operand(LM_Node *node):
             return 1
         if token->type == TOKEN_STRING:
             return 1
+        if not strcmp(token->string, "..."):
+            return 1
     return 0
 
 static int def is_symbol(LM_Node *node, char const *symbol):
