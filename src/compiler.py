@@ -178,7 +178,7 @@ int def add_string_constant(LM_Compiler *c, char const *string):
     LM_Object *val = c->current->constants->data[i]
     val->header.type = LM_TYPE_STR
     val->value.pointer = land_strdup(string)
-    return i | 128
+    return i + 128
 
 int def add_constant(LM_Compiler *c, LM_Token *token, LM_DataType type):
     int i = new_constant(c)
@@ -190,7 +190,7 @@ int def add_constant(LM_Compiler *c, LM_Token *token, LM_DataType type):
     else:
         val->value.pointer = land_strdup(token->string)
 
-    return i | 128
+    return i + 128
 
 static def add_code(LM_Compiler *c, int opcode, op1, op2, op3):
     char code[4]
@@ -243,6 +243,13 @@ static int def find_or_create_local(LM_Compiler *c, char const *string):
 
 static int def find_or_create_global(LM_Compiler *c, char const *string):
     return find_or_create_local(c, string)
+
+static int def access_constant(LM_Compiler *c, int constant):
+    if constant <= 255: return constant
+    constant -= 128
+    int r = create_new_temporary(c)
+    add_code(c, OPCODE_CON, r, constant & 255, constant >> 8)
+    return r
 
 static int def compile_named_variable_lookup(LM_Compiler *c, char const *string):
     int constant = add_string_constant(c, string)
@@ -348,14 +355,16 @@ static int def prepare_assignement(LM_Compiler *c, char const *string, int *what
     if not glob and c->current->is_global:
         glob = find_or_create_global(c, string)
     if glob:
-        *what = add_string_constant(c, string)
+        int constant = add_string_constant(c, string)
+        *what = access_constant(c, constant)
         return 0
     # Third: Assign to an existing parent local?
     LM_CompilerFunction *f = c->current->parent
     while f:
         int *num = land_hash_get(f->locals, string)
         if num:
-            *what = add_string_constant(c, string)
+            int constant = add_string_constant(c, string)
+            *what = access_constant(c, constant)
             return 0
         f = f->parent
     # Fourth: Assign to an existing local variable.
@@ -875,9 +884,11 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
         compile_node(c, n2)
         if n2->last->type == LM_NODE_STATEMENT:
             LM_Node *statement = n2->last
-            lm_node_debug(statement, 0)
+
             if statement->first->type == LM_NODE_OPERATION:
-                int opcode = c->current->code->buffer[c->current->code->n - 4]
+                int opcode = OPCODE_NOP
+                if c->current->code->buffer and c->current->code->n >= 4:
+                    opcode = c->current->code->buffer[c->current->code->n - 4]
                 if opcode == OPCODE_RET:
                     need_return = 0
                 elif opcode == OPCODE_FUN or opcode == OPCODE_USE:
@@ -935,7 +946,8 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
     LM_Token *token = n->data
     if token->type == TOKEN_ALPHANUM:
         if token->string[0] >= '0' and token->string[0] <= '9':
-            return add_constant(c, token, LM_TYPE_NUM)
+            int constant = add_constant(c, token, LM_TYPE_NUM)
+            return access_constant(c, constant)
         else:
             if not ustrcmp(token->string, "none"):
                 return 128
@@ -946,7 +958,8 @@ static int def compile_operand(LM_Compiler *c, LM_Node *n):
                 fprintf(stderr, "Variable %s treated as none.\n", token->string)
             return result
     elif token->type == TOKEN_STRING:
-        return add_constant(c, token, LM_TYPE_STR)
+        int constant = add_constant(c, token, LM_TYPE_STR)
+        return access_constant(c, constant)
     return 0
 
 int def compile_node(LM_Compiler *c, LM_Node *n):
@@ -993,7 +1006,7 @@ def lm_compiler_debug(LM_Compiler *c, FILE *out):
         land_array_destroy(keys)
 
         for int j = 0; j < f->constants->count; j++:
-            fprintf(out, " constant %d: ", j | 128)
+            fprintf(out, " constant %d: ", j + 128)
             LM_Object *val = f->constants->data[j]
             if (val->header.type == LM_TYPE_NUM) fprintf(out, "%.2f", val->value.num)
             if (val->header.type == LM_TYPE_STR) fprintf(out, "%s", (char *)val->value.pointer)

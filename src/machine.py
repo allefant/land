@@ -84,6 +84,7 @@ enum LM_Opcode:
     OPCODE_DEF # DEF x B ? put definition B into x
     OPCODE_NEW # NEW x ? ? create a new dictionay and put it into x
     OPCODE_GOT # GOT x y z set x to true/false if y is in z
+    OPCODE_CON # CON x y z set x to constant y + z * 256 (for >127 constants)
 
     # jumps
     OPCODE_HOP # HOP ? <B> do a relative jump
@@ -136,6 +137,16 @@ class LM_Object:
     union value:
         double num
         void *pointer
+
+class LM_UserObject:
+    """
+   A user customized object.
+    """
+    LM_ObjectHeader header
+    void *data
+    void (*destroy)(LM_Machine *m)
+    void (*get)(LM_Machine *m)
+    void (*set)(LM_Machine *m)
 
 class LM_Function:
     """
@@ -203,6 +214,7 @@ class LM_Machine:
     int target # The target register to assign the retrieved value to.
     LM_ObjectHeader *name # Name of named parameter (for setter/getter)
     LM_ObjectHeader *value # Value of named parameter (for setter/getter)
+    LM_UserObject *user # The user object to use, if any (for setter/getter)
 
     int stats_objects_allocated
     int stats_objects_destroyed
@@ -231,6 +243,15 @@ LM_Object *def lm_machine_allocate_object(LM_Machine *self):
     LM_Object *x
     land_alloc(x)
     land_array_add(self->objects, x)
+    self->stats_objects_allocated++
+    return x
+
+LM_UserObject *def lm_machine_allocate_user_object(LM_Machine *self):
+    """Allocate a new object."""
+    LM_UserObject *x
+    land_alloc(x)
+    land_array_add(self->objects, x)
+    x->header.type = LM_TYPE_USE
     self->stats_objects_allocated++
     return x
 
@@ -445,6 +466,14 @@ static def machine_opcode_str(LM_Machine *self, int a, b, c):
 static def machine_opcode_dot(LM_Machine *self, int a, b, c):
 
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    if ob->type == LM_TYPE_USE:
+        LM_UserObject *uo = (void *)ob
+        LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+        self->name = oc
+        self->target = a
+        uo->get(self)
+        return
+
     OB_DIC("DOT", ob)
     LandHash *dict = ((LM_Object *)ob)->value.pointer
 
@@ -474,6 +503,16 @@ static def machine_opcode_got(LM_Machine *self, int a, b, c):
 static def machine_opcode_set(LM_Machine *self, int a, b, c):
 
     LM_ObjectHeader *oa = lm_machine_get_value(self, a)
+    if oa->type == LM_TYPE_USE:
+        LM_UserObject *uo = (void *)oa
+        LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+        LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+        self->user = uo
+        self->name = ob
+        self->value = oc
+        uo->set(self)
+        return
+
     OB_DIC("SET", oa)
     LandHash *dict = ((LM_Object *)oa)->value.pointer
 
@@ -499,6 +538,18 @@ int def lm_machine_get_integer(LM_Machine *self, int i):
     if o->type == LM_TYPE_STR:
         return ustrtod(((LM_Object *)o)->value.pointer, None)
     return 0
+
+char const *def lm_machine_get_string(LM_Machine *self, int i):
+    if i == 0: return 0
+    LM_ObjectHeader *o
+    if i > 0:
+        o = self->current->locals->data[i]
+    else:
+        o = self->current->definition->function->constants->data[128 + i]
+
+    if o->type == LM_TYPE_STR:
+        return ((LM_Object *)o)->value.pointer
+    return None
 
 static def machine_call(LM_Machine *self, LM_Definition *definition, int b, c):
     # TODO: We can re-use an old frame. Locals need not be initialized as the
@@ -543,6 +594,12 @@ static def machine_opcode_arg(LM_Machine *self, int a, b, c):
 
 static def machine_opcode_ass(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    lm_machine_set_value(self, a, ob)
+
+static def machine_opcode_con(LM_Machine *self, int a, b, c):
+    int constant = ((unsigned char)b) + (((unsigned char)c) << 8)
+    LM_ObjectHeader *ob = self->current->definition->function->constants->data[
+        constant]
     lm_machine_set_value(self, a, ob)
 
 static def machine_opcode_ret(LM_Machine *self, int a, b, c):
@@ -754,6 +811,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(DOT)
         D(SET)
         D(GOT)
+        D(CON)
 
         D(ADD)
         D(SUB)
@@ -928,6 +986,7 @@ def lm_machine_continue(LM_Machine *self):
             case OPCODE_NEW: machine_opcode_new(self, a, b, c); break
             case OPCODE_DOT: machine_opcode_dot(self, a, b, c); break
             case OPCODE_GOT: machine_opcode_got(self, a, b, c); break
+            case OPCODE_CON: machine_opcode_con(self, a, b, c); break
             case OPCODE_SET: machine_opcode_set(self, a, b, c); break
             case OPCODE_STR: machine_opcode_str(self, a, b, c); break
 

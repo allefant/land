@@ -46,6 +46,7 @@ static LM_Node *def parse_statement(Parser *self):
     LM_Node *statement_node = node_new(self, LM_NODE_STATEMENT, None)
     LM_Token *first_token = self->token
     int in_parenthesis = 0
+    bool continuation = False
 
     if not strcmp(self->token->string, ";"):
         self->token = self->token->next
@@ -57,15 +58,24 @@ static LM_Node *def parse_statement(Parser *self):
 
     LM_Node *first_node = node_new(self, LM_NODE_TOKEN, first_token)
     lm_node_add_child(statement_node, first_node)
+    int first_line = first_token->line
     self->token = self->token->next
     while self->token:
         if not strcmp(self->token->string, "("): in_parenthesis++
         if not strcmp(self->token->string, "{"): in_parenthesis++
 
-        if not in_parenthesis and self->token->line > first_token->line: break
+        # A new line and not inside parenthesis
+        if not in_parenthesis and self->token->line > first_line:
+            if continuation:
+                first_line = self->token->line
+            else:
+                break
 
         if not strcmp(self->token->string, ")"): in_parenthesis--
         if not strcmp(self->token->string, "}"): in_parenthesis--
+
+        if not strcmp(self->token->string, ","): continuation = True
+        else: continuation = False
         
         if not strcmp(self->token->string, ";"):
             self->token = self->token->next
