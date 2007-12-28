@@ -887,10 +887,8 @@ static int def compile_function(LM_Compiler *c, LM_Node *n):
         if token->type != TOKEN_SYMBOL:
             find_or_create_local(c, token->string)
             land_array_add(c->current->parameters, land_strdup(token->string))
-        elif not strcmp(token->string, "..."):
-            find_or_create_local(c, token->string)
-            land_array_add(c->current->parameters, land_strdup(token->string))
-            c->current->varargs = true
+            if not strcmp(token->string, "..."):
+                c->current->varargs = true
         n2 = n2->next
 
     # Constant 128 is perpetual nothingness (None).

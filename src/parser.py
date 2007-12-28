@@ -86,6 +86,9 @@ static LM_Node *def parse_statement(Parser *self):
             self->token = self->token->next
             break
 
+        if not strcmp(self->token->string, "..."):
+            self->token->type = TOKEN_ALPHANUM
+
         LM_Node *token_node = node_new(self, LM_NODE_TOKEN, self->token)
         lm_node_add_child(statement_node, token_node)
 

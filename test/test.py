@@ -380,6 +380,14 @@ foo x = 2
 foo 0, x = 2
 """, "none none\n0 none\nnone {x = 2}\n0 {x = 2}\n")
 
+    def test_dictadd(self):
+        self.execute("dictadd", """
+x = {a = 1, b = 2}
+y = {b = 20, c = 30}
+z = x + y
+print z
+""", "{a = 1, b = 20, c = 30}\n")
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(Test)
     unittest.TextTestRunner(verbosity = 2).run(suite)

@@ -126,7 +126,7 @@ enum LM_Opcode:
 class LM_ObjectHeader:
     LM_DataType type
     unsigned int garbage : 1
-    # FIXME: permanent is dangerous, as things references by a permanent object
+    # FIXME: permanent is dangerous, as things referenced by a permanent object
     # still are garbage collected. What is this used for anyway?
     unsigned int permanent : 1
 
@@ -208,6 +208,9 @@ class LM_Machine:
 
     LM_Frame *current
     int error
+
+    # The none object
+    LM_ObjectHeader *none
 
     # Do these belong to the frame? (think multi-threading, where our machine
     # has multiple threads, which run on multiple OS threads..)
@@ -318,11 +321,9 @@ LM_Object *def lm_machine_alloc_num(LM_Machine *self, double val):
     return o
 
 LM_Object *def lm_machine_alloc_dic(LM_Machine *self):
-    LM_Object *o
-    land_alloc(o)
+    LM_Object *o = lm_machine_allocate_object(self)
     o->header.type = LM_TYPE_DIC
     o->value.pointer = land_hash_new()
-    land_array_add(self->objects, o)
     return o
 
 LM_Definition *def lm_machine_alloc_def(LM_Machine *self):
@@ -330,6 +331,7 @@ LM_Definition *def lm_machine_alloc_def(LM_Machine *self):
     land_alloc(d)
     d->header.type = LM_TYPE_DEF
     land_array_add(self->objects, d)
+    self->stats_objects_allocated++
     return d
 
 LM_Frame *def lm_machine_alloc_frame(LM_Machine *self):
@@ -337,6 +339,7 @@ LM_Frame *def lm_machine_alloc_frame(LM_Machine *self):
     land_alloc(f)
     f->header.type = LM_TYPE_FUN
     land_array_add(self->objects, f)
+    self->stats_objects_allocated++
     return f
 
 static def machine_error(LM_Machine *self, char const *blah, ...):
@@ -659,20 +662,6 @@ static def machine_opcode_ret(LM_Machine *self, int a, b, c):
 
     lm_machine_set_value(self, 0, ob)
 
-static def machine_binary_op(LM_Machine *self, int a, b, c,
-    double (*cb)(double x, double y)):
-    LM_Object *oa = lm_machine_allocate_object(self)
-    oa->header.type = LM_TYPE_NUM
-    LM_ObjectHeader *obh = lm_machine_get_value(self, b)
-    LM_ObjectHeader *och = lm_machine_get_value(self, c)
-    # FIXME: Check type
-    LM_Object *ob = (LM_Object *)obh
-    LM_Object *oc = (LM_Object *)och
-    oa->value.num = cb(ob->value.num, oc->value.num)
-    lm_machine_set_value(self, a, &oa->header)
-
-static double def add_cb(double x, y):
-    return x + y
 static double def sub_cb(double x, y):
     return x - y
 static double def mul_cb(double x, y):
@@ -687,25 +676,95 @@ static double def low_cb(double x, y):
     return x < y
 static double def big_cb(double x, y):
     return x > y
-static double def sam_cb(double x, y):
-    return x == y
-static double def nos_cb(double x, y):
-    return x != y
+
+static def machine_binary_op(LM_Machine *self, int a, b, c,
+    double (*cb)(double x, double y)):
+
+    LM_ObjectHeader *obh = lm_machine_get_value(self, b)
+    LM_ObjectHeader *och = lm_machine_get_value(self, c)
+    if obh->type == LM_TYPE_NUM and och->type == LM_TYPE_NUM:
+        LM_Object *ob = (LM_Object *)obh
+        LM_Object *oc = (LM_Object *)och
+        double v = cb(ob->value.num, oc->value.num)
+        LM_Object *oa = lm_machine_alloc_num(self, v)
+        lm_machine_set_value(self, a, &oa->header)
+
+    # FIXME
 
 static macro binop(name) static void machine_opcode_##name(
     LM_Machine *self, int a, int b, int c) {
     machine_binary_op(self, a, b, c, name##_cb);}
 
-binop(add)
 binop(sub)
 binop(mul)
 binop(div)
 binop(low)
 binop(big)
-binop(sam)
 binop(sol)
 binop(sob)
-binop(nos)
+
+static def machine_opcode_add(LM_Machine *self, int a, int b, int c):
+    LM_ObjectHeader *obh = lm_machine_get_value(self, b)
+    LM_ObjectHeader *och = lm_machine_get_value(self, c)
+
+    if obh->type == LM_TYPE_NUM and och->type == LM_TYPE_NUM:
+        LM_Object *ob = (LM_Object *)obh
+        LM_Object *oc = (LM_Object *)och
+        double v = ob->value.num + oc->value.num
+        LM_Object *oa = lm_machine_alloc_num(self, v)
+        lm_machine_set_value(self, a, &oa->header)
+        return
+
+    if obh->type == LM_TYPE_DIC and och->type == LM_TYPE_DIC:
+        LM_Object *ob = (LM_Object *)obh
+        LM_Object *oc = (LM_Object *)och
+        LandHash *hb = ob->value.pointer
+        LandHash *hc = oc->value.pointer
+        LM_Object *oa = lm_machine_alloc_dic(self)
+        LandHash *ha = oa->value.pointer
+        LandArray *kb = land_hash_keys(hb)
+        LandArray *kc = land_hash_keys(hc)
+        for int i = 0; i < kb->count; i++:
+            char const *k = land_array_get_nth(kb, i)
+            void *data = land_hash_get(hb, k)
+            land_hash_replace(ha, k, data)
+        land_array_destroy(kb)
+        for int i = 0; i < kc->count; i++:
+            char const *k = land_array_get_nth(kc, i)
+            void *data = land_hash_get(hc, k)
+            land_hash_replace(ha, k, data)
+        land_array_destroy(kc)
+
+        lm_machine_set_value(self, a, &oa->header)
+        return
+
+    # TODO: strings, user objects, mixed types
+
+    lm_machine_set_value(self, a, self->none)
+
+static def machine_opcode_sam(LM_Machine *self, int a, int b, int c):
+    LM_ObjectHeader *obh = lm_machine_get_value(self, b)
+    LM_ObjectHeader *och = lm_machine_get_value(self, c)
+
+    LM_Object *oa = lm_machine_alloc_num(self, 0)
+
+    if obh->type == LM_TYPE_NUM and och->type == LM_TYPE_NUM:
+        LM_Object *ob = (LM_Object *)obh
+        LM_Object *oc = (LM_Object *)och
+        double v = (ob->value.num == oc->value.num)
+        oa->value.num = v
+    elif obh->type == LM_TYPE_NON and och->type == LM_TYPE_NON:
+        oa->value.num = 1
+    else:
+        # FIXME
+        oa->value.num = 0
+
+    lm_machine_set_value(self, a, &oa->header)
+
+static def machine_opcode_nos(LM_Machine *self, int a, int b, int c):
+    machine_opcode_sam(self, a, b, c)
+    LM_Object *oa = (void *)lm_machine_get_value(self, a)
+    oa->value.num = !oa->value.num
 
 static def machine_opcode_get(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
@@ -1241,6 +1300,10 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
     self->external = land_hash_new()
     self->functions = land_array_new()
 
+    land_alloc(self->none)
+    self->none->type = LM_TYPE_NON
+    self->none->permanent = 1
+
     while 1:
         int n = pack_igetl(pf)
         if n < 0: break
@@ -1266,13 +1329,18 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         f->constants = land_array_new()
         n = pack_igetl(pf)
         for int i = 0; i < n; i++:
-            LM_Object *ob = lm_machine_alloc_permanent(self)
-            int t = ob->header.type = pack_igetl(pf)
-            if t == LM_TYPE_NUM:
-                uint32_t x = pack_igetl(pf)
-                ob->value.num = *(float *)&x
-            if t == LM_TYPE_STR: ob->value.pointer = read_name(pf)
-            land_array_add(f->constants, ob)
+            LM_ObjectHeader *obh = self->none
+            int t = pack_igetl(pf)
+            if t != LM_TYPE_NON:
+                LM_Object *ob
+                ob = lm_machine_alloc_permanent(self)
+                obh = &ob->header
+                obh->type = t
+                if t == LM_TYPE_NUM:
+                    uint32_t x = pack_igetl(pf)
+                    ob->value.num = *(float *)&x
+                if t == LM_TYPE_STR: ob->value.pointer = read_name(pf)
+            land_array_add(f->constants, obh)
 
         f->code_length = n = pack_igetl(pf)
         f->code = land_malloc(n)

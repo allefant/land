@@ -6,14 +6,10 @@ import compiler, node, token
 static int def is_operator(LM_Node *node):
     if node->type == LM_NODE_TOKEN:
         LM_Token *token = node->data
-        if token->type == TOKEN_SYMBOL:
-            return 1
-        if not strcmp(token->string, "or"):
-            return 1
-        if not strcmp(token->string, "and"):
-            return 1
-        if not strcmp(token->string, "in"):
-            return 1
+        if token->type == TOKEN_SYMBOL: return 1
+        if not strcmp(token->string, "or"): return 1
+        if not strcmp(token->string, "and"): return 1
+        if not strcmp(token->string, "in"): return 1
     return 0
 
 static int def is_operand(LM_Node *node):
@@ -26,8 +22,6 @@ static int def is_operand(LM_Node *node):
         if token->type == TOKEN_ALPHANUM:
             return 1
         if token->type == TOKEN_STRING:
-            return 1
-        if not strcmp(token->string, "..."):
             return 1
     return 0
 
