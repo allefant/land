@@ -112,10 +112,16 @@ def land_grid_draw_grid(LandGrid *self, LandView *view):
 
 def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
     *cell_x, *cell_y):
+    """
+    Given a view position, return the corresponding cell position.
+    """
     self->vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
 
 def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
     cell_y, *view_x, float *view_y):
+    """
+    Given a cell position, return the corresponding view position, in pixels.
+    """
     self->vt->get_cell_position(self, view, cell_x, cell_y, view_x, view_y)
 
 def land_grid_initialize(LandGrid *self,
