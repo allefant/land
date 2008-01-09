@@ -1,3 +1,4 @@
+import global stdbool
 import array, grid, sprite
 
 class LandLayer:
@@ -23,10 +24,13 @@ class LandLayer:
 
     LandLayer *next_in_map
 
+    bool hidden
+
 def land_layer_draw(LandLayer *self, LandView *view):
+    if self->hidden: return
     LandView v = *view
-    v.scroll_x -= self->x
-    v.scroll_y -= self->y
+    v.scroll_x += self->view_x
+    v.scroll_y += self->view_y
     v.scroll_x *= self->scrolling_x
     v.scroll_y *= self->scrolling_y
     v.x += self->view_x
@@ -71,3 +75,9 @@ def land_layer_set_position(LandLayer *self, float x, float y):
 
 def land_layer_set_grid(LandLayer *self, LandGrid *grid):
     self->grid = grid
+
+def land_layer_hide(LandLayer *self):
+    self->hidden = true
+
+def land_layer_unhide(LandLayer *self):
+    self->hidden = false
