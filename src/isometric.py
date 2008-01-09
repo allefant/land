@@ -91,6 +91,7 @@ LandGrid *def land_isometric_custom_grid(
     self->vt->get_cell_at = wrap ? land_grid_pixel_to_cell_isometric_wrap :\
         land_grid_pixel_to_cell_isometric
     self->vt->draw_cell = draw_cell
+    self->vt->get_cell_position = land_grid_cell_to_pixel_isometric
     return self
 
 def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
@@ -100,6 +101,7 @@ def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
     the given view. 
     """
     LandGridIsometric *iso = (void *)self
+
     float x = view->scroll_x + mx - view->x
     float y = view->scroll_y + my - view->y
 
