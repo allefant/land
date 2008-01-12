@@ -452,10 +452,12 @@ static int def compar(void const *a, void const *b):
     char *bn = *(char **)b
     return ustrcmp(an, bn)
 
-LandArray *def land_load_images(char const *pattern, int center, int optimize):
+LandArray *def land_load_images_cb(char const *pattern,
+    void (*cb)(LandImage *image, void *data), void *data):
     """
     Load all images matching the file name pattern, and create an array
-    referencing them all.
+    referencing them all, in alphabetic filename order. The callback function
+    is called on each image along the way.
     """
     LandArray *filenames = None
     int count = 0
@@ -466,6 +468,8 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
     if !count:
         count = for_each_file_ex(pattern, 0, 0, callback, &filenames)
 
+    if not filenames: return None
+
     qsort(filenames->data, count, sizeof (void *), compar)
     
     LandArray *array = None
@@ -475,12 +479,24 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
         LandImage *image = land_image_load(filename)
         land_free(filename)
         if image:
-            if center: land_image_center(image)
-            if optimize: land_image_optimize(image)
+            if cb: cb(image, data)
             land_array_add_data(&array, image)
 
     land_array_destroy(filenames)
     return array
+
+static def defcb(LandImage *image, void *p):
+    int *data = p
+    if data[0]: land_image_center(image)
+    if data[1]: land_image_optimize(image)
+
+LandArray *def land_load_images(char const *pattern, int center, int optimize):
+    """
+    Load all images matching the file name pattern, and create an array
+    referencing them all.
+    """
+    int data[2] = {center, optimize}
+    return land_load_images_cb(pattern, defcb, data)
 
 LandImage *def land_image_sub(LandImage *parent, float x, float y, float w, float h):
     LandImage *self = land_display_new_image()
