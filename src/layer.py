@@ -29,8 +29,9 @@ class LandLayer:
 def land_layer_draw(LandLayer *self, LandView *view):
     if self->hidden: return
     LandView v = *view
-    v.scroll_x += self->view_x
-    v.scroll_y += self->view_y
+   
+    v.scroll_x += self->view_x - self->x
+    v.scroll_y += self->view_y - self->y
     v.scroll_x *= self->scrolling_x
     v.scroll_y *= self->scrolling_y
     v.x += self->view_x
