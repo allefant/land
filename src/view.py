@@ -85,13 +85,29 @@ def land_view_ensure_visible_on_screen(LandView *self, float x, y, bx, by):
     land_view_ensure_visible(self, x, y, bx, by)
 
 def land_view_ensure_inside_grid(LandView *self, LandGrid *grid):
-    int w = grid->x_cells * grid->cell_w
-    int h = grid->y_cells * grid->cell_h
+    """
+    For a non-wrapped grid, move the view so it lies within the grid.
 
-    if self->scroll_x < 0: self->scroll_x = 0
-    if self->scroll_y < 0: self->scroll_y = 0
-    if self->scroll_x > w - self->w: self->scroll_x = w - self->w
-    if self->scroll_y > h - self->h: self->scroll_y = h - self->h
+    For a wrapped grid, where the view always is inside the grid, this function
+    only normalizes the scroll position to lie within the "first quadrant".
+    """
+    if grid->wrap:
+        float cx, cy, sx, sy
+        land_grid_get_cell_at(grid, self, self->x, self->y, &cx, &cy)
+        self->scroll_x = 0
+        self->scroll_y = 0
+        land_grid_get_cell_position(grid, self, cx, cy, &sx, &sy)
+        self->scroll_x = sx - self->x
+        self->scroll_y = sy - self->y
+    else:
+        # FIXME: Take into account non-rectangular grid, e.g. isometric..
+        int w = grid->x_cells * grid->cell_w
+        int h = grid->y_cells * grid->cell_h
+
+        if self->scroll_x < 0: self->scroll_x = 0
+        if self->scroll_y < 0: self->scroll_y = 0
+        if self->scroll_x > w - self->w: self->scroll_x = w - self->w
+        if self->scroll_y > h - self->h: self->scroll_y = h - self->h
 
 def land_view_clip(LandView *self):
     land_clip(self->x, self->y, self->x + self->w, self->y + self->h)
