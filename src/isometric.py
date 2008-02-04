@@ -1,6 +1,6 @@
 import grid
 
-static import global math
+static import global math, stdbool
 static import isometric, log, display
 
 # Isometric cells:
@@ -78,10 +78,11 @@ LandGrid *def land_isometric_wrap_new(float cell_w1, cell_h1, cell_w2, cell_h2,
     int x_cells, y_cells):
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
     self->vt = land_grid_vtable_isometric_wrap
+    self->wrap = true
     return self
 
 LandGrid *def land_isometric_custom_grid(
-    float cell_w1, cell_h1, cell_w2, cell_h2, int x_cells, y_cells, wrap,
+    float cell_w1, cell_h1, cell_w2, cell_h2, int x_cells, y_cells, bool wrap,
     void (*draw_cell)(LandGrid *self, LandView *view, int cell_x, int cell_y,
         float x, float y)):
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
@@ -91,7 +92,10 @@ LandGrid *def land_isometric_custom_grid(
     self->vt->get_cell_at = wrap ? land_grid_pixel_to_cell_isometric_wrap :\
         land_grid_pixel_to_cell_isometric
     self->vt->draw_cell = draw_cell
-    self->vt->get_cell_position = land_grid_cell_to_pixel_isometric
+    self->vt->get_cell_position = wrap ?\
+        land_grid_cell_to_pixel_isometric_wrap :\
+        land_grid_cell_to_pixel_isometric
+    self->wrap = wrap
     return self
 
 def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
@@ -120,6 +124,30 @@ def land_grid_cell_to_pixel_isometric(LandGrid *self, LandView *view,
 
     float mx = cell_x * iso->cell_w2 - cell_y * iso->cell_w1
     float my = cell_x * iso->cell_h2 + cell_y * iso->cell_h1
+    mx = view->x + mx - view->scroll_x
+    my = view->y + my - view->scroll_y
+    *view_x = mx
+    *view_y = my
+
+def land_grid_cell_to_pixel_isometric_wrap(LandGrid *self, LandView *view,
+    float cell_x, cell_y, *view_x, *view_y):
+    """
+    Given a cell position, return the position of the cell's origin in
+    on-screen coordinates, using the current view.
+    """
+    LandGridIsometric *iso = (void *)self
+
+    # We are a wrapped grid, so normalize the passed cell position first to
+    # lie in the zero quadrant.
+    cell_x = cell_x - floorf(cell_x / self->x_cells) * self->x_cells
+    cell_y = cell_y - floorf(cell_y / self->y_cells) * self->y_cells
+
+    # The pixel offset then also is guaranteed to be normalized.
+    float mx = cell_x * iso->cell_w2 - cell_y * iso->cell_w1
+    float my = cell_x * iso->cell_h2 + cell_y * iso->cell_h1
+
+    # If the view was not normalized, that may be intended by the caller, so
+    # don't mess with it.
     mx = view->x + mx - view->scroll_x
     my = view->y + my - view->scroll_y
     *view_x = mx
@@ -412,13 +440,16 @@ def land_isometric_init():
     land_grid_vtable_isometric->draw = land_grid_draw_isometric
     land_grid_vtable_isometric->draw_cell = placeholder
     land_grid_vtable_isometric->get_cell_at = land_grid_pixel_to_cell_isometric
-    land_grid_vtable_isometric->get_cell_position = land_grid_cell_to_pixel_isometric
+    land_grid_vtable_isometric->get_cell_position =\
+        land_grid_cell_to_pixel_isometric
 
     land_alloc(land_grid_vtable_isometric_wrap)
     land_grid_vtable_isometric_wrap->draw = land_grid_draw_isometric_wrap
     land_grid_vtable_isometric_wrap->draw_cell = placeholder
-    land_grid_vtable_isometric_wrap->get_cell_at = land_grid_pixel_to_cell_isometric_wrap
-    land_grid_vtable_isometric_wrap->get_cell_position = land_grid_cell_to_pixel_isometric
+    land_grid_vtable_isometric_wrap->get_cell_at =\
+        land_grid_pixel_to_cell_isometric_wrap
+    land_grid_vtable_isometric_wrap->get_cell_position =\
+        land_grid_cell_to_pixel_isometric_wrap
 
 def land_isometric_exit():
     land_free(land_grid_vtable_isometric)
