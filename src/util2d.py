@@ -1,3 +1,5 @@
+import land
+
 float def land_norm2d(float x, y):
     return sqrt(x * x + y * y)
 
@@ -30,7 +32,7 @@ float def land_cross2d(float ax, ay, bx, by):
     If the result is 0, the two vectors are parallel. If the result is > 0, b
     points more right than a. If the result is < 0, b points more left than a.
 
-    Geometrically, this is "how far away does one vector go of the other".
+    Geometrically, this is "how far away does one vector go from the other".
 
     For example, if we have two vectors a = (4, -3) and b = (4, 0). Then:
     |a| = 5
@@ -44,8 +46,8 @@ float def land_cross2d(float ax, ay, bx, by):
 
 def land_ortho2d(float ax, ay, *bx, *by):
     """
-    Returns a vector orthogonal on ax/ay. More specifically, returns a
-    vector rotated 90 degree to the right.
+    Returns a vector orthogonal to ax/ay. More specifically, returns a
+    vector rotated 90 degree to the right (with y axis going down).
     """
     *bx = -ay;
     *by = ax;
