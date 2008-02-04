@@ -72,6 +72,7 @@ collision detection now.
 
 """
 
+import global stdbool
 import view
 
 class LandGridInterface:
@@ -88,6 +89,7 @@ class LandGrid:
     LandGridInterface *vt
     int x_cells, y_cells # in cells 
     int cell_w, cell_h # in pixels
+    bool wrap
 
 static import grid, log, tilegrid, isometric, sprite
 
@@ -114,6 +116,10 @@ def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
     *cell_x, *cell_y):
     """
     Given a view position, return the corresponding cell position.
+
+    For a wrapped grid, the returned position will always be normalized to
+    lie within the grid, even if the passed position or the view's scroll
+    position are outside.
     """
     self->vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
 
@@ -121,6 +127,11 @@ def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
     cell_y, *view_x, float *view_y):
     """
     Given a cell position, return the corresponding view position, in pixels.
+
+    For a wrapped grid, the returned position will first be normalized to
+    lie within the grid, and then related to the view position. Try normalizing
+    the view's scroll position first (land_view_ensure_inside_grid) so it lies
+    within the grid, if you experience unexpected offsets.
     """
     self->vt->get_cell_position(self, view, cell_x, cell_y, view_x, view_y)
 
