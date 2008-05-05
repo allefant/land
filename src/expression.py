@@ -62,11 +62,11 @@ static int def operator_precedence(LM_Node *left, LM_Node *right):
         if not strcmp(tok2->string, "or"): return 1
         return 0
 
-    if not strcmp(tok2->string, "("): # a ? b (
-        return 0
-
     if not ustrcmp(tok1->string, "."): # a . b ?
         return 1
+
+    if not strcmp(tok2->string, "("): # a ? b (
+        return 0
 
     if not strcmp(tok1->string, "="): # a = b ?
         if strcmp(tok2->string, ","):
@@ -104,6 +104,7 @@ int def expression(SyntaxAnalyzer *self, LM_Node *node):
     Parses at the given node. Returns 0 if the given node cannot be reduced,
     or 1 if it will reduce further.
     """
+
     if is_symbol(node, "{"):
         while expression(self, node->next): pass
             

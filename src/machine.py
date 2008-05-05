@@ -56,6 +56,7 @@ enum LM_DataType:
                 # collected, there is currently no mechanism to call a
                 # user provided destructor, so for now use this only to pass
                 # in static data.
+    LM_TYPE_MOD # A module.
 
 # x y z is registers (0..127) or constants (-128..-1)
 #       Note: 0 is reserved as return-register, -128 as none constant.
@@ -67,8 +68,8 @@ enum LM_Opcode:
     OPCODE_USE # USE x y C Calls a user callback named x (y and C like FUN)
     OPCODE_GEU # SEU x y z Set x.y to z, where x names a user callback
     OPCODE_SEU # GEU x y z Set x to y.z, where y names a user callback
-    OPCODE_END # END ? ? ? stops the virtual machine
     OPCODE_PAU # PAU ? ? ? pauses the virtual machine
+    OPCODE_IMP # IMP x y ? Set x to a module imported from file named y 
 
     # output
     OPCODE_OUT # OUT x ? ? outputs x
@@ -93,6 +94,7 @@ enum LM_Opcode:
     OPCODE_FUN # FUN x y C calls function in x with C parameters, first is y
     OPCODE_FUV # FUV x y C same as FUN but last parameter is varargs
     OPCODE_RET # RET x ? ? return from the current function, with value x
+    OPCODE_END # END ? ? ? return from executing a module
 
     # binary operations
     OPCODE_ADD # ADD x y z does x = y + z
@@ -173,6 +175,7 @@ class LM_Definition:
     LM_ObjectHeader header
     LM_Function *function
     LM_Frame *parent
+    LM_Module *module
 
 class LM_Frame:
     """
@@ -188,13 +191,24 @@ class LM_Frame:
     LM_Frame *parent
     int noreturn
 
-class LM_Machine:
+class LM_Module:
+    """
+    A module contains all the compiled stuff, that is, functions (including
+    the global one) and constants.
+    """
+    LM_ObjectHeader header
+
     # An array of all known functions. Functions are global and shared by all
     # instances of the virtual machine. Basically, an LM_Function is the static
     # aspect of a function, and shared among all instances. LM_Definition is
     # the dynamic part, owned by each individual instance.
     LandArray *functions
 
+    # When a module is loaded, it's global function is executed, and we get
+    # a frame.
+    LM_Frame *frame
+
+class LM_Machine:
     # A mapping of names of external functions to C function pointers. This
     # also is shared by everyone.
     LandHash *external
@@ -203,11 +217,13 @@ class LM_Machine:
     # of an LM_Machine will allocate its own objects.
     LandArray *objects
     # An array of objects used from the outside (so the GC won't collect
-    # anything references by them)
+    # anything referenced by them)
     LandArray *used
 
     LM_Frame *current
     int error
+
+    LM_Module *main_module
 
     # The none object
     LM_ObjectHeader *none
@@ -442,17 +458,31 @@ def lm_machine_put_variable(LM_Machine *self, char const *name,
         f = f->definition->parent
 
 static def machine_opcode_def(LM_Machine *self, int a, b, c):
-    
+    """
+    Variable 'a' receives a reference to definition number 'b' in the current
+    module.
+    """
     LM_Definition *d = lm_machine_alloc_def(self)
 
-    d->function = self->functions->data[b]
+    d->function = self->current->definition->module->functions->data[b]
     d->parent = self->current
+    d->module = self->current->definition->module
 
-    self->current->locals->data[a] = d
+    lm_machine_set_value(self, a, &d->header)
 
 static def machine_opcode_new(LM_Machine *self, int a, b, c):
     LM_Object *o = lm_machine_alloc_dic(self)
     lm_machine_set_value(self, a, &o->header)
+
+static def machine_opcode_imp(LM_Machine *self, int a, b, c):
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    OB_STR("IMP", ob)
+    char const *name = ((LM_Object *)ob)->value.pointer
+    LM_Module *mod = lm_machine_module_from_name(self, name)
+    lm_machine_set_value(self, a, &mod->header)
+
+    # Note: Here we will leave the current frame and execute the module.
+    lm_machine_module_reset(self, mod)
 
 static def machine_opcode_str(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *obh = lm_machine_get_value(self, b)
@@ -471,18 +501,31 @@ static def machine_opcode_str(LM_Machine *self, int a, b, c):
         ret = lm_machine_alloc_str(self, ob->value.pointer)
     lm_machine_set_value(self, a, &ret->header)
 
-static def machine_opcode_dot(LM_Machine *self, int a, b, c):
-
+static def _get_user_variable(LM_Machine *self, int a, b, c):
     LM_ObjectHeader *ob = lm_machine_get_value(self, b)
-    if ob->type == LM_TYPE_USE:
-        LM_UserObject *uo = (void *)ob
-        LM_ObjectHeader *oc = lm_machine_get_value(self, c)
-        self->name = oc
-        self->target = a
-        uo->get(self)
-        return
+    LM_UserObject *uo = (void *)ob
+    LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+    self->name = oc
+    self->target = a
+    uo->get(self)
 
-    OB_DIC("DOT", ob)
+static def _get_module_variable(LM_Machine *self, int a, b, c):
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    LM_Module *mod = (void *)ob
+    LM_Function *gf = mod->functions->data[0]
+
+    LM_ObjectHeader *oc = lm_machine_get_value(self, c)
+    OB_STR("DOT", oc)
+    char const *keyname = ((LM_Object *)oc)->value.pointer
+
+    int *i = land_hash_get(gf->variables, keyname)
+    if i:
+        lm_machine_set_value(self, a, mod->frame->locals->data[*i])
+    else:
+        machine_error(self, "DOT: Module attribute not found")
+    
+static def _get_dict_variable(LM_Machine *self, int a, b, c):
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
     LandHash *dict = ((LM_Object *)ob)->value.pointer
 
     LM_ObjectHeader *oc = lm_machine_get_value(self, c)
@@ -493,7 +536,22 @@ static def machine_opcode_dot(LM_Machine *self, int a, b, c):
     if o:
         lm_machine_set_value(self, a, o)
     else:
-        machine_error(self, "DOT: Attribute not found")
+        machine_error(self, "DOT: Dictionary attribute not found")
+
+static def machine_opcode_dot(LM_Machine *self, int a, b, c):
+
+    LM_ObjectHeader *ob = lm_machine_get_value(self, b)
+    if ob->type == LM_TYPE_USE:
+        _get_user_variable(self, a, b, c)
+        return
+    elif ob->type == LM_TYPE_MOD:
+        _get_module_variable(self, a, b, c)
+        return
+    elif ob->type == LM_TYPE_DIC:
+        _get_dict_variable(self, a, b, c)
+        return
+        
+    machine_error(self, "DOT: Dictionary, module or user variable expected")
 
 static def machine_opcode_got(LM_Machine *self, int a, b, c):
 
@@ -662,6 +720,10 @@ static def machine_opcode_ret(LM_Machine *self, int a, b, c):
     # We do write the return value to the 0 register of the caller.
 
     lm_machine_set_value(self, 0, ob)
+
+static def machine_opcode_end(LM_Machine *self, int a, b, c):
+    self->current->ip = 0
+    self->current = self->current->parent
 
 static double def sub_cb(double x, y):
     return x - y
@@ -849,9 +911,6 @@ static def machine_opcode_flu(LM_Machine *self, int a, b, c):
     machine_opcode_out(self, a, b, c)
     printf("\n")
 
-static def machine_opcode_end(LM_Machine *self, int a, b, c):
-    self->current->ip = 0
-
 static def machine_opcode_pau(LM_Machine *self, int a, b, c):
     pass
 
@@ -906,6 +965,7 @@ static def debug_code(char *buffer, char const *indent, FILE *out):
         D(RET)
         D(END)
         D(PAU)
+        D(IMP)
         D(PUT)
         D(GET)
         D(OUT)
@@ -1075,12 +1135,22 @@ def lm_machine_continue(LM_Machine *self):
                 break
             case OPCODE_END:
                 machine_opcode_end(self, a, b, c)
-                lm_garbage_collector(self)
-                return
+                frame = self->current
+                if frame:
+                    code = frame->definition->function->code
+                    break
+                else:
+                    lm_garbage_collector(self) # TODO: right place for this?
+                    return
             case OPCODE_PAU:
                 machine_opcode_pau(self, a, b, c)
                 lm_garbage_collector(self)
                 return
+            case OPCODE_IMP:
+                machine_opcode_imp(self, a, b, c)
+                frame = self->current
+                code = frame->definition->function->code
+                break
             case OPCODE_OUT: machine_opcode_out(self, a, b, c); break
             case OPCODE_FLU: machine_opcode_flu(self, a, b, c); break
             case OPCODE_DEF: machine_opcode_def(self, a, b, c); break
@@ -1172,7 +1242,7 @@ int def lm_machine_add_global(LM_Machine *self, char const *name):
     """
     Adds a new global variable. This must be called before executing the VM.
     """
-    LM_Function *f = self->functions->data[0]
+    LM_Function *f = self->current->definition->module->functions->data[0]
     int *val
     land_alloc(val)
     *val = f->locals_count
@@ -1180,26 +1250,30 @@ int def lm_machine_add_global(LM_Machine *self, char const *name):
     land_hash_insert(f->variables, name, val)
     return *val
 
-def lm_machine_reset(LM_Machine *self):
-
+def lm_machine_module_reset(LM_Machine *vm, LM_Module *mod):
     # Define the global function.
-    LM_Definition *definition = lm_machine_alloc_def(self)
+    LM_Definition *definition = lm_machine_alloc_def(vm)
 
-    definition->function = self->functions->data[0]
+    definition->function = mod->functions->data[0]
     definition->parent = None
+    definition->module = mod
 
     # And call it.
-    machine_call(self, definition, 0, 0, false)
+    machine_call(vm, definition, 0, 0, false)
+    mod->frame = vm->current
+
+def lm_machine_reset(LM_Machine *self):
+    lm_machine_module_reset(self, self->main_module)
 
 def lm_machine_debug_code(char *buffer, int n, char const *indent, FILE *out):
     for int j = 0; j < n; j++:
         debug_code(buffer + j, indent, out)
         j += 3
 
-def lm_machine_debug(LM_Machine *self, FILE *out):
-    for int i = 0; i < self->functions->count; i++:
-        fprintf(out, "Function (%d/%d):\n", i, self->functions->count)
-        LM_Function *f = land_array_get_nth(self->functions, i)
+def lm_machine_debug(LM_Machine *self, LM_Module *module, FILE *out):
+    for int i = 0; i < module->functions->count; i++:
+        fprintf(out, "Function (%d/%d):\n", i, module->functions->count)
+        LM_Function *f = land_array_get_nth(module->functions, i)
         fprintf(out, " locals: %d (%d parameters, %s)\n", f->locals_count,
             f->params_count, f->varargs ? "varargs" : "fix")
 
@@ -1265,18 +1339,11 @@ def lm_machine_destroy_instance(LM_Machine *self):
 
     land_free(self)
 
-def lm_machine_destroy(LM_Machine *self):
-    """
-    Destroys the currently running machine with lm_machine_destroy_instance,
-    and also destroys all static data like function definitions.
-    """
-
-    land_hash_destroy(self->external)
-
+def lm_machine_destroy_module(LM_Machine *self, LM_Module *module):
     # Destroy all the compiled code and static variable name mappings and
     # constants.
-    for int i = 0; i < self->functions->count; i++:
-        LM_Function *f = land_array_get_nth(self->functions, i)
+    for int i = 0; i < module->functions->count; i++:
+        LM_Function *f = land_array_get_nth(module->functions, i)
         # The constant 0 should be a reference to none, so ignore it.
         for int j = 1; j < f->constants->count; j++:
             LM_ObjectHeader *h = land_array_get_nth(f->constants, j)
@@ -1291,24 +1358,29 @@ def lm_machine_destroy(LM_Machine *self):
         land_free(f->code)
 
         land_free(f)
-    land_array_destroy(self->functions)
+    land_array_destroy(module->functions)
 
+def lm_machine_destroy(LM_Machine *self):
+    """
+    Destroys the currently running machine with lm_machine_destroy_instance,
+    and also destroys all static data like function definitions.
+    """
+
+    land_hash_destroy(self->external)
+
+    # FIXME: actually.. if the GC doesn't see main_module as referenced, the
+    # module already will have been collected and this should crash...
+    lm_machine_destroy_module(self, self->main_module)
     land_free(self->none)
 
     lm_machine_destroy_instance(self)
 
-LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
-    """
-    Create a new machine by reading compiled code from a packfile.
-    """
-    LM_Machine *self = lm_machine_new_machine()
+LM_Module *def lm_machine_module_from_packfile(LM_Machine *vm, PACKFILE *pf):
+    LM_Module *self
+    land_alloc(self)
 
-    self->external = land_hash_new()
+    self->header.type = LM_TYPE_MOD
     self->functions = land_array_new()
-
-    land_alloc(self->none)
-    self->none->type = LM_TYPE_NON
-    self->none->permanent = 1
 
     while 1:
         int n = pack_igetl(pf)
@@ -1335,11 +1407,11 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
         f->constants = land_array_new()
         n = pack_igetl(pf)
         for int i = 0; i < n; i++:
-            LM_ObjectHeader *obh = self->none
+            LM_ObjectHeader *obh = vm->none
             int t = pack_igetl(pf)
             if t != LM_TYPE_NON:
                 LM_Object *ob
-                ob = lm_machine_alloc_permanent(self)
+                ob = lm_machine_alloc_permanent(vm)
                 obh = &ob->header
                 obh->type = t
                 if t == LM_TYPE_NUM:
@@ -1354,6 +1426,34 @@ LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
             f->code[i] = pack_getc(pf)
 
         land_array_add(self->functions, f)
+
+    return self
+
+LM_Module *def lm_machine_module_from_name(LM_Machine *vm, char const *name):
+    # FIXME: look for .code files, md5 sum
+    # FIXME: also deal with already loaded modules
+    PACKFILE *pf = pack_fopen(name, "rb")
+    if not pf:
+        fprintf(stderr, "Cannot import \"%s\".\n", name)
+        return None
+
+    LM_Module *m = lm_machine_module_from_packfile(vm, pf)
+    pack_fclose(pf)
+    return m
+
+LM_Machine *def lm_machine_new_from_packfile(PACKFILE *pf):
+    """
+    Create a new machine by reading compiled code from a packfile.
+    """
+    LM_Machine *self = lm_machine_new_machine()
+
+    self->external = land_hash_new()
+
+    land_alloc(self->none)
+    self->none->type = LM_TYPE_NON
+    self->none->permanent = 1
+
+    self->main_module = lm_machine_module_from_packfile(self, pf)
 
     return self
 
@@ -1387,5 +1487,5 @@ LM_Machine *def lm_machine_new_instance(LM_Machine *machine):
     """
     LM_Machine *self = lm_machine_new_machine()
     self->external = machine->external
-    self->functions = machine->functions
+    self->main_module = machine->main_module
     return self

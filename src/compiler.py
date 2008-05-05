@@ -15,6 +15,9 @@ class LM_Compiler:
     LandArray *resolve
 
 class LM_CompilerFunction:
+    """
+    This is only present during compilation.
+    """
     int is_global
 
     int locals_count # How many locals are currently in use.
@@ -284,6 +287,96 @@ static int def get_variable(LM_Compiler *c, char const *string):
 
     return 0
 
+# Note: The paramnames are not generally available at compile time. Only in
+# cases where they trivially are, we do an optimization step here and translate
+# them to normal, ordered parameters.
+static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
+    int *first, bool *varargs):
+    # TODO: Clarify if we want a limit of 256 params
+    int params[256]
+    params[0] = 0
+
+    *varargs = false
+
+    LM_Node *param = n->first
+    int nparams = 0
+    int got_named = 0
+    # What we do is, we compile all the parameter expressions and remember
+    # into which local variables the resulting values go.
+    while param:
+        int positional = 1
+        if param->type == LM_NODE_OPERATION:
+            LM_Token *ptoken = param->data
+            if not strcmp(ptoken->string, ","):
+                param = param->first
+                continue
+            # FIXME: should create a tuple
+            if not strcmp(ptoken->string, "("):
+                param = param->first
+                continue
+            # An assignement here means a named parameter
+            if not strcmp(ptoken->string, "="):
+                positional = 0
+
+        if positional:
+            if got_named:
+                fprintf(stderr, "Error: "
+                    "Cannot use positional parameters after named parametes.\n")
+                # FIXME: properly handle errors
+            int result = compile_node(c, param)
+            params[nparams] = result
+            nparams++
+        else:
+            if not got_named:
+                # Create a new dictionary for the named parameters
+                got_named = create_new_temporary(c)
+                add_code(c, OPCODE_NEW, got_named, 0, 0)
+                *varargs = true
+
+            LM_Node *paramkey = param->first
+            LM_Node *paramval = paramkey->next
+            LM_Token *keytok = paramkey->data
+            int result = compile_node(c, paramval)
+            # Assigning to ... is a special syntax for appending a dictionary to
+            # the variable arguments dictionary.
+            if not strcmp(keytok->string, "..."):
+                add_code(c, OPCODE_ADD, got_named, got_named, result)
+            else:
+                int attribute = add_string_constant(c, keytok->string)
+                attribute = access_constant(c, attribute)
+                add_code(c, OPCODE_SET, got_named, attribute, result)
+
+        LM_Node *parent = param->parent
+        param = param->next
+        while not param:
+            if parent and parent != n:
+                param = parent
+                parent = param->parent
+                param = param->next
+            else:
+                break
+
+    # Named parameters are just passed as an extra dictionary at the end.
+    if got_named:
+        params[nparams++] = got_named
+
+    # Check if the arguments already are in the right order for passing on.
+    int need_args = 0
+    *first = params[0]
+    for int i = 0; i < nparams; i++:
+        if params[i] < 1 or params[i] > 127 or params[i] != *first + i:
+            need_args = 1
+            break
+
+    # If not, assign them all to consecutive locals.
+    if need_args:
+        *first = c->current->locals_count
+        for int i = 0; i < nparams; i++:
+            int num = create_new_temporary(c)
+            add_code(c, OPCODE_ARG, num, params[i], 0)
+
+    return nparams
+
 static int def compile_dot(LM_Compiler *c, LM_Node *n):
     int result = create_new_temporary(c)
     int temps = c->current->temporaries_count
@@ -309,6 +402,15 @@ static int def compile_dot(LM_Compiler *c, LM_Node *n):
         add_code(c, OPCODE_GEU, result, constant, attribute)
     else:
         add_code(c, OPCODE_DOT, result, parent, attribute)
+
+    LM_Node *call = an->next
+    if call:
+        int first
+        bool varargs
+        int nparams = parse_function_call_parameters(c, call, &first, &varargs)
+        add_code(c, varargs ? OPCODE_FUV : OPCODE_FUN, result, first, nparams)
+        # 0 means the return value of the function call
+        return 0
 
     return result
 
@@ -606,96 +708,6 @@ static int def compile_conditional(LM_Compiler *c, LM_Node *n):
 
     return 0   
 
-# Note: The paramnames are not generally available at compile time. Only in
-# cases where they trivially are, we do an optimization step here and translate
-# them to normal, ordered parameters.
-static int def parse_function_call_parameters(LM_Compiler *c, LM_Node *n,
-    int *first, bool *varargs):
-    # TODO: Clarify if we want a limit of 256 params
-    int params[256]
-    params[0] = 0
-
-    *varargs = false
-
-    LM_Node *param = n->first
-    int nparams = 0
-    int got_named = 0
-    # What we do is, we compile all the parameter expressions and remember
-    # into which local variables the resulting values go.
-    while param:
-        int positional = 1
-        if param->type == LM_NODE_OPERATION:
-            LM_Token *ptoken = param->data
-            if not strcmp(ptoken->string, ","):
-                param = param->first
-                continue
-            # FIXME: should create a tuple
-            if not strcmp(ptoken->string, "("):
-                param = param->first
-                continue
-            # An assignement here means a named parameter
-            if not strcmp(ptoken->string, "="):
-                positional = 0
-
-        if positional:
-            if got_named:
-                fprintf(stderr, "Error: "
-                    "Cannot use positional parameters after named parametes.\n")
-                # FIXME: properly handle errors
-            int result = compile_node(c, param)
-            params[nparams] = result
-            nparams++
-        else:
-            if not got_named:
-                # Create a new dictionary for the named parameters
-                got_named = create_new_temporary(c)
-                add_code(c, OPCODE_NEW, got_named, 0, 0)
-                *varargs = true
-
-            LM_Node *paramkey = param->first
-            LM_Node *paramval = paramkey->next
-            LM_Token *keytok = paramkey->data
-            int result = compile_node(c, paramval)
-            # Assigning to ... is a special syntax for appending a dictionary to
-            # the variable arguments dictionary.
-            if not strcmp(keytok->string, "..."):
-                add_code(c, OPCODE_ADD, got_named, got_named, result)
-            else:
-                int attribute = add_string_constant(c, keytok->string)
-                attribute = access_constant(c, attribute)
-                add_code(c, OPCODE_SET, got_named, attribute, result)
-
-        LM_Node *parent = param->parent
-        param = param->next
-        while not param:
-            if parent and parent != n:
-                param = parent
-                parent = param->parent
-                param = param->next
-            else:
-                break
-
-    # Named parameters are just passed as an extra dictionary at the end.
-    if got_named:
-        params[nparams++] = got_named
-
-    # Check if the arguments already are in the right order for passing on.
-    int need_args = 0
-    *first = params[0]
-    for int i = 0; i < nparams; i++:
-        if params[i] < 1 or params[i] > 127 or params[i] != *first + i:
-            need_args = 1
-            break
-
-    # If not, assign them all to consecutive locals.
-    if need_args:
-        *first = c->current->locals_count
-        for int i = 0; i < nparams; i++:
-            int num = create_new_temporary(c)
-            add_code(c, OPCODE_ARG, num, params[i], 0)
-
-    return nparams
-
 int def parse_dictionary_constant(LM_Compiler *c, LM_Node *n):
     int x = create_new_temporary(c)
     add_code(c, OPCODE_NEW, x, 0, 0)
@@ -829,6 +841,11 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
             int x = create_new_temporary(c)
             add_code(c, OPCODE_STR, x, first, 0)
             return x
+        elif not strcmp(token->string, "module"):
+            nparams = parse_function_call_parameters(c, n, &first, &varargs)
+            int x = create_new_temporary(c)
+            add_code(c, OPCODE_IMP, x, first, 0)
+            return x
         elif not strcmp(token->string, "pause"):
             add_code(c, OPCODE_PAU, 0, 0, 0)
             return 0
@@ -852,7 +869,7 @@ static int def compile_operation(LM_Compiler *c, LM_Node *n):
 
             nparams = parse_function_call_parameters(c, n, &first, &varargs)
             add_code(c, varargs ? OPCODE_FUV : OPCODE_FUN, result, first, nparams)
-            
+
             return 0
     return 0
 

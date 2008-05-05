@@ -46,7 +46,7 @@ def compile(char const *input, char const *output, int debug):
     lm_compiler_destroy(c)
 
 static def run_machine(LM_Machine *m):
-    lm_machine_debug(m, stderr)
+    lm_machine_debug(m, m->main_module, stderr)
 
     lm_machine_use(m, "userdict", userdict)
     lm_machine_use(m, "test", test)
@@ -105,9 +105,9 @@ def interpret(char const *input, int debug):
 
 def usage():
     fprintf(stderr, "usage:\n")
-    fprintf(stderr, "spell compile input.spell [output.code]\n")
-    fprintf(stderr, "spell execute input.spell|input.code\n")
-    fprintf(stderr, "spell interpret input.spell\n")
+    fprintf(stderr, "spell c[ompile] input.spell [output.code]\n")
+    fprintf(stderr, "spell e[xecute] input.spell|input.code\n")
+    fprintf(stderr, "spell i[nterpret] input.spell\n")
     land_set_exitcode(-1)
 
 def start():
@@ -116,6 +116,7 @@ def start():
     if land_argc >= 2:
         if not ustrcmp(land_argv[1], "compile") or\
             not ustrcmp(land_argv[1], "com") or\
+            not ustrcmp(land_argv[1], "co") or\
             not ustrcmp(land_argv[1], "c"):
             if land_argc == 3:
                 compile(land_argv[2], None, debug)
@@ -125,6 +126,7 @@ def start():
                 usage()
         elif not ustrcmp(land_argv[1], "execute") or\
             not ustrcmp(land_argv[1], "exe") or\
+            not ustrcmp(land_argv[1], "ex") or\
             not ustrcmp(land_argv[1], "e"):
             if land_argc == 3:
                 execute(land_argv[2], debug)
@@ -132,6 +134,7 @@ def start():
                 usage()
         elif not ustrcmp(land_argv[1], "interpret") or\
             not ustrcmp(land_argv[1], "int") or\
+            not ustrcmp(land_argv[1], "in") or\
             not ustrcmp(land_argv[1], "i"):
             if land_argc == 3:
                 interpret(land_argv[2], debug)
