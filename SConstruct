@@ -12,6 +12,7 @@ debug = ARGUMENTS.get("debug", "")
 profile = ARGUMENTS.get("profile", "")
 optimization = ARGUMENTS.get("optimization", "")
 memlog = ARGUMENTS.get("memlog", "")
+CC = ARGUMENTS.get("CC", "")
 
 exportcode = ARGUMENTS.get("exportcode", "")
 
@@ -24,9 +25,6 @@ pyfiles += glob.glob("src/*/*.py")
 includeenv = Environment(ENV = {'PATH' : os.environ['PATH']})
 includeenv.SConsignFile("scons/signatures")
 includeenv.BuildDir("include/land", "src", duplicate = False)
-# This means, if the same .c or .h is created, then it should be treated as
-# unmodified (does this really work?)
-includeenv.TargetSignatures("content")
 
 includeenv.BuildDir("c", "src", duplicate = False)
 includeenv.BuildDir("docstrings", "src", duplicate = False)
@@ -40,7 +38,7 @@ for py in pyfiles:
     doc = "docstrings/" + py[4:-3] + ".txt"
     name = py[4:-3]
     extra = ""
-    if exportcode: extra = "-N"
+    if exportcode: extra = "-CUN"
     includeenv.Command([c, h, doc], py, "scramble.py %s -i %s -c %s -h %s -d %s -n %s -p _LAND_HEADER" % (
     	extra, py, c, h, doc, name))
 
@@ -49,7 +47,10 @@ includeenv.Command("include/land.h", [],
 
 # Main environment.
 env = Environment()
-env.TargetSignatures("content")
+
+if CC:
+    print("Using CC=%s" % CC)
+    env["CC"] = CC
 
 if crosscompile:
     env["PLATFORM"] = "win32"
@@ -76,6 +77,8 @@ env.Append(CCFLAGS = "-Wdisabled-optimization")
 env.Append(CCFLAGS = "-Wmissing-declarations")
 env.Append(CCFLAGS = "-Wno-unused-parameter")
 env.Append(CCFLAGS = "--std=gnu99")
+
+#env.Append(CCFLAGS = "-funit-at-a-time")
 
 env.Append(CPPPATH = ["include/land"])
 

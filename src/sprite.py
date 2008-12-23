@@ -342,7 +342,7 @@ LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
     """
 
     LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
-    LandList *retlist = NULL
+    LandList *retlist = None
     int tl = l / grid->super.cell_w
     int tt = t / grid->super.cell_h
     int tr = r / grid->super.cell_w
@@ -368,6 +368,23 @@ LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
                         land_add_list_data(&retlist, other)
                     item = item->next
 
+    return retlist
+
+LandList *def  land_sprites_grid_get_in_cell(LandGrid *grid,
+    int cx, cy):
+    LandList *retlist = None
+    LandSpritesGrid *sgrid = LAND_SPRITES_GRID(grid)
+    if cx < 0 or cy < 0 or cx >= grid->x_cells or cy >= grid->y_cells: return None
+    LandList *list = sgrid->sprites[cy * grid->x_cells + cx]
+    if list:
+        LandListItem *item = list->first
+        while item:
+            LandSprite *s = item->data
+            int sx = s->x / grid->cell_w
+            int sy = s->y / grid->cell_h
+            if sx == cx and sy == cy:
+                land_add_list_data(&retlist, s)
+            item = item->next
     return retlist
 
 static int def is_left(float ax, ay, bx, by):
@@ -553,6 +570,13 @@ def land_sprites_grid_draw(LandGrid *super, LandView *view):
     self->tag++
     land_grid_draw_normal(super, view)
 
+static def get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
+    *cell_x, *cell_y):
+    float x = view->scroll_x + (view_x - view->x) / view->scale_x
+    float y = view->scroll_y + (view_y - view->y) / view->scale_y
+    *cell_x = x / self->cell_w
+    *cell_y = y / self->cell_h
+
 def land_sprites_init():
 
     land_log_message("land_sprites_init\n")
@@ -560,6 +584,7 @@ def land_sprites_init():
     land_grid_vtable_sprites->draw = land_sprites_grid_draw
     land_grid_vtable_sprites->draw_cell = (void *)land_sprites_grid_draw_cell
     land_grid_vtable_sprites->del = land_sprites_grid_del
+    land_grid_vtable_sprites->get_cell_at = get_cell_at
 
 def land_sprites_exit():
 

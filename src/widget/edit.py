@@ -1,3 +1,4 @@
+import global stdbool
 import base
 
 # A simple, one-line edit box. 
@@ -9,6 +10,7 @@ class LandWidgetEdit:
     int cursor
     int last_key
     int last_char
+    bool align_right
     void (*modified)(LandWidget *self)
 
 macro LAND_WIDGET_EDIT(widget) ((LandWidgetEdit *) land_widget_check(widget,
@@ -26,6 +28,14 @@ static double land_widget_cursor_blink_rate = 2
 
 LandWidgetInterface *land_widget_edit_interface
 
+static int def get_x_offset(LandWidget *base):
+    int x = base->box.x + base->element->il
+    LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
+    if self->align_right:
+        int w = land_text_get_width(self->text)
+        x = base->box.x + base->box.w - base->element->r - w
+    return x
+
 def land_widget_edit_draw(LandWidget *base):
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
     if !base->no_decoration:
@@ -40,9 +50,10 @@ def land_widget_edit_draw(LandWidget *base):
         land_clip_intersect(l, t, r, b)
 
     if self->text:
-        int x = base->box.x + base->element->il
+        int x = get_x_offset(base)
         int y = base->box.y + base->element->it
         land_widget_theme_color(base)
+
         land_text_pos(x, y)
         land_print(self->text)
 
@@ -63,7 +74,7 @@ def land_widget_edit_mouse_tick(LandWidget *base):
     if (land_mouse_delta_b() & 1):
         if (land_mouse_b() & 1):
             base->want_focus = 1
-            int x = land_mouse_x() - base->box.x - base->element->il
+            int x = land_mouse_x() - get_x_offset(base)
             edit->cursor = land_text_get_char_index(edit->text, x)
 
 static macro M if (edit->modified) edit->modified(base)
@@ -156,6 +167,10 @@ def land_widget_edit_set_text(LandWidget *base, char const *text):
     land_widget_theme_set_minimum_size_for_text(base, text)
     if edit->cursor > ustrlen(text):
         edit->cursor = ustrlen(text)
+
+def land_widget_edit_align_right(LandWidget *base, bool yes):
+    LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
+    edit->align_right = yes
 
 char const *def land_widget_edit_get_text(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)

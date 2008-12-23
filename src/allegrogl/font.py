@@ -1,5 +1,6 @@
 import global allegro
 import ../array, ../font, ../log
+import ../allegro/font
 
 #ifndef LAND_NO_TTF
 import global fudgefont
@@ -34,8 +35,8 @@ static class FONT_AGL_DATA:
     int has_alpha
 
 class LandFontAllegrogl:
-    struct LandFont super
-    FONT *font
+    struct LandFontAllegro super
+    FONT *glfont
     char *filename
     float size
 
@@ -157,12 +158,17 @@ static LandList *fonts
 
        
 static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
-    int alpha = 0
-    int paletted = 0
+    bool alpha = False
+    bool paletted = False
+    bool kerning = False
+
+    kerning = fudgefont_font_has_kerning(af)
+
     if is_color_font(af):
         FONT_COLOR_DATA *fcd = af->data
         if bitmap_color_depth(fcd->bitmaps[0]) == 32:
-            alpha = 1
+            pass
+            #alpha = 1
         else:
             paletted = 1
             #ifndef LAND_NO_TTF
@@ -173,21 +179,26 @@ static def convert(LandFontAllegrogl *self, FONT *af, PALETTE pal):
         paletted = 1
 
     if alpha:
+        # FIXME: fudgefont doesn't deal with it
         make_trans_font(af)
-    land_log_message(" using %salpha, using %spalette\n",
-        alpha ? "" : "no ", paletted ? "" : "no ")
+    land_log_message(" using %salpha, using %spalette, using %skerning\n",
+        alpha ? "" : "no ", paletted ? "" : "no ", kerning ? "" : "no ")
 
-    self->font = allegro_gl_convert_allegro_font_ex(af,
-        AGL_FONT_TYPE_TEXTURED, -1, paletted ? GL_ALPHA : GL_RGBA8)
-    if self->font:
-        self->super.size = text_height(self->font)
-        self->super.vt = vtable
+    if kerning:
+        self->glfont = fudgefont_make_agl_font(af);
+    else:
+        self->glfont = allegro_gl_convert_allegro_font_ex(af,
+            AGL_FONT_TYPE_TEXTURED, -1, GL_ALPHA8)
+
+    if self->glfont:
+        self->super.super.size = text_height(self->glfont)
+        self->super.super.vt = vtable
         land_log_message(" font of height %d loaded\n", text_height(af))
         #int n = allegro_gl_list_font_textures(self->font, NULL, 0)
         #GLuint ids[n]
         #allegro_gl_list_font_textures(self->font, ids, n)
         #for int i = 0; i < n; i++:
-        FONT_AGL_DATA *data = self->font->data
+        FONT_AGL_DATA *data = self->glfont->data
         while data:
             int w, h, r, g, b, a
             glBindTexture(GL_TEXTURE_2D, data->texture)
@@ -209,11 +220,12 @@ LandFont *def land_font_allegrogl_new(LandDisplay *super):
     LandFontAllegrogl *self
     land_alloc(self)
     land_add_list_data(&fonts, self)
-    return &self->super
+    return &self->super.super
 
 def land_font_allegrogl_destroy(LandDisplay *d, LandFont *self):
     LandFontAllegrogl *a = (LandFontAllegrogl *)self
-    destroy_font(a->font)
+    destroy_font(a->super.font)
+    destroy_font(a->glfont)
     if a->filename: land_free(a->filename)
     land_remove_list_data(&fonts, self)
     land_free(a)
@@ -224,18 +236,18 @@ def land_font_allegrogl_del(LandDisplay *d, LandFont *self):
 static def reload(LandFontAllegrogl *self):
     int data = self->size
     PALETTE pal
-    FONT *temp = None
-    if _land_datafile:
+    FONT *temp = self->super.font
+    if not temp and _land_datafile:
         # FIXME: check for ttf extension, in which case fudgefont should support
         # loading from memory instead of a file.
         LandImage *image = land_image_load(self->filename)
         temp = grab_font_from_bitmap(image->bitmap)
         land_image_destroy(image)
-        
+
     if not temp:
         temp = load_font(self->filename, pal, &data)
     convert(self, temp, pal)
-    destroy_font(temp)
+    self->super.font = temp
 
 LandFont *def land_font_allegrogl_load(char const *filename, float size):
     land_log_message("land_font_allegrogl_load %s %.1f\n", filename, size)
@@ -244,7 +256,7 @@ LandFont *def land_font_allegrogl_load(char const *filename, float size):
     self->size = size
     reload(self)
 
-    return &self->super
+    return &self->super.super
 
 LandFont *def land_font_allegrogl_default():
     LandFontAllegrogl *self = (void *)land_display_new_font()
@@ -252,22 +264,27 @@ LandFont *def land_font_allegrogl_default():
     PALETTE pal
     memcpy(pal, default_palette, sizeof pal)
     convert(self, font, pal)
-    return &self->super
+    return &self->super.super
 
 def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
-    char const *text, int alignement):
+    char const *text, int alignment):
+    
+    if not (display->flags & LAND_OPENGL):
+        land_font_allegro_print(state, display, text, alignment)
+        return
+    
     LandFontAllegrogl *self = LAND_FONT_ALLEGROGL(state->font)
     if not self:
         return
 
-    int w = text_length(self->font, text)
+    int w = text_length(self->glfont, text)
     int h = state->font->size
 
     float x = state->x_pos
     float y = state->y_pos
-    if alignement == 1: # right
+    if alignment == 1: # right
         x -= w
-    elif alignement == 2: # center
+    elif alignment == 2: # center
         x -= w / 2.0
     # To avoid extra anti-aliasing "smear" effect with default viewport.
     x = (int)x
@@ -276,7 +293,10 @@ def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
         glEnable(GL_BLEND)
         glEnable(GL_TEXTURE_2D)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        allegro_gl_printf_ex(self->font, x, y, 0, "%s", text)
+        if fudgefont_font_has_kerning(self->glfont):
+            allegro_gl_printf_ex_kerning(self->glfont, x, y, 0, "%s", text)
+        else:
+            allegro_gl_printf_ex(self->glfont, x, y, 0, "%s", text)
 
     state->x = x
     state->y = y
@@ -286,7 +306,7 @@ def land_font_allegrogl_print(LandFontState *state, LandDisplay *display,
 float def land_font_allegrogl_text_length(LandFontState *state,
     char const *text):
     LandFontAllegrogl *self = LAND_FONT_ALLEGROGL(state->font)
-    return text_length(self->font, text)
+    return text_length(self->glfont, text)
 
 def land_font_allegrogl_unupload(void):
     if not fonts: return
@@ -294,8 +314,8 @@ def land_font_allegrogl_unupload(void):
     land_log_message("Un-uploading all fonts..\n")
     for i = fonts->first; i; i = i->next:
         LandFontAllegrogl *f = i->data
-        destroy_font(f->font)
-        f->font = NULL
+        destroy_font(f->glfont)
+        f->glfont = NULL
 
 def land_font_allegrogl_reupload(void):
     if not fonts: return
@@ -304,7 +324,7 @@ def land_font_allegrogl_reupload(void):
 
     for i = fonts->first; i; i = i->next:
         LandFontAllegrogl *f = i->data
-        if not f->font:
+        if not f->glfont:
             reload(f)
 
 def land_font_allegrogl_init(void):

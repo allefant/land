@@ -382,7 +382,6 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     LandWidget *right = land_widget_container_new(widget, 0, 0, 0, 0)
     right->vt = land_widget_scrolling_vertical_container_interface
     land_widget_theme_initialize(right)
-    land_widget_theme_set_minimum_size(right)
     land_widget_scrollbar_new(right, NULL,
         1, right->element->il, right->element->it, 0, 0)
 
@@ -390,7 +389,6 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     LandWidget *bottom = land_widget_container_new(widget, 0, 0, 0, 0)
     bottom->vt = land_widget_scrolling_horizontal_container_interface
     land_widget_theme_initialize(bottom)
-    land_widget_theme_set_minimum_size(bottom)
     land_widget_scrollbar_new(bottom, NULL,
         0, bottom->element->il, bottom->element->it, 0, 0)
 

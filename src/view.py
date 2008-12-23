@@ -1,7 +1,8 @@
 import grid, array
 
 class LandView:
-    float scroll_x, scroll_y; # position of upper left corner inside the map
+    # position of upper left corner inside the map, independent of scaling.
+    float scroll_x, scroll_y;
     float scale_x, scale_y
     # (origin of view relative to origin of map) 
     int x, y, w, h; # screen area 

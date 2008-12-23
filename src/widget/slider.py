@@ -32,15 +32,15 @@ LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
     LandWidget *super = (void *)self
     land_widget_handle_interface_initialize()
     land_widget_base_initialize(super, parent, x, y, w, h)
+
     super->vt = land_widget_handle_horizontal_interface
     land_widget_theme_initialize(super)
-    land_widget_theme_set_minimum_size(super)
     self->vertical = vertical
     self->minval = minval
     self->maxval = maxval
     self->update = update
     self->value = minval
-    
+
     return super
 
 LandWidget *def land_widget_slider_new(LandWidget *parent, float minval, maxval,
@@ -52,11 +52,10 @@ LandWidget *def land_widget_slider_new(LandWidget *parent, float minval, maxval,
     land_widget_container_initialize(super, parent, x, y, w, h)
     super->vt = land_widget_slider_interface
     land_widget_theme_initialize(super)
-    land_widget_theme_set_minimum_size(super)
-    
+
     LandWidget *handle = land_widget_handle_new(super, minval, maxval, vertical,
         update, x + super->element->il, y + super->element->it, 0, 0)
-    
+
     land_widget_layout_set_minimum_size(super,
         handle->box.min_width + super->element->il + super->element->it,
         handle->box.min_height + super->element->il + super->element->it)
@@ -118,6 +117,10 @@ def land_widget_handle_mouse_tick(LandWidget *super):
         if newy > b: newy = b
         if newx < l: newx = l
         if newy < t: newy = t
+        
+        # sliders can only be moved horizontally right now...
+        newy = t
+        
         int dx = newx - super->box.x
         int dy = newy - super->box.y
         land_widget_move(super, dx, dy)

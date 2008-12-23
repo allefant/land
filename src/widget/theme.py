@@ -446,30 +446,19 @@ def land_widget_theme_font(LandWidget *self):
     if not element: return
     land_font_set(element->font)
 
-def land_widget_theme_set_minimum_size(LandWidget *self):
-    LandWidgetThemeElement *element = land_widget_theme_element(self)
-    if not element: return
-    land_widget_layout_set_minimum_size(self,
-        MAX(self->box.min_width, element->minw),
-        MAX(self->box.min_height, element->minh))
-
-def land_widget_theme_initialize(LandWidget *self):
-    """
-    Adjust the widget's theme to its class (widgets all start off as "base"
-    otherwise).
-    """
-    if not self->element: return
-    self->element = land_widget_theme_find_element(self->element->theme, self)
-
-    land_widget_theme_set_minimum_size(self)
-
 def land_widget_theme_set_minimum_size_for_contents(LandWidget *self,
     int w, int h):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
-
-    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
-        element->it + element->ib + h)
+    self->inner_w = w
+    self->inner_h = h
+    w += element->il + element->ir
+    h += element->it + element->ib
+    if element->minw > w: w = element->minw
+    if element->minh > h: h = element->minh
+    if self->outer_w > w: w = self->outer_w
+    if self->outer_h > h: h = self->outer_h
+    land_widget_layout_set_minimum_size(self, w, h)
 
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     char const *text):
@@ -478,8 +467,7 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     land_font_set(element->font)
     int w = land_text_get_width(text)
     int h = land_font_height(land_font_current())
-    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
-        element->it + element->ib + h)
+    land_widget_theme_set_minimum_size_for_contents(self, w, h)
 
 def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     LandImage *image):
@@ -487,8 +475,61 @@ def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     if not element: return
     int w = land_image_width(image)
     int h = land_image_height(image)
-    
-    land_widget_layout_set_minimum_size(self, element->il + element->ir + w,
-        element->it + element->ib + h)
+    land_widget_theme_set_minimum_size_for_contents(self, w, h)
 
-    
+def land_widget_theme_initialize(LandWidget *self):
+    """
+    Initialize theming of an item. Must only called once at item creation,
+    as it also calculates the minimum size.
+    """
+    if not self->element: return
+    self->element = land_widget_theme_find_element(self->element->theme, self)
+    # FIXME: Do this in land_widget_base_initialize instead
+    self->outer_w = self->box.min_width
+    self->outer_h = self->box.min_height
+    int w = self->box.min_width - self->element->il - self->element->ir
+    int h = self->box.min_height - self->element->it - self->element->ib
+    land_widget_theme_set_minimum_size_for_contents(self, w, h)
+
+def land_widget_theme_update(LandWidget *self):
+    """
+    Adjust the widget's theme to its class (widgets all start off as "base"
+    otherwise).
+    """
+    if not self->element: return
+    self->element = land_widget_theme_find_element(self->element->theme, self)
+    land_widget_theme_set_minimum_size_for_contents(self,
+        self->inner_w, self->inner_h)
+
+static def _theme_recurse(LandWidget *self, LandWidgetTheme *theme):
+    if not self->element: return
+    self->element = land_widget_theme_find_element(theme, self)
+    land_widget_theme_set_minimum_size_for_contents(self,
+        self->inner_w, self->inner_h)
+
+    if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
+        LandWidgetContainer *c = (void *)self
+        LandListItem *i = c->children->first
+        while i:
+            LandWidget *w = i->data
+            _theme_recurse(w, theme)
+             i = i->next
+
+static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
+    if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
+        LandWidgetContainer *c = (void *)self
+        LandListItem *i = c->children->first
+        while i:
+            LandWidget *w = i->data
+            _layout_recurse(w, theme)
+             i = i->next
+        if self->parent and (self->parent->box.flags & GUL_NO_LAYOUT):
+            land_widget_layout(self)
+
+def land_widget_theme_apply(LandWidget *self, LandWidgetTheme *theme):
+    """
+    Applies the given theme to the widget and all its children.
+    """
+    _theme_recurse(self, theme)
+    _layout_recurse(self, theme)
+    land_widget_layout(self)

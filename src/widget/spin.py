@@ -63,6 +63,7 @@ def land_widget_spin_initialize(LandWidget *base,
     spin->step = step
 
     LandWidget *edit = land_widget_edit_new(base, "", modified, 0, 0, 1, 1)
+    land_widget_edit_align_right(edit, true)
     LandWidget *spinner = land_widget_vbox_new(base, 0, 0, 1, 1)
     LandWidgetSpinButton *buttonup = LAND_WIDGET_SPINBUTTON(
         land_widget_spinbutton_new(spinner, image_up, NULL, 0, 0, 1, 1))

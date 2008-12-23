@@ -88,6 +88,7 @@ def land_init():
 
     #ifndef LAND_NO_TTF
     install_fudgefont()
+    fudgefont_set_kerning(true);
     #endif
 
 static def land_tick():

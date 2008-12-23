@@ -276,6 +276,13 @@ class LandWidget:
     LandHash *properties # arbitrary string-keyed properties
 
     struct LandWidgetThemeElement *element # this widget's theme
+    # FIXME: get_inner_size() method should be called and those two properties
+    # removed. They cache the minimum dimensions needed for the content of
+    # the window (without theme border).
+    int inner_w, inner_h
+    # FIXME: as above, not needed. Those cache the minimum size independent of
+    # content.
+    int outer_w, outer_h
 
 class LandWidgetProperty:
     void (*destroy)(void *data)
@@ -406,6 +413,7 @@ LandWidgetInterface *def land_widget_copy_interface(LandWidgetInterface *basevt,
 
 def land_widget_create_interface(LandWidget *widget, char const *name):
     widget->vt = land_widget_copy_interface(widget->vt, name)
+    land_widget_theme_update(widget)
 
 def land_widget_base_destroy(LandWidget *self):
     land_widget_remove_all_properties(self)

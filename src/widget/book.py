@@ -15,8 +15,12 @@ static import land, widget/hbox
 
 LandWidgetInterface *land_widget_book_interface
 LandWidgetInterface *land_widget_tab_interface
+LandWidgetInterface *land_widget_tab_l_interface
+LandWidgetInterface *land_widget_tab_m_interface
+LandWidgetInterface *land_widget_tab_r_interface
 LandWidgetInterface *land_widget_tabbar_interface
 LandWidgetInterface *land_widget_bookpage_interface
+LandWidgetInterface *land_widget_bookpage_tabless_interface
 
 def land_widget_book_initialize(LandWidget *base,
     LandWidget *parent, int x, int y, int w, int h):
@@ -74,18 +78,32 @@ def land_widget_book_show_page(LandWidget *self, LandWidget *page):
 
     panelitem = panel->children->first
     tabitem = tabbar->children->first
+
     # Then unhide the active one.
     while panelitem:
+        LandWidget *tab = LAND_WIDGET(tabitem->data)
         if panelitem->data == page:
-            LandWidget *tab = panelitem->data
-            land_widget_unhide(tab)
+            LandWidget *tabpanel = LAND_WIDGET(panelitem->data)
+            
+            land_widget_unhide(tabpanel)
 
             # Kind of a hack, so if it's a scrolling window, it updates itself
             # on first view.
-            land_call_method(tab, update, (tab))
+            land_call_method(tab, update, (tabpanel))
 
-            LAND_WIDGET(tabitem->data)->selected = 1
-            break
+            tab->selected = 1
+
+        if tabitem == tabbar->children->first:
+            if tabitem->next:
+                tab->vt = land_widget_tab_l_interface
+            else:
+                tab->vt = land_widget_tab_interface
+        elif tabitem->next:
+            tab->vt = land_widget_tab_m_interface
+        else:
+            tab->vt = land_widget_tab_r_interface
+
+        land_widget_theme_update(tab)
 
         panelitem = panelitem->next
         tabitem = tabitem->next
@@ -110,6 +128,8 @@ def land_widget_book_remove_page(LandWidget *widget, LandWidget *rem):
             break
         panelitem = panelitem->next
         tabitem = tabitem->next
+
+    land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
 
 static def clicked(LandWidget *button):
     # The page corresponding to the button is the one with the same index. This
@@ -155,6 +175,8 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
     land_widget_layout_set_grid(panel, 1, 1)
     land_widget_layout_set_grid_position(add, 0, 0)
 
+    land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
+
 def land_widget_book_pagename(LandWidget *widget, char const *name):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(
@@ -168,6 +190,15 @@ LandWidget *def land_widget_book_new(LandWidget *parent, int x, y, w, h):
     land_widget_book_initialize((LandWidget *)self, parent, x, y, w, h)
     return LAND_WIDGET(self)
 
+def land_widget_book_hide_tabbar(LandWidget *widget):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
+    LandWidget *tabbar = container->children->first->next->data
+    LandWidget *panel = LAND_WIDGET(container->children->first->data)
+
+    land_widget_hide(tabbar)
+    panel->vt = land_widget_bookpage_tabless_interface
+    land_widget_theme_update(panel)
+
 def land_widget_book_interface_initialize(void):
     if (land_widget_book_interface) return
     land_widget_container_interface_initialize()
@@ -180,7 +211,14 @@ def land_widget_book_interface_initialize(void):
     land_widget_tab_interface = land_widget_copy_interface(
         land_widget_button_interface, "tab")
     land_widget_tab_interface->id |= LAND_WIDGET_ID_TAB
-    
+
+    land_widget_tab_l_interface = land_widget_copy_interface(
+        land_widget_tab_interface, "tab.l")
+    land_widget_tab_m_interface = land_widget_copy_interface(
+        land_widget_tab_interface, "tab.m")
+    land_widget_tab_r_interface = land_widget_copy_interface(
+        land_widget_tab_interface, "tab.r")
+
     land_widget_hbox_interface_initialize()
     land_widget_tabbar_interface = land_widget_copy_interface(
         land_widget_hbox_interface, "tabbar")
@@ -189,6 +227,9 @@ def land_widget_book_interface_initialize(void):
     land_widget_bookpage_interface = land_widget_copy_interface(
         land_widget_hbox_interface, "bookpage")
     land_widget_bookpage_interface->id |= LAND_WIDGET_ID_BOOKPAGE
+
+    land_widget_bookpage_tabless_interface = land_widget_copy_interface(
+        land_widget_bookpage_interface, "bookpage.tabless")
 
 # Return the current active page or None
 LandWidget *def land_widget_book_get_current_page(LandWidget *self):

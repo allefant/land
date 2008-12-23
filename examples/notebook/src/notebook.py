@@ -6,6 +6,9 @@ import global land/land
 LandWidget *desktop
 LandWidget *notebook
 
+LandWidgetTheme *theme
+LandWidgetTheme *classic, *green
+
 class LandWidgetColored:
     LandWidget super
     float r, g, b, a
@@ -19,7 +22,10 @@ static def colored(LandWidget *self):
 static def game_init(LandRunner *self):
     land_font_load("../../data/galaxy.ttf", 12)
 
-    land_widget_theme_set_default(land_widget_theme_new("../../data/classic.cfg"))
+    classic = land_widget_theme_new("../../data/classic.cfg")
+    green = land_widget_theme_new("../../data/green.cfg")
+    theme = green
+    land_widget_theme_set_default(theme)
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
 
@@ -66,10 +72,37 @@ static def game_tick(LandRunner *self):
         LandWidget *page = land_widget_book_get_current_page(notebook)
         land_widget_book_remove_page(notebook, page)
 
+    if land_key_pressed(KEY_SPACE):
+        if theme == green: theme = classic
+        else: theme = green
+        land_widget_theme_apply(desktop, theme)
+
     land_widget_tick(desktop)
 
+def print(char const *str, ...):
+    va_list args
+    va_start(args, str)
+    char t[1024]
+    vsnprintf(t, sizeof t, str, args)
+    va_end(args)
+
+    float x = land_text_x_pos()
+    float y = land_text_y_pos()
+    land_color(0, 0, 0, 1)
+    land_text_pos(x - 1, y)
+    land_print(t)
+    land_text_pos(x + 1, y)
+    land_print(t)
+    land_text_pos(x, y - 1)
+    land_print(t)
+    land_text_pos(x, y + 1)
+    land_print(t)
+    land_text_pos(x, y)
+    land_color(1, 1, 1, 1)
+    land_print(t)
+
 static def debug(LandWidget *w):
-    land_print("* %p [%s(%d): %s%s%s%s]", w, w->vt->name, w->reference,
+    print("* %p [%s(%d): %s%s%s%s]", w, w->vt->name, w->reference,
         w->no_layout ? "N" : "",
         w->hidden ? "H" : "",
         w->box.flags & GUL_SHRINK_X ? "X" : "",
@@ -84,14 +117,13 @@ static def debug(LandWidget *w):
                 debug(w)
                 i = i->next
         else:
-            land_print("(empty)")
+            print("(empty)")
         land_text_pos(land_text_x_pos() - 10, land_text_y_pos())
 
 static def game_draw(LandRunner *self):
     land_widget_draw(desktop)
     
     land_text_pos(300, 50)
-    land_color(0, 0, 0, 0.75)
     debug(desktop)
 
 static def game_exit(LandRunner *self):

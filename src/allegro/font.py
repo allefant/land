@@ -57,7 +57,8 @@ def land_font_allegro_print(LandFontState *state, LandDisplay *display,
         # If FudgeFont would output 32-bit glyphs, we couldn't recolor the
         # palette. So there certainly is no easy solution.
 
-        fudgefont_color_range(0, 0, 0, r, g, b)
+        #fudgefont_color_range(0, 0, 0, r, g, b)
+        fudgefont_color_range(255, 255, 255, r, g, b)
         #endif
 
         textout_ex(LAND_DISPLAY_IMAGE(display)->bitmap, self->font, text, x, y,

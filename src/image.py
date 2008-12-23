@@ -641,6 +641,19 @@ def land_image_unclip(LandImage *self):
     self->r = 0
     self->b = 0
 
+def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
+    float l = self->l
+    float t = self->t
+    float r = self->r
+    float b = self->b
+    land_image_clip(self, sx, sy, sx + sw, sy + sh)
+    land_image_draw(self, x - sx, y - sy)
+    self->l = l
+    self->t = t
+    self->r = r
+    self->b = b
+    
+
 int def land_image_height(LandImage *self):
     if not self->bitmap: return 0
     return self->bitmap->h

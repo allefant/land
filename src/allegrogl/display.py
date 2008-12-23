@@ -158,7 +158,7 @@ def land_display_allegrogl_filled_circle(LandDisplay *super,
         glVertex2f(xcenter + xradius * cos(a), ycenter - yradius * sin(a))
         a += ai
 
-    glEnd(); 
+    glEnd()
 
 def land_display_allegrogl_circle(LandDisplay *super,
     float x, float y, float x_, float y_):
