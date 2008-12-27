@@ -1,4 +1,4 @@
-import global land
+import global land/land
 
 LandWidget *desktop
 LandWidgetTheme *theme
@@ -11,7 +11,7 @@ def create_dialog():
     desktop = land_widget_board_new(None, 0, 0, 640, 480)
     land_widget_reference(desktop)
 
-    char *text = land_read_text("GPL-2")
+    char *text = land_read_text("../../data/GPL-2")
 
     LandWidget *window =  land_widget_vbox_new(desktop, 100, 100, 4, 4)
     LandWidget *mover = land_widget_mover_new(window, "GPL-2", 0, 0, 4, 4)

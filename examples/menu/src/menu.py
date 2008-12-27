@@ -1,7 +1,7 @@
 import global stdlib
 import global string
 
-import global land
+import global land/land
 
 char const *data[] = {
     "Aardvark", "Antelope", "Ape", "Armadillo", "Anteater",

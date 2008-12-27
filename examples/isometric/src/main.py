@@ -1,4 +1,4 @@
-import global land
+import global land/land
 
 LandMap *map
 LandView *view

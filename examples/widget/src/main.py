@@ -1,4 +1,4 @@
-import global land
+import global land/land
 
 LandFont *my_font
 LandWidgetTheme *theme
@@ -38,10 +38,10 @@ static def clicked(LandWidget *self):
 static def init(LandRunner *self):
     int i
 
-    my_font = land_font_load("data/galaxy.ttf", 10)
+    my_font = land_font_load("../../data/galaxy.ttf", 10)
     land_font_set(my_font)
 
-    theme = land_widget_theme_new("data/classic.cfg")
+    theme = land_widget_theme_new("../../data/classic.cfg")
     land_widget_theme_set_default(theme)
 
     desktop = land_widget_container_new(NULL, 0, 0, 640, 480)

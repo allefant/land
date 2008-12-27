@@ -1,4 +1,4 @@
-import global land
+import global land/land
 
 int cached = 0
 LandImage *cache

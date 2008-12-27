@@ -1,7 +1,7 @@
 import global stdlib
 import global string
 
-import global land
+import global land/land
 
 LandWidget *desktop
 LandWidgetTheme *theme

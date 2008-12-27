@@ -1,4 +1,4 @@
-import global land
+import global land/land
 
 LandWidget *desktop, *panel
 int page = 0
