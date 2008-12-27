@@ -42,8 +42,8 @@ class LandFontAllegrogl:
 
 macro LAND_FONT_ALLEGROGL(_x_) ((LandFontAllegrogl *)_x_)
 
-static import allegrogl/font, global allegro/internal/aintern
-static import data
+static import font, global allegro/internal/aintern
+static import land/data
 
 static LandFontInterface *vtable
 static LandList *fonts

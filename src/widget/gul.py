@@ -65,9 +65,9 @@ class LandLayoutBox:
     int flags
 
 import base
-static import widget/container, widget/theme
+static import container, theme
 static import global stdio, stdlib, assert, string, stdarg, allegro
-static import log, mem
+static import land/log, land/mem
 
 #static macro D(_); _
 static macro D(_); (void)0;

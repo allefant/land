@@ -7,7 +7,7 @@ class LandWidgetMover:
 
 macro LAND_WIDGET_MOVER(widget) ((LandWidgetMover *)widget)
 
-static import land
+static import land/land
 
 LandWidgetInterface *land_widget_mover_interface = NULL
 

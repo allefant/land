@@ -9,7 +9,7 @@ class LandWidgetScrollingText:
     """
     LandWidgetScrolling super
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_scrolling_text_interface
 

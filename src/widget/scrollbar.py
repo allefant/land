@@ -15,7 +15,7 @@ class LandWidgetScrollbar:
 macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLBAR, __FILE__, __LINE__))
 
-static import widget/box
+static import box
 
 global LandWidgetInterface *land_widget_scrollbar_vertical_interface
 global LandWidgetInterface *land_widget_scrollbar_horizontal_interface

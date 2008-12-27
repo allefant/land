@@ -1,5 +1,5 @@
 import base
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_box_interface
 

@@ -6,7 +6,7 @@ class LandWidgetBoard:
 macro LAND_WIDGET_BOARD(widget) ((LandWidgetBoard *) land_widget_check(widget,
     LAND_WIDGET_ID_BOARD, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_board_interface
 

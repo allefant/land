@@ -10,7 +10,7 @@ class LandDisplayAllegro:
 
 macro LAND_DISPLAY_ALLEGRO(_x_) ((LandDisplayAllegro *)_x_)
 
-static import allegro/image
+static import image
 
 static LandDisplayInterface *vtable
 

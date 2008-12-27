@@ -291,7 +291,7 @@ class LandWidgetProperty:
 macro LAND_WIDGET(widget) ((LandWidget *) land_widget_check(widget,
     LAND_WIDGET_ID_BASE, __FILE__, __LINE__))
 
-static import widget/layout, util
+static import layout, land/util
 
 global LandWidgetInterface *land_widget_base_interface
 LandArray *land_widget_interfaces

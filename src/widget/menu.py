@@ -18,7 +18,7 @@ class LandWidgetMenuItem:
     void (*callback)(LandWidget *self)
     LandWidget *menu; # Menu we are part of, if any. Usually parent. 
 
-static import widget/theme, widget/menu
+static import theme, menu
 
 LandWidgetInterface *land_widget_menu_interface
 LandWidgetInterface *land_widget_menubutton_interface

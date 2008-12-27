@@ -1,5 +1,5 @@
 import global allegro
-import global land
+import global land/land
 import global jpeglib, jerror
 
 static class my_src_mgr:

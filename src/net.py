@@ -1,7 +1,7 @@
 #ifndef LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
-import global land, unistd
+import global land/land, unistd
 
 #ifdef WINDOWS
 static import global winsock2, ws2tcpip

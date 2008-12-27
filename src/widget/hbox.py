@@ -10,7 +10,7 @@ class LandWidgetHBox:
 macro LAND_WIDGET_HBOX(widget) ((LandWidgetHBox *) land_widget_check(widget,
     LAND_WIDGET_ID_HBOX, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_hbox_interface
 

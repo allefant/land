@@ -1,5 +1,5 @@
 import base, ../list
-static import land
+static import land/land
 
 class LandWidgetContainer:
     """

@@ -1,6 +1,6 @@
 import global allegro, alleggl, math
 import ../array, ../display, ../log, ../exception
-static import allegrogl/display, allegrogl/image, allegrogl/font
+static import display, image, font
 
 class LandDisplayAllegroGL:
     LandDisplay super

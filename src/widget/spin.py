@@ -24,7 +24,7 @@ macro LAND_WIDGET_SPIN(widget) ((LandWidgetSpin *) land_widget_check(widget,
 macro LAND_WIDGET_SPINBUTTON(widget) ((LandWidgetSpinButton *)
     land_widget_check(widget, LAND_WIDGET_ID_SPINBUTTON, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 LandWidgetInterface *land_widget_spin_interface
 LandWidgetInterface *land_widget_spinbutton_interface

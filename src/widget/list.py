@@ -8,7 +8,7 @@ class LandWidgetList:
 macro LAND_WIDGET_LIST(widget) ((LandWidgetList *) land_widget_check(widget,
     LAND_WIDGET_ID_LIST, __FILE__, __LINE__))
 
-static import land, widget/button
+static import land/land, button
 
 LandWidgetInterface *land_widget_list_interface
 LandWidgetInterface *land_widget_listitem_interface

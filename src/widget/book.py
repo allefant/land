@@ -11,7 +11,7 @@ class LandWidgetBook:
 macro LAND_WIDGET_BOOK(widget) ((LandWidgetBook *) land_widget_check(widget,
     LAND_WIDGET_ID_BOOK, __FILE__, __LINE__))
 
-static import land, widget/hbox
+static import land/land, hbox
 
 LandWidgetInterface *land_widget_book_interface
 LandWidgetInterface *land_widget_tab_interface

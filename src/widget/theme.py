@@ -1,4 +1,4 @@
-import land, base
+import land/land, base
 
 enum LandWidgetThemeFlags:
     TILE_H = 0

@@ -10,7 +10,7 @@ class LandWidgetVBox:
 macro LAND_WIDGET_VBOX(widget) ((LandWidgetVBox *)land_widget_check(widget,
     LAND_WIDGET_ID_VBOX, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_vbox_interface
 

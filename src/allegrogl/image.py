@@ -1,6 +1,6 @@
 import ../image, ../display
 static import global alleggl
-static import allegrogl/image, mem, log
+static import image, land/mem, land/log
 
 static LandImageInterface *vtable
 static LandList *images

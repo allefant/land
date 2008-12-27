@@ -25,7 +25,7 @@ class LandWidgetButton:
 macro LAND_WIDGET_BUTTON(widget) ((LandWidgetButton *)
     land_widget_check(widget, LAND_WIDGET_ID_BUTTON, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_button_interface
 

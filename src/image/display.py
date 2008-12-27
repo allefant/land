@@ -1,6 +1,6 @@
 import global allegro
 import ../array, ../display, ../log
-static import allegro/image
+static import ../allegro/image
 
 class LandDisplayImage:
     struct LandDisplay super

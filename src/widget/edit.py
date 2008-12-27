@@ -16,7 +16,7 @@ class LandWidgetEdit:
 macro LAND_WIDGET_EDIT(widget) ((LandWidgetEdit *) land_widget_check(widget,
     LAND_WIDGET_ID_EDIT, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 # FIXME: should come from theme
 # How fast the cursor changes between visible and invisible.

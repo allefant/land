@@ -1,5 +1,5 @@
 import base, container
-static import land
+static import land/land
 
 class LandWidgetSlider:
     """

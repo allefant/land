@@ -9,7 +9,7 @@ class LandWidgetPanel:
 
 macro LAND_WIDGET_PANEL(widget) ((LandWidgetPanel *) land_widget_check(widget, LAND_WIDGET_ID_PANEL, __FILE__, __LINE__))
 
-static import land
+static import land/land
 
 global LandWidgetInterface *land_widget_panel_interface
 
