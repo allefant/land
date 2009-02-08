@@ -1,4 +1,4 @@
-import global allegro, alleggl, stdio
+import global stdio, stdint
 import image
 
 class LandPixelMask:

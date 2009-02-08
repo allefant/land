@@ -92,7 +92,7 @@ Like circle, but filled.
 """
 
 
-import global allegro, alleggl, stdlib
+import global stdlib
 import list, image, log, mem, font
 
 macro LAND_WINDOWED 1
@@ -190,10 +190,8 @@ def land_set_image_display(LandImage *image):
         _global_image_shortcut_display = land_display_image_new(image, 0)
 
     else:
-        self->bitmap = image->memory_cache
         self->super.w = land_image_width(image)
         self->super.h = land_image_height(image)
-        self->super.bpp = bitmap_color_depth(image->memory_cache)
 
     _global_image = image
     land_display_select(_global_image_shortcut_display)
@@ -216,9 +214,6 @@ def land_display_set():
     _land_active_display->vt->set(_land_active_display)
     _land_active_display->vt->color(_land_active_display)
     _land_active_display->vt->clip(_land_active_display)
-    
-    if set_display_switch_mode(SWITCH_BACKGROUND):
-        set_display_switch_mode(SWITCH_BACKAMNESIA)
 
 LandDisplay *def land_display_get():
     """
@@ -460,13 +455,15 @@ def land_display_unselect():
         _land_active_display = NULL
 
 def land_screenshot(char const *filename):
-    BITMAP *bmp
-    int w = _land_active_display->w
-    int h = _land_active_display->h
-    bmp = create_bitmap(w, h)
-    blit(screen, bmp, 0, 0, 0, 0, w, h)
-    save_bitmap(filename, bmp, None)
-    destroy_bitmap(bmp)
+    pass
+    #FIXME
+    #BITMAP *bmp
+    #int w = _land_active_display->w
+    #int h = _land_active_display->h
+    #bmp = create_bitmap(w, h)
+    #blit(screen, bmp, 0, 0, 0, 0, w, h)
+    #save_bitmap(filename, bmp, None)
+    #destroy_bitmap(bmp)
 
 def land_screenshot_autoname(char const *name):
     for int i = 0; ; i++:

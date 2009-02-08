@@ -4,6 +4,10 @@ cmake_policy(SET CMP0009 NEW) # fon't follow symlinks
 include_directories(${CMAKE_BINARY_DIR}/c)
 include_directories(${CMAKE_BINARY_DIR}/examples/c)
 
+# FIXME: Should be auto-detected or specified by user instead.
+include_directories(/home/elias/prog/allegro/install4.9/include)
+link_directories(/home/elias/prog/allegro/install4.9/lib)
+
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
 #
@@ -53,9 +57,8 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-static-debug
                 land-static-debug
-                alld-4.3.11 alld_unsharable agld
-                fudgefontd ldpng logg
-                png jpeg ogg vorbis vorbisfile)
+                allegro-debug-4.9.8
+                )
         endif (DEBUG)
         if (RELEASE)
             add_executable(${ex}-static ${example_cfiles})

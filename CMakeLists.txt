@@ -1,9 +1,12 @@
 cmake_minimum_required (VERSION 2.6)
 project(land) 
-add_subdirectory(examples)
+#add_subdirectory(examples)
 
 # This is so generated .h files will be found.
 include_directories(${CMAKE_BINARY_DIR}/c)
+
+# FIXME: Should be auto-detected or specified by user instead.
+include_directories(/home/elias/prog/allegro/install4.9/include)
 
 # Settings.
 set(SHARED 1 CACHE BOOL "Whether to build the shared library.")

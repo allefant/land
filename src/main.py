@@ -1,15 +1,6 @@
 import runner
 static import global allegro, sys/time,
 static import land
-static import jpg
-
-#ifndef LAND_NO_PNG
-import global loadpng
-#endif
-
-#ifndef LAND_NO_TTF
-import global fudgefont
-#endif
 
 class LandParameters:
     int w, h, bpp, hz

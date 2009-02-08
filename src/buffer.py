@@ -1,6 +1,6 @@
 static import global stdio, stdlib, string, zlib
 static import mem
-import global allegro
+import global allegro5/allegro5
 import array
 
 class LandBuffer:
@@ -195,34 +195,39 @@ static int def pf_feof(void *userdata):
 static int def pf_ferror(void *userdata):
     return 0
 
-static struct PACKFILE_VTABLE vt = {
-    pf_fclose,
-    pf_getc,
-    pf_ungetc,
-    pf_fread,
-    pf_putc,
-    pf_fwrite,
-    pf_fseek,
-    pf_feof,
-    pf_ferror
-}
 
-PACKFILE *def land_buffer_read_packfile(LandBuffer *self):
-    """
-    Returns a packfile to read from the given buffer. The buffer must not be
-    destroyed as long as the packfile is open.
-    """
-    LandBufferAsFile *lbaf; land_alloc(lbaf)
-    lbaf->landbuffer = self
-    PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
-    return pf
+#static struct PACKFILE_VTABLE vt = {
+    #pf_fclose,
+    #pf_getc,
+    #pf_ungetc,
+    #pf_fread,
+    #pf_putc,
+    #pf_fwrite,
+    #pf_fseek,
+    #pf_feof,
+    #pf_ferror
+#}
 
-PACKFILE *def land_buffer_write_packfile(LandBuffer *self):
-    """
-    Returns a packfile to write to the given buffer. The buffer must not be
-    destroyed as long as the packfile is open.
-    """
-    LandBufferAsFile *lbaf; land_alloc(lbaf)
-    lbaf->landbuffer = self
-    PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
-    return pf
+#PACKFILE *def land_buffer_read_packfile(LandBuffer *self):
+    #"""
+    #Returns a packfile to read from the given buffer. The buffer must not be
+    #destroyed as long as the packfile is open.
+    #"""
+    #LandBufferAsFile *lbaf; land_alloc(lbaf)
+    #lbaf->landbuffer = self
+    #PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
+    #return pf
+
+#PACKFILE *def land_buffer_write_packfile(LandBuffer *self):
+    #"""
+    #Returns a packfile to write to the given buffer. The buffer must not be
+    #destroyed as long as the packfile is open.
+    #"""
+    #LandBufferAsFile *lbaf; land_alloc(lbaf)
+    #lbaf->landbuffer = self
+    #PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
+    #return pf
+
+
+
+

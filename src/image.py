@@ -1,9 +1,4 @@
-import global allegro
 import array, log, pixelmask, util
-
-#ifndef LAND_NO_PNG
-import global loadpng
-#endif
 
 macro LAND_SUBIMAGE 1
 
@@ -28,14 +23,9 @@ class LandImage:
     char *filename
     char *name
 
-    BITMAP *bitmap; # FIXME: what for is this used?
-    # We always keep a memory cache. FIXME: when is it updated? 
-    BITMAP *memory_cache
-    
     int flags
 
-    LandPixelMask *mask; # Bit-mask of the image. 
-    RGB *palette
+    LandPixelMask *mask; # Bit-mask of the image.
 
     float x, y; # Offset to origin. 
 
@@ -69,52 +59,24 @@ LandImage *def land_image_load(char const *filename):
     LandImage *self = NULL
     land_log_message("land_image_load %s..", filename)
     set_color_conversion(COLORCONV_NONE)
-    BITMAP *bmp = NULL
-    PALETTE pal
-    if _land_datafile:
-        int size
-        char *buffer = land_datafile_read_entry(_land_datafile, filename,
-            &size)
-        if buffer:
-            land_log_message_nostamp(" [memory %d] ", size)
+    ALLEGRO_BITMAP *bmp = NULL
 
-            if !ustrcmp(get_extension(filename), "jpg"):
-                bmp = load_memory_jpg(buffer, size)
+    bmp = al_iio_load(filename)
 
-            #ifndef LAND_NO_PNG
-            if !strcmp(get_extension(filename), "png"):
-                bmp = load_memory_png(buffer, size, NULL)
-            #endif
-
-            land_free(buffer)
-
-    if !bmp:
-        if !strcmp(get_extension(filename), "png") or\
-            !strcmp(get_extension(filename), "jpg") or\
-            !strcmp(get_extension(filename), "bmp") or\
-            !strcmp(get_extension(filename), "tga") or\
-            !strcmp(get_extension(filename), "pcx"):
-            bmp = load_bitmap(filename, pal)
-        else:
-            bmp = load_png(filename, pal)
     if bmp:
         self = land_display_new_image()
         self->filename = land_strdup(filename)
         self->name = land_strdup(filename)
-        self->bitmap = bmp
-        self->memory_cache = bmp
-        if bitmap_color_depth(bmp) == 8:
-            self->palette = land_malloc(sizeof(PALETTE))
-            memcpy(self->palette, &pal, sizeof(PALETTE))
-
-        land_log_message_nostamp("success (%d x %d)\n", bmp->w, bmp->h)
+       
+        int w = al_bitmap_width(bmp)
+        int h = al_bitmap_height(bmp)
+        land_log_message_nostamp("success (%d x %d)\n", w, h)
         land_image_prepare(self)
     
         float red, green, blue, alpha
         int n
         n = land_image_color_stats(self, &red, &green, &blue, &alpha)
         land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
-
     else:
         land_log_message_nostamp("failure\n")
 

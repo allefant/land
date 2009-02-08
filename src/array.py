@@ -1,4 +1,4 @@
-import global stdlib, allegro, stdio
+import global stdlib, stdio, allegro5/allegro5
 class LandArray:
     int count
     int size
