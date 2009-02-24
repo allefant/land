@@ -61,17 +61,17 @@ static def game_init(LandRunner *self):
 
 static def game_tick(LandRunner *self):
     int kx = 0, ky = 0
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
-    if land_key(KEY_LEFT):
+    if land_key(LandKeyLeft):
         kx = -1
-    if land_key(KEY_RIGHT):
+    if land_key(LandKeyRight):
         kx = 1
-    if land_key(KEY_UP):
+    if land_key(LandKeyUp):
         ky = -1
-    if land_key(KEY_DOWN):
+    if land_key(LandKeyDown):
         ky = 1
-    if land_key(KEY_HOME):
+    if land_key(LandKeyHome):
         land_view_scroll_to(my_view, 0, 0)
 
     int z = land_mouse_delta_z()
@@ -105,11 +105,11 @@ static def game_exit(LandRunner *self):
 
 def begin():
     land_init()
-    land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("game",
         game_init, NULL, game_tick, game_draw, NULL, game_exit)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(begin)

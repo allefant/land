@@ -70,25 +70,25 @@ static def init(LandRunner *self):
     slider = land_widget_slider_new(desktop, -1, 1, False, None, 100, 50, 100, 10)
 
 static def tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
 
-    if land_key(KEY_LEFT):
+    if land_key(LandKeyLeft):
         land_widget_scrolling_scroll(scrolling1, -1, 0)
 
-    if land_key(KEY_RIGHT):
+    if land_key(LandKeyRight):
         land_widget_scrolling_scroll(scrolling1, 1, 0)
 
-    if land_key(KEY_UP):
+    if land_key(LandKeyUp):
         land_widget_scrolling_scroll(scrolling1, 0, -1)
 
-    if land_key(KEY_DOWN):
+    if land_key(LandKeyDown):
         land_widget_scrolling_scroll(scrolling1, 0, 1)
 
-    if land_key_pressed(KEY_U):
+    if land_key_pressed('u'):
         gul_layout_updated(scrolling1)
 
-    if land_key_pressed(KEY_A):
+    if land_key_pressed('a'):
         land_widget_scrolling_autobars(scrolling1)
 
     land_widget_tick(desktop)

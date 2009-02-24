@@ -1,7 +1,7 @@
 import grid
 
 static import global math, stdbool
-static import isometric, log, display
+static import log, display
 
 # Isometric cells:
 #

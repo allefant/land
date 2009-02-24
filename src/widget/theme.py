@@ -131,17 +131,17 @@ static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
         # top 
         if bt && y + bt >= _land_active_display->clip_y1:
             land_clip_push()
-            land_clip_intersect(0, y, land_display_width(),  MIN(y + h, y + bt))
+            land_clip_intersect(0, y, land_display_width(),  min(y + h, y + bt))
             bfunc(pat->bmp, bx, 0, bw, bt, x, y, w, bt)
             land_clip_pop()
 
         # middle 
         if h - pat->bt - pat->bb > 0 && !skip_middle:
             land_clip_push()
-            land_clip_intersect(0, MIN(y + h, y + pat->bt), land_display_width(), MAX(y, y + h - pat->bb))
-            int start = MAX(0, (_land_active_display->clip_y1 - (y + oy)) / bm)
+            land_clip_intersect(0, min(y + h, y + pat->bt), land_display_width(), max(y, y + h - pat->bb))
+            int start = max(0, (_land_active_display->clip_y1 - (y + oy)) / bm)
             start = y + oy + start * bm
-            int end = MIN(_land_active_display->clip_y2, y + h)
+            int end = min(_land_active_display->clip_y2, y + h)
             for j = start; j < end; j += bm:
                 bfunc(pat->bmp, bx, pat->bt, bw, bm, x, j, w, bm)
 
@@ -150,7 +150,7 @@ static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
         # bottom 
         if bb && y + h - bb < _land_active_display->clip_y2:
             land_clip_push()
-            land_clip_intersect(0, MAX(y, y + h - bb), land_display_width(), y + h)
+            land_clip_intersect(0, max(y, y + h - bb), land_display_width(), y + h)
             bfunc(pat->bmp, bx, land_image_height(pat->bmp) - bb, bw, bb, x,
                 y + h - bb, w, bb)
             land_clip_pop()
@@ -220,19 +220,19 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
         # left 
         if bl && x + bl >= _land_active_display->clip_x1:
             land_clip_push()
-            land_clip_intersect(x, 0, MIN(x + w, x + bl), land_display_height())
+            land_clip_intersect(x, 0, min(x + w, x + bl), land_display_height())
             blit_column(pat, 0, bl, x, y, bl, h, 0)
             land_clip_pop()
             
         # middle 
         if w - pat->bl - pat->br > 0:
             land_clip_push()
-            land_clip_intersect(MIN(x + w, x + pat->bl), 0, MAX(x, x + w - pat->br),
+            land_clip_intersect(min(x + w, x + pat->bl), 0, max(x, x + w - pat->br),
                 land_display_height())
 
-            int start = MAX(0, (_land_active_display->clip_x1 - (x + ox)) / bm)
+            int start = max(0, (_land_active_display->clip_x1 - (x + ox)) / bm)
             start = x + ox + start * bm
-            int end = MIN(_land_active_display->clip_x2, x + w - pat->br)
+            int end = min(_land_active_display->clip_x2, x + w - pat->br)
             for i = start; i < end; i += bm:
                 blit_column(pat, pat->bl, bm, i, y, bm, h, skip_middle)
 
@@ -241,38 +241,52 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
         # right 
         if br && x + w - br < _land_active_display->clip_x2:
             land_clip_push()
-            land_clip_intersect(MAX(x, x + w - br), 0, x + w, land_display_height())
+            land_clip_intersect(max(x, x + w - br), 0, x + w, land_display_height())
             blit_column(pat, bw - br, br, x + w - br, y, br, h, 0)
             land_clip_pop()
 
 
     land_clip_pop()
 
-static def read_int_arg(int argc, char **argv, int *a, int *val):
+static def read_int_arg(int argc, LandArray *argv, int *a, int *val):
     (*a)++
     if *a < argc:
-        *val = strtoul(argv[*a], NULL, 0)
+        LandBuffer *buf = land_array_get_nth(argv, *a)
+        char *arg = land_buffer_finish(buf)
+        *val = strtoul(arg, NULL, 0)
 
 LandWidgetThemeElement *def land_widget_theme_element_new(
-    struct LandWidgetTheme *theme, char const *element, int argc, char **argv):
+    struct LandWidgetTheme *theme, char const *name, *argline):
     LandWidgetThemeElement *self
     land_alloc(self)
-    self->name = land_strdup(element)
+    land_log_message("New theme element %s: %s\n", name, argline)
+
+    self->name = land_strdup(name)
     self->a = 1
     self->minw = 4
     self->minh = 4
     self->font = land_font_current()
     self->theme = theme
 
+    LandBuffer *argbuf = land_buffer_new()
+    land_buffer_cat(argbuf, argline)
+    land_buffer_strip(argbuf, " ")
+    LandArray *argv = land_buffer_split(argbuf, ' ')
+    land_buffer_del(argbuf)
+    int argc = land_array_count(argv)
     LandImage *img = NULL
     if argc:
         char name[2048]
-        uszprintf(name, sizeof name, "%s%s%s", theme->prefix, argv[0], theme->suffix)
+        LandBuffer *buf = land_array_get_nth(argv, 0)
+        char *arg = land_buffer_finish(buf)
+        uszprintf(name, sizeof name, "%s%s%s", theme->prefix, arg, theme->suffix)
+        land_free(arg)
         img = land_image_load(name)
         if img:
-            int a
-            for a = 1; a < argc; a++:
-                if (!strcmp (argv[a], "cut")):
+            for int a = 1; a < argc; a++:
+                buf = land_array_get_nth(argv, a)
+                arg = land_buffer_finish(buf)
+                if not strcmp (arg, "cut"):
                     int cx = 0, cy = 0, cw = 0, ch = 0
                     read_int_arg(argc, argv, &a, &cx)
                     read_int_arg(argc, argv, &a, &cy)
@@ -285,17 +299,17 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                         ch += land_image_height(img)
                     self->bmp = land_image_new_from(img, cx, cy, cw, ch)
 
-                elif (!strcmp (argv[a], "halign")):
+                elif not strcmp (arg, "halign"):
                     self->flags |= ALIGN_H
 
-                elif (!strcmp (argv[a], "valign")):
+                elif (!strcmp (arg, "valign")):
                     self->flags |= ALIGN_V
 
-                elif (!strcmp (argv[a], "min")):
+                elif (!strcmp (arg, "min")):
                     read_int_arg(argc, argv, &a, &self->minw)
                     read_int_arg(argc, argv, &a, &self->minh)
 
-                elif (!strcmp (argv[a], "border")):
+                elif (!strcmp (arg, "border")):
                     read_int_arg(argc, argv, &a, &self->bl)
                     read_int_arg(argc, argv, &a, &self->bt)
                     read_int_arg(argc, argv, &a, &self->br)
@@ -306,17 +320,17 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     self->ir = self->br
                     self->ib = self->bb
                 
-                elif (!strcmp (argv[a], "inner")):
+                elif (!strcmp (arg, "inner")):
                     read_int_arg(argc, argv, &a, &self->il)
                     read_int_arg(argc, argv, &a, &self->it)
                     read_int_arg(argc, argv, &a, &self->ir)
                     read_int_arg(argc, argv, &a, &self->ib)
 
-                elif (!strcmp (argv[a], "gap")):
+                elif (!strcmp (arg, "gap")):
                     read_int_arg(argc, argv, &a, &self->hgap)
                     read_int_arg(argc, argv, &a, &self->vgap)
 
-                elif (!ustrcmp(argv[a], "color")):
+                elif (!ustrcmp(arg, "color")):
                     int c = 0
                     read_int_arg(argc, argv, &a, &c)
                     self->a = (c & 255) / 255.0; c >>= 8
@@ -324,8 +338,10 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     self->g = (c & 255) / 255.0; c >>= 8
                     self->r = (c & 255) / 255.0; c >>= 8
 
-                elif (!ustrcmp(argv[a], "transparent")):
+                elif (!ustrcmp(arg, "transparent")):
                     self->transparent = 1
+                
+                land_free(arg)
 
             if !self->bmp:
                 self->bmp = land_image_new_from(img, 0, 0,
@@ -338,6 +354,7 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
         else:
             land_log_message("element: Error: %s not found!\n", name)
 
+    land_array_destroy(argv)
     if img: land_image_destroy(img)
 
     return self
@@ -346,29 +363,33 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
     LandWidgetTheme *self
     land_alloc(self)
 
-    push_config_state()
-    set_config_file(filename)
+    LandIniFile *config = land_ini_read(filename)
 
     LandBuffer *prefix = land_buffer_new()
-    land_buffer_add(prefix, filename, get_filename(filename) - filename)
-    land_buffer_cat(prefix, "/")
-    land_buffer_cat(prefix, get_config_string("agup.cfg", "prefix", ""))
+    land_buffer_cat(prefix, filename)
+    int slash = land_buffer_rfind(prefix, '/')
+    if slash >= 0:
+        land_buffer_set_length(prefix, slash + 1)
+    else:
+        land_buffer_set_length(prefix, 0)
+    
+    land_buffer_cat(prefix, land_ini_get_string(config, "agup.cfg", "prefix", ""))
 
-    self->name = land_strdup(get_config_string("agup.cfg", "name", ""))
+    self->name = land_strdup(land_ini_get_string(config, "agup.cfg", "name", ""))
     self->prefix = land_buffer_finish(prefix)
-    self->suffix = land_strdup(get_config_string("agup.cfg", "suffix", ""))
+    self->suffix = land_strdup(land_ini_get_string(config, "agup.cfg", "suffix", ""))
 
-    char const **entries = NULL
-    int n = list_config_entries("agup.cfg/elements", &entries)
-    int i
-    for i = 0; i < n; i++:
-        int argc
-        char **argv = get_config_argv("agup.cfg/elements", entries[i], &argc)
-        LandWidgetThemeElement *elem = land_widget_theme_element_new(self,
-            entries[i], argc, argv)
+    int n = land_ini_get_number_of_entries(config, "agup.cfg/elements")
+    for int i = 0; i < n; i++:
+        char const *v = land_init_get_nth_entry(config,
+            "agup.cfg/elements", i)
+        char const *k = land_ini_get_string(config, "agup.cfg/elements",
+            v, "")
+        LandWidgetThemeElement *elem = land_widget_theme_element_new(
+            self, v, k)
         land_add_list_data(&self->elements, elem)
 
-    pop_config_state()
+    land_ini_destroy(config)
 
     return self
 

@@ -66,7 +66,7 @@ class LandLayoutBox:
 
 import base
 static import container, theme
-static import global stdio, stdlib, assert, string, stdarg, allegro
+static import global stdio, stdlib, assert, string, stdarg
 static import land/log, land/mem
 
 #static macro D(_); _
@@ -81,7 +81,7 @@ static def ERR(char const *format, ...):
     ustrzcat(str, sizeof str, "\n")
     land_log_message(str)
     va_end(args)
-    
+
     #printf("\n")
 
 def gul_box_initialize(LandLayoutBox *self):
@@ -300,9 +300,9 @@ static def gul_box_bottom_up(LandWidget *self):
                     LandWidget *c = i->data
                     gul_box_bottom_up(LAND_WIDGET(c))
 
-                self->box.current_min_width = MAX(self->box.min_width,
+                self->box.current_min_width = max(self->box.min_width,
                     min_width(self))
-                self->box.current_min_height = MAX(self->box.min_height,
+                self->box.current_min_height = max(self->box.min_height,
                     min_height(self))
                 return
 

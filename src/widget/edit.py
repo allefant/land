@@ -80,9 +80,9 @@ def land_widget_edit_mouse_tick(LandWidget *base):
 static macro M if (edit->modified) edit->modified(base)
 def land_widget_edit_keyboard_tick(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
-    while (keypressed()):
-        int k
-        int u = ureadkey(&k)
+    while not land_keybuffer_empty():
+        int k, u
+        land_keybuffer_next(&k, &u)
         edit->last_key = k
         edit->last_char = u
         if u && u > 31 && u != 127:
@@ -93,31 +93,31 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
             M
         else:
             int l = ustrlen(edit->text)
-            if k == KEY_LEFT:
+            if k == LandKeyLeft:
                 edit->cursor--
                 if (edit->cursor < 0) edit->cursor = 0
 
-            elif k == KEY_RIGHT:
+            elif k == LandKeyRight:
                 edit->cursor++
                 if (edit->cursor > l) edit->cursor = l
 
-            elif k == KEY_DEL:
+            elif k == LandKeyDelete:
                 if edit->cursor < l:
                     uremove(edit->text, edit->cursor)
                     edit->bytes = ustrsizez(edit->text)
                     edit->text = land_realloc(edit->text, edit->bytes)
                     M
-            elif k == KEY_BACKSPACE:
+            elif k == LandKeyBackspace:
                 if edit->cursor > 0:
                     edit->cursor--
                     uremove(edit->text, edit->cursor)
                     edit->bytes = ustrsizez(edit->text)
                     edit->text = land_realloc(edit->text, edit->bytes)
                     M
-            elif k == KEY_HOME:
+            elif k == LandKeyHome:
                 edit->cursor = 0
 
-            elif k == KEY_END:
+            elif k == LandKeyEnd:
                 edit->cursor = l
 
 def land_widget_edit_destroy(LandWidget *base):

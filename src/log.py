@@ -1,4 +1,4 @@
-static import global stdio, stdarg, stdlib, string, allegro, time, sys/time
+static import global stdio, stdarg, stdlib, string, time, sys/time
 static import mem
 
 static char *logname = NULL

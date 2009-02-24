@@ -91,7 +91,7 @@ class LandGrid:
     int cell_w, cell_h # in pixels
     bool wrap
 
-static import grid, log, tilegrid, isometric, sprite
+static import grid, log, tilegrid, isometric, sprite, global math
 
 def land_grid_draw(LandGrid *self, LandView *view):
     self->vt->draw(self, view)

@@ -27,9 +27,9 @@ static macro BB(x1, y1, x2, y2, x3, y3, x4, y4) {
 
 static def get_bounding_box(float l, float t, float r, float b, float angle,
     float *bl, float *bt, float *br, float *bb):
-    if angle < AL_PI / 2: BB(l, t, r, t, r, b, l, b)
-    elif angle < AL_PI: BB(r, t, r, b, l, b, l, t)
-    elif angle < 3 * AL_PI / 2: BB(r, b, l, b, l, t, r, t)
+    if angle < LAND_PI / 2: BB(l, t, r, t, r, b, l, b)
+    elif angle < LAND_PI: BB(r, t, r, b, l, b, l, t)
+    elif angle < 3 * LAND_PI / 2: BB(r, b, l, b, l, t, r, t)
     else BB(l, b, l, t, r, t, r, b)
 
 #ifdef DEBUG_MASK
@@ -47,68 +47,71 @@ static def printout_mask(SinglePixelMask *mask):
         printf("\n")
 #endif
 
-# Creates n prerotated bitmasks for the given bitmap. A single bit represents
-# one pixel.
-# 
-static LandPixelMask *def pixelmask_create(BITMAP *bmp, int n, int threshold):
+# Creates n prerotated bitmasks for the given bitmap. A single bit
+# represents one pixel.
+static LandPixelMask *def pixelmask_create(LandImage *image,
+    int n, int threshold):
     LandPixelMask *mask
     int j
     mask = land_malloc(sizeof *mask + sizeof(SinglePixelMask *) * n)
     mask->n = n
-    mask->w = bmp->w
-    mask->h = bmp->h
+    int bmpw = land_image_width(image)
+    int bmph = land_image_height(image)
+    mask->w = bmpw
+    mask->h = bmph
+    mask->x = 0
+    mask->y = 0
     for j = 0; j < n; j++:
-        float angle = j * AL_PI * 2 / n
+        float angle = j * LAND_PI * 2 / n
         float w, h
-        if angle < AL_PI / 2:
-            w = bmp->w * cos(angle) + bmp->h * sin(angle)
-            h = bmp->h * cos(angle) + bmp->w * sin(angle)
+        if angle < LAND_PI / 2:
+            w = bmpw * cos(angle) + bmph * sin(angle)
+            h = bmph * cos(angle) + bmpw * sin(angle)
 
-        elif angle < AL_PI:
-            w = bmp->w * -cos(angle) + bmp->h * sin(angle)
-            h = bmp->h * -cos(angle) + bmp->w * sin(angle)
+        elif angle < LAND_PI:
+            w = bmpw * -cos(angle) + bmph * sin(angle)
+            h = bmph * -cos(angle) + bmpw * sin(angle)
 
-        elif angle < 3 * AL_PI / 2:
-            w = bmp->w * -cos(angle) + bmp->h * -sin(angle)
-            h = bmp->h * -cos(angle) + bmp->w * -sin(angle)
+        elif angle < 3 * LAND_PI / 2:
+            w = bmpw * -cos(angle) + bmph * -sin(angle)
+            h = bmph * -cos(angle) + bmpw * -sin(angle)
 
         else:
-            w = bmp->w * cos(angle) + bmp->h * -sin(angle)
-            h = bmp->h * cos(angle) + bmp->w * -sin(angle)
+            w = bmpw * cos(angle) + bmph * -sin(angle)
+            h = bmph * cos(angle) + bmpw * -sin(angle)
 
-        BITMAP *temp = create_bitmap_ex(32, w, h)
-        clear_to_color(temp, makeacol(0, 0, 0, 0))
-        pivot_sprite(temp, bmp, temp->w / 2, temp->h / 2, bmp->w / 2,
-            bmp->h / 2, -ftofix(128 * angle / AL_PI))
+        int tw = ceil(w)
+        int th = ceil(h)
+        LandImage *temp = land_image_create(tw, th)
+        land_set_image_display(temp)
+        land_image_draw_rotated(image, w / 2.0, h / 2.0, angle)
+        land_unset_image_display()
 
-        int mask_w = 1 + (temp->w + 31) / 32
+        int mask_w = 1 + (w + 31) / 32
 
         mask->rotation[j] = land_malloc(sizeof *mask->rotation[j] +
-            mask_w * temp->h * sizeof(uint32_t))
+            mask_w * th * sizeof(uint32_t))
         mask->rotation[j]->w = mask_w
-        mask->rotation[j]->h = temp->h
+        mask->rotation[j]->h = th
+        
+        unsigned char rgba[tw * th * 4]
+        land_image_get_rgba_data(temp, rgba)
+        land_image_destroy(temp)
 
-        int y
-
-        for y = 0; y < temp->h; y++:
+        for int y = 0; y < th; y++:
             int x
-
-            for x = 0; x < temp->w; x += 32:
-                int i
+            for x = 0; x < tw; x += 32:
                 int bits = 0
 
-                for i = 0; i < 32 && x + i < temp->w; i++:
-                    if geta32(getpixel(temp, x + i, y)) >= threshold:
+                for int i = 0; i < 32 && x + i < tw; i++:
+                    if rgba[y * tw * 4 + (x + i) * 4 + 3] >= threshold:
                         bits += 1 << i
-
-
+                
                 mask->rotation[j]->data[y * mask_w + x / 32] = bits
 
             # Extra 0 padding, so if *pos is valid, *(pos + 1) will point to
             # all 0 - useful to not need special case the right border. 
             mask->rotation[j]->data[y * mask_w + x / 32] = 0
-
-        destroy_bitmap(temp)
 
     return mask
 
@@ -120,7 +123,7 @@ static def pixelmask_destroy(LandPixelMask *mask):
     land_free(mask)
 
 static int def mask_get_rotation_frame(LandPixelMask *mask, float angle):
-    float r = mask->n * angle / (2 * AL_PI)
+    float r = mask->n * angle / (2 * LAND_PI)
     if r > 0: r += 0.5
     else: r -= 0.5
     int i = (int)(r) % mask->n
@@ -136,16 +139,8 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
     int h = land_image_height(self)
     float ml, mt, mr, mb
     get_bounding_box(-self->x, -self->y, w - self->x, h - self->y,
-        k * 2.0 * AL_PI / self->mask->n, &ml, &mt, &mr, &mb)
+        k * 2.0 * LAND_PI / self->mask->n, &ml, &mt, &mr, &mb)
 
-    glDisable(GL_TEXTURE_2D)
-    glBegin(GL_POINTS)
-    glColor4f(1, 1, 1, 0.5)
-    glVertex2f(x + ml, y + mt)
-    glVertex2f(x + mr, y + mt)
-    glVertex2f(x + ml, y + mb)
-    glVertex2f(x + mr, y + mb)
-    glColor4f(1, 1, 1, 1)
     for i = 0; i < self->mask->rotation[k]->h; i++:
         int j
         for j = 0; j < mask_w; j++:
@@ -153,11 +148,8 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
             int b
             for b = 0; b < 32; b++:
                 if m & (1 << b):
-                    glVertex2f(x + ml + j * 32 + b, y + mt + i)
+                    land_plot(x + ml + j * 32 + b, y + mt + i)
 
-
-
-    glEnd()
 
 # Compare two rectangles of two bit masks, using efficient bit checking. 
 static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
@@ -198,50 +190,35 @@ static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
 # Compare a bit mask on x/y and size w/h with another on x_/y_ and size w_/h_.
 # This is very efficient, only doing bit-checks if there is overlap at all.
 # 
-static int def pixelmask_collision(SinglePixelMask *mask, int x, int y, int w, int h,
-                        SinglePixelMask *mask_, int x_, int y_, int w_, int h_):
-    if x >= x_ + w_ || x_ >= x + w || y >= y_ + h_ || y_ >= y + h: return 0
+static int def pixelmask_collision(
+    SinglePixelMask *mask, int x, y, w, h,
+    SinglePixelMask *mask_, int x_, y_, w_, h_):
+    if x >= x_ + w_ or x_ >= x + w or y >= y_ + h_ or y_ >= y + h: return 0
 
     if x <= x_:
         if y <= y_:
             return pixelmask_part_collision(mask, x_ - x, y_ - y,
-                                            mask_, 0, 0, MIN(x + w - x_, w_),
-                                            MIN(y + h - y_, h_))
+                mask_, 0, 0, min(x + w - x_, w_), min(y + h - y_, h_))
 
         else:
-            return pixelmask_part_collision(mask, x_ - x, 0,
-                                            mask_, 0, y - y_, MIN(x + w - x_,
-                                                                  w_),
-                                            MIN(y_ + h_ - y, h))
+            return pixelmask_part_collision(mask, x_ - x, 0, mask_, 0,
+                y - y_, min(x + w - x_, w_), min(y_ + h_ - y, h))
 
 
     else:
         if y <= y_:
-            return pixelmask_part_collision(mask, 0, y_ - y,
-                                            mask_, x - x_, 0, MIN(x_ + w_ - x,
-                                                                  w),
-                                            MIN(y + h - y_, h_))
+            return pixelmask_part_collision(mask, 0, y_ - y, mask_,
+                x - x_, 0, min(x_ + w_ - x, w), min(y + h - y_, h_))
 
         else:
-            return pixelmask_part_collision(mask, 0, 0,
-                                            mask_, x - x_, y - y_,
-                                            MIN(x_ + w_ - x, w),
-                                            MIN(y_ + h_ - y, h))
-
-
+            return pixelmask_part_collision(mask, 0, 0, mask_, x - x_,
+                y - y_, min(x_ + w_ - x, w), min(y_ + h_ - y, h))
 
 # Create pixelmasks for the given amount of rotations (starting with angle 0).
 # The source offset and source clipping are considered for this.
 # 
 def land_image_create_pixelmasks(LandImage *self, int n, int threshold):
-    int w = self->memory_cache->w
-    int h = self->memory_cache->h
-    BITMAP *tmp = create_sub_bitmap(self->memory_cache,
-        self->l, self->t, w - self->l - self->r, h - self->t - self->b)
-    self->mask = pixelmask_create(tmp, n, threshold)
-    self->mask->x = self->l
-    self->mask->y = self->t
-    destroy_bitmap(tmp)
+    self->mask = pixelmask_create(self, n, threshold)
 
 def land_image_destroy_pixelmasks(LandImage *self):
     if self->mask: pixelmask_destroy(self->mask)
@@ -266,9 +243,9 @@ int def land_image_overlaps(LandImage *self, float x, float y, float angle,
     int my_ = other->mask->y - other->y
 
     float ml, mt, mr, mb, ml_, mt_, mr_, mb_
-    get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * AL_PI / self->mask->n,
+    get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * LAND_PI / self->mask->n,
         &ml, &mt, &mr, &mb)
-    get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i * 2.0 * AL_PI / other->mask->n,
+    get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i * 2.0 * LAND_PI / other->mask->n,
         &ml_, &mt_, &mr_, &mb_)
 
     return pixelmask_collision(

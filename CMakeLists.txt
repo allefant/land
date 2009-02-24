@@ -87,3 +87,5 @@ if (SHARED)
             )
     endif (RELEASE)
 endif (SHARED)
+
+add_subdirectory(examples EXCLUDE_FROM_ALL)

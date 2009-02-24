@@ -35,7 +35,7 @@ def my_mouse_tick(LandWidget *self):
         land_array_replace_nth(history, land_array_count(history) - 1,
             land_strdup(str))
 
-LandWidget * def land_widget_mybox_new(LandWidget *parent):
+LandWidget *def land_widget_mybox_new(LandWidget *parent):
     static LandWidgetInterface *myvt = NULL
     if not myvt:
         land_widget_box_interface_initialize()
@@ -78,7 +78,7 @@ def init(LandRunner *self):
     panel_1()
 
 def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC): land_quit()
+    if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
 
     land_widget_tick(desktop)

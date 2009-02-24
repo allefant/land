@@ -15,7 +15,7 @@ static def init(LandRunner *self):
     land_widget_reference(desktop)
 
 static def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) || land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)

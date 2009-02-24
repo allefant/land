@@ -301,8 +301,9 @@ def my_draw(LandWidget *self):
         land_color(1, 0, 0, 1)
         land_print_right("%d",  ping_out)
 
-static def closebutton():
-    simulate_keypress ((KEY_ESC << 8) + 27)
+#static def closebutton():
+    #simulate_keypress ((LandKeyEscape << 8) + 27)
+#    pass
 
 LandWidgetInterface *vt
 
@@ -353,7 +354,7 @@ def init(LandRunner *self):
     create_gui()
 
 def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC): land_quit()
+    if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
     land_widget_tick(desktop)
 
@@ -383,12 +384,12 @@ def done(LandRunner *self):
 
 def my_main():
     land_init()
-    land_set_display_parameters(320, 240, 32, 0,
+    land_set_display_parameters(320, 240,
         LAND_WINDOWED | LAND_OPENGL)
     LandRunner *runner = land_runner_new("main", init, None, tick, draw, None,
         done)
-    land_set_frequency(6)
+    land_set_fps(6)
     land_set_initial_runner(runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(my_main)

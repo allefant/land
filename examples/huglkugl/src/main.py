@@ -53,13 +53,13 @@ static def game_init(LandRunner *self):
 
 
 static def game_tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC): land_quit()
+    if land_key_pressed(LandKeyEscape): land_quit()
 
     int kx = 0, ky = 0
-    if land_key(KEY_LEFT): kx = -1
-    if land_key(KEY_RIGHT): kx = 1
-    if land_key(KEY_UP): ky = -1
-    if land_key(KEY_DOWN): ky = 1
+    if land_key(LandKeyLeft): kx = -1
+    if land_key(LandKeyRight): kx = 1
+    if land_key(LandKeyUp): ky = -1
+    if land_key(LandKeyDown): ky = 1
 
     land_sprite_move(sprites[0], game.front_grid, kx * 3, ky * 3)
 

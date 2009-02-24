@@ -3,7 +3,10 @@ macro land_call_method(self, method, params) if (self->vt->method) self->vt->met
 
 static import global land/land
 
+macro LAND_PI 3.1415926535897931
+
 char *def land_read_text(char const *filename):
+    assert(0)
     #FIXME
     return None
     #PACKFILE *pf = pack_fopen(filename, "r")

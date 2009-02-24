@@ -620,8 +620,8 @@ def land_spritetype_image_initialize(LandSpriteTypeImage *self,
     LAND_SPRITE_TYPE(self)->destroy = land_sprite_image_destroy
     LAND_SPRITE_TYPE(self)->x = image->x - image->l
     LAND_SPRITE_TYPE(self)->y = image->y - image->t
-    LAND_SPRITE_TYPE(self)->w = image->bitmap->w - image->l - image->r
-    LAND_SPRITE_TYPE(self)->h = image->bitmap->h - image->t - image->b
+    LAND_SPRITE_TYPE(self)->w = land_image_width(image) - image->l - image->r
+    LAND_SPRITE_TYPE(self)->h = land_image_height(image) - image->t - image->b
     self->image = image
     LAND_SPRITE_TYPE(self)->name = "image"
 

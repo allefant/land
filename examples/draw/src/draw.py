@@ -1,13 +1,13 @@
 import global land/land
 
 static def game_tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
 
 static float def hueclip(float hue, float pos):
-    float a = AL_PI / 3.0
-    float wrap = (pos * a - hue + AL_PI) / (2 * AL_PI)
-    wrap = (wrap - floor(wrap)) * 2 * AL_PI - AL_PI
+    float a = LAND_PI / 3.0
+    float wrap = (pos * a - hue + LAND_PI) / (2 * LAND_PI)
+    wrap = (wrap - floor(wrap)) * 2 * LAND_PI - LAND_PI
     float x = 3.0 - fabs(wrap) / a
     x -= 1
     if x < 0:
@@ -25,7 +25,7 @@ static def draw_star(float middle_x, float middle_y, int n, float r, float start
     float x, y
     float px, py, pa
     float a = start_angle
-    float da = 2 * AL_PI / n
+    float da = 2 * LAND_PI / n
     int i
     for i = 0; i <= n; i++:
         float red, green, blue
@@ -152,7 +152,7 @@ static def game_draw(LandRunner *self):
        #int i
        #for i = 3; i < 15; i++:
        #{
-           #draw_star(20.5 + (i - 3) * 50, 20.5 + j * 50, i * 2, 10, t * AL_PI / 60.0, j)
+           #draw_star(20.5 + (i - 3) * 50, 20.5 + j * 50, i * 2, 10, t * LAND_PI / 60.0, j)
        #}
    #}
    #t++
@@ -160,10 +160,10 @@ static def game_draw(LandRunner *self):
 
 def begin():
     land_init()
-    land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("game", NULL, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(begin)

@@ -175,11 +175,12 @@ So far, the state maintained by a LandDisplay thus is:
 # Import everything so the complete Land API is available.
 # Also the platform independent macros to launch the Land main loop are here.
 
-import global allegro5/allegro5
 import global stdio, stdlib, string, stdarg, stdbool, math
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
-import log, color, data, mem, widget, net, queue, sound, buffer
+import log, color, data, mem, widget, net, queue, sound, buffer, ini
+
+import land/allegro5/a5_opengl
 
 static LandArray *exit_functions
 static int _exitcode
@@ -204,9 +205,9 @@ macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw, leave,
     shortcut_runner = land_runner_new("shortcut", init, enter, tick, draw,
         leave, destroy);
     land_runner_register(shortcut_runner);
-    land_set_display_parameters(w, h, bpp, hz, flags);
+    land_set_display_parameters(w, h, flags);
     land_set_initial_runner(shortcut_runner);
-    land_set_frequency(hz); land_main();
+    land_set_fps(hz); land_mainloop();
     land_log_message("Return code is %d.\n", land_get_exitcode());
     return land_get_exitcode();} END_OF_MAIN()
 

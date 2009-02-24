@@ -1,26 +1,33 @@
-static import global allegro
-static import exception
+import global stdbool
+static import exception, land/allegro5/a5_main
+static import global assert
 
+static int _mx, _my, _mz, _mb
 static int mx, my, mz, omx, omy, omz
 static int mb, omb
 
-static int have_os_cursor = 0
-
 def land_mouse_init():
     land_show_mouse_cursor()
-
-int def land_have_os_cursor():
-    return have_os_cursor
 
 def land_mouse_tick():
     omx = mx
     omy = my
     omz = mz
     omb = mb
-    mx = mouse_x
-    my = mouse_y
-    mz = mouse_z
-    mb = mouse_b
+    mx = _mx
+    my = _my
+    mz = _mz
+    mb = _mb
+
+def land_mouse_move_event(int mx, int my, int mz):
+    _mx = mx
+    _my = my
+    _mz = mz
+
+def land_mouse_button_event(int mb):
+    # FIXME: can lose fast clicks this way, should simply treat the
+    # mouse buttons as additional keys in the keyboard module
+    _mb = mb
 
 int def land_mouse_x():
     """Return the mouse X coordinate for the current tick."""
@@ -55,15 +62,15 @@ int def land_mouse_delta_b():
     return mb ^ omb
 
 def land_mouse_set_pos(int x, int y):
-    position_mouse(x, y)
+    assert(0)
+    #position_mouse(x, y)
     mx = x
     my = y
 
-int def land_hide_mouse_cursor():
-    show_os_cursor(MOUSE_CURSOR_NONE)
-    have_os_cursor = 0
-    return have_os_cursor
+bool def land_hide_mouse_cursor():
+    platform_hide_mouse_cursor()
+    return true
 
-int def land_show_mouse_cursor():
-    have_os_cursor = !show_os_cursor(MOUSE_CURSOR_ARROW)
-    return have_os_cursor
+bool def land_show_mouse_cursor():
+    platform_show_mouse_cursor()
+    return true

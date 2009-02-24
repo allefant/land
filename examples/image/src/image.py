@@ -13,9 +13,9 @@ static LandImage * def create_test_image():
         int x = i % w
         int y = i / w
         float red, green, blue
-        red = MAX(0, 1 - (float)x / w - (float)y / h)
-        green = MAX(0, (float)x / w - (float)y / h)
-        blue = MAX(0, (float)y / h - (float)x / w)
+        red = max(0, 1 - (float)x / w - (float)y / h)
+        green = max(0, (float)x / w - (float)y / h)
+        blue = max(0, (float)y / h - (float)x / w)
         int b
         for b = 1; b < 8; b++:
             int mask = (1 << b) - 1
@@ -37,7 +37,7 @@ static LandImage * def create_test_image():
                 ix--
             if iy <= 0:
                 iy--
-            int iz = MAX(abs(ix), abs(iy))
+            int iz = max(abs(ix), abs(iy))
             if (iz & 3) == 0:
                 blue = 1
                 green = 1
@@ -70,7 +70,7 @@ static def destroy(LandRunner *self):
     land_image_del(image)
 
 static def tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
 
 static def draw(LandRunner *self):
@@ -106,8 +106,8 @@ static def draw(LandRunner *self):
     land_color(0, 1, 0, 1)
     land_filled_circle(480 - 2, 140 - 2, 480 + 2, 140 + 2)
 
-    float sx = cos(angle + AL_PI / 4) * 1.5
-    float sy = sin(angle + AL_PI / 4) * 1.5
+    float sx = cos(angle + LAND_PI / 4) * 1.5
+    float sy = sin(angle + LAND_PI / 4) * 1.5
     land_image_draw_scaled_rotated(image, 480, 300, sx, sy, -sin(angle))
     land_color(0, 1, 0, 1)
     land_filled_circle(480 - 2, 300 - 2, 480 + 2, 300 + 2)
@@ -128,14 +128,16 @@ static def draw(LandRunner *self):
     #land_image_draw(image, 40 - s, 240 + s)
     #land_image_unclip(image)
 
-    angle += 1.0 * AL_PI / 180.0
-    angle /= AL_PI * 2
+    angle += 1.0 * LAND_PI / 180.0
+    angle /= LAND_PI * 2
     angle -= floor(angle)
-    angle *= AL_PI * 2
+    angle *= LAND_PI * 2
 
     int x = 50
     int y = 50
-    glBindTexture(GL_TEXTURE_2D, ((LandImageOpenGL *)image)->gl_texture)
+    abort()
+    #FIXME
+    #glBindTexture(GL_TEXTURE_2D, ((LandImageOpenGL *)image)->gl_texture)
 
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE)
 

@@ -26,7 +26,7 @@ static def init(LandRunner *self):
     land_widget_theme_initialize(panel)
 
 static def tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
     land_widget_tick(desktop)
 

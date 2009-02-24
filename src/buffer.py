@@ -96,23 +96,35 @@ def land_buffer_strip(LandBuffer *self, char const *what):
     self->size = 1 + j - i
 
 def land_buffer_write_to_file(LandBuffer *self, char const *filename):
-    PACKFILE *pf = pack_fopen(filename, "w")
-    pack_fwrite(self->buffer, self->n, pf)
-    pack_fclose(pf)
+    FILE *f = fopen(filename, "w")
+    fwrite(self->buffer, 1, self->n, f)
+    fclose(f)
+
+int def land_buffer_rfind(LandBuffer *self, char c):
+    if self->n == 0: return -1
+    for int i = self->n - 1; i >= 0; i--:
+        if self->buffer[i] == c: return i
+    return -1
+
+def land_buffer_set_length(LandBuffer *self, int n):
+    self->n = n
+
+def land_buffer_shorten(LandBuffer *self, int n):
+    self->n -= n
 
 LandBuffer *def land_buffer_read_from_file(char const *filename):
     """
     Read a buffer from the given file. If the file cannot be read, return None.
     """
-    PACKFILE *pf = pack_fopen(filename, "r")
+    FILE *pf = fopen(filename, "r")
     if not pf:
         return None
     LandBuffer *self = land_buffer_new()
     while 1:
-        int c = pack_getc(pf)
+        int c = fgetc(pf)
         if c < 0: break
         land_buffer_add(self, (char *)&c, 1)
-    pack_fclose(pf)
+    fclose(pf)
     return self
 
 #ifndef LAND_NO_COMPRESS

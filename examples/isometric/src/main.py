@@ -49,20 +49,20 @@ static def game_init(LandRunner *self):
 
 static def game_tick(LandRunner *self):
     int kx = 0, ky = 0
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
-    if land_key(KEY_LEFT):
+    if land_key(LandKeyLeft):
         kx = -1
-    if land_key(KEY_RIGHT):
+    if land_key(LandKeyRight):
         kx = 1
-    if land_key(KEY_UP):
+    if land_key(LandKeyUp):
         ky = -1
-    if land_key(KEY_DOWN):
+    if land_key(LandKeyDown):
         ky = 1
-    if land_key_pressed(KEY_F1):
+    if land_key_pressed(LandKeyFunction + 1):
         wrap ^= 1
         restart()
-    if land_key_pressed(KEY_F2):
+    if land_key_pressed(LandKeyFunction + 2):
         int i = gridselection++
         if gridselection == 5: gridselection = 0
         float grids[][4] = {
@@ -77,7 +77,7 @@ static def game_tick(LandRunner *self):
         iso->cell_w2 = grids[i][2]
         iso->cell_h2 = grids[i][3]
         tile = tiles[i]
-    if land_key_pressed(KEY_F3):
+    if land_key_pressed(LandKeyFunction + 3):
         clip ^= 1
 
     if land_mouse_b() & 2:

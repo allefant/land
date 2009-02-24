@@ -99,10 +99,10 @@ def init(LandRunner *self):
     panel_1()
 
 def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC): land_quit()
+    if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
 
-    if land_key_pressed(KEY_SPACE):
+    if land_key_pressed(' '):
         if panel: land_widget_remove(panel)
         page++
         if page == 1: panel_2()

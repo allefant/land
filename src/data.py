@@ -1,4 +1,4 @@
-import global allegro, stdio
+import global stdio
 import array, log, mem
 
 class LandDataEntry:

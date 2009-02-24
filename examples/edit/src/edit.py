@@ -36,7 +36,7 @@ static def redraw(LandWidget *self):
     land_font_set(f)
 
 static def init(LandRunner *self):
-    af = land_font_allegro_load("data/galaxy.ttf", 20)
+    af = land_font_load("data/galaxy.ttf", 20)
 
     land_font_load("data/galaxy.ttf", 12)
 
@@ -63,7 +63,7 @@ static def init(LandRunner *self):
     current = land_image_create(128, 128)
 
 static def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) || land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)

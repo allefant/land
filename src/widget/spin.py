@@ -127,7 +127,7 @@ float def land_widget_spin_get_value(LandWidget *base):
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
     LandWidget *edit = LAND_WIDGET(item->data)
     char const *text = land_widget_edit_get_text(edit)
-    float val = ustrtod(text, NULL)
+    float val = strtod(text, NULL)
     if val < spin->min: val = spin->min
     if val > spin->max and spin->max > spin->min: val = spin->max
     return val

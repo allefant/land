@@ -1,39 +1,34 @@
+import global assert
 import array, display
 
-class LandFontInterface:
-    land_method(void, print, (LandFontState *state, LandDisplay *display, char const *text,
-        int alignement))
-    land_method(void, destroy, (LandDisplay *d, LandFont *self))
-    land_method(float, length, (LandFontState *state,    char const *text))
-
 class LandFont:
-    LandFontInterface *vt
     int size
 
 class LandFontState:
     float x_pos, y_pos
     LandFont *font
     float x, y, w, h
-    float off
+    bool off
     float wordwrap_width, wordwrap_height
 
-static import global allegro, stdio
+static import global stdio
 static import font, exception, main
-static import allegro/font, allegrogl/font
+
+static import allegro5/a5_font
 
 static LandFontState *land_font_state
 static int active
 
 def land_font_init():
+    if active: return
     land_alloc(land_font_state)
-    land_font_allegrogl_init()
-    land_font_allegro_init()
+    platform_font_init()
     active = 1
 
 def land_font_exit():
+    if not active: return
     land_free(land_font_state)
-    land_font_allegro_exit()
-    land_font_allegrogl_exit()
+    platform_font_exit()
     active = 0
 
 int def land_font_active():
@@ -45,20 +40,14 @@ LandFont *def land_font_load(char const *filename, float size):
     height of a line in the font. But some fonts, e.g. bitmap fonts, will
     ignore it. The font also us made the current font if successfully loaded.
     """
-    LandFont *self
-    if land_get_flags() & LAND_OPENGL:
-        self = land_font_allegrogl_load(filename, size)
-    else:
-        self = land_font_allegro_load(filename, size)
+    LandFont *self = platform_font_load(filename, size)
 
     land_font_state->font = self
     return self
 
 LandFont *def land_font_default():
     LandFont *self = None
-    if land_get_flags() & LAND_OPENGL:
-        self = land_font_allegrogl_default()
-    land_font_state->font = self
+    assert(0)
     return self
 
 def land_font_destroy(LandFont *self):
@@ -66,10 +55,6 @@ def land_font_destroy(LandFont *self):
 
 def land_font_set(LandFont *self):
     land_font_state->font = self
-
-#__attribute__((noreturn))
-def land_text_size(float sx, float sy):
-    land_exception("Text sizing currently not implemented, use different fonts instead.")
 
 def land_text_pos(float x, float y):
     land_font_state->x_pos = x
@@ -115,22 +100,18 @@ def land_text_on():
     land_font_state->off = 0
 
 def land_print_string(char const *str, int newline, int alignement):
-    land_font_state->font->vt->print(land_font_state, _land_active_display, str,
-        alignement)
+    platform_font_print(land_font_state, str, alignement)
     if newline:
         land_font_state->y_pos = land_font_state->y + land_font_state->h
     else:
         land_font_state->x_pos = land_font_state->x + land_font_state->w
 
 int def land_text_get_width(char const *str):
-    if land_font_state->font->vt->length:
-        return land_font_state->font->vt->length(land_font_state, str)
-    else:
-        int onoff = land_font_state->off
-        land_font_state->off = 1
-        land_font_state->font->vt->print(land_font_state, NULL, str, 0)
-        land_font_state->off = onoff
-        return land_font_state->w
+    int onoff = land_font_state->off
+    land_font_state->off = 1
+    platform_font_print(land_font_state, str, 0)
+    land_font_state->off = onoff
+    return land_font_state->w
 
 # Get the position at which the nth character is drawn. 
 int def land_text_get_char_offset(char const *str, int nth):

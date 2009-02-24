@@ -1,25 +1,17 @@
 import array, log, pixelmask, util
+static import global assert
 
 macro LAND_SUBIMAGE 1
-
-class LandImageInterface:
-    land_method(void, prepare, (LandImage *self))
-    land_method(void, draw_scaled_rotated_tinted, (LandImage *self,
-        float x, float y, float sx, float sy, float angle, float r, float g, float b, float alpha))
-    land_method(void, grab, (LandImage *self, int x, int y))
-    land_method(void, grab_into, (LandImage *self, int x, int y, int tx, int ty, int tw, int th))
-    land_method(void, sub, (LandImage *self, LandImage *parent))
+macro LAND_LOADED 2
 
 class LandImage:
     """
-    An image is a rectangular area of pixels. Land will by default always keep a
-    "memory cache" of the image, that is an uncompressed copy of all the R/G/B/A
-    values of all pixels contained in it.
-    Usually, output drivers will convert the image to a device dependent format
-    (e.g. an OpenGL texture) which is much faster to display than sending all
-    the single pixels to the screen each time the image is to be shown.
+    An image is a rectangular area of pixels. The actual representation
+    of the pixel data is completely left to the plaform specific layer.
+    An OpenGL driver most likely will have a memory buffer with the
+    raw RGBA data of the image attached to each LandImage, along with
+    a texture id for displaying it and an FBO id for drawing to it.
     """
-    LandImageInterface *vt
     char *filename
     char *name
 
@@ -27,11 +19,10 @@ class LandImage:
 
     LandPixelMask *mask; # Bit-mask of the image.
 
+    int width, height
     float x, y; # Offset to origin. 
 
     float l, t, r, b; # Cut-away left, top, right, bottom. 
-
-import allegro/image, allegrogl/image
 
 # TODO
 class LandSubImage:
@@ -44,35 +35,28 @@ class LandSubImage:
     float x, y, w, h
 
 static import global string
-static import display, data, jpg
+static import display, data
+
+static import allegro5/a5_image
 
 extern LandDataFile *_land_datafile
 
 static void (*_cb)(char const *path, LandImage *image)
 
-static int active
-
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
 LandImage *def land_image_load(char const *filename):
-    LandImage *self = NULL
     land_log_message("land_image_load %s..", filename)
-    set_color_conversion(COLORCONV_NONE)
-    ALLEGRO_BITMAP *bmp = NULL
 
-    bmp = al_iio_load(filename)
+    LandImage *self = platform_image_load(filename)
 
-    if bmp:
-        self = land_display_new_image()
-        self->filename = land_strdup(filename)
-        self->name = land_strdup(filename)
-       
-        int w = al_bitmap_width(bmp)
-        int h = al_bitmap_height(bmp)
+    if self->flags & LAND_LOADED:
+        int w = land_image_width(self)
+        int h = land_image_height(self)
         land_log_message_nostamp("success (%d x %d)\n", w, h)
         land_image_prepare(self)
-    
+
         float red, green, blue, alpha
         int n
         n = land_image_color_stats(self, &red, &green, &blue, &alpha)
@@ -90,58 +74,35 @@ LandImage *def land_image_memory_new(int w, int h):
     The image will always be a simple memory rectangle of pixels, with no
     driver specific optimizations.
     """
-    LandImage *self = land_image_allegro_new(_land_active_display)
-    if w > 0 and h > 0:
-        BITMAP *bmp = create_bitmap(w, h)
-        self->filename = None
-        self->name = None
-        self->bitmap = bmp
-        self->memory_cache = bmp
-        land_log_message("land_image_memory_new %d x %d x %d.\n", w, h,
-            bitmap_color_depth(bmp))
-        land_image_prepare(self)
-    return self
+    assert(0)
+    return None
 
 LandImage *def land_image_new(int w, int h):
     """
-    Creates a new image. If w or h are 0, the image will have no contents at
+    Creates a new image. If w and h are 0, the image will have no contents at
     all (this can be useful if the contents are to be added later).
     """
     LandImage *self = land_display_new_image()
-    if w > 0 and h > 0:
-        BITMAP *bmp = create_bitmap(w, h)
-        self->filename = None
-        self->name = None
-        self->bitmap = bmp
-        self->memory_cache = bmp
-        land_log_message("land_image_new %d x %d x %d.\n", w, h,
-            bitmap_color_depth(bmp))
-        land_image_prepare(self)
+    self->width = w
+    self->height = h
+    if w or h:
+        platform_image_empty(self)
     return self
 
 LandImage *def land_image_create(int w, int h):
     """
     Like land_image_new, but clears the image to all 0 initially.
     """
-    BITMAP *bmp = create_bitmap(w, h)
-    clear_to_color(bmp, 0)
     LandImage *self = land_display_new_image()
-    self->filename = NULL
-    self->name = NULL
-    self->bitmap = bmp
-    self->memory_cache = bmp
-    land_log_message("land_image_create %d x %d x %d.\n", w, h, bitmap_color_depth(bmp))
-    land_image_prepare(self)
+    self->width = w
+    self->height = h
+    platform_image_empty(self)
     return self
 
 def land_image_del(LandImage *self):
-    #FIXME!
-    # if self->bitmap != self->memory_cache: #    destroy_bitmap(self->bitmap)
     land_image_destroy_pixelmasks(self)
-    destroy_bitmap(self->memory_cache)
     if self->name: land_free(self->name)
     if self->filename && self->filename != self->name: land_free(self->filename)
-    if self->palette: land_free(self->palette)
     land_display_del_image(self)
 
 def land_image_destroy(LandImage *self):
@@ -154,47 +115,24 @@ def land_image_crop(LandImage *self, int x, int y, int w, int h):
     which case the additional borders are filled with transparency. The offset
     need not lie within the image.
     """
-    BITMAP *b = self->memory_cache
-    if b and x == 0 and y == 0 and w == b->w and h == b->h:
-        return
-    BITMAP *cropped = create_bitmap_ex(32, w, h)
-    clear_to_color(cropped, 0)
-    if b:
-        blit(b, cropped, x, y, 0, 0, w, h)
-        destroy_bitmap(b)
-    self->memory_cache = cropped
-    self->bitmap = cropped
-    land_image_prepare(self)
+    assert(0)
 
 def land_image_auto_crop(LandImage *self):
     """
     This will optimize an image by cropping away any completely transparent
     borders it may have.
     """
-    # TODO
-    pass
+    assert(0)
 
 LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     """
     Create a new image, copying pixel data from a rectangle in an existing
     image.
     """
-    BITMAP *bmp = create_bitmap_ex(bitmap_color_depth(copy->memory_cache),
-        w, h)
-    LandImage *self = land_display_new_image()
-    self->filename = NULL
-    self->name = NULL
-    self->bitmap = bmp
-    self->memory_cache = bmp
-    land_log_message("land_image_new_from %d x %d x %d.\n", w, h, bitmap_color_depth(bmp))
-
-    blit(copy->memory_cache, self->memory_cache, x, y, 0, 0, w, h)
-    float red, green, blue, alpha
-    int n
-    n = land_image_color_stats(self, &red, &green, &blue, &alpha)
-    land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
-    land_image_prepare(self)
-    return self
+    LandImage *self = land_image_new(w, h)
+    land_set_image_display(self)
+    land_image_draw_partial(copy, 0, 0, x, y, w, h)
+    land_unset_image_display()
 
 int def land_image_color_stats(LandImage *self,
     float *red, *green, *blue, *alpha):
@@ -203,20 +141,22 @@ int def land_image_color_stats(LandImage *self,
     and alpha component. 
     """
     int n = 0
+    int w = land_image_width(self)
+    int h = land_image_height(self)
     *red = 0
     *green = 0
     *blue = 0
     *alpha = 0
-    int i, j
-    for j = 0; j < land_image_height(self); j++:
-        for i = 0; i < land_image_width(self); i++:
-            int rgba = getpixel(self->memory_cache, i, j)
-            *red += getr32(rgba) * 1.0 / 255.0
-            *green += getg32(rgba) * 1.0 / 255.0
-            *blue += getb32(rgba) * 1.0 / 255.0
-            *alpha += geta32(rgba) * 1.0 / 255.0
+    unsigned char rgba[w * h * 4]
+    land_image_get_rgba_data(self, rgba)
+    int p = 0
+    for int j = 0; j < h; j++:
+        for int i = 0; i < w; i++:
+            *red += rgba[p++] * 1.0 / 255.0
+            *green += rgba[p++] * 1.0 / 255.0
+            *blue += rgba[p++] * 1.0 / 255.0
+            *alpha += rgba[p++] * 1.0 / 255.0
             n++
-
 
     return n
 
@@ -225,33 +165,14 @@ def land_image_color_replace(LandImage *self, int r255, int g255, int b255,
     """
     Replaces a color with another.
     """
-    BITMAP *bmp = self->memory_cache
-    for int x = 0; x < bmp->w; x++:
-        for int y = 0; y < bmp->h; y++:
-            int col = getpixel(bmp, x, y)
-            int r = getr(col)
-            int g = getg(col)
-            int b = getb(col)
-            int a = geta(col)
-            if r == r255 and g == g255 and b == b255 and a == a255:
-                putpixel(bmp, x, y, makeacol(_r255, _g255, _b255, _a255))
-    land_image_prepare(self)
+    assert(0)
 
 def land_image_colorkey(LandImage *self, int r255, int g255, int b255):
     """
     Replaces all pixels in the image matching the given RGB triplet (in 0..255
     format) with full transparency.
     """
-    BITMAP *bmp = self->memory_cache
-    for int x = 0; x < bmp->w; x++:
-        for int y = 0; y < bmp->h; y++:
-            int col = getpixel(bmp, x, y)
-            int r = getr(col)
-            int g = getg(col)
-            int b = getb(col)
-            if r == r255 and g == g255 and b == b255:
-                putpixel(bmp, x, y, 0)
-    land_image_prepare(self)
+    assert(0)
 
 def land_image_colorkey_hack(LandImage *self, int allegro_color):
     """
@@ -259,25 +180,7 @@ def land_image_colorkey_hack(LandImage *self, int allegro_color):
     the color in Allegro's format. The only use for this is if you load
     paletted pictures and want to colorkey by index.
     """
-    BITMAP *bmp = self->memory_cache
-    set_palette(self->palette)
-    BITMAP *replace = create_bitmap_ex(32, bmp->w, bmp->h)
-    for int x = 0; x < bmp->w; x++:
-        for int y = 0; y < bmp->h; y++:
-            int col = getpixel(bmp, x, y)
-            int r = getr8(col)
-            int g = getg8(col)
-            int b = getb8(col)
-            if col == allegro_color:
-                putpixel(replace, x, y, makeacol32(0, 0, 0, 0))
-            else:
-                putpixel(replace, x, y, makeacol32(r, g, b, 255))
-    destroy_bitmap(bmp)
-    land_free(self->palette)
-    self->palette = None
-    self->memory_cache = replace
-    self->bitmap = replace
-    land_image_prepare(self)
+    assert(0)
 
 def land_image_colorize(LandImage *self, LandImage *colormask):
     """
@@ -285,23 +188,7 @@ def land_image_colorize(LandImage *self, LandImage *colormask):
     color. The mask uses (1, 0, 1) for transparent, and the intensity is
     otherwise used as intensity of the replacement color.
     """
-    int allegro_pink = bitmap_mask_color(colormask->bitmap)
-    int x, y
-    float ch, cs, v
-    int r, g, b
-    r = _land_active_display->color_r * 255
-    g = _land_active_display->color_g * 255
-    b = _land_active_display->color_b * 255
-    rgb_to_hsv(r, g, b, &ch, &cs, &v)
-
-    for x = 0; x < self->bitmap->w; x++:
-        for y = 0; y < self->bitmap->h; y++:
-            int col = getpixel(colormask->bitmap, x, y)
-            if col != allegro_pink:
-                float h, s
-                rgb_to_hsv(getr(col), getg(col), getb(col), &h, &s, &v)
-                hsv_to_rgb(ch, cs, v, &r, &g, &b)
-                putpixel(self->bitmap, x, y, makecol(r, g, b))
+    assert(0)
 
 int def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     """
@@ -311,33 +198,7 @@ int def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     colors would be difficult otherwise. The array ''rgb'' should have 3 * n
     integers, consisting of consecutive R, G, B triplets to replace.
     """
-    int modified = 0
-    int x, y
-    float ch, cs, v
-    int r, g, b
-    r = _land_active_display->color_r * 255
-    g = _land_active_display->color_g * 255
-    b = _land_active_display->color_b * 255
-    rgb_to_hsv(r, g, b, &ch, &cs, &v)
-
-    for x = 0; x < self->bitmap->w; x++:
-        for y = 0; y < self->bitmap->h; y++:
-            int col = getpixel(self->bitmap, x, y)
-            int cr = getr(col)
-            int cg = getg(col)
-            int cb = getb(col)
-            int a = geta(col)
-            for int i = 0; i < n; i++:
-                if rgb[i * 3] == cr and rgb[i * 3 + 1] == cg and\
-                    rgb[i * 3 + 2] == cb:
-                    modified += 1
-                    float h, s
-                    rgb_to_hsv(cr, cg, cb, &h, &s, &v)
-                    hsv_to_rgb(ch, cs, v, &r, &g, &b)
-                    putpixel(self->bitmap, x, y, makeacol(r, g, b, a))
-                    break
-    if modified: land_image_prepare(self)
-    return modified
+    assert(0)
 
 LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     int *rgb):
@@ -351,49 +212,7 @@ LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     The use of this function is to always draw the mask over the original
     image, but tint the white mask to other colors.
     """
-    LandImage *mask = land_display_new_image()
-    mask->filename = None
-    mask->name = None
-    mask->x = self->x
-    mask->y = self->y
-    mask->l = self->l
-    mask->t = self->t
-    mask->r = self->r
-    mask->b = self->b
-
-    int w = self->bitmap->w
-    int h = self->bitmap->h
-    BITMAP *bmp = create_bitmap_ex(32, w, h)
-    clear_to_color(bmp, makeacol(0, 0, 0, 0))
-    mask->memory_cache = bmp
-    mask->bitmap = bmp
-    land_log_message("land_image_split_mask_from_colors %d x %d x %d.\n", w, h,
-        bitmap_color_depth(bmp))
-    
-    for int x = 0; x < self->bitmap->w; x++:
-        for int y = 0; y < self->bitmap->h; y++:
-            int col = getpixel(self->bitmap, x, y)
-            int cr = getr(col)
-            int cg = getg(col)
-            int cb = getb(col)
-            int a = geta(col)
-            for int i = 0; i < n_rgb; i++:
-                if rgb[i * 3] == cr and rgb[i * 3 + 1] == cg and\
-                    rgb[i * 3 + 2] == cb:
-                    float hue, sat, val
-                    rgb_to_hsv(cr, cg, cb, &hue, &sat, &val)
-                    int r, g, b
-                    hsv_to_rgb(hue, 0, val, &r, &g, &b)
-                    putpixel(self->memory_cache, x, y, makeacol(cr, cg, cb, 0))
-                    putpixel(mask->memory_cache, x, y, makeacol(r, g, b, a))
-                    break
-
-    float red, green, blue, alpha
-    int n = land_image_color_stats(mask, &red, &green, &blue, &alpha)
-    land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
-    land_image_prepare(self)
-    land_image_prepare(mask)
-    return mask
+    assert(0)
 
 def land_image_prepare(LandImage *self):
     """
@@ -402,7 +221,7 @@ def land_image_prepare(LandImage *self):
     this is not needed, but it can be useful for certain optimizations, where
     the automatic synchronization is circumvented.
     """
-    self->vt->prepare(self)
+    platform_image_prepare(self)
 
 static int def callback(const char *filename, int attrib, void *param):
     LandArray **filenames = param
@@ -421,14 +240,15 @@ LandArray *def land_load_images_cb(char const *pattern,
     referencing them all, in alphabetic filename order. The callback function
     is called on each image along the way.
     """
+    assert(0)
     LandArray *filenames = None
     int count = 0
     if _land_datafile:
         count = land_datafile_for_each_entry(_land_datafile, pattern, callback,
             &filenames)
 
-    if !count:
-        count = for_each_file_ex(pattern, 0, 0, callback, &filenames)
+    # if !count:
+    #    count = for_each_file_ex(pattern, 0, 0, callback, &filenames)
 
     if not filenames: return None
 
@@ -463,9 +283,13 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
 LandImage *def land_image_sub(LandImage *parent, float x, float y, float w, float h):
     LandImage *self = land_display_new_image()
     self->flags |= LAND_SUBIMAGE
-    self->vt->sub(self, parent)
-    self->bitmap = parent->bitmap
-    self->memory_cache = parent->memory_cache
+    
+    assert(0)
+    
+    #self->vt->sub(self, parent)
+
+    #self->bitmap = parent->bitmap
+    #self->memory_cache = parent->memory_cache
     self->l = x
     self->t = y
     self->r = land_image_width(parent) - x - w
@@ -512,19 +336,11 @@ LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
     land_image_del(sheet)
     return array
 
-def land_image_draw_scaled_rotated_tinted(LandImage *self, float x, float y, float sx, float sy,
+def land_image_draw_scaled_rotated_tinted(LandImage *self, float x,
+    float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
-    # FIXME
-    # We cannot just use the image's vtable here. And we also cannot just use
-    # the display's vtable. In fact, we might need another method for any
-    # display/image combination. For now, if the display is an ImageDisplay,
-    # we draw the image as if it were an LandImageAllegro, no matter what type
-    # of image it is. In all other cases, we let the image vtable do whateve
-    # it sees fit.
-    if land_display_image_check(_land_active_display):
-        land_image_allegro_draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha)
-    else:
-        self->vt->draw_scaled_rotated_tinted(self, x, y, sx, sy, angle, r, g, b, alpha)
+    platform_image_draw_scaled_rotated_tinted(self, x, y, sx, sy,
+        angle, r, g, b, alpha)
 
 def land_image_draw_scaled_rotated(LandImage *self, float x, float y, float sx, float sy,
     float angle):
@@ -551,40 +367,27 @@ def land_image_draw_tinted(LandImage *self, float x, float y, float r, float g,
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, r, g, b, alpha)
 
 def land_image_grab(LandImage *self, int x, int y):
-    self->vt->grab(self, x, y)
+    platform_image_grab_into(self, x, y, 0, 0, self->width, self->height)
 
-def land_image_grab_into(LandImage *self, int x, int y, int tx, int ty, int tw, int th):
-    self->vt->grab_into(self, x, y, tx, ty, tw, th)
+def land_image_grab_into(LandImage *self, float x, y, tx, ty, tw, th):
+    platform_image_grab_into(self, x, y, tx, ty, tw, th)
 
 def land_image_offset(LandImage *self, int x, int y):
     self->x = x
     self->y = y
 
 def land_image_memory_draw(LandImage *self, float x, float y):
-    # FIXME
-    glBindTexture(GL_TEXTURE_2D, 0) # This is needed, no idea why
-    # FIXME - this always draws to screen. When it really is needed is when we
-    # draw a memory bitmap to e.g. an OpenGL display. The correct way to do
-    # this is to add a method to each display driver to draw a memory bitmap.
-    blit(self->bitmap, screen, 0, 0, x - self->x, y - self->y,
-        self->bitmap->w, self->bitmap->h)
+    assert(0)
 
 def land_image_center(LandImage *self):
-    self->x = self->bitmap->w / 2
-    self->y = self->bitmap->h / 2
+    self->x = 0.5 * self->width
+    self->y = 0.5 * self->height
 
 def land_image_init():
-    land_image_allegro_init()
-    land_image_allegrogl_init()
-    active = 1
+    pass
 
 def land_image_exit():
-    land_image_allegrogl_exit()
-    land_image_allegro_exit()
-    active = 0
-
-int def land_image_active():
-    return active
+    pass
 
 # Set's a source clip rectangle for the image. That is, only the specified
 # rectangle out of the image will actually be used when this image is drawn
@@ -593,8 +396,8 @@ int def land_image_active():
 def land_image_clip(LandImage *self, float x, float y, float x_, float y_):
     self->l = x
     self->t = y
-    self->r = self->bitmap->w - x_
-    self->b = self->bitmap->h - y_
+    self->r = self->width - x_
+    self->b = self->height - y_
 
 # Just a shortcut for land_image_clip(image, 0, 0, 0, 0); 
 def land_image_unclip(LandImage *self):
@@ -614,71 +417,26 @@ def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
     self->t = t
     self->r = r
     self->b = b
-    
 
 int def land_image_height(LandImage *self):
-    if not self->bitmap: return 0
-    return self->bitmap->h
+    return self->width
 
 int def land_image_width(LandImage *self):
-    if not self->bitmap: return 0
-    return self->bitmap->w
+    return self->height
 
 # Optimizes a bitmap to take only as little space as necesary, whilst
 # maintaining the correct offset.
-# 
-static BITMAP *def optimize_bitmap(BITMAP *bmp, int *x, int *y):
-    int l = bmp->w
-    int r = -1
-    int t = bmp->h
-    int b = -1
-    int i, j
-    for j = 0; j < bmp->h; j++:
-        for i = 0; i < bmp->w; i++:
-            if getpixel(bmp, i, j) != bitmap_mask_color(bmp):
-                if i < l: l = i
-                if j < t: t = j
-                if i > r: r = i
-                if j > b: b = j
-
-
-
-    BITMAP *optimized = create_bitmap(1 + r - l, 1 + b - t)
-    blit(bmp, optimized, l, t, 0, 0, optimized->w, optimized->h)
-    # E.g. our image is 20x20, and x/y is 10/10, if now l/t is 10/10,
-    # then x/y becomes 0/0.
-    *x -= l
-    *y -= t
-    return optimized
+static LandImage *def optimize_bitmap(LandImage *self, int *x, int *y):
+    assert(0)
 
 def land_image_optimize(LandImage *self):
-    printf("FIXME: land_image_optimize\n")
-    int offx = 0, offy = 0
-    BITMAP *opt = optimize_bitmap(self->memory_cache, &offx, &offy)
-    # FIXME: self->bitmap
-    destroy_bitmap(self->memory_cache)
-    self->memory_cache = opt
+    assert(0)
 
-    self->x += offx
-    self->y += offy
-
-    # FIXME: source clip rect?
-
-    self->vt->prepare(self)
+def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
+    platform_image_get_rgba_data(self, rgba)
 
 def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
-    int w = land_image_width(self)
-    int h = land_image_height(self)
+    platform_image_set_rgba_data(self, rgba)
 
-    destroy_bitmap(self->memory_cache)
-    if self->bitmap == self->memory_cache: self->bitmap = None
-    self->memory_cache = create_bitmap(w, h)
-    if not self->bitmap: self->bitmap = self->memory_cache
-    for int y = 0; y < h; y++:
-        unsigned char *row = self->memory_cache->line[y]
-        for int x = 0; x < w; x++:
-            row[4 * x + 0] = rgba[y * w * 4 + x * 4 + 0]
-            row[4 * x + 1] = rgba[y * w * 4 + x * 4 + 1]
-            row[4 * x + 2] = rgba[y * w * 4 + x * 4 + 2]
-            row[4 * x + 3] = rgba[y * w * 4 + x * 4 + 3]
-    self->vt->prepare(self)
+def land_image_save(LandImage *self, char const *filename):
+    platform_image_save(self, filename)

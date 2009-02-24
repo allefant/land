@@ -19,10 +19,11 @@ def init(LandRunner *self):
     land_unset_image_display()
 
 def tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC):
+    if land_key_pressed(LandKeyEscape):
         land_quit()
     angle += 0.1
 
+    al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgb_f(1, 1, 1));
     land_set_image_display(image)
     land_color(0, 0, 0, 0)
     int x = land_rand(0, 99)
@@ -55,7 +56,7 @@ int def main():
     LandRunner *runner = land_runner_new("Draw Target", init, NULL, tick, draw, NULL, done)
     land_runner_register(runner)
     land_set_initial_runner(runner)
-    land_set_display_parameters(640, 480, 32, 100, LAND_OPENGL | LAND_WINDOWED)
-    land_set_frequency(100)
-    land_main()
+    land_set_display_parameters(640, 480, LAND_OPENGL | LAND_WINDOWED)
+    land_set_fps(100)
+    land_mainloop()
     return 0

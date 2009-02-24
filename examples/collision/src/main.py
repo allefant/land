@@ -19,19 +19,21 @@ static def game_init(LandRunner *self):
     land_image_center(game.img2)
 
     land_set_image_display(game.img1)
-    land_clear(0, 0, 0, 1)
+    float w = 40, h = 40
+    land_clear(0, 0, 0, 0)
     land_color(1, 0, 0, 1)
-    float x = land_display_width() / 2
-    float y = land_display_height() / 2
+    float x = w / 2
+    float y = h / 2
     land_line(x, 0, x, y)
-    land_line(x, y, 0, land_display_height())
-    land_line(x, y, land_display_width(), land_display_height())
+    land_line(x, y, 0, h)
+    land_line(x, y, w, h)
     land_unset_image_display()
 
     land_set_image_display(game.img2)
-    land_clear(0, 0, 0, 1)
+    w = 100, h = 100
+    land_clear(0, 0, 0, 0)
     land_color(1, 0, 0, 1)
-    land_line(0, 0, land_display_width(), land_display_height())
+    land_line(0, 0, w, h)
     land_unset_image_display()
 
     land_image_create_pixelmasks(game.img1, 256, 128)
@@ -44,7 +46,7 @@ static def game_init(LandRunner *self):
     game.y = land_mouse_y()
 
 static def game_tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC):
+    if land_key_pressed(LandKeyEscape):
         land_quit()
 
     float dx = land_mouse_x() - game.x
@@ -56,9 +58,9 @@ static def game_tick(LandRunner *self):
         dmax = 10
 
     int kx = 0, ky = 0
-    if land_key(KEY_LEFT):
+    if land_key(LandKeyLeft):
         kx = 1
-    if land_key(KEY_RIGHT):
+    if land_key(LandKeyRight):
         kx = -1
 
     float da = 0.1 * kx
@@ -90,8 +92,9 @@ static def game_draw(LandRunner *self):
     land_image_draw_rotated(game.img1, (int)game.x, (int)game.y, game.angle)
     land_image_draw(game.img2, game.x_, game.y_)
 
-    land_image_debug_pixelmask(game.img1, (int)game.x, (int)game.y, game.angle)
-    land_image_debug_pixelmask(game.img2, (int)game.x_, (int)game.y_, 0)
+    #land_color(0, 1, 0, 0.5)
+    #land_image_debug_pixelmask(game.img1, (int)game.x, (int)game.y, game.angle)
+    #land_image_debug_pixelmask(game.img2, (int)game.x_, (int)game.y_, 0)
 
     land_text_pos(0, 0)
     land_color(1, 1, 1, 1)

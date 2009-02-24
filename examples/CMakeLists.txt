@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
  
-cmake_policy(SET CMP0009 NEW) # fon't follow symlinks
-include_directories(${CMAKE_BINARY_DIR}/c)
+cmake_policy(SET CMP0009 NEW) # don't follow symlinks
+include_directories(${CMAKE_BINARY_DIR}/examples/c)
 include_directories(${CMAKE_BINARY_DIR}/examples/c)
 
 # FIXME: Should be auto-detected or specified by user instead.
@@ -12,14 +12,18 @@ link_directories(/home/elias/prog/allegro/install4.9/lib)
 # Step 1: Find all .py source files.
 #
 
+set(example_exes)
 file(GLOB examples RELATIVE ${CMAKE_SOURCE_DIR}/examples */src)
 foreach(exsrc ${examples})
     get_filename_component(ex ${exsrc} PATH)
-    file(GLOB_RECURSE example_pyfiles RELATIVE ${CMAKE_SOURCE_DIR}/examples ${ex}/*.py)
+    
+    message(STATUS "Example found: ${ex}")
 
     #_______________________________________________________________________
     # Step 2: Rules to create .c and .h files.
     #
+    file(GLOB_RECURSE example_pyfiles RELATIVE ${CMAKE_SOURCE_DIR}/examples
+        ${ex}/src/*.py)
     set(example_cfiles)
     foreach(py ${example_pyfiles})
         get_filename_component(path ${py} PATH)
@@ -57,7 +61,18 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-static-debug
                 land-static-debug
-                allegro-debug-4.9.8
+                allegro-debug-static-4.9.9
+                a5_font-debug-static-4.9.9
+                a5_primitives-debug-static-4.9.9
+                a5_iio-debug-static-4.9.9
+                a5_color-debug-static-4.9.9
+                z
+                png
+                jpeg
+                m
+                GL
+                Xinerama
+                Xcursor
                 )
         endif (DEBUG)
         if (RELEASE)
@@ -90,16 +105,21 @@ foreach(exsrc ${examples})
         endif (DEBUG)
         if (RELEASE)
             add_executable(${ex} ${example_cfiles})
+            list(APPEND example_exes ${ex})
             set_target_properties(${ex}
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
             target_link_libraries(${ex}
                 land
-                alleg-4.3.11 alleg_unsharable agl
-                fudgefont ldpng logg
-                png jpeg ogg vorbis vorbisfile)
+                allegro-4.9.8
+                a5_font-4.9.8
+                a5_primitives-4.9.8
+                )
         endif (RELEASE)
     endif (SHARED)
 
 endforeach(exsrc)
+
+add_custom_target(examples
+    DEPENDS ${example_exes})

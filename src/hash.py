@@ -1,4 +1,4 @@
-import global assert, stdio, stdlib, allegro
+import global assert, stdio, stdlib
 
 class LandHashEntry:
     char *thekey

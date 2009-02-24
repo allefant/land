@@ -9,9 +9,9 @@ static def game_init(LandRunner *self):
     land_alloc(game)
 
 static def game_tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
-    game->t += 1.0 / land_get_frequency()
+    game->t += 1.0 / land_get_fps()
 
 static def game_draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
@@ -24,11 +24,11 @@ static def game_draw(LandRunner *self):
 
 def init():
     land_init()
-    land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("game",
         game_init, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(init)

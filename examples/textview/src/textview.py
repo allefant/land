@@ -31,13 +31,13 @@ def init(LandRunner *r):
 
 def tick(LandRunner *r):
     if land_closebutton(): land_quit()
-    if land_key_pressed(KEY_ESC): land_quit()
+    if land_key_pressed(LandKeyEscape): land_quit()
 
     int kx = 0, ky = 0
-    if land_key(KEY_LEFT): kx -= 1
-    if land_key(KEY_RIGHT): kx += 1
-    if land_key(KEY_UP): ky -= 1
-    if land_key(KEY_DOWN): ky += 1
+    if land_key(LandKeyLeft): kx -= 1
+    if land_key(LandKeyRight): kx += 1
+    if land_key(LandKeyUp): ky -= 1
+    if land_key(LandKeyDown): ky += 1
 
     if kx or ky:
         land_widget_scrolling_scroll(scrolling, kx, ky)

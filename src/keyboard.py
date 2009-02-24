@@ -1,28 +1,92 @@
-static import keyboard, global allegro
+import global stdbool
 
-static int key_state[KEY_MAX]
-static int key_pressed[KEY_MAX]
+enum LandKeyboardKeys:
+    LandKeyNone = 0
+    LandKeyInsert = 1
+    LandKeyDelete = 2
+    LandKeyHome = 3
+    LandKeyEnd = 4
+    LandKeyPageUp = 5
+    LandKeyPageDown = 6
+    LandKeyPadSlash = 7
+    LandKeyBackspace = 8
+    LandKeyTab = 9
+    LandKeyPadStar = 10
+    LandKeyPadMinus = 11
+    LandKeyPadPlus = 12
+    LandKeyEnter = 13
+    LandKeyUnknown = 14 /* 14=U+0, ..., 26=U+12 */
+    LandKeyEscape = 27
+    LandKeyPadDelete = 28
+    LandKeyPadEnter = 29
+    LandKeyLeftWin = 30
+    LandKeyRightWin = 31 /* 32=space */
+    LandKeyUnknown2 = 33 /* 33=U'+0, ..., 38=U'+6, 39=quote */
+    LandKeyLeftShift = '('
+    LandKeyRightShift = ')'
+    LandKeyScrollLock = '*' /* 42 */
+    LandKeyNumLock = '+' /* 44=, 45=- 46=. 47=/ */
+    LandKeyNumber = '0' /* 48=0, ..., 57=9, 58=:, 59=; */
+    LandKeyLeftAlt= '<' /* 61== */
+    LandKeyRightAlt= '>'
+    LandKeyMenu = '?'
+    LandKeyFunction = '@' /* 65=F+1, 76=F+12 */
+    LandKeyPad = 'M' /* 77=P+0, 86=P+9 */
+    LandKeyLeft = 'W'
+    LandKeyRight = 'X'
+    LandKeyUp = 'Y'
+    LandKeyDown = 'Z' /* 91=[, 92=\, 93=], 94=^ */
+    LandKeyCapsLock= '_'
+    LandKeyPrint = '`'
+    LandKeyLetter = 'a' /* 97=a, ..., 122=z */
+    LandKeyLeftControl = '{'
+    LandKeyPause = '|'
+    LandKeyRightControl = '}' /* 126=~ */
+    LandKeyUnknown3 = 127 /* 127=U''+0, ..., 227=U''+100 */
+    LandKeysCount = 228
 
-static def cb(int k):
-    if k & 128:
-        key_state[k & 127] = 0
+static int key_state[LandKeysCount]
+static int key_pressed[LandKeysCount]
+static int keybuffer_keycode[256]
+static int keybuffer_unicode[256]
+static int keybuffer_first
+static int keybuffer_last
 
-    else:
-        if !key_state[k]:
-            key_pressed[k]++
-            key_state[k] = 1
+def land_key_press_event(int k):
+    if !key_state[k]:
+        key_pressed[k]++
+        key_state[k] = 1
+
+def land_key_release_event(int k):
+    key_state[k] = 0
 
 def land_keyboard_init():
-    keyboard_lowlevel_callback = cb
+    pass
 
 int def land_key(int k):
-    return key[k]
+    return key_state[k]
 
 int def land_key_pressed(int k):
     return key_pressed[k]
 
 def land_keyboard_tick():
     int i
-    for i = 0; i < KEY_MAX; i++:
+    for i = 0; i < LandKeysCount; i++:
         key_pressed[i] = 0
+    keybuffer_first = 0
+    keybuffer_last = 0
 
+def land_keyboard_add_char(int keycode, int unicode):
+    if keybuffer_last == 256: return
+    keybuffer_keycode[keybuffer_last] = keycode
+    keybuffer_unicode[keybuffer_last] = unicode
+    keybuffer_last++
+
+bool def land_keybuffer_empty():
+    return (keybuffer_last > keybuffer_first)
+
+def land_keybuffer_next(int *k, int *u):
+    if keybuffer_first < keybuffer_last:
+        *k = keybuffer_keycode[keybuffer_first]
+        *u = keybuffer_unicode[keybuffer_first]
+        keybuffer_first++

@@ -65,14 +65,14 @@ static def game_init(LandRunner *self):
     land_widget_layout(notebook)
 
 static def game_tick(LandRunner *self):
-    if land_key_pressed(KEY_ESC) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) || land_closebutton():
         land_quit()
         
-    if land_key_pressed(KEY_DEL):
+    if land_key_pressed(LandKeyDelete):
         LandWidget *page = land_widget_book_get_current_page(notebook)
         land_widget_book_remove_page(notebook, page)
 
-    if land_key_pressed(KEY_SPACE):
+    if land_key_pressed(' '):
         if theme == green: theme = classic
         else: theme = green
         land_widget_theme_apply(desktop, theme)
@@ -133,11 +133,11 @@ static def game_exit(LandRunner *self):
 
 def begin():
     land_init()
-    land_set_display_parameters(640, 480, 32, 100, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("notebook", game_init,
         NULL, game_tick, game_draw, NULL, game_exit)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(begin)

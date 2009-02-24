@@ -6,7 +6,7 @@ static def init(LandRunner *self):
     image = land_image_load(land_argv[1])
 
 static def tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
 
 static def draw(LandRunner *self):

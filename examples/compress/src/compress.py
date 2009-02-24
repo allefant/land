@@ -34,8 +34,8 @@ int def main():
     land_free(de)
 
     printf("\nBuffer 2\n")
-    LandBuffer *orig = land_buffer_read_from_file("src/compress.py")
-    b = land_buffer_read_from_file("src/compress.py")
+    LandBuffer *orig = land_buffer_read_from_file("../../data/GPL-2")
+    b = land_buffer_read_from_file("../../data/GPL-2")
     printf("Uncompressed length: %d\n", b->n)
     land_buffer_compress(b)
     printf("Compressed length: %d (%.1f%%)\n", b->n, 100.0 * b->n / orig->n)

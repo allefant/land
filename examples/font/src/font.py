@@ -15,7 +15,7 @@ static def game_init(LandRunner *self):
     # builtin = land_allegro_font()
 
 static def game_tick(LandRunner *self):
-    if land_key(KEY_ESC):
+    if land_key(LandKeyEscape):
         land_quit()
 
 static def game_draw(LandRunner *self):
@@ -50,11 +50,11 @@ static def game_draw(LandRunner *self):
 
     glLoadIdentity()
     glTranslatef(land_display_width() / 2, land_display_height() * 0.7, 0)
-    glRotatef(45 * sin(land_get_time() * AL_PI * 0.5), 0, 0, 1)
+    glRotatef(45 * sin(land_get_time() * LAND_PI * 0.5), 0, 0, 1)
     land_text_pos(0, 0)
     land_print_center("Truecolor")
 
-    float s = 0.6 + 0.5 * sin(land_get_time() * AL_PI)
+    float s = 0.6 + 0.5 * sin(land_get_time() * LAND_PI)
     double t = land_get_time()
     double a = fmod((t + sin(t)) * 180, 360)
 
@@ -80,11 +80,11 @@ static def game_draw(LandRunner *self):
 
 def my_main():
     land_init()
-    land_set_display_parameters(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("font example",
         game_init, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)
-    land_main()
+    land_mainloop()
 
 land_use_main(my_main)
