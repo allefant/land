@@ -83,7 +83,7 @@ def land_keyboard_add_char(int keycode, int unicode):
     keybuffer_last++
 
 bool def land_keybuffer_empty():
-    return (keybuffer_last > keybuffer_first)
+    return keybuffer_last == keybuffer_first
 
 def land_keybuffer_next(int *k, int *u):
     if keybuffer_first < keybuffer_last:

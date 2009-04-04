@@ -53,7 +53,7 @@ def land_widget_theme_set_default(LandWidgetTheme *self):
 static inline int def centered_offset (int size1, int size2):
     int center1, center2, o
 
-    if !size1 || !size2:
+    if not size1 or not size2:
         return 0
     center1 = size1 / 2
     center2 = size2 / 2
@@ -194,7 +194,6 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
         if pat->flags & ALIGN_H:
             # TODO: anchor
             ox = (x / bm) * bm - x
-
         else:
             ox = centered_offset(w, bm)
 
@@ -209,7 +208,6 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
         # |   |   |   |
         # |___|___|___|
         #
-         
 
         int bl = pat->bl
         int br = pat->br
@@ -254,12 +252,12 @@ static def read_int_arg(int argc, LandArray *argv, int *a, int *val):
         LandBuffer *buf = land_array_get_nth(argv, *a)
         char *arg = land_buffer_finish(buf)
         *val = strtoul(arg, NULL, 0)
+        land_free(arg)
 
 LandWidgetThemeElement *def land_widget_theme_element_new(
     struct LandWidgetTheme *theme, char const *name, *argline):
     LandWidgetThemeElement *self
     land_alloc(self)
-    land_log_message("New theme element %s: %s\n", name, argline)
 
     self->name = land_strdup(name)
     self->a = 1
@@ -276,12 +274,12 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
     int argc = land_array_count(argv)
     LandImage *img = NULL
     if argc:
-        char name[2048]
+        char iname[2048]
         LandBuffer *buf = land_array_get_nth(argv, 0)
         char *arg = land_buffer_finish(buf)
-        uszprintf(name, sizeof name, "%s%s%s", theme->prefix, arg, theme->suffix)
+        uszprintf(iname, sizeof iname, "%s%s%s", theme->prefix, arg, theme->suffix)
         land_free(arg)
-        img = land_image_load(name)
+        img = land_image_load(iname)
         if img:
             for int a = 1; a < argc; a++:
                 buf = land_array_get_nth(argv, a)
@@ -292,12 +290,15 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     read_int_arg(argc, argv, &a, &cy)
                     read_int_arg(argc, argv, &a, &cw)
                     read_int_arg(argc, argv, &a, &ch)
+                    
 
                     if cw <= 0:
                         cw += land_image_width(img)
                     if ch <= 0:
                         ch += land_image_height(img)
+
                     self->bmp = land_image_new_from(img, cx, cy, cw, ch)
+                    
 
                 elif not strcmp (arg, "halign"):
                     self->flags |= ALIGN_H
@@ -343,10 +344,11 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                 
                 land_free(arg)
 
-            if !self->bmp:
+            if not self->bmp:
                 self->bmp = land_image_new_from(img, 0, 0,
                     land_image_width(img), land_image_height(img))
-            land_log_message("element: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
+            land_log_message("element %s: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
+                name,
                 land_image_width(self->bmp), land_image_height(self->bmp),
                 self->bl, self->bt, self->br, self->bb,
                 self->r, self->g, self->b, self->a)
@@ -508,9 +510,9 @@ def land_widget_theme_initialize(LandWidget *self):
     # FIXME: Do this in land_widget_base_initialize instead
     self->outer_w = self->box.min_width
     self->outer_h = self->box.min_height
-    int w = self->box.min_width - self->element->il - self->element->ir
-    int h = self->box.min_height - self->element->it - self->element->ib
-    land_widget_theme_set_minimum_size_for_contents(self, w, h)
+    #int w = self->box.min_width - self->element->il - self->element->ir
+    #int h = self->box.min_height - self->element->it - self->element->ib
+    land_widget_theme_set_minimum_size_for_contents(self, 0, 0)
 
 def land_widget_theme_update(LandWidget *self):
     """
@@ -525,12 +527,13 @@ def land_widget_theme_update(LandWidget *self):
 static def _theme_recurse(LandWidget *self, LandWidgetTheme *theme):
     if not self->element: return
     self->element = land_widget_theme_find_element(theme, self)
+
     land_widget_theme_set_minimum_size_for_contents(self,
         self->inner_w, self->inner_h)
 
     if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
         LandWidgetContainer *c = (void *)self
-        LandListItem *i = c->children->first
+        LandListItem *i = c->children ? c->children->first : None
         while i:
             LandWidget *w = i->data
             _theme_recurse(w, theme)
@@ -539,7 +542,7 @@ static def _theme_recurse(LandWidget *self, LandWidgetTheme *theme):
 static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
     if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
         LandWidgetContainer *c = (void *)self
-        LandListItem *i = c->children->first
+        LandListItem *i = c->children ? c->children->first : None
         while i:
             LandWidget *w = i->data
             _layout_recurse(w, theme)

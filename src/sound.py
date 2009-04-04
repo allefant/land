@@ -1,42 +1,33 @@
-import global allegro5/allegro5
 static import mem
 
 class LandSound:
-    #SAMPLE *sample
     char *filename
     char *name
+
+static import allegro5/a5_sound
 
 static int active
 
 LandSound *def land_sound_load(char const *filename):
-    LandSound *sound
-    land_alloc(sound)
-    #sound->sample = load_sample(filename)
-    sound->filename = land_strdup(filename)
+    LandSound *sound = platform_sound_load(filename)
     return sound
 
 def land_sound_play(LandSound *s, float volume, pan, frequency):
-    pass
-    #FIXME
-    #play_sample(s->sample, 255 * volume, 127.5 + 127.5 * pan, 1000 * frequency,
-    #    0)
+    platform_sound_play(s, volume, pan, frequency, false)
 
 def land_sound_loop(LandSound *s, float volume, pan, frequency):
-    pass
-    #play_sample(s->sample, 255 * volume, 127.5 + 127.5 * pan, 1000 * frequency,
-    #    1)
+    platform_sound_play(s, volume, pan, frequency, true)
 
 def land_sound_stop(LandSound *s):
-    pass
-    #stop_sample(s->sample)
+    platform_sound_stop(s)
 
 def land_sound_destroy(LandSound *s):
-    land_free(s->filename)
-    land_free(s)
+    platform_sound_destroy(s)
 
 def land_sound_init():
-    #register_sample_file_type("ogg", logg_load, None)
+    platform_sound_init()
     active = 1
 
 def land_sound_exit():
+    platform_sound_exit()
     active = 0

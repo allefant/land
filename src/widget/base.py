@@ -276,9 +276,9 @@ class LandWidget:
     LandHash *properties # arbitrary string-keyed properties
 
     struct LandWidgetThemeElement *element # this widget's theme
-    # FIXME: get_inner_size() method should be called and those two properties
-    # removed. They cache the minimum dimensions needed for the content of
-    # the window (without theme border).
+    # FIXME: get_inner_size() method should be called and those two
+    # properties removed. They cache the minimum dimensions needed for
+    # the contents of the window (without theme border).
     int inner_w, inner_h
     # FIXME: as above, not needed. Those cache the minimum size independent of
     # content.

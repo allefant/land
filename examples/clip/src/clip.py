@@ -32,14 +32,12 @@ static def game_draw(LandRunner *self):
         for i = 0; i < 15; i++:
             float x = 2 + i * 20
             float y = 2 + j * 20
-            float clip = x + 8 + i * 0.1
-            x += j * 0.1
+            float clip = x + 8 + i * 0.5
+            x += j * 0.5
             land_clip(clip, 0, 640, 480)
             land_image_draw_tinted(image, x, y, 1, 0, 0, 0.8)
             land_clip(0, 0, clip, 480)
             land_image_draw_tinted(image, x, y, 0, 1, 0, 0.8)
-
-
 
 land_begin_shortcut(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL,
     game_init, NULL, game_tick, game_draw, NULL, NULL)

@@ -1,5 +1,5 @@
 import land/image, land/display
-static import global allegro5/allegro5, allegro5/a5_iio
+static import global allegro5/allegro5, allegro5/a5_iio, allegro5/a5_opengl
 
 static class LandImagePlatform:
     LandImage super
@@ -48,17 +48,36 @@ def platform_image_save(LandImage *super, char const *filename):
     LandImagePlatform *self = (void *)super
     al_iio_save(filename, self->a5)
 
-def platform_image_prepare(LandImage *suoer):
+def platform_image_prepare(LandImage *super):
     pass
 
 def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
     SELF
-    al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
-        al_map_rgba_f(r, g, b, alpha))
-    al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
-        x, y, sx, sy, angle, 0)
+    if r != 1 or g != 1 or b != 1 or alpha != 1:
+        al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
+            al_map_rgba_f(r, g, b, alpha))
+    if super->l or super->t or super->r or super->b:
+        if angle != 0 or sx != 1 or sy != 1:
+            ALLEGRO_BITMAP *sub = al_create_sub_bitmap(self->a5,
+                super->l, super->t,
+                super->width - super->l - super->r,
+                super->height - super->t - super->b)
+            float cx = super->x - super->l
+            float cy = super->y - super->t
+            al_draw_rotated_scaled_bitmap(sub, cx, cy,
+                x, y, sx, sy, angle, 0)
+            al_destroy_bitmap(sub)
+        else:
+            al_draw_bitmap_region(self->a5, super->l, super->t,
+                super->width - super->l - super->r,
+                super->height - super->t - super->b,
+                x + super->l,
+                y + super->t, 0)
+    else:
+        al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
+            x, y, sx, sy, angle, 0)
 
 def platform_set_image_display(LandImage *super):
     SELF
@@ -83,16 +102,23 @@ def platform_image_get_rgba_data(LandImage *super, unsigned char *rgba):
     int w = super->width
     int h = super->height
     unsigned char *p = rgba
-    ALLEGRO_LOCKED_REGION lock
-    al_lock_bitmap(self->a5, &lock, ALLEGRO_LOCK_READONLY)
+    ALLEGRO_LOCKED_REGION *lock
+    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
+        ALLEGRO_LOCK_READONLY)
+    unsigned char *p2 = lock->data
     for int y = 0; y < h; y++:
+        unsigned char *p3 = p2
         for int x = 0; x < w; x++:
             unsigned char r, g, b, a
-            al_unmap_rgba(al_get_pixel(self->a5, x, y), &r, &g, &b, &a)
+            r = *(p3++)
+            g = *(p3++)
+            b = *(p3++)
+            a = *(p3++)
             *(p++) = r
             *(p++) = g
             *(p++) = b
             *(p++) = a
+        p2 += lock->pitch
     al_unlock_bitmap(self->a5)
 
 def platform_image_set_rgba_data(LandImage *super,
@@ -101,18 +127,37 @@ def platform_image_set_rgba_data(LandImage *super,
     int w = super->width
     int h = super->height
     unsigned char const *p = rgba
-    ALLEGRO_STATE state
-    al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
-    al_set_target_bitmap(self->a5)
-    ALLEGRO_LOCKED_REGION lock
-    al_lock_bitmap(self->a5, &lock, ALLEGRO_LOCK_WRITEONLY)
+    ALLEGRO_LOCKED_REGION *lock
+    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
+        ALLEGRO_LOCK_WRITEONLY)
+    unsigned char *p2 = lock->data
     for int y = 0; y < h; y++:
+        unsigned char *p3 = p2
         for int x = 0; x < w; x++:
             int r, g, b, a
             r = *(p++)
             g = *(p++)
             b = *(p++)
             a = *(p++)
-            al_put_pixel(x, y, al_map_rgba(r, g, b, a))
+            *(p3++) = r
+            *(p3++) = g
+            *(p3++) = b
+            *(p3++) = a
+        p2 += lock->pitch
     al_unlock_bitmap(self->a5)
+
+int def platform_image_opengl_texture(LandImage *super):
+    SELF
+    return al_get_opengl_texture(self->a5)
+
+def platform_image_crop(LandImage *super, int x, y, w, h):
+    SELF
+    ALLEGRO_STATE state
+    al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
+    ALLEGRO_BITMAP *cropped = al_create_bitmap(w, h)
+    al_set_target_bitmap(cropped)
+    if self->a5:
+        al_draw_bitmap(self->a5, -x, -y, 0)
+        al_destroy_bitmap(self->a5)
+    self->a5 = cropped
     al_restore_state(&state)

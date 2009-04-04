@@ -15,7 +15,6 @@ def platform_init():
 
     al_install_keyboard();
     al_install_mouse();
-    al_font_init();
 
 static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 0, \
@@ -159,7 +158,7 @@ def platform_hide_mouse_cursor():
     al_hide_mouse_cursor()
 
 def platform_show_mouse_cursor():
-    al_hide_mouse_cursor()
+    al_show_mouse_cursor()
 
 def platform_mainloop(LandParameters *parameters):
     ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue()
@@ -195,14 +194,12 @@ def platform_mainloop(LandParameters *parameters):
             case ALLEGRO_EVENT_KEY_DOWN:
                 int lk = platform_keycode(event.keyboard.keycode)
                 land_key_press_event(lk)
-                if event.keyboard.unichar:
-                    land_keyboard_add_char(lk, event.keyboard.unichar)
+                land_keyboard_add_char(lk, event.keyboard.unichar)
                 break
             case ALLEGRO_EVENT_KEY_REPEAT:
                 int lk = platform_keycode(event.keyboard.keycode)
                 land_key_press_event(lk)
-                if event.keyboard.unichar:
-                    land_keyboard_add_char(lk, event.keyboard.unichar)
+                land_keyboard_add_char(lk, event.keyboard.unichar)
                 break;
             case ALLEGRO_EVENT_KEY_UP:
                 int lk = platform_keycode(event.keyboard.keycode)
@@ -213,8 +210,8 @@ def platform_mainloop(LandParameters *parameters):
                     event.mouse.x, event.mouse.y, event.mouse.z)
                 break
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-                land_mouse_button_event(event.mouse.button)
+                land_mouse_button_down_event(event.mouse.button - 1)
                 break
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-                land_mouse_button_event(event.mouse.button)
+                land_mouse_button_up_event(event.mouse.button - 1)
                 break

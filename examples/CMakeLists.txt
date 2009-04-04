@@ -46,10 +46,12 @@ foreach(exsrc ${examples})
     # Step 3: Build from .c files.
     #
 
+    set(AV "4.9.10")
     set(WFLAGS "-W -Wall")
     set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
     set(CFLAGS "--std=gnu99")
     set(DFLAGS "-g")
+    set(PFLAGS "-g -p")
     set(RFLAGS "-O3")
 
     if (STATIC)
@@ -61,11 +63,12 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-static-debug
                 land-static-debug
-                allegro-debug-static-4.9.9
-                a5_font-debug-static-4.9.9
-                a5_primitives-debug-static-4.9.9
-                a5_iio-debug-static-4.9.9
-                a5_color-debug-static-4.9.9
+                allegro-debug-static-${AV}
+                a5_font-debug-static-${AV}
+                a5_ttf-debug-static-${AV}
+                a5_primitives-debug-static-${AV}
+                a5_iio-debug-static-${AV}
+                a5_color-debug-static-${AV}
                 z
                 png
                 jpeg
@@ -73,8 +76,34 @@ foreach(exsrc ${examples})
                 GL
                 Xinerama
                 Xcursor
+                freetype
                 )
         endif (DEBUG)
+        if (PROFILE)
+            add_executable(${ex}-static-profile ${example_cfiles})
+            set_target_properties(${ex}-static-profile
+                PROPERTIES
+                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
+                LINK_FLAGS -p
+                )
+            target_link_libraries(${ex}-static-profile
+                land-static-profile
+                allegro-profile-static-${AV}
+                a5_font-profile-static-${AV}
+                a5_ttf-profile-static-${AV}
+                a5_primitives-profile-static-${AV}
+                a5_iio-profile-static-${AV}
+                a5_color-profile-static-${AV}
+                z
+                png
+                jpeg
+                m
+                GL
+                Xinerama
+                Xcursor
+                freetype
+                )
+        endif (PROFILE)
         if (RELEASE)
             add_executable(${ex}-static ${example_cfiles})
             set_target_properties(${ex}-static
@@ -99,9 +128,15 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-debug
                 land-debug
-                alld-4.3.11 alld_unsharable agld
-                fudgefontd ldpng logg
-                png jpeg ogg vorbis vorbisfile)
+                allegro-debug-${AV}
+                a5_font-debug-${AV}
+                a5_ttf-debug-${AV}
+                a5_primitives-debug-${AV}
+                a5_iio-debug-${AV}
+                a5_color-debug-${AV}
+                a5_acodec-debug-${AV}
+                kcm_audio-debug-${AV}
+                )
         endif (DEBUG)
         if (RELEASE)
             add_executable(${ex} ${example_cfiles})
@@ -112,9 +147,9 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}
                 land
-                allegro-4.9.8
-                a5_font-4.9.8
-                a5_primitives-4.9.8
+                allegro-${AV}
+                a5_font-${AV}
+                a5_primitives-${AV}
                 )
         endif (RELEASE)
     endif (SHARED)

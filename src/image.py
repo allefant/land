@@ -108,14 +108,16 @@ def land_image_del(LandImage *self):
 def land_image_destroy(LandImage *self):
     land_image_del(self)
 
-def land_image_crop(LandImage *self, int x, int y, int w, int h):
+def land_image_crop(LandImage *self, int x, y, w, h):
     """
     Crops an image to the specified rectangle. All image contents outside the
     rectangle will be lost. You can also use this to make an image larger, in
     which case the additional borders are filled with transparency. The offset
     need not lie within the image.
     """
-    assert(0)
+    if self->width == w and self->height == h and x == 0 and y == 0:
+        return
+    platform_image_crop(self, x, y, w, h)
 
 def land_image_auto_crop(LandImage *self):
     """
@@ -129,10 +131,21 @@ LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     Create a new image, copying pixel data from a rectangle in an existing
     image.
     """
+    land_log_message("land_image_new_from %s..", copy->name)
+
     LandImage *self = land_image_new(w, h)
     land_set_image_display(self)
     land_image_draw_partial(copy, 0, 0, x, y, w, h)
     land_unset_image_display()
+    
+    land_log_message_nostamp("success (%d x %d)\n", w, h)
+
+    float red, green, blue, alpha
+    int n
+    n = land_image_color_stats(self, &red, &green, &blue, &alpha)
+    land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
+    
+    return self
 
 int def land_image_color_stats(LandImage *self,
     float *red, *green, *blue, *alpha):
@@ -190,15 +203,58 @@ def land_image_colorize(LandImage *self, LandImage *colormask):
     """
     assert(0)
 
-int def land_image_colorize_replace(LandImage *self, int n, int *rgb):
+def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     """
-    Like land_image_colorize, but instead of a mask, a list of colors to
-    colorize is given (and intensity is taken from those colors). The colors use
-    integer 0..255 format, since exact comparison with the usual floating point
-    colors would be difficult otherwise. The array ''rgb'' should have 3 * n
-    integers, consisting of consecutive R, G, B triplets to replace.
+    This takes a list of colors and replaces all colors in the image
+    corresponding to one of them with the current color.
+
+    The colors use integer 0..255 format, since exact comparison with
+    the usual floating point colors would be difficult otherwise. The
+    array ''rgb'' should have 3 * n integers, consisting of consecutive
+    R, G, B triplets to replace.
     """
-    assert(0)
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+    unsigned char rgba[w * h * 4]
+    land_image_get_rgba_data(self, rgba)
+    unsigned char *p = rgba
+    
+    float fr, fg, fb, fa
+    land_get_color(&fr, &fg, &fb, &fa)
+    int red = fr * 255
+    int green = fg * 255
+    int blue = fb * 255
+    
+    int base_red = rgb[0]
+    int base_green = rgb[1]
+    int base_blue = rgb[2]
+    int base_sum = base_red + base_green + base_blue
+
+    for int y = 0; y < h; y++:
+        for int x = 0; x < w; x++:
+            int r = *(p + 0)
+            int g = *(p + 1)
+            int b = *(p + 2)
+            for int i = 0; i < n; i++:
+                if rgb[i * 3 + 0] == r and \
+                    rgb[i * 3 + 1] == g and \
+                    rgb[i * 3 + 2] == b:
+                    int sum = r + g + b
+                    int nr, ng, nb
+                    if sum <= base_sum:
+                        nr = red * sum / base_sum
+                        ng = green * sum / base_sum
+                        nb = blue * sum / base_sum
+                    else:
+                        nr = 255 - (255 - red) * base_sum / sum
+                        ng = 255 - (255 - green) * base_sum / sum
+                        nb = 255 - (255 - blue) * base_sum / sum
+                    *(p + 0) = r
+                    *(p + 1) = g
+                    *(p + 2) = b
+            p += 4
+
+    land_image_set_rgba_data(self, rgba)
 
 LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     int *rgb):
@@ -419,10 +475,10 @@ def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
     self->b = b
 
 int def land_image_height(LandImage *self):
-    return self->width
+    return self->height
 
 int def land_image_width(LandImage *self):
-    return self->height
+    return self->width
 
 # Optimizes a bitmap to take only as little space as necesary, whilst
 # maintaining the correct offset.
@@ -440,3 +496,6 @@ def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
 
 def land_image_save(LandImage *self, char const *filename):
     platform_image_save(self, filename)
+
+int def land_image_opengl_texture(LandImage *self):
+    return platform_image_opengl_texture(self)

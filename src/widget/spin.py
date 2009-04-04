@@ -47,6 +47,10 @@ LandWidget *def land_widget_spinbutton_new(LandWidget *parent, LandImage *image,
     land_widget_button_initialize(self, parent, NULL, image, clicked, x, y, w, h)
     land_widget_spinbutton_interface_initialize()
     self->vt = land_widget_spinbutton_interface
+
+    land_widget_theme_initialize(self)
+    land_widget_theme_set_minimum_size_for_image(self, image)
+
     return self
 
 def land_widget_spin_initialize(LandWidget *base,
@@ -179,5 +183,5 @@ def land_widget_spin_interface_initialize():
         land_widget_hbox_interface, "spin")
     land_widget_spin_interface->id |= LAND_WIDGET_ID_SPIN
     
-    image_up = land_image_create(5, 3)
-    image_down = land_image_create(5, 3)
+    image_up = land_image_create(2, 2)
+    image_down = land_image_create(2, 2)

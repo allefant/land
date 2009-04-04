@@ -29,10 +29,10 @@ static def game_draw(LandRunner *self):
     land_font_set(big)
     float x = land_display_width() / 2
     float y = land_display_height() / 2 - land_font_height(big) / 2
-    land_color(0, 1, 0, 0.5)
+    land_color(0, 1, 0, ((int)land_get_time()) & 1 ? 0.5 : 0)
     land_line(x - 3, y, x + 3, y)
     land_line(x, y - 3, x, y + 3)
-    land_color(0, 0, 0, 1)
+    land_color(0, 0, 1, 1)
     land_text_pos(x, y)
     land_print_center("Land Fonts")
 
@@ -63,7 +63,7 @@ static def game_draw(LandRunner *self):
     glTranslatef(land_display_width() / 4, 2 * land_display_height() / 5, 0)
     glRotatef(a, 0, 0, 1)
     glScalef(s, s, 1)
-    land_color(0, 0, 0, 1)
+    land_color(0, 1, 0, 1)
     land_text_pos(0, -30)
 
     land_print_center("paletted")
@@ -73,7 +73,7 @@ static def game_draw(LandRunner *self):
     glTranslatef(land_display_width() * 0.75, 2 * land_display_height() / 5, 0)
     glRotatef(-a, 0, 0, 1)
     glScalef(s, s, 1)
-    land_color(0, 0, 0, 1)
+    land_color(1, 0, 0, 1)
     land_text_pos(0, -30)
 
     land_print_center("paletted")

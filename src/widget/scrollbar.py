@@ -144,11 +144,21 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
 
         int dx = 0, dy = 0, dw = 0, dh = 0
         if self->vertical:
+            dw = super->parent->box.w - (
+                super->parent->element->ir +
+                super->parent->element->il) - super->box.w
             dh = posrange - super->box.h
+            dx = super->parent->box.x + super->parent->element->il -\
+                super->box.x
             dy = pos - super->box.y
         else:
             dw = posrange - super->box.w
+            dh = super->parent->box.h - (
+                super->parent->element->ib +
+                super->parent->element->it) - super->box.h
             dx = pos - super->box.x
+            dy = super->parent->box.y + super->parent->element->it -\
+                super->box.y
         land_widget_move(super, dx, dy)
         land_widget_size(super, dw, dh)
 
@@ -195,7 +205,7 @@ def land_widget_scrollbar_mouse_tick(LandWidget *super):
 LandWidget *def land_widget_scrollbar_new(LandWidget *parent, *target,
     int vertical, int x, y, w, h):
     LandWidgetScrollbar *self
-    
+
     land_widget_scrollbar_interface_initialize()
 
     land_alloc(self)

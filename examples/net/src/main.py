@@ -330,7 +330,7 @@ LandWidget *def my_widget_new(LandWidget *parent, int state, id):
 def create_gui():
     int w = land_display_width()
     int h = land_display_height()
-    land_widget_theme_set_default(land_widget_theme_new("data/classic.cfg"))
+    land_widget_theme_set_default(land_widget_theme_new("../../data/classic.cfg"))
     desktop = land_widget_panel_new(None, 0, 0, w, h)
     land_widget_reference(desktop)
     land_widget_theme_initialize(desktop)

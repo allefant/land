@@ -86,8 +86,6 @@ static def ERR(char const *format, ...):
 
 def gul_box_initialize(LandLayoutBox *self):
     memset(self, 0, sizeof *self)
-    self->min_width = 3
-    self->min_height = 3
 
 LandLayoutBox *def gul_box_new():
     LandLayoutBox *self = land_malloc(sizeof *self)

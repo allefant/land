@@ -17,8 +17,7 @@ static void *def _get(LandIniSection *s, char const *key):
     for int i = 0; i < s->n; i++:
         if not strcmp(s->entries[i].key, key) && s->entries[i].val:
             return s->entries[i].val
-
-    return NULL
+    return None
 
 static def _add(LandIniSection *s, char const *key, void *val):
     for int i = 0; i < s->n; i++:
@@ -50,6 +49,12 @@ def land_ini_set_string(LandIniFile *ini,
 
     _add(s, key, val ? strdup(val) : NULL)
 
+def land_ini_set_int(LandIniFile *ini,
+    char const *section, char const *key, int val):
+    char temp[100]
+    snprintf(temp, sizeof temp, "%d", val)
+    land_ini_set_string(ini, section, key, temp)
+
 char const *def land_ini_get_string(LandIniFile *ini,
     char const *section, char const *key, char const *def):
     LandIniSection *s = _get(ini->sections, section)
@@ -58,9 +63,16 @@ char const *def land_ini_get_string(LandIniFile *ini,
     if v: return v
     return def
 
+int def land_ini_get_int(LandIniFile *ini,
+    char const *section, char const *key, int def):
+    char const *s = land_ini_get_string(ini, section, key, None)
+    if s == None: return def
+    return strtol(s, None, 0)
+
 int def land_ini_get_number_of_entries(LandIniFile *ini,
     char const *section):
     LandIniSection *s = ini->sections
+    if not s: return 0
     if section:
         s = _get(s, section)
     return s->n
@@ -81,10 +93,18 @@ macro addc(var, len) \
     if (len < (int)sizeof(var) - 1) len++; \
     var[len + 1] = '\0';
 
+static enum State:
+    OUTSIDE
+    SECTION
+    KEY
+    EQUALS
+    VALUE
+    COMMENT
+
 LandIniFile *def land_ini_read(char const *filename):
     char section_name[1024] = "", key_name[1024], value[1024] = ""
     int slen = 0, klen = 0, vlen = 0
-    int state = 0
+    State state = OUTSIDE
     LandIniFile *ini = calloc(1, sizeof *ini)
     ini->filename = strdup(filename)
     ini->sections = calloc(1, sizeof *ini->sections)
@@ -98,45 +118,52 @@ LandIniFile *def land_ini_read(char const *filename):
             c = '\n'
 
         if c == '\r': continue
-        if state == 0: # outside
+        if state == OUTSIDE: # outside
             if c == '[':
                 slen = 0
-                state = 1
+                state = SECTION
+            
+            elif c == '#':
+                state = COMMENT
 
-            elif  not is_whitespace(c):
+            elif not is_whitespace(c):
                 klen = 0
                 addc(key_name, klen)
                 state = 2
 
 
-        elif  state == 1: # section name
+        elif  state == SECTION: # section name
             if c == ']' || c == '\n':
-                state = 0
+                state = OUTSIDE
             else:
                 addc(section_name, slen)
 
-        elif state == 2: # key name
-            if c == '\n': state = 0
-            elif c == '=': state = 3
+        elif state == KEY: # key name
+            if c == '\n': state = OUTSIDE
+            elif c == '=': state = EQUALS
             elif not is_whitespace(c):
                 addc(key_name, klen)
 
-        elif state == 3: # = sign
+        elif state == EQUALS: # = sign
             if c == '\n':
                 value[0] = 0
                 goto got_value
             if c == '\n' or not is_whitespace(c):
-                state = 4
+                state = VALUE
                 vlen = 0
                 addc(value, vlen)
 
-        elif state == 4: # key value
+        elif state == VALUE: # key value
             if c == '\n':
                 label got_value
                 land_ini_set_string(ini, section_name, key_name, value)
-                state = 0
+                state = OUTSIDE
             else:
                 addc(value, vlen)
+        
+        elif state == COMMENT: # key value
+            if c == '\n':
+                state = OUTSIDE
 
     fclose(f)
     return ini

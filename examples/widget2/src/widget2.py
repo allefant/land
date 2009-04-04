@@ -7,7 +7,7 @@ LandWidget *desktop
 LandWidgetTheme *theme
 
 static def init(LandRunner *self):
-    land_font_load("data/galaxy.ttf", 12)
+    land_font_load("../../data/galaxy.ttf", 12)
 
     theme = land_widget_theme_new("../../data/classic.cfg")
     land_widget_theme_set_default(theme)
@@ -15,7 +15,7 @@ static def init(LandRunner *self):
     land_widget_reference(desktop)
 
 static def tick(LandRunner *self):
-    if land_key_pressed(LandKeyEscape) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)

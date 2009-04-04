@@ -135,9 +135,9 @@ static def draw(LandRunner *self):
 
     int x = 50
     int y = 50
-    abort()
-    #FIXME
-    #glBindTexture(GL_TEXTURE_2D, ((LandImageOpenGL *)image)->gl_texture)
+
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, land_image_opengl_texture(image))
 
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE)
 

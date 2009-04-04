@@ -33,7 +33,7 @@ static int def get_x_offset(LandWidget *base):
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
     if self->align_right:
         int w = land_text_get_width(self->text)
-        x = base->box.x + base->box.w - base->element->r - w
+        x = base->box.x + base->box.w - base->element->r - w - 0.5
     return x
 
 def land_widget_edit_draw(LandWidget *base):
@@ -62,7 +62,7 @@ def land_widget_edit_draw(LandWidget *base):
             pos -= floor(pos)
             if pos < 0.5:
                 int cx = land_text_get_char_offset(self->text, self->cursor)
-                land_line(x + cx, y, x + cx, base->box.y + base->box.h -
+                land_line(x + cx + 0.5, y, x + cx + 0.5, base->box.y + base->box.h -
                     base->element->ib)
 
     if !base->dont_clip:
@@ -71,8 +71,8 @@ def land_widget_edit_draw(LandWidget *base):
 def land_widget_edit_mouse_tick(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
 
-    if (land_mouse_delta_b() & 1):
-        if (land_mouse_b() & 1):
+    if land_mouse_delta_b() & 1:
+        if land_mouse_b() & 1:
             base->want_focus = 1
             int x = land_mouse_x() - get_x_offset(base)
             edit->cursor = land_text_get_char_index(edit->text, x)
@@ -85,7 +85,7 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
         land_keybuffer_next(&k, &u)
         edit->last_key = k
         edit->last_char = u
-        if u && u > 31 && u != 127:
+        if u > 31:
             edit->bytes += ucwidth(u)
             edit->text = land_realloc(edit->text, edit->bytes)
             uinsert(edit->text, edit->cursor, u)
@@ -95,12 +95,10 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
             int l = ustrlen(edit->text)
             if k == LandKeyLeft:
                 edit->cursor--
-                if (edit->cursor < 0) edit->cursor = 0
-
+                if edit->cursor < 0: edit->cursor = 0
             elif k == LandKeyRight:
                 edit->cursor++
-                if (edit->cursor > l) edit->cursor = l
-
+                if edit->cursor > l: edit->cursor = l
             elif k == LandKeyDelete:
                 if edit->cursor < l:
                     uremove(edit->text, edit->cursor)
@@ -116,7 +114,6 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                     M
             elif k == LandKeyHome:
                 edit->cursor = 0
-
             elif k == LandKeyEnd:
                 edit->cursor = l
 

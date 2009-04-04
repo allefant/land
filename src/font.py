@@ -99,8 +99,8 @@ def land_text_off():
 def land_text_on():
     land_font_state->off = 0
 
-def land_print_string(char const *str, int newline, int alignement):
-    platform_font_print(land_font_state, str, alignement)
+def land_print_string(char const *str, int newline, int alignment):
+    platform_font_print(land_font_state, str, alignment)
     if newline:
         land_font_state->y_pos = land_font_state->y + land_font_state->h
     else:

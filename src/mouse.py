@@ -24,10 +24,13 @@ def land_mouse_move_event(int mx, int my, int mz):
     _my = my
     _mz = mz
 
-def land_mouse_button_event(int mb):
+def land_mouse_button_down_event(int b):
     # FIXME: can lose fast clicks this way, should simply treat the
     # mouse buttons as additional keys in the keyboard module
-    _mb = mb
+    _mb |= 1 << b
+
+def land_mouse_button_up_event(int b):
+    _mb &= ~(1 << b)
 
 int def land_mouse_x():
     """Return the mouse X coordinate for the current tick."""

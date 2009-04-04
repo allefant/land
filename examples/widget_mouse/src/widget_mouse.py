@@ -68,8 +68,8 @@ def panel_1():
     land_widget_mybox_new(vbox)
 
 def init(LandRunner *self):
-    land_font_load("data/galaxy.ttf", 12)
-    LandWidgetTheme *theme = land_widget_theme_new("data/classic.cfg")
+    land_font_load("../../data/galaxy.ttf", 12)
+    LandWidgetTheme *theme = land_widget_theme_new("../../data/classic.cfg")
     land_widget_theme_set_default(theme)
     desktop = land_widget_board_new(NULL, 10, 10, 620, 460)
 

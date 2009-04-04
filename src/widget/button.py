@@ -122,7 +122,7 @@ def land_widget_button_draw(LandWidget *base):
                     land_print_center("%s", self->text)
                 break
 
-    if !base->dont_clip:
+    if not base->dont_clip:
         land_clip_pop()
 
 def land_widget_button_size(LandWidget *base, float dx, dy):
@@ -299,9 +299,6 @@ def land_widget_button_shift(LandWidget *self, int x, int y):
     button->xshift = x
     button->yshift = y
 
-def land_widget_button_get_inner_size(LandWidget *self, float *w, float *h):
-    pass
-
 def land_widget_button_interface_initialize():
     if land_widget_button_interface: return
 
@@ -311,8 +308,6 @@ def land_widget_button_interface_initialize():
     land_widget_button_interface->destroy = land_widget_button_destroy
     land_widget_button_interface->draw = land_widget_button_draw
     land_widget_button_interface->mouse_tick = land_widget_button_mouse_tick
-    land_widget_button_interface->get_inner_size =\
-        land_widget_button_get_inner_size
     land_widget_button_interface->size = land_widget_button_size
 
 def land_widget_button_destroy(LandWidget *base):

@@ -13,6 +13,7 @@ set(SHARED 1 CACHE BOOL "Whether to build the shared library.")
 set(STATIC 0 CACHE BOOL "Whether to build the static library.")
 set(RELEASE 1 CACHE BOOL "Whether to build the release library.")
 set(DEBUG 0 CACHE BOOL "Whether to build the debug library.")
+set(PROFILE 0 CACHE BOOL "Whether to build the profile library.")
 
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
@@ -53,6 +54,7 @@ set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
 set(CFLAGS "--std=gnu99")
 set(DFLAGS "-g")
 set(RFLAGS "-O3")
+set(PFLAGS "-g -p -O2")
 
 if (STATIC)
     if (DEBUG)
@@ -62,6 +64,14 @@ if (STATIC)
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
             )
     endif (DEBUG)
+    if (PROFILE)
+        add_library(land-static-profile STATIC ${cfiles})
+        set_target_properties(land-static-profile
+            PROPERTIES
+            COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
+            LINK_FLAGS -p
+            )
+    endif (PROFILE)
     if (RELEASE)
         add_library(land-static STATIC ${cfiles})
         set_target_properties(land-static

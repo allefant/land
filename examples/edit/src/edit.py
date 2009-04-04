@@ -36,9 +36,9 @@ static def redraw(LandWidget *self):
     land_font_set(f)
 
 static def init(LandRunner *self):
-    af = land_font_load("data/galaxy.ttf", 20)
+    af = land_font_load("../../data/galaxy.ttf", 20)
 
-    land_font_load("data/galaxy.ttf", 12)
+    land_font_load("../../data/galaxy.ttf", 12)
 
     theme = land_widget_theme_new("../../data/classic.cfg")
     land_widget_theme_set_default(theme)

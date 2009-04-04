@@ -152,6 +152,7 @@ int def land_buffer_compare(LandBuffer *self, *other):
     if self->n > other->n: return 1
     return memcmp(self->buffer, other->buffer, self->n)
 
+#if 0
 static int def pf_fclose(void *userdata):
     LandBufferAsFile *self = userdata
     land_free(self)
@@ -207,6 +208,7 @@ static int def pf_feof(void *userdata):
 static int def pf_ferror(void *userdata):
     return 0
 
+#endif
 
 #static struct PACKFILE_VTABLE vt = {
     #pf_fclose,
