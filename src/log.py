@@ -64,11 +64,11 @@ def land_log_message(char const *format, ...):
     va_start(va_args, format)
     logfile = fopen(logname, "a")
     struct timeval tv
-    #ifdef ALLEGRO_WINDOWS
+    *** "ifdef" ALLEGRO_WINDOWS
     tv.tv_usec = 0
-    #else
+    *** "else"
     gettimeofday(&tv, NULL)
-    #endif
+    *** "endif"
     time_t t
     struct tm tm
     time(&t)

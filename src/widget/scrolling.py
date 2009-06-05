@@ -17,12 +17,12 @@ class LandWidgetScrolling:
     # 0 = never hide empty
     # 4 = hide empty only if both scrollbars are hidden
     # 8 = always hide empty except if both scrollbars are shown
-    unsigned int autohide : 4
+    unsigned int autohide
 
     # 0 = no scrollwheel scrolling
     # 1 = scrolling [default]
     # 2 = unlimited
-    unsigned int scrollwheel : 2
+    unsigned int scrollwheel
 
 macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
@@ -405,7 +405,7 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     land_widget_layout_set_shrinking(bottom, 0, 1)
 
     # Child 4: Empty box. 
-    LandWidget *empty = land_widget_panel_new(widget, 0, 0, 0, 0)
+    LandWidget *empty = land_widget_vbox_new(widget, 0, 0, 0, 0)
     land_widget_layout_set_grid_position(empty, 1, 1)
     land_widget_layout_set_shrinking(empty, 1, 1)
 

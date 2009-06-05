@@ -33,21 +33,21 @@ LandWidget *desktop
 static LandWidget *def construct_menu():
     int index[26]
     int i, j
-    for i = 0; i < 26; i++:
-        for j = 0; data[j]; j++:
+    for i = 0 while i < 26 with i++:
+        for j = 0 while data[j] with j++:
             if data[j][0] == 'A' + i: break
 
         index[i] = j
 
     LandWidget *menu = land_widget_menu_new(desktop,
         land_mouse_x(), land_mouse_y(), 10, 10)
-    for i = 0; i < 10; i++:
+    for i = 0 while i < 10 with i++:
         char name[256]
         int h = land_rand(0, 25)
         name[0] = 'A' + h
         name[1] = '\0'
         LandWidget *submenu = land_widget_menu_new(desktop, 0, 0, 10, 10)
-        for j = 0;  data[index[h] + j] && data[index[h] + j][0] == 'A' + h; j++:
+        for j = 0 while  data[index[h] + j] && data[index[h] + j][0] == 'A' + h with j++:
             land_widget_menuitem_new(submenu, data[index[h] + j], NULL)
 
         land_widget_hide(submenu)

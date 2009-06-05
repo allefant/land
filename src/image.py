@@ -1,8 +1,10 @@
-import array, log, pixelmask, util
+import array, log, pixelmask, util, buffer
 static import global assert
 
 macro LAND_SUBIMAGE 1
 macro LAND_LOADED 2
+
+static macro LOG_COLOR_STATS 0
 
 class LandImage:
     """
@@ -43,29 +45,45 @@ extern LandDataFile *_land_datafile
 
 static void (*_cb)(char const *path, LandImage *image)
 
+static int bitmap_count, bitmap_memory
+
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
-LandImage *def land_image_load(char const *filename):
+static LandImage *def _load(char const *filename, bool mem):
     land_log_message("land_image_load %s..", filename)
 
-    LandImage *self = platform_image_load(filename)
+    LandImage *self = platform_image_load(filename, mem)
 
     if self->flags & LAND_LOADED:
         int w = land_image_width(self)
         int h = land_image_height(self)
         land_log_message_nostamp("success (%d x %d)\n", w, h)
-        land_image_prepare(self)
 
-        float red, green, blue, alpha
-        int n
+        if not mem:
+            land_image_prepare(self)
+
+        *** "ifdef" LOG_COLOR_STATS
+        float red = 0, green = 0, blue = 0, alpha = 0
+        int n = 1
         n = land_image_color_stats(self, &red, &green, &blue, &alpha)
         land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
+        *** "endif"
+
+        bitmap_count++
+        bitmap_memory += w * h * 4
+        land_log_message(" %d bitmaps (%.1fMB).\n", bitmap_count, bitmap_memory / 1024.0 / 1024.0)
     else:
         land_log_message_nostamp("failure\n")
 
     if _cb: _cb(filename, self)
     return self
+
+LandImage *def land_image_load(char const *filename):
+    return _load(filename, False)
+
+LandImage *def land_image_load_memory(char const *filename):
+    return _load(filename, True)
 
 LandImage *def land_image_memory_new(int w, int h):
     """
@@ -87,6 +105,8 @@ LandImage *def land_image_new(int w, int h):
     self->height = h
     if w or h:
         platform_image_empty(self)
+    bitmap_count++
+    bitmap_memory += w * h * 4
     return self
 
 LandImage *def land_image_create(int w, int h):
@@ -97,12 +117,17 @@ LandImage *def land_image_create(int w, int h):
     self->width = w
     self->height = h
     platform_image_empty(self)
+    bitmap_count++
+    bitmap_memory += w * h * 4
     return self
 
 def land_image_del(LandImage *self):
+    if not self: return
     land_image_destroy_pixelmasks(self)
     if self->name: land_free(self->name)
     if self->filename && self->filename != self->name: land_free(self->filename)
+    bitmap_count--
+    bitmap_memory -= self->width * self->height * 4
     land_display_del_image(self)
 
 def land_image_destroy(LandImage *self):
@@ -140,10 +165,14 @@ LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     
     land_log_message_nostamp("success (%d x %d)\n", w, h)
 
+    *** "ifdef" LOG_COLOR_STATS
     float red, green, blue, alpha
     int n
     n = land_image_color_stats(self, &red, &green, &blue, &alpha)
     land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
+    *** "endif"
+
+    land_log_message(" %d bitmaps (%.1fMB).\n", bitmap_count, bitmap_memory / 1024.0 / 1024.0)
     
     return self
 
@@ -160,17 +189,17 @@ int def land_image_color_stats(LandImage *self,
     *green = 0
     *blue = 0
     *alpha = 0
-    unsigned char rgba[w * h * 4]
+    unsigned char *rgba = land_malloc(w * h * 4)
     land_image_get_rgba_data(self, rgba)
     int p = 0
-    for int j = 0; j < h; j++:
-        for int i = 0; i < w; i++:
+    for int j = 0 while j < h with j++:
+        for int i = 0 while i < w with i++:
             *red += rgba[p++] * 1.0 / 255.0
             *green += rgba[p++] * 1.0 / 255.0
             *blue += rgba[p++] * 1.0 / 255.0
             *alpha += rgba[p++] * 1.0 / 255.0
             n++
-
+    land_free(rgba)
     return n
 
 def land_image_color_replace(LandImage *self, int r255, int g255, int b255,
@@ -230,12 +259,12 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     int base_blue = rgb[2]
     int base_sum = base_red + base_green + base_blue
 
-    for int y = 0; y < h; y++:
-        for int x = 0; x < w; x++:
+    for int y = 0 while y < h with y++:
+        for int x = 0 while x < w with x++:
             int r = *(p + 0)
             int g = *(p + 1)
             int b = *(p + 2)
-            for int i = 0; i < n; i++:
+            for int i = 0 while i < n with i++:
                 if rgb[i * 3 + 0] == r and \
                     rgb[i * 3 + 1] == g and \
                     rgb[i * 3 + 2] == b:
@@ -287,7 +316,15 @@ static int def callback(const char *filename, int attrib, void *param):
 static int def compar(void const *a, void const *b):
     char *an = *(char **)a
     char *bn = *(char **)b
-    return ustrcmp(an, bn)
+    return strcmp(an, bn)
+
+static int def filter(char const *name, bool is_dir, void *data):
+    char const *pattern = data
+    if is_dir:
+        return 2
+    if land_fnmatch(pattern, name):
+        return 1
+    return 0
 
 LandArray *def land_load_images_cb(char const *pattern,
     void (*cb)(LandImage *image, void *data), void *data):
@@ -296,23 +333,34 @@ LandArray *def land_load_images_cb(char const *pattern,
     referencing them all, in alphabetic filename order. The callback function
     is called on each image along the way.
     """
-    assert(0)
+
+    LandBuffer *dirbuf = land_buffer_new()
+    int j = 0
+    for int i = 0 while pattern[i] with i++:
+        if pattern[i] == '/':
+            land_buffer_add(dirbuf, pattern + j, i - j + 1)
+            j = i + 1
+        if pattern[i] == '?' or pattern[i] == '*': break
+    char *dir = land_buffer_finish(dirbuf)
+
     LandArray *filenames = None
     int count = 0
     if _land_datafile:
         count = land_datafile_for_each_entry(_land_datafile, pattern, callback,
             &filenames)
 
-    # if !count:
-    #    count = for_each_file_ex(pattern, 0, 0, callback, &filenames)
+    if not count:
+        filenames = land_filelist(dir, filter, (void *)pattern)
+        if filenames:
+            count = filenames->count
 
     if not filenames: return None
 
     qsort(filenames->data, count, sizeof (void *), compar)
-    
+
     LandArray *array = None
     int i
-    for i = 0; i < filenames->count; i++:
+    for i = 0 while i < filenames->count with i++:
         char *filename = land_array_get_nth(filenames, i)
         LandImage *image = land_image_load(filename)
         land_free(filename)
@@ -363,8 +411,8 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
     LandImage *sheet = land_image_load(filename)
     if !sheet: return NULL
     int x, y, i, j
-    for j = 0; j < y_count; j++:
-        for i = 0; i < x_count; i++:
+    for j = 0 while j < y_count with j++:
+        for i = 0 while i < x_count with i++:
             x = offset_x + i * (grid_w + x_gap)
             y = offset_y + j * (grid_h + y_gap)
             LandImage *sub = land_image_sub(sheet, x, y, grid_w, grid_h)
@@ -378,16 +426,15 @@ LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
     int offset_y, int grid_w, int grid_h, int x_gap, int y_gap, int x_count,
     int y_count, int auto_crop):
     LandArray *array = NULL
-    LandImage *sheet = land_image_load(filename)
+    LandImage *sheet = land_image_load_memory(filename)
     if !sheet: return NULL
     int x, y, i, j
-    for j = 0; j < y_count; j++:
-        for i = 0; i < x_count; i++:
+    for j = 0 while j < y_count with j++:
+        for i = 0 while i < x_count with i++:
             x = offset_x + i * (grid_w + x_gap)
             y = offset_y + j * (grid_h + y_gap)
             LandImage *sub = land_image_new_from(sheet, x, y, grid_w, grid_h)
             land_array_add_data(&array, sub)
-
 
     land_image_del(sheet)
     return array

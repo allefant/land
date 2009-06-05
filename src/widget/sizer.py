@@ -100,9 +100,9 @@ def land_widget_sizer_set_target(LandWidget *self, LandWidget *target):
 def land_widget_sizer_interface_initialize():
     if land_widget_sizer_interface[0]: return
     char const *dir[8] = {"t", "rt", "r", "rb", "b", "lb", "l", "lt"}
-    for int i = 0; i < 8; i++:
+    for int i = 0 while i < 8 with i++:
         char str[256]
-        uszprintf(str, sizeof str, "sizer.%s", dir[i])
+        snprintf(str, sizeof str, "sizer.%s", dir[i])
         land_widget_sizer_interface[i] = land_widget_copy_interface(
             land_widget_base_interface, str)
         land_widget_sizer_interface[i]->draw = land_widget_sizer_draw

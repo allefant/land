@@ -27,7 +27,7 @@ static def draw_star(float middle_x, float middle_y, int n, float r, float start
     float a = start_angle
     float da = 2 * LAND_PI / n
     int i
-    for i = 0; i <= n; i++:
+    for i = 0 while i <= n with i++:
         float red, green, blue
         float r2 = r
         if i & 1:
@@ -147,10 +147,10 @@ static def game_draw(LandRunner *self):
 
     #static int t = 0
    #int j
-   #for j = 0; j < 9; j++:
+   #for j = 0 while j < 9 with j++:
    #{
        #int i
-       #for i = 3; i < 15; i++:
+       #for i = 3 while i < 15 with i++:
        #{
            #draw_star(20.5 + (i - 3) * 50, 20.5 + j * 50, i * 2, 10, t * LAND_PI / 60.0, j)
        #}

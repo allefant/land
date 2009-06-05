@@ -18,11 +18,11 @@ LandFont *def platform_font_load(char const *filename, float size):
     LandFontPlatform *self;
     land_alloc(self);
 
-    self->a5 = al_load_font(filename, size, 0);
+    self->a5 = al_load_font(filename, size, 0)
 
     land_log_message_nostamp("%s.\n", self->a5 ? "success" : "failure")
     LandFont *super = (void *)self
-    super->size = size
+    super->size = al_get_font_line_height(self->a5)
     return super
 
 def platform_font_print(LandFontState *lfs,
@@ -34,7 +34,7 @@ def platform_font_print(LandFontState *lfs,
 
     float x = lfs->x = lfs->x_pos
     float y = lfs->y = lfs->y_pos
-    lfs->w = al_get_text_width(self->a5, str, -1)
+    lfs->w = al_get_text_width(self->a5, str)
     lfs->h = al_get_font_line_height(self->a5)
 
     if lfs->off: return
@@ -46,10 +46,10 @@ def platform_font_print(LandFontState *lfs,
         d->color_r, d->color_g, d->color_b, d->color_a))
 
     if alignment == 2:
-        al_font_textout_centre(self->a5, x, y, str, -1)
+        al_draw_text(self->a5, x, y, ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == 1:
-        al_font_textout_right(self->a5, x, y, str, -1)
+        al_draw_text(self->a5, x, y, ALLEGRO_ALIGN_RIGHT, str)
     else:
-        al_font_textout(self->a5, x, y, str, -1)
+        al_draw_text(self->a5, x, y, 0, str)
     
     al_restore_state(&state)

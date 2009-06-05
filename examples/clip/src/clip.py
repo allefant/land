@@ -28,8 +28,8 @@ static def game_draw(LandRunner *self):
     # Going top to bottom, the image itself is shifted to the right from 0 to
     # 1.5.
     int i, j
-    for j = 0; j < 15; j++:
-        for i = 0; i < 15; i++:
+    for j = 0 while j < 15 with j++:
+        for i = 0 while i < 15 with i++:
             float x = 2 + i * 20
             float y = 2 + j * 20
             float clip = x + 8 + i * 0.5

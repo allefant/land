@@ -3,7 +3,7 @@ import base, scrolling, vbox
 class LandWidgetList:
     LandWidgetVBox super
     # If set, multiple items can get selected. 
-    unsigned int multi_select : 1
+    bool multi_select
 
 macro LAND_WIDGET_LIST(widget) ((LandWidgetList *) land_widget_check(widget,
     LAND_WIDGET_ID_LIST, __FILE__, __LINE__))
@@ -86,7 +86,7 @@ LandArray *def land_widget_list_get_selected_items(LandWidget *self):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
     LandArray *array = land_array_new()
     LandListItem *item
-    for item = container->children->first; item; item = item->next:
+    for item = container->children->first while item with item = item->next:
         LandWidget *child = item->data
         if child->selected:
             land_array_add_data(&array, child)
@@ -96,7 +96,7 @@ LandArray *def land_widget_list_get_selected_items(LandWidget *self):
 def land_widget_list_clear_selection(LandWidget *self):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
     LandListItem *item
-    for item = container->children->first; item; item = item->next:
+    for item = container->children->first while item with item = item->next:
         LandWidget *child = item->data
         if child->selected:
             child->selected = 0

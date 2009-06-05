@@ -1,4 +1,4 @@
-import container, ../list
+import container, land/list
 
 class LandWidgetBook:
     """
@@ -199,8 +199,8 @@ def land_widget_book_hide_tabbar(LandWidget *widget):
     panel->vt = land_widget_bookpage_tabless_interface
     land_widget_theme_update(panel)
 
-def land_widget_book_interface_initialize(void):
-    if (land_widget_book_interface) return
+def land_widget_book_interface_initialize():
+    if land_widget_book_interface: return
     land_widget_container_interface_initialize()
     land_widget_book_interface = land_widget_copy_interface(
         land_widget_container_interface, "book")

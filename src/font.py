@@ -115,12 +115,13 @@ int def land_text_get_width(char const *str):
 
 # Get the position at which the nth character is drawn. 
 int def land_text_get_char_offset(char const *str, int nth):
-    int l = ustrlen(str)
-    if nth > l: nth = l
-    char *s = land_strdup(str)
-    usetat(s, nth, 0)
-    int x = land_text_get_width(s)
-    land_free(s)
+    char *u = land_strdup(str)
+    char *p = u
+    for int i = 0 while i < nth with i++:
+        land_utf8_char(&p)
+    *p = 0
+    int x = land_text_get_width(u)
+    land_free(u)
     return x
 
 # Get the character index which is under the given pixel position, so that
@@ -130,14 +131,19 @@ int def land_text_get_char_offset(char const *str, int nth):
 # 
 int def land_text_get_char_index(char const *str, int x):
     if x < 0: return 0
-    int l = ustrlen(str)
-    int i
-    for i = 0; i <= l; i++:
+    int l = 0
+    char *p = (char *)str
+    while land_utf8_char(&p): l++
+    for int i = 0 while i <= l with i++:
         if land_text_get_char_offset(str, i) > x: return i - 1
-
     return l
 
-macro VPRINT char str[1024]; va_list args; va_start(args, text); vsnprintf(str, sizeof str, text, args); va_end(args);
+macro VPRINT:
+    char str[1024]
+    va_list args
+    va_start(args, text)
+    vsnprintf(str, sizeof str, text, args)
+    va_end(args)
 
 def land_print(char const *text, ...):
     VPRINT
@@ -168,52 +174,50 @@ static int def _wordwrap_helper(char const *text, int w, h,
     int y = land_text_y_pos()
     float fh = land_font_state->font->size
     char const *a = text
-    char glyph[sizeof(int) * 2]
-    int *ig = (void *)glyph
-    ig[1] = 0
+
+    printf("wordwrap %d %d\n", w, h)
+
     while 1:
-        char const *ptr = a
+        char *ptr = (char *)a
         if h > 0 and land_text_y_pos() >= y + h: break
-        int n = 0
+        int n = 0, ok_n = 0
         float offset = 0
         float www = 0
-        int pn
+        int c
         while 1:
-            pn = n
-            int c
+            # Find next possible break location.
+            bool skip = True
             while 1:
-                c = ugetat(ptr, 0)
+                c = land_utf8_char(&ptr)
                 if c == 0: break
-                if c == ' ' or c == '\n':
-                    break
-                ig[0] = c
-                offset += land_text_get_width(glyph)
-                ptr += uoffset(a, 1)
+                if c == '\n': break
+                if c == ' ':
+                    if not skip: break
+                else:
+                    skip = False
                 n++
+
+            offset = land_text_get_char_offset(a, n)
 
             int x = offset
             if x > w:
-                if pn > 0:
-                    n = pn - 1
+                if ok_n > 0:
+                    n = ok_n
                 else:
                     www = x
+
                 break
             www = x
             if c == 0 or c == '\n': break
-            ig[0] = c
-            offset += land_text_get_width(glyph)
-            ptr += uoffset(ptr, 1)
+            ok_n = n
             n++
-
         if www > land_font_state->wordwrap_width:
             land_font_state->wordwrap_width = www
         land_font_state->wordwrap_height += fh
         cb(a - text, a + n - text, data)
 
-        a += uoffset(a, n)
-        int c = ugetat(a, 0)
+        a += n + 1
         if c == 0: break
-        if c == ' ' or c == '\n': a += uoffset(a, 1)
     return a - text
 
 static def _print_wordwrap_cb(int a, b, void *data):
@@ -222,7 +226,8 @@ static def _print_wordwrap_cb(int a, b, void *data):
     int *alignement = p[1]
 
     char s[b - a + 1]
-    ustrzcpy(s, b - a + 1, text + a)
+    strncpy(s, text + a, b - a + 1)
+    s[b - a] = 0
     land_print_string(s, 1, *alignement)
 
 int def land_print_string_wordwrap(char const *text, int w, h, alignement):
@@ -254,7 +259,8 @@ static def land_wordwrap_text_cb(int a, b, void *data):
     char *text = p[0]
     LandArray *lines = p[1]
     char *s = land_malloc(b - a + 1)
-    ustrzcpy(s, b - a + 1, text + a)
+    strncpy(s, text + a,  b - a + 1)
+    s[b - a] = 0
     land_array_add(lines, s)
 
 LandArray *def land_wordwrap_text(int w, h, char const *str):
@@ -284,11 +290,12 @@ LandArray *def land_text_splitlines(char const *str):
 
     LandArray *lines = land_array_new()
     while 1:
-        char const *p = ustrchr(str, '\n')
+        char const *p = strchr(str, '\n')
         if not p:
             p = str + strlen(str)
         char *s = land_malloc(p - str + 1)
-        ustrzcpy(s, p - str + 1, str)
+        strncpy(s, str, p - str)
+        s[p - str] = 0
 
         int w = land_text_get_width(s)
         if w > land_font_state->wordwrap_width:
@@ -319,6 +326,6 @@ def land_print_lines(LandArray *lines, int alignement):
     if first < 0: first = 0
     if last > n - 1: last = n - 1
     land_font_state->y_pos += fh * first
-    for int i = first; i <= last; i++:
+    for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
         land_print_string(s, 1, alignement)

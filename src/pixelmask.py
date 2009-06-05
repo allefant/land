@@ -18,12 +18,11 @@ class SinglePixelMask:
     int w, h
     uint32_t data[0]
 
-static macro BB(x1, y1, x2, y2, x3, y3, x4, y4) {
-    *bl = x1 * cos(angle) + y1 * sin(angle);
-    *bt = y2 * cos(angle) - x2 * sin(angle);
-    *br = x3 * cos(angle) + y3 * sin(angle);
-    *bb = y4 * cos(angle) - x4 * sin(angle);
-    }
+static macro BB(x1, y1, x2, y2, x3, y3, x4, y4):
+    *bl = x1 * cos(angle) + y1 * sin(angle)
+    *bt = y2 * cos(angle) - x2 * sin(angle)
+    *br = x3 * cos(angle) + y3 * sin(angle)
+    *bb = y4 * cos(angle) - x4 * sin(angle)
 
 static def get_bounding_box(float l, float t, float r, float b, float angle,
     float *bl, float *bt, float *br, float *bb):
@@ -32,20 +31,20 @@ static def get_bounding_box(float l, float t, float r, float b, float angle,
     elif angle < 3 * LAND_PI / 2: BB(r, b, l, b, l, t, r, t)
     else BB(l, b, l, t, r, t, r, b)
 
-#ifdef DEBUG_MASK
+*** "ifdef" DEBUG_MASK
 static def printout_mask(SinglePixelMask *mask):
     int i
     int mask_w = mask->w
-    for i = 0; i < mask->h; i++:
+    for i = 0 while i < mask->h with i++:
         int j
-        for j = 0; j < mask_w; j++:
+        for j = 0 while j < mask_w with j++:
             int m = mask->data[mask_w * i + j]
             int b
-            for b = 0; b < 32; b++:
+            for b = 0 while b < 32 with b++:
                 printf("%c", m & (1 << b) ? '1' : '0')
 
         printf("\n")
-#endif
+*** "endif"
 
 # Creates n prerotated bitmasks for the given bitmap. A single bit
 # represents one pixel.
@@ -61,7 +60,7 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
     mask->h = bmph
     mask->x = 0
     mask->y = 0
-    for j = 0; j < n; j++:
+    for j = 0 while j < n with j++:
         float angle = j * LAND_PI * 2 / n
         float w, h
         if angle < LAND_PI / 2:
@@ -98,12 +97,12 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
         land_image_get_rgba_data(temp, rgba)
         land_image_destroy(temp)
 
-        for int y = 0; y < th; y++:
+        for int y = 0 while y < th with y++:
             int x
-            for x = 0; x < tw; x += 32:
+            for x = 0 while x < tw with x += 32:
                 int bits = 0
 
-                for int i = 0; i < 32 && x + i < tw; i++:
+                for int i = 0 while i < 32 && x + i < tw with i++:
                     if rgba[y * tw * 4 + (x + i) * 4 + 3] >= threshold:
                         bits += 1 << i
                 
@@ -117,7 +116,7 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
 
 static def pixelmask_destroy(LandPixelMask *mask):
     int j
-    for j = 0; j < mask->n; j++:
+    for j = 0 while j < mask->n with j++:
         land_free(mask->rotation[j])
 
     land_free(mask)
@@ -141,12 +140,12 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
     get_bounding_box(-self->x, -self->y, w - self->x, h - self->y,
         k * 2.0 * LAND_PI / self->mask->n, &ml, &mt, &mr, &mb)
 
-    for i = 0; i < self->mask->rotation[k]->h; i++:
+    for i = 0 while i < self->mask->rotation[k]->h with i++:
         int j
-        for j = 0; j < mask_w; j++:
+        for j = 0 while j < mask_w with j++:
             int m = self->mask->rotation[k]->data[mask_w * i + j]
             int b
-            for b = 0; b < 32; b++:
+            for b = 0 while b < 32 with b++:
                 if m & (1 << b):
                     land_plot(x + ml + j * 32 + b, y + mt + i)
 
@@ -163,12 +162,12 @@ static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
     unsigned int bit_ = x_ & 31
     int j
 
-    for j = 0; j < h; j++:
+    for j = 0 while j < h with j++:
         int lw
         int i = x >> 5
         int i_ = x_ >> 5
 
-        for lw = w; lw > 0; lw -= 32:
+        for lw = w while lw > 0 with lw -= 32:
             unsigned int m, m_
             if bit == 0: m = li[i]
             else: m = (li[i] >> bit) + (li[i + 1] << (32 - bit))

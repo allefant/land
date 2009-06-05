@@ -5,7 +5,7 @@ class LandWidgetVBox:
     """A VBox is a container where all children are layed out in rows."""
     LandWidgetContainer super
     int columns
-    int disable_updates : 1
+    bool disable_updates
 
 macro LAND_WIDGET_VBOX(widget) ((LandWidgetVBox *)land_widget_check(widget,
     LAND_WIDGET_ID_VBOX, __FILE__, __LINE__))
@@ -22,13 +22,25 @@ def land_widget_vbox_disable_updates(LandWidget *base):
     """
     LAND_WIDGET_VBOX(base)->disable_updates = 1
 
-def land_widget_vbox_update(LandWidget *base):
+def land_widget_vbox_do_update(LandWidget *base):
     """
     Update the vbox, after updates have previously been disabled with
     land_widget_vbox_disable_updates.
     """
     LAND_WIDGET_VBOX(base)->disable_updates = 0
     land_widget_layout(base)
+
+def land_widget_vbox_update(LandWidget *base):
+    """
+    This is called when a child is done adding itself. It's the earliest time
+    we can calculate the layout.
+
+    FIXME: the layout also is calculated in the add method, but that's wrong
+
+    """
+    land_widget_container_update(base)
+    if not LAND_WIDGET_VBOX(base)->disable_updates:
+        land_widget_layout(base)
 
 static def land_widget_vbox_renumber(LandWidget *base):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
@@ -45,7 +57,7 @@ static def land_widget_vbox_renumber(LandWidget *base):
                 y++
             item = item->next
     if !vbox->disable_updates:
-        land_widget_vbox_update(base)
+        land_widget_vbox_do_update(base)
 
 def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     """
@@ -70,7 +82,7 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
     if layout: land_widget_layout_unfreeze(base)
 
     if !vbox->disable_updates:
-        land_widget_vbox_update(base)
+        land_widget_vbox_do_update(base)
 
 def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):
     """Remove a widget from the vbox."""
@@ -119,4 +131,5 @@ def land_widget_vbox_interface_initialize():
         land_widget_container_interface, "vbox")
     land_widget_vbox_interface->id |= LAND_WIDGET_ID_VBOX
     land_widget_vbox_interface->add = land_widget_vbox_add
+    land_widget_vbox_interface->update = land_widget_vbox_update
     land_widget_vbox_interface->remove = land_widget_vbox_remove

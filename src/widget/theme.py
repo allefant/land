@@ -10,7 +10,7 @@ enum LandWidgetThemeFlags:
     ALIGN_H = 16
     ALIGN_V = 32
 
-# data for a single GUI bitmap 
+# data for a single GUI bitmap
 class LandWidgetThemeElement:
     char *name
     LandImage *bmp
@@ -21,7 +21,7 @@ class LandWidgetThemeElement:
     int ox, oy # extra offset into the anchor widget 
     float r, g, b, a # text color 
     LandFont *font
-    unsigned int transparent : 1
+    bool transparent
 
     # Offset to contents - by default this is the same as the border, but it can
     # be smaller (contents are drawn over the border) or larger (there's some
@@ -62,13 +62,13 @@ static inline int def centered_offset (int size1, int size2):
         o -= size2
     return o
 
-static inline def _masked_non_stretched_blit(LandImage *s, int sx, int sy, int w, int h,
-                           int dx, int dy, int _, int __):
+static inline void def _masked_non_stretched_blit(LandImage *s,
+    int sx, sy, w, h, dx, dy, _, __):
     land_image_clip(s, sx, sy, sx + w, sy + h)
     land_image_draw(s, dx - sx, dy - sy)
 
-static inline def _masked_stretched_blit(LandImage *s, int sx, int sy, int w, int h,
-                           int dx, int dy, int dw, int dh):
+static inline void def _masked_stretched_blit(LandImage *s,
+    int sx, sy, w, h, dx, dy, dw, dh):
     land_image_clip(s, sx, sy, sx + w, sy + h)
     land_image_draw_scaled(s, dx - sx, dy - sy, (float)dw / w,
         (float)dh / h)
@@ -82,7 +82,7 @@ enum COLUMN_TYPE:
 
 # Draw a column of pattern pat (at bx, width bw) into the given rectangle.
 # 
-static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
+static inline void def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
     int x, int y, int w, int h, int skip_middle):
     int oy
     int j
@@ -142,7 +142,7 @@ static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
             int start = max(0, (_land_active_display->clip_y1 - (y + oy)) / bm)
             start = y + oy + start * bm
             int end = min(_land_active_display->clip_y2, y + h)
-            for j = start; j < end; j += bm:
+            for j = start while j < end with j += bm:
                 bfunc(pat->bmp, bx, pat->bt, bw, bm, x, j, w, bm)
 
             land_clip_pop()
@@ -231,7 +231,7 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
             int start = max(0, (_land_active_display->clip_x1 - (x + ox)) / bm)
             start = x + ox + start * bm
             int end = min(_land_active_display->clip_x2, x + w - pat->br)
-            for i = start; i < end; i += bm:
+            for i = start while i < end with i += bm:
                 blit_column(pat, pat->bl, bm, i, y, bm, h, skip_middle)
 
             land_clip_pop()
@@ -272,16 +272,17 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
     LandArray *argv = land_buffer_split(argbuf, ' ')
     land_buffer_del(argbuf)
     int argc = land_array_count(argv)
+    
     LandImage *img = NULL
     if argc:
         char iname[2048]
         LandBuffer *buf = land_array_get_nth(argv, 0)
         char *arg = land_buffer_finish(buf)
-        uszprintf(iname, sizeof iname, "%s%s%s", theme->prefix, arg, theme->suffix)
+        snprintf(iname, sizeof iname, "%s%s%s", theme->prefix, arg, theme->suffix)
         land_free(arg)
         img = land_image_load(iname)
         if img:
-            for int a = 1; a < argc; a++:
+            for int a = 1 while a < argc with a++:
                 buf = land_array_get_nth(argv, a)
                 arg = land_buffer_finish(buf)
                 if not strcmp (arg, "cut"):
@@ -327,11 +328,11 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     read_int_arg(argc, argv, &a, &self->ir)
                     read_int_arg(argc, argv, &a, &self->ib)
 
-                elif (!strcmp (arg, "gap")):
+                elif !strcmp (arg, "gap"):
                     read_int_arg(argc, argv, &a, &self->hgap)
                     read_int_arg(argc, argv, &a, &self->vgap)
 
-                elif (!ustrcmp(arg, "color")):
+                elif !strcmp(arg, "color"):
                     int c = 0
                     read_int_arg(argc, argv, &a, &c)
                     self->a = (c & 255) / 255.0; c >>= 8
@@ -339,7 +340,7 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     self->g = (c & 255) / 255.0; c >>= 8
                     self->r = (c & 255) / 255.0; c >>= 8
 
-                elif (!ustrcmp(arg, "transparent")):
+                elif (!strcmp(arg, "transparent")):
                     self->transparent = 1
                 
                 land_free(arg)
@@ -382,7 +383,7 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
     self->suffix = land_strdup(land_ini_get_string(config, "agup.cfg", "suffix", ""))
 
     int n = land_ini_get_number_of_entries(config, "agup.cfg/elements")
-    for int i = 0; i < n; i++:
+    for int i = 0 while i < n with i++:
         char const *v = land_init_get_nth_entry(config,
             "agup.cfg/elements", i)
         char const *k = land_ini_get_string(config, "agup.cfg/elements",
@@ -397,7 +398,7 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
 
 def land_widget_theme_destroy(LandWidgetTheme *self):
     LandListItem *item
-    for item = self->elements->first; item; item = item->next:
+    for item = self->elements->first while item with item = item->next:
         LandWidgetThemeElement *elem = item->data
         land_free(elem->name)
         land_image_destroy(elem->bmp)
@@ -413,7 +414,7 @@ static LandWidgetThemeElement *def find_element(LandList *list, char const *name
     LandListItem *item = list->first
     while item:
         LandWidgetThemeElement *elem = item->data
-        if not ustrcmp(elem->name, name):
+        if not strcmp(elem->name, name):
             return elem
         item = item->next
 
@@ -432,13 +433,13 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
     if not element->selected:
         char name[1024]
         # First, try to find "widget.selected"
-        ustrzcpy(name, sizeof name, widget->vt->name)
-        ustrzcat(name, sizeof name, ".selected")
+        strncpy(name, widget->vt->name, sizeof name)
+        strncat(name, ".selected", sizeof name)
         element->selected = find_element(theme->elements, name)
         # If it doesn't exist, try "base.selected"
         if not element->selected:
-            ustrzcpy(name, sizeof name, element->name)
-            ustrzcat(name, sizeof name, ".selected")
+            strncpy(name, element->name, sizeof name)
+            strncat(name, ".selected", sizeof name)
             element->selected = find_element(theme->elements, name)
         # If that doesn't exist as well, use the same as non-selected.
         if not element->selected:
@@ -537,7 +538,7 @@ static def _theme_recurse(LandWidget *self, LandWidgetTheme *theme):
         while i:
             LandWidget *w = i->data
             _theme_recurse(w, theme)
-             i = i->next
+            i = i->next
 
 static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
     if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
@@ -546,7 +547,7 @@ static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
         while i:
             LandWidget *w = i->data
             _layout_recurse(w, theme)
-             i = i->next
+            i = i->next
         if self->parent and (self->parent->box.flags & GUL_NO_LAYOUT):
             land_widget_layout(self)
 

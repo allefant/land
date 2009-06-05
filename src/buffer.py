@@ -1,7 +1,7 @@
 static import global stdio, stdlib, string, zlib
 static import mem
 import global allegro5/allegro5
-import array
+import array, util
 
 class LandBuffer:
     int size # reserved memory
@@ -73,7 +73,7 @@ LandArray *def land_buffer_split(LandBuffer const *self, char delim):
     """
     LandArray *a = land_array_new()
     int start = 0
-    for int i = 0; i < self->n; i++:
+    for int i = 0 while i < self->n with i++:
         if self->buffer[i] == delim:
             LandBuffer *l = land_buffer_new()
             land_buffer_add(l, self->buffer + start, i - start)
@@ -84,16 +84,45 @@ LandArray *def land_buffer_split(LandBuffer const *self, char delim):
     land_array_add(a, l)
     return a
 
-def land_buffer_strip(LandBuffer *self, char const *what):
+def land_buffer_strip_right(LandBuffer *self, char const *what):
     if self->n == 0: return
-    int i = 0
-    while ustrchr(what, self->buffer[i]):
-        i++
-    int j = self->n - 1
-    while ustrchr(what, self->buffer[j]):
-        j--
-    memmove(self->buffer, self->buffer + i, 1 + j - i)
-    self->size = 1 + j - i
+    int away = 0
+    char *p = self->buffer + self->n
+    while p > self->buffer:
+        int c = land_utf8_char_back(&p);
+        char const *q = what
+        while 1:
+            int d = land_utf8_char_const(&q)
+            if not d:
+                goto done
+            if c == d:
+                away++
+                break
+    label done
+    self->n -= away
+
+def land_buffer_strip_left(LandBuffer *self, char const *what):
+    if self->n == 0: return
+    int away = 0
+    char *p = self->buffer
+    while 1:
+        label again
+        int c = land_utf8_char(&p)
+        if not c: break
+        char const *q = what
+        while 1:
+            int d = land_utf8_char_const(&q)
+            if not d: break
+            if c == d:
+                away++
+                goto again
+        break
+    self->n -= away
+    memmove(self->buffer, self->buffer + away, self->n)
+
+def land_buffer_strip(LandBuffer *self, char const *what):
+    land_buffer_strip_right(self, what)
+    land_buffer_strip_left(self, what)
 
 def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     FILE *f = fopen(filename, "w")
@@ -102,7 +131,7 @@ def land_buffer_write_to_file(LandBuffer *self, char const *filename):
 
 int def land_buffer_rfind(LandBuffer *self, char c):
     if self->n == 0: return -1
-    for int i = self->n - 1; i >= 0; i--:
+    for int i = self->n - 1 while i >= 0 with i--:
         if self->buffer[i] == c: return i
     return -1
 
@@ -127,7 +156,7 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
     fclose(pf)
     return self
 
-#ifndef LAND_NO_COMPRESS
+*** "ifndef" LAND_NO_COMPRESS
 def land_buffer_compress(LandBuffer *self):
     uLongf destlen = self->n * 1.1 + 12
     Bytef *dest = land_malloc(4 + destlen)
@@ -145,14 +174,14 @@ def land_buffer_decompress(LandBuffer *self):
     land_free(self->buffer)
     self->buffer = (void *)dest
     self->size = self->n = destlen
-#endif
+*** "endif"
 
 int def land_buffer_compare(LandBuffer *self, *other):
     if self->n < other->n: return -1
     if self->n > other->n: return 1
     return memcmp(self->buffer, other->buffer, self->n)
 
-#if 0
+*** "if" 0
 static int def pf_fclose(void *userdata):
     LandBufferAsFile *self = userdata
     land_free(self)
@@ -208,7 +237,7 @@ static int def pf_feof(void *userdata):
 static int def pf_ferror(void *userdata):
     return 0
 
-#endif
+*** "endif"
 
 #static struct PACKFILE_VTABLE vt = {
     #pf_fclose,

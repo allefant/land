@@ -404,9 +404,9 @@ def land_screenshot(char const *filename):
     assert(0)
 
 def land_screenshot_autoname(char const *name):
-    for int i = 0; ; i++:
+    for int i = 0 while  with i++:
         char path[1024]
-        uszprintf(path, sizeof path, "%s%d.jpg", name, i)
+        snprintf(path, sizeof path, "%s%d.jpg", name, i)
         assert(0)
         # if not exists(path):
         #    land_screenshot(path)

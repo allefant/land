@@ -24,9 +24,10 @@ def platform_display_del(LandDisplay *super):
     LandDisplayPlatform *self = (void *)super
     al_destroy_display(self->a5)
 
-static macro SELF \
-    LandDisplayPlatform *self = (void *)_land_active_display; \
-    LandDisplay *super = &self->super; (void)super;
+static macro SELF:
+    LandDisplayPlatform *self = (void *)_land_active_display
+    LandDisplay *super = &self->super
+    (void)super
 
 def platform_display_set():
     SELF
@@ -50,7 +51,7 @@ def platform_display_clip():
         super->clip_x2 - super->clip_x1, super->clip_y2 - super->clip_y1)
 
 def platform_display_clear(LandDisplay *self, float r, g, b, a):
-    al_clear(al_map_rgba_f(r, g, b, a))
+    al_clear_to_color(al_map_rgba_f(r, g, b, a))
 
 def platform_display_flip():
     al_flip_display()

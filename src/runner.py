@@ -3,7 +3,7 @@ import list
 class LandRunner:
     char *name
     int inited
-    int allocated : 1
+    bool allocated
     void (*init)(LandRunner *self)
     void (*enter)(LandRunner *self)
     void (*tick)(LandRunner *self)
@@ -49,32 +49,32 @@ def land_runner_switch_active(LandRunner *self):
         if active_runner->init: active_runner->init(active_runner)
     land_runner_enter_active()
 
-def land_runner_enter_active(void):
+def land_runner_enter_active():
     LandRunner *self = active_runner
     if self && self->enter:
         self->enter(self)
 
-def land_runner_tick_active(void):
+def land_runner_tick_active():
     LandRunner *self = active_runner
     if self && self->tick:
         self->tick(self)
 
-def land_runner_draw_active(void):
+def land_runner_draw_active():
     LandRunner *self = active_runner
     if self && self->draw:
         self->draw(self)
 
-def land_runner_leave_active(void):
+def land_runner_leave_active():
     LandRunner *self = active_runner
     if self && self->leave:
         self->leave(self)
 
-def land_runner_destroy_all(void):
+def land_runner_destroy_all():
     land_log_message("land_runner_destroy_all\n")
     LandListItem *i
     if !runners:
         return
-    for i = runners->first; i; i = i->next:
+    for i = runners->first while i with i = i->next:
         LandRunner *self = (LandRunner *)i->data
         if self->destroy:
             self->destroy(self)

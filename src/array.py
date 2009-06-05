@@ -6,11 +6,11 @@ class LandArray:
 
 static import mem
 
-#ifdef LAND_MEMLOG
+*** "ifdef" LAND_MEMLOG
 
-#undef land_array_new
-#undef land_array_destroy
-#undef land_array_add
+*** "undef" land_array_new
+*** "undef" land_array_destroy
+*** "undef" land_array_add
 
 LandArray *def land_array_new_memlog(char const *f, int l):
     LandArray *array = land_array_new()
@@ -26,7 +26,7 @@ def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
     land_memory_remove(self, "array", 1, f, l)
     land_memory_add(self, "array", self->size, f, l)
 
-#endif
+*** "endif"
 
 LandArray *def land_array_new():
     """
@@ -99,11 +99,11 @@ def land_array_add_data(LandArray **array, void *data):
     """
     LandArray *self = *array
     if !self:
-        #ifdef LAND_MEMLOG
+        *** "if" LAND_MEMLOG
         self = land_array_new_memlog(__FILE__, __LINE__)
-        #else
+        *** "else"
         self = land_array_new()
-        #endif
+        *** "endif"
         *array = self
 
     land_array_add(self, data)
@@ -114,7 +114,7 @@ int def land_array_find(LandArray *self, void *data):
     first index i so that land_array_get_nth(array, i) == data. If the data
     cannot be found, -1 is returned.
     """
-    for int i = 0; i < self->count; i++:
+    for int i = 0 while i < self->count with i++:
         if self->data[i] == data: return i
     return -1
 
@@ -154,7 +154,7 @@ def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
 static int def alphacomp(void const *a, void const *b):
     char const * const *as = a
     char const * const *bs = b
-    int r = ustrcmp(*as, *bs)
+    int r = strcmp(*as, *bs)
     return r
 
 def land_array_sort_alphabetical(LandArray *self):
@@ -177,7 +177,7 @@ int def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
     """
     if not self: return 0
     int i
-    for i = 0; i < self->count; i++:
+    for i = 0 while i < self->count with i++:
         if cb(self->data[i], data): break
     return i
 
@@ -187,11 +187,10 @@ def land_array_clear(LandArray *self):
     """
     self->count = 0
 
-#header
-#ifdef LAND_MEMLOG
+global *** "ifdef" LAND_MEMLOG
 
 macro land_array_new() land_array_new_memlog(__FILE__, __LINE__)
 macro land_array_destroy(x) land_array_destroy_memlog(x, __FILE__, __LINE__)
 macro land_array_add(x, y) land_array_add_memlog(x, y, __FILE__, __LINE__)
 
-#endif
+global *** "endif"

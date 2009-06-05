@@ -153,7 +153,7 @@ are many other cases. Also, you never have to use the reference counting. You
 just need to understand that Land provides no way to directly and forcefully
 delete one of its widgets, and why it is like that.
 """
-import ../hash, gul
+import land/hash, gul
 
 # A widget ID must contain the hex digits of the parent.
 macro LAND_WIDGET_ID_BASE           0x00000001 // no visual, no layout
@@ -251,25 +251,25 @@ class LandWidget:
     LandLayoutBox box
 
     # internal state
-    unsigned int got_mouse : 1 # this widget has the mouse focus
-    unsigned int got_keyboard : 1 # this widget has the keyboard focus
-    unsigned int send_to_top : 1 # move this widget to top in next tick
-    unsigned int want_focus : 1 # give keyboard focus to this widget
-    unsigned int dont_clip : 1 # children can draw outside this widget
-    unsigned int no_decoration : 1 # draw nothing except contents
-    unsigned int only_border : 1 # draw only a border, for performance reasons
+    unsigned int got_mouse with 1 # this widget has the mouse focus
+    unsigned int got_keyboard with 1 # this widget has the keyboard focus
+    unsigned int send_to_top with 1 # move this widget to top in next tick
+    unsigned int want_focus with 1 # give keyboard focus to this widget
+    unsigned int dont_clip with 1 # children can draw outside this widget
+    unsigned int no_decoration with 1 # draw nothing except contents
+    unsigned int only_border with 1 # draw only a border, for performance reasons
     # Widget is not displayed at all, e.g. hidden scrollbar.
-    unsigned int hidden : 1 
+    unsigned int hidden with 1 
     # inhibit layout updates, for performance reasons
-    unsigned int no_layout : 1
+    unsigned int no_layout with 1
 
-    unsigned int layout_hack : 1 # signals that the layout calculation needs to
+    unsigned int layout_hack with 1 # signals that the layout calculation needs to
                                     # start over
 
     # user state
-    unsigned int selected : 1 # e.g. checked checkbox or pressed button
-    unsigned int highlighted : 1 # item with mouse hovering over it
-    unsigned int disabled : 1 # e.g. button who cannot currently be pressed
+    unsigned int selected with 1 # e.g. checked checkbox or pressed button
+    unsigned int highlighted with 1 # item with mouse hovering over it
+    unsigned int disabled with 1 # e.g. button who cannot currently be pressed
 
     int reference # reference counting
 
@@ -301,7 +301,7 @@ int def land_widget_is(LandWidget const *self, int id):
     Return true if the widget has the given type (or one derived from it).
     """
     int i
-    for i = 0; i < 7; i++:
+    for i = 0 while i < 7 with i++:
         int digit = id & (0xf << (i * 4))
         if not digit: break
         if (self->vt->id & (0xf << (i * 4))) != digit: return 0
@@ -340,10 +340,10 @@ def land_widget_remove_all_properties(LandWidget *self):
     LandHash *hash = self->properties
     if not hash: return
     int i
-    for i = 0; i < hash->size; i++:
+    for i = 0 while i < hash->size with i++:
         if hash->entries[i]:
             int j
-            for j = 0; j < hash->entries[i]->n; j++:
+            for j = 0 while j < hash->entries[i]->n with j++:
                 LandWidgetProperty *prop = hash->entries[i][j].data
                 if prop->destroy: prop->destroy(prop->data)
                 land_free(prop)
@@ -382,7 +382,7 @@ def land_widget_interfaces_destroy_all():
     int n = land_array_count(land_widget_interfaces)
     land_log_message("land_widget_interfaces_destroy_all (%d)\n", n)
     int i
-    for i = 0; i < n; i++:
+    for i = 0 while i < n with i++:
         LandWidgetInterface *f = land_array_get_nth(land_widget_interfaces, i)
         land_free(f->name)
         land_free(f)
@@ -587,7 +587,7 @@ def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
         *r -= self->element->ir
         *b -= self->element->ib
 
-def land_widget_base_interface_initialize(void):
+def land_widget_base_interface_initialize():
     if land_widget_base_interface: return
 
     land_alloc(land_widget_base_interface)

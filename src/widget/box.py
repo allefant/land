@@ -19,7 +19,7 @@ LandWidget *def land_widget_box_new(LandWidget *parent, int x, y, w, h):
 
     return self
 
-def land_widget_box_interface_initialize(void):
+def land_widget_box_interface_initialize():
     if land_widget_box_interface: return
 
     land_widget_box_interface = land_widget_copy_interface(

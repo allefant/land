@@ -1,4 +1,4 @@
-import ../land, container
+import land/land, container
 
 class LandWidgetScrollbar:
     """
@@ -8,7 +8,7 @@ class LandWidgetScrollbar:
     LandWidget *target
     int dragged
     int drag_x, drag_y
-    int vertical : 1
+    bool vertical
     void (*callback)(LandWidget *self, int set, int *min, int *max, int *range,
         int *pos)
 

@@ -5,7 +5,6 @@ import base
 class LandWidgetEdit:
     LandWidget super
     char *text
-    int bytes # How many bytes are reserved for text.
     int scroll
     int cursor
     int last_key
@@ -86,13 +85,13 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
         edit->last_key = k
         edit->last_char = u
         if u > 31:
-            edit->bytes += ucwidth(u)
-            edit->text = land_realloc(edit->text, edit->bytes)
-            uinsert(edit->text, edit->cursor, u)
+            edit->text = land_utf8_realloc_insert(edit->text, edit->cursor, u)
             edit->cursor++
             M
         else:
-            int l = ustrlen(edit->text)
+            char *pos = edit->text
+            int l = 0
+            while land_utf8_char(&pos): l++
             if k == LandKeyLeft:
                 edit->cursor--
                 if edit->cursor < 0: edit->cursor = 0
@@ -101,16 +100,14 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                 if edit->cursor > l: edit->cursor = l
             elif k == LandKeyDelete:
                 if edit->cursor < l:
-                    uremove(edit->text, edit->cursor)
-                    edit->bytes = ustrsizez(edit->text)
-                    edit->text = land_realloc(edit->text, edit->bytes)
+                    edit->text = land_utf8_realloc_remove(edit->text,
+                        edit->cursor)
                     M
             elif k == LandKeyBackspace:
                 if edit->cursor > 0:
                     edit->cursor--
-                    uremove(edit->text, edit->cursor)
-                    edit->bytes = ustrsizez(edit->text)
-                    edit->text = land_realloc(edit->text, edit->bytes)
+                    edit->text = land_utf8_realloc_remove(edit->text,
+                        edit->cursor)
                     M
             elif k == LandKeyHome:
                 edit->cursor = 0
@@ -119,7 +116,7 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
 
 def land_widget_edit_destroy(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
-    if (edit->text) land_free(edit->text)
+    if edit->text: land_free(edit->text)
     land_widget_base_destroy(base)
 
 def land_widget_edit_initialize(LandWidget *base,
@@ -131,9 +128,8 @@ def land_widget_edit_initialize(LandWidget *base,
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
     if text:
         self->text = land_strdup(text)
-        self->bytes = ustrsizez(self->text)
         land_widget_theme_set_minimum_size_for_text(base, text)
-        if (base->box.min_width < w) base->box.min_width = w
+        if base->box.min_width < w: base->box.min_width = w
 
     self->modified = modified
 
@@ -160,10 +156,9 @@ def land_widget_edit_set_text(LandWidget *base, char const *text):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     land_free(edit->text)
     edit->text = land_strdup(text)
-    edit->bytes = ustrsizez(edit->text)
     land_widget_theme_set_minimum_size_for_text(base, text)
-    if edit->cursor > ustrlen(text):
-        edit->cursor = ustrlen(text)
+    if edit->cursor > land_utf8_count(text):
+        edit->cursor = land_utf8_count(text)
 
 def land_widget_edit_align_right(LandWidget *base, bool yes):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)

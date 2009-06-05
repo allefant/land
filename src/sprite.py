@@ -28,7 +28,7 @@ class LandSpriteType:
     # How to draw sprites of this type.
     void (*draw)(LandSprite *self, LandView *view)
     # Sprite-sprite collision detection.
-    int (*overlap)(LandSprite *self, LandSprite *with)
+    int (*overlap)(LandSprite *self, LandSprite *other)
     # How to destroy sprites of this type.
     void (*destroy)(LandSprite *self)
     
@@ -99,7 +99,7 @@ def land_sprites_grid_clear(LandGrid *super):
     """
     LandSpritesGrid *self = LAND_SPRITES_GRID(super)
     int j
-    for j = 0; j < super->x_cells * super->y_cells; j++:
+    for j = 0 while j < super->x_cells * super->y_cells with j++:
         if self->sprites[j]:
             land_list_destroy(self->sprites[j])
             self->sprites[j] = None
@@ -157,7 +157,7 @@ def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
 LandSprite *def land_sprite_new(LandSpriteType *type):
 
-    if !ustrcmp(type->name, "animation"):
+    if !strcmp(type->name, "animation"):
         return land_sprite_animated_new(type)
 
     LandSprite *self
@@ -272,8 +272,8 @@ LandList *def land_sprites_grid_overlap(LandSprite *self,
 
     grid->tag++
 
-    for int ty = tt; ty <= tb; ty++:
-        for int tx = tl; tx <= tr; tx++:
+    for int ty = tt while ty <= tb with ty++:
+        for int tx = tl while tx <= tr with tx++:
             LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
             if list:
                 LandListItem *item = list->first
@@ -312,9 +312,9 @@ LandList *def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
     if tb >= grid->super.y_cells: tb = grid->super.y_cells - 1
 
     grid->tag++
-    for ty = tt; ty <= tb; ty++:
+    for ty = tt while ty <= tb with ty++:
 
-        for tx = tl; tx <= tr; tx++:
+        for tx = tl while tx <= tr with tx++:
 
             LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
             if list:
@@ -353,9 +353,9 @@ LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
     if tr >= grid->super.x_cells: tr = grid->super.x_cells - 1
     if tb >= grid->super.y_cells: tb = grid->super.y_cells - 1
     grid->tag++
-    for ty = tt; ty <= tb; ty++:
+    for ty = tt while ty <= tb with ty++:
 
-        for tx = tl; tx <= tr; tx++:
+        for tx = tl while tx <= tr with tx++:
 
             LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
             if list:
@@ -429,8 +429,8 @@ LandList *def land_sprites_get_triangle(LandGrid *sprites_grid,
     # check sprites in all cells
     LandList *retlist = NULL
     grid->tag++
-    for int ty = tt; ty <= tb; ty++:
-        for int tx = tl; tx <= tr; tx++:
+    for int ty = tt while ty <= tb with ty++:
+        for int tx = tl while tx <= tr with tx++:
             LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
             if not list: continue
             LandListItem *item = list->first
@@ -468,8 +468,8 @@ def grid_place(LandSprite *self, LandSpritesGrid *grid):
     get_grid_extents(self, &grid->super, &tl, &tt, &tr, &tb)
 
     # Add the sprite to all cells it possibly overlaps.
-    for int ty = tt; ty <= tb; ty++:
-        for int tx = tl; tx <= tr; tx++:
+    for int ty = tt while ty <= tb with ty++:
+        for int tx = tl while tx <= tr with tx++:
 
             # FIXME: need proper sprites container, without allocating a new
             # ListItem
@@ -503,8 +503,8 @@ def grid_unplace(LandSprite *self, LandSpritesGrid *grid):
     int tl, tt, tr, tb
     get_grid_extents(self, &grid->super, &tl, &tt, &tr, &tb)
 
-    for int ty = tt; ty <= tb; ty++:
-        for int tx = tl; tx <= tr; tx++:
+    for int ty = tt while ty <= tb with ty++:
+        for int tx = tl while tx <= tr with tx++:
             # FIXME: need proper sprites container, without iterating the whole
             # list and de-allocating the ListItem
             land_remove_list_data(&grid->sprites[ty * grid->super.x_cells + tx],

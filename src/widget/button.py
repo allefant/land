@@ -1,4 +1,4 @@
-import base, ../image, ../animation
+import base, land/image, land/animation
 
 # TODO: It's time to split this up into simple buttons, image buttons, and
 # text widgets.
@@ -7,14 +7,14 @@ class LandWidgetButton:
     A button.
     """
     LandWidget super
-    unsigned int xalign : 2 # 0 = left, 1 = right, 2 = center
-    unsigned int yalign : 2 # 0 = top, 1 = bottom, 2 = center
+    unsigned int xalign # 0 = left, 1 = right, 2 = center
+    unsigned int yalign # 0 = top, 1 = bottom, 2 = center
     int xshift
     int yshift
     # 0 = single line
     # 1 = multi line
     # 2 = multi line with word wrapping
-    int multiline : 2
+    int multiline
     LandAnimation *animation
     LandImage *image
     char *text
@@ -263,6 +263,7 @@ def land_widget_button_multiline(LandWidget *self, int style):
     if button->lines:
         land_array_for_each(button->lines, _linedelcb, None)
         land_array_destroy(button->lines)
+        button->lines = None
     if style and button->text:
         float x, y, w, h
         land_widget_theme_font(self)

@@ -1,7 +1,10 @@
 import global land/land
 
+LandWidgetTheme *theme, *classic, *green
 LandWidget *desktop, *panel
 int page = 0
+
+extern int gul_debug;
 
 def my_draw(LandWidget *self):
     land_widget_theme_draw(self)
@@ -27,7 +30,27 @@ LandWidget * def land_widget_mybox_new(LandWidget *parent):
     self->vt = myvt
     return self
 
+def panel_0():
+    panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
+
+    LandWidget *vbox = land_widget_vbox_new(panel, 0, 0, 0, 0)
+    land_widget_mybox_new(vbox)
+
 def panel_1():
+    panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
+
+    LandWidget *vbox = land_widget_vbox_new(panel, 0, 0, 0, 0)
+    land_widget_mybox_new(vbox)
+    land_widget_mybox_new(vbox)
+
+def panel_2():
+    panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
+
+    LandWidget *hbox = land_widget_hbox_new(panel, 0, 0, 0, 0)
+    land_widget_mybox_new(hbox)
+    land_widget_mybox_new(hbox)
+
+def panel_3():
     panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
 
     LandWidget *vbox = land_widget_vbox_new(panel, 0, 0, 0, 0)
@@ -44,7 +67,7 @@ def panel_1():
     land_widget_mybox_new(vbox)
     land_widget_mybox_new(vbox)
 
-def panel_2():
+def panel_4():
     panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
 
     LandWidget *hbox = land_widget_hbox_new(panel, 0, 0, 0, 0)
@@ -64,7 +87,7 @@ def panel_2():
     # right column
     land_widget_mybox_new(hbox)
 
-def panel_3():
+def panel_5():
     panel = land_widget_panel_new(desktop, 30, 30, 300, 300)
 
     LandWidget *container = land_widget_container_new(panel, 0, 0, 0, 0)
@@ -89,14 +112,16 @@ def panel_3():
     land_widget_layout_set_grid_position(box5, 1, 1)
 
 def init(LandRunner *self):
+    gul_debug = 0;
     land_font_load("../../data/galaxy.ttf", 12)
-    LandWidgetTheme *theme = land_widget_theme_new("../../data/classic.cfg")
+    theme = classic = land_widget_theme_new("../../data/classic.cfg")
+    green = land_widget_theme_new("../../data/green.cfg")
     land_widget_theme_set_default(theme)
     desktop = land_widget_board_new(NULL, 20, 20, 600, 440)
 
     land_widget_reference(desktop)
 
-    panel_1()
+    panel_0()
 
 def tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape): land_quit()
@@ -105,11 +130,20 @@ def tick(LandRunner *self):
     if land_key_pressed(' '):
         if panel: land_widget_remove(panel)
         page++
-        if page == 1: panel_2()
-        elif page == 2: panel_3()
+        if page == 1: panel_1()
+        elif page == 2: panel_2()
+        elif page == 3: panel_3()
+        elif page == 4: panel_4()
+        elif page == 5: panel_5()
         else:
             page = 0
-            panel_1()
+            panel_0()
+    if land_key_pressed(13):
+        if theme == classic:
+            theme = green
+        else:
+            theme = classic
+        land_widget_theme_apply(desktop, theme)
 
 def draw(LandRunner *self):
     land_clear(0.5, 0.5, 1, 1)

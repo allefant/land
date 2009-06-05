@@ -10,18 +10,18 @@ macro GUL_EQUAL_X  8
 macro GUL_LEAVE_X  16
 
 #GUL_EXPAND_Y 0
-macro GUL_SHRINK_Y (1 * 256)
+macro GUL_SHRINK_Y = (1 * 256)
 #GUL_TOP 0
-macro GUL_CENTER_Y (2 * 256)
-macro GUL_BOTTOM   (4 * 256)
-macro GUL_EQUAL_Y  (8 * 256)
+macro GUL_CENTER_Y = (2 * 256)
+macro GUL_BOTTOM   = (4 * 256)
+macro GUL_EQUAL_Y  = (8 * 256)
 
-macro GUL_LEAVE_Y  (16 * 256)
+macro GUL_LEAVE_Y  = (16 * 256)
 
-macro GUL_HIDDEN (1 * 65536)
-macro GUL_NO_LAYOUT (2 * 65536)
+macro GUL_HIDDEN = (1 * 65536)
+macro GUL_NO_LAYOUT = (2 * 65536)
 
-macro GUL_RESIZE (4 * 65536)
+macro GUL_RESIZE = (4 * 65536)
 
 # EQUAL_X:
 # bottom-up: Try to use width of largest column, until parent->max_width / n
@@ -69,16 +69,18 @@ static import container, theme
 static import global stdio, stdlib, assert, string, stdarg
 static import land/log, land/mem
 
-#static macro D(_); _
-static macro D(_); (void)0;
+int gul_debug;
+
+static macro D(_) if (gul_debug) _
+#static macro D(_) (void)0;
 
 static def ERR(char const *format, ...):
     va_list args
     va_start(args, format)
     #vprintf(format, args)
     char str[1024]
-    uvszprintf(str, sizeof str, format, args)
-    ustrzcat(str, sizeof str, "\n")
+    vsnprintf(str, sizeof str, format, args)
+    strcat(str, "\n")
     land_log_message(str)
     va_end(args)
 
@@ -137,14 +139,14 @@ static def update_lookup_grid(LandWidget *self):
         # The lookup grid initially is filled with 0. Now all non-hidden boxes
         # fill in which grid cells they occupy.
         LandListItem *li = container->children->first
-        for ; li; li = li->next:
+        for  while li with li = li->next:
             LandWidget *c = li->data
             int i, j
             # NO_LAYOUT children are handled like normal, since it only affects
             # layout inside themselves, not themselves.
             if c->box.flags & GUL_HIDDEN: continue
-            for i = c->box.col; i <= c->box.col + c->box.extra_cols; i++:
-                for j = c->box.row; j <= c->box.row + c->box.extra_rows; j++:
+            for i = c->box.col while i <= c->box.col + c->box.extra_cols with i++:
+                for j = c->box.row while j <= c->box.row + c->box.extra_rows with j++:
                     self->box.lookup_grid[i + j * self->box.cols] = c
 
 
@@ -162,7 +164,7 @@ static int def row_min_height(LandWidget *self, int row):
     int i
     int v = 0
 
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         LandWidget *c = lookup_box_in_grid(self, i, row)
 
         if c && c->box.current_min_height > v:
@@ -175,7 +177,7 @@ static int def column_min_width(LandWidget *self, int col):
     int i
     int v = 0
 
-    for i = 0; i < self->box.rows; i++:
+    for i = 0 while i < self->box.rows with i++:
         LandWidget *c = lookup_box_in_grid(self, col, i)
     
         if c and c->box.current_min_width > v:
@@ -187,7 +189,7 @@ static int def column_min_width(LandWidget *self, int col):
 static int def is_column_expanding(LandWidget *self, int col):
     int i
 
-    for i = 0; i < self->box.rows; i++:
+    for i = 0 while i < self->box.rows with i++:
         LandWidget *c = lookup_box_in_grid(self, col, i)
 
         if c and c->box.col == col and not (c->box.flags & GUL_SHRINK_X):
@@ -199,7 +201,7 @@ static int def is_column_expanding(LandWidget *self, int col):
 static int def is_row_expanding(LandWidget *self, int row):
     int i
 
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         LandWidget *c = lookup_box_in_grid(self, i, row)
 
         if c and c->box.row == row and not (c->box.flags & GUL_SHRINK_Y):
@@ -212,7 +214,7 @@ static int def expanding_columns(LandWidget * self):
     int i
     int v = 0
 
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         if is_column_expanding(self, i):
             v++
 
@@ -223,7 +225,7 @@ static int def expanding_rows(LandWidget * self):
     int i
     int v = 0
 
-    for i = 0; i < self->box.rows; i++:
+    for i = 0 while i < self->box.rows with i++:
         if is_row_expanding(self, i):
             v++
 
@@ -234,7 +236,7 @@ static int def min_height(LandWidget *self):
     int i
     int v = 0
 
-    for i = 0; i < self->box.rows; i++:
+    for i = 0 while i < self->box.rows with i++:
         v += row_min_height(self, i)
     
     if self->element:
@@ -247,7 +249,7 @@ static int def min_width(LandWidget *self):
     int i
     int v = 0
 
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         v += column_min_width(self, i)
 
     if self->element:
@@ -257,9 +259,9 @@ static int def min_width(LandWidget *self):
 
 static int def adjust_resize_width(LandWidget *self, int dx):
     int i
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         int j
-        for j = 0; j < self->box.rows; j++:
+        for j = 0 while j < self->box.rows with j++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
             if c and c->box.flags & GUL_RESIZE:
                 c->box.current_min_width += dx
@@ -268,9 +270,9 @@ static int def adjust_resize_width(LandWidget *self, int dx):
 
 static int def adjust_resize_height(LandWidget *self, int dx):
     int j
-    for j = 0; j < self->box.rows; j++:
+    for j = 0 while j < self->box.rows with j++:
         int i
-        for i = 0; i < self->box.cols; i++:
+        for i = 0 while i < self->box.cols with i++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
             if c and c->box.flags & GUL_RESIZE:
                 c->box.current_min_height += dx
@@ -294,7 +296,7 @@ static def gul_box_bottom_up(LandWidget *self):
             LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
             if container->children:
                 LandListItem *i = container->children->first
-                for ; i; i = i->next:
+                for  while i with i = i->next:
                     LandWidget *c = i->data
                     gul_box_bottom_up(LAND_WIDGET(c))
 
@@ -345,8 +347,8 @@ static def gul_box_top_down(LandWidget *self):
     int want_height = expanding_rows(self)
 
     D(printf("    Children: %d (%d exp) x %d (%d exp)\n",
-        self->box.cols, want_width, self->box.rows, want_height);
-        printf("              %d x %d\n", minw, minh);)
+        self->box.cols, want_width, self->box.rows, want_height);)
+    D(printf("              %d x %d min\n", minw, minh);)
 
     int i, j
 
@@ -360,7 +362,7 @@ static def gul_box_top_down(LandWidget *self):
     available_width -= share * want_width
     D(printf("    Columns:");)
     int hgap = self->element ? element->hgap : 0
-    for i = 0; i < self->box.cols; i++:
+    for i = 0 while i < self->box.cols with i++:
         int cw = column_min_width(self, i)
         int cx = x
 
@@ -379,7 +381,7 @@ static def gul_box_top_down(LandWidget *self):
         x += cw + hgap
 
         # Place all rows in the column accordingly 
-        for j = 0; j < self->box.rows; j++:
+        for j = 0 while j < self->box.rows with j++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
             # Multi-row cells already were handled.
             if c and c->box.row == j:
@@ -402,7 +404,7 @@ static def gul_box_top_down(LandWidget *self):
         share = available_height / want_height
     available_height -= share * want_height
     int vgap = self->element ? element->vgap : 0
-    for j = 0; j < self->box.rows; j++:
+    for j = 0 while j < self->box.rows with j++:
         int ch = row_min_height(self, j)
         int cy = y
 
@@ -422,7 +424,7 @@ static def gul_box_top_down(LandWidget *self):
         y += vgap
 
         # Place all columns in the row accordingly. 
-        for i = 0; i < self->box.cols; i++:
+        for i = 0 while i < self->box.cols with i++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
             # Multi-column cells already were handled.
             if c and c->box.col == i:
@@ -438,7 +440,7 @@ static def gul_box_top_down(LandWidget *self):
         LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
         if container->children:
             LandListItem *li = container->children->first
-            for ; li; li = li->next:
+            for while li with li = li->next:
                 LandWidget *c = li->data
 
                 if c->box.w != c->box.ow or c->box.h != c->box.oh:
@@ -478,6 +480,7 @@ def gul_layout_updated(LandWidget *self):
     This is used if the size of a widget may have changed and therefore its own
     as well as its parent's layout needs updating.
     """
+    D(printf("gul_layout_updated %s[%p]\n", self->vt->name, self);)
     # If the parent has NO_LAYOUT set, then our own layout change also does
     # not trigger propagation of the layout change over this barrier. For
     # example, a button inside a window changes its size. Its parent uses

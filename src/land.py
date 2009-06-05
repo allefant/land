@@ -184,32 +184,31 @@ import land/allegro5/a5_opengl
 
 static LandArray *exit_functions
 static int _exitcode
+   
+macro land_use_main(m):
+    int def main(int argc, char **argv):
+        land_argc = argc
+        land_argv = argv
+        m()
+        land_log_message("Return code is %d.\n", land_get_exitcode())
+        return land_get_exitcode()
+    END_OF_MAIN()
 
-macro land_begin() static void _land_main(); int main(int argc, char **argv) {
-    land_argc = argc; land_argv = argv; _land_main();
-    land_log_message("Return code is %d.\n", land_get_exitcode());
-    return land_get_exitcode();
-    } END_OF_MAIN() static void _land_main()
-    
-macro land_use_main(m) int main(int argc,
-    char **argv) {
-    land_argc = argc;
-    land_argv = argv;
-    m();
-    land_log_message("Return code is %d.\n", land_get_exitcode());
-    return land_get_exitcode();} END_OF_MAIN()
-
-macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw, leave,
-    destroy) int main(int argc, char **argv) { land_argc = argc;
-    land_argv = argv; land_init();
-    shortcut_runner = land_runner_new("shortcut", init, enter, tick, draw,
-        leave, destroy);
-    land_runner_register(shortcut_runner);
-    land_set_display_parameters(w, h, flags);
-    land_set_initial_runner(shortcut_runner);
-    land_set_fps(hz); land_mainloop();
-    land_log_message("Return code is %d.\n", land_get_exitcode());
-    return land_get_exitcode();} END_OF_MAIN()
+macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw,
+    leave, destroy):
+    int def main(int argc, char **argv):
+        land_argc = argc
+        land_argv = argv
+        land_init()
+        shortcut_runner = land_runner_new("shortcut", init, enter, tick, draw,
+            leave, destroy)
+        land_runner_register(shortcut_runner)
+        land_set_display_parameters(w, h, flags)
+        land_set_initial_runner(shortcut_runner)
+        land_set_fps(hz); land_mainloop()
+        land_log_message("Return code is %d.\n", land_get_exitcode())
+        return land_get_exitcode()
+    END_OF_MAIN()
 
 def land_set_exitcode(int code):
     _exitcode = code
@@ -222,7 +221,7 @@ def land_exit_function(void (*function)(void)):
 
 def land_exit_functions():
     int i, n = land_array_count(exit_functions)
-    for i = n - 1; i >= 0 ; i--:
+    for i = n - 1 while i >= 0  with i--:
         void (*function)(void) = land_array_get_nth(exit_functions, i)
         function()
     land_array_destroy(exit_functions)

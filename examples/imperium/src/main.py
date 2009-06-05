@@ -8,7 +8,7 @@ macro LAND_MAP_ISOMETRIC 1
 static LandMap * def land_create_map(int cw, int ch, int w, int h, int layers, int flags):
     LandMap *self = land_map_new()
     int l
-    for l = 0; l < layers; l++:
+    for l = 0 while l < layers with l++:
         LandLayer *layer = land_layer_new()
         if flags & LAND_MAP_ISOMETRIC:
             layer->grid = land_isometric_wrap_new(cw, ch, cw, ch, w, h)

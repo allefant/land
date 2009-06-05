@@ -58,9 +58,9 @@ char const *address = "localhost:7778"
 
 int ticks
 
-static def client_clear_others (void):
+static def client_clear_others():
     int i
-    for i = 0; i < 8; i++:
+    for i = 0 while i < 8 with i++:
         MyWidget *my = (MyWidget *)clients[i * 2 + 1]
         if my->state == ANOTHER or my->state == SELF:
             my->state = FREE
@@ -70,7 +70,7 @@ static def server_notify_lost (int who):
     char packet[12]
     int *idata = (int *)packet
 
-    for j = 0; j < 8; j++:
+    for j = 0 while j < 8 with j++:
         # part message to all remaining 
         if conn_server[j]:
             idata[0] = ID_JOIN
@@ -119,9 +119,9 @@ def clicked(LandWidget *self):
             land_net_del(conn_server[my->id])
             conn_server[my->id] = NULL
 
-           server_notify_lost(my->id)
-           my->state = FREE
-           break
+            server_notify_lost(my->id)
+            my->state = FREE
+            break
 
 def my_mouse_tick(LandWidget *self):
     if land_mouse_delta_b() & 1:
@@ -139,7 +139,7 @@ def my_tick(LandWidget *self):
             newconn = land_net_accept(conn_listen)
             if newconn:
                 int i
-                for i = 0; i < 8; i++:
+                for i = 0 while i < 8 with i++:
                     # go through connected clients (left pane) to find free one
                     MyWidget *client = (MyWidget *)clients[i * 2]
                     if client->state == FREE:
@@ -151,7 +151,7 @@ def my_tick(LandWidget *self):
                         conn_server[i]->buffer = land_malloc (MAX_PACKET_SIZE)
                         conn_server[i]->size = MAX_PACKET_SIZE
 
-                        for j = 0; j < 8; j++:
+                        for j = 0 while j < 8 with j++:
                             MyWidget *other = (MyWidget *)clients[j * 2]
                             # send join messages for all already connected
                             # clients to new one
@@ -341,7 +341,7 @@ def create_gui():
     my_widget_new(vbox, NOTHING, 0)
     my_widget_new(vbox, NOTHING, 0)
     int i
-    for i = 0; i < 16; i++:
+    for i = 0 while i < 16 with i++:
         clients[i] = my_widget_new(vbox, FREE, i / 2)
     land_widget_layout(desktop)
 
@@ -361,7 +361,7 @@ def tick(LandRunner *self):
     int i
     my_tick(listen_widget)
     my_tick(connect_widget)
-    for i = 0; i < 16; i++:
+    for i = 0 while i < 16 with i++:
         my_tick(clients[i])
 
     ticks++
@@ -372,7 +372,7 @@ def draw(LandRunner *self):
 def done(LandRunner *self):
     int i
 
-    for i = 0; i < 8; i++:
+    for i = 0 while i < 8 with i++:
         if conn_server[i]:
             land_net_del(conn_server[i])
 

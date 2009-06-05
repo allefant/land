@@ -1,6 +1,6 @@
 import global stdlib, string
 
-macro land_alloc(self); self = land_calloc(sizeof *self)
+macro land_alloc(self) self = land_calloc(sizeof *self)
 
 static import global stdio
 
@@ -8,7 +8,7 @@ static import global stdio
 
 static import log
 
-#ifdef LAND_MEMLOG
+*** "ifdef" LAND_MEMLOG
 
 static macro LOGFILE "memlog.log"
 
@@ -42,14 +42,14 @@ static def done():
             _maxsize)
 
     fprintf(lf, "Memory leaks: %d\n", _num)
-    for n = 0; n < _num; n++:
+    for n = 0 while n < _num with n++:
         fprintf(lf, "%s: %d: %d elements [%s] not freed: %p\n",
                 not_freed[n].file, not_freed[n].line,
                 not_freed[n].size, not_freed[n].id, not_freed[n].ptr)
         int i
         if !strcmp(not_freed[n].id, ""):
             fprintf(lf, "    first bytes: [")
-            for i = 0; i < 16; i++:
+            for i = 0 while i < 16 with i++:
                 if i >= not_freed[n].size: break
                 int c = *((unsigned char *)(not_freed[n].ptr) + i)
                 if c >= 32 and c <= 127:
@@ -90,24 +90,24 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     _size += size
     if _num > _maxnum: _maxnum = _num
     if _size > _maxsize: _maxsize = _size
-        #ifdef LOGALL
-        FILE *lf = fopen(LOGFILE, "a")
-        fprintf(lf, "%s: %d: allocated: %d elements [%s] at %p\n",
-            f, l, size, id, ptr)
-        fclose(lf)
-        #endif
-        pass
+    *** "ifdef" LOGALL
+    FILE *lf = fopen(LOGFILE, "a")
+    fprintf(lf, "%s: %d: allocated: %d elements [%s] at %p\n",
+        f, l, size, id, ptr)
+    fclose(lf)
+    *** "endif"
+    pass
 
 def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     int n
     if !installed: install()
     if !ptr:
         if re:
-            #ifdef LOGALL
+            *** "ifdef" LOGALL
             FILE *lf = fopen(LOGFILE, "a")
             fprintf(lf, "%s: %d: reallocated: %p [%s]\n", f, l, ptr, id)
             fclose(lf)
-            #endif 
+            *** "endif"
             return
         
         FILE *lf = fopen(LOGFILE, "a")
@@ -117,14 +117,14 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
 
         return
 
-    for n = 0; n < _num; n++:
+    for n = 0 while n < _num with n++:
         if not_freed[n].ptr == ptr:
-            #ifdef LOGALL
+            *** "ifdef" LOGALL
             FILE *lf = fopen(LOGFILE, "a")
             fprintf(lf, "%s: %d: freed: %d elements [%s] at %p\n",
                 f, l, not_freed[n].size, id, ptr)
             fclose(lf)
-            #endif
+            *** "endif"
             _size -= not_freed[n].size
             not_freed[n] = not_freed[_num - 1]
             _num--
@@ -163,7 +163,7 @@ def land_free_memlog(void *ptr, char const *f, int l):
     free(ptr)
     land_memory_remove(ptr, "", 0, f, l)
 
-#else // LAND_MEMLOG
+*** "else" # LAND_MEMLOG
 
 void *def land_malloc(int size):
     return malloc(size)
@@ -180,16 +180,12 @@ char *def land_strdup(char const *str):
 def land_free(void *ptr):
     free(ptr)
 
-#endif
+*** "endif"
 
-#header
-
-#ifdef LAND_MEMLOG
-
+global *** "ifdef" LAND_MEMLOG
 macro land_malloc(x) land_malloc_memlog(x, __FILE__, __LINE__)
 macro land_calloc(x) land_calloc_memlog(x, __FILE__, __LINE__)
 macro land_free(x) land_free_memlog(x, __FILE__, __LINE__)
 macro land_realloc(x,y) land_realloc_memlog(x, y ,__FILE__, __LINE__)
 macro land_strdup(x) land_strdup_memlog(x, __FILE__, __LINE__)
-
-#endif
+global *** "endif"

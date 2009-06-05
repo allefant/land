@@ -34,8 +34,8 @@ def paint(int x, y, w, h, xp, yp, tw, th):
     int i, j
     int mx = tw / 2
     int my = th / 2
-    for j = yp; j < yp + h; j++:
-        for i = xp; i < xp + w; i++:
+    for j = yp while j < yp + h with j++:
+        for i = xp while i < xp + w with i++:
             float a = atan2(j - my, i - mx)
             float d = sqrt((i - mx) * (i - mx) + (j - my) * (j - my))
             float hue = angle + 3 * a * 180 / LAND_PI
@@ -48,8 +48,8 @@ def paint(int x, y, w, h, xp, yp, tw, th):
 def draw(LandRunner *self):
     if not cached:
         int i, j
-        for i = 0; i < 1024; i += 256:
-            for j = 0; j < 1024; j += 256:
+        for i = 0 while i < 1024 with i += 256:
+            for j = 0 while j < 1024 with j += 256:
                 paint(0, 0, 256, 256, i, j, 1024, 1024)
                 land_image_grab_into(cache, 0, 0, i, j, 256, 256)
 

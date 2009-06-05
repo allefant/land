@@ -47,7 +47,7 @@ static def game_init(LandRunner *self):
     sprites_count = layer->grid->x_cells * layer->grid->y_cells
 
     int i
-    for i = 0; i < sprites_count; i++:
+    for i = 0 while i < sprites_count with i++:
         float x = rand() % (layer->grid->x_cells * layer->grid->cell_w)
         float y = rand() % (layer->grid->y_cells * layer->grid->cell_h)
         MySprite *sprite

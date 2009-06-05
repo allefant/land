@@ -151,6 +151,15 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyNumLock,
     LandKeyCapsLock}
 
+char const *def platform_key_name(int lk):
+    int ak = 0
+    for int i = 0 while i < ALLEGRO_KEY_MAX with i++:
+        if keyboard_conversion_table[i] == lk:
+            ak = i
+            break
+    char const *s = al_keycode_to_name(ak)
+    return s
+
 static int def platform_keycode(int ak):
     return keyboard_conversion_table[ak]
 

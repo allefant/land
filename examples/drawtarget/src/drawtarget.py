@@ -10,10 +10,11 @@ def init(LandRunner *self):
     int mx = 50
     int my = 50
     int r = 50
-    land_clear(0, 0, 0, 0)
+    al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgb_f(1, 1, 1));
+    land_clear(1, 0, 0, 0)
     land_color(1, 1, 1, 1)
     land_filled_circle(mx - r, my - r, mx + r, my + r)
-    land_color(0, 0, 0, 1)
+    land_color(0, 0, 0, 0)
     r = 20
     land_filled_circle(mx - r, my - r, mx + r, my + r)
     land_unset_image_display()
@@ -38,6 +39,7 @@ def draw(LandRunner *self):
     int y = 240
     float t = sqrt(50 * 50 + 50 * 50)
     float s = 50
+    al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, al_map_rgb_f(1, 1, 1));
     land_image_draw_scaled_rotated(image, x - s, y - s, 1, 1, angle)
     land_image_draw_scaled_rotated(image, x - s, y + s, 1, 1, angle)
     land_image_draw_scaled_rotated(image, x + s, y - s, 1, 1, angle)

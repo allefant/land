@@ -1,16 +1,16 @@
-#ifndef LAND_NO_NET
+*** "ifndef" LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
 import global land/land, unistd
 
-#ifdef WINDOWS
+*** "ifdef" WINDOWS
 static import global winsock2, ws2tcpip
 static macro SHUT_RDWR SD_BOTH
-#else
+*** "else"
 static import global stdlib, string, signal
 static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet
 static import global netdb
-#endif
+*** "endif"
 
 # Pseudocode for server:
 # 
@@ -68,9 +68,9 @@ class LandNet:
 
 static macro D(_) _
 
-# #define DEBUG_BYTES
+# macro DEBUG_BYTES
 
-#ifdef WINDOWS
+*** "ifdef" WINDOWS
 static def cleanup():
     WSACleanup()
 
@@ -89,21 +89,21 @@ static def sockerror(char const *name):
         case WSAEALREADY: what = "WSAEALREADY"; break
         case WSAENOTSOCK: what = "WSAENOTSOCK"; break
     fprintf(stderr, "%s: %s [%d]\n", name, what, err)
-#else
+*** "else"
 static macro closesocket close
 static macro sockerror perror
-#endif
+*** "endif"
 
 static int def nonblocking(LandNet *self):
     int r
     # Make non-blocking.
-    #if defined WINDOWS
+    *** "if" defined(WINDOWS)
     u_long a = 1
     r = ioctlsocket(self->sock, FIONBIO, &a)
-    #else
+    *** "else"
     int a = 1
     r = ioctl(self->sock, FIONBIO, &a)
-    #endif
+    *** "endif"
 
     if r:
         sockerror("ioctl")
@@ -157,7 +157,7 @@ LandNet *def land_net_new():
     static int once = 1
 
     if once:
-        #ifdef WINDOWS
+        *** "ifdef" WINDOWS
         WORD wVersionRequested
         WSADATA wsaData
         int err
@@ -167,7 +167,7 @@ LandNet *def land_net_new():
         if err != 0:
             return NULL
         land_exit_function(cleanup)
-        #else
+        *** "else"
         struct sigaction sa
         sigset_t mask
         sigemptyset(&mask)
@@ -175,7 +175,7 @@ LandNet *def land_net_new():
         sa.sa_mask = mask
         sa.sa_flags = 0
         sigaction(SIGPIPE, &sa, NULL)
-        #endif
+        *** "endif"
 
         once = 0
 
@@ -208,11 +208,11 @@ def land_net_listen(LandNet *self, char const *address):
         land_free(host)
         return
 
-    #ifdef WINDOWS
+    *** "ifdef" WINDOWS
     char a = 1;
-    #else
+    *** "else"
     int a = 1
-    #endif
+    *** "endif"
     setsockopt(self->sock, IPPROTO_TCP, SO_REUSEADDR, &a, sizeof(a))
 
     # Address to listen on. 
@@ -251,12 +251,12 @@ static def land_net_poll_accept(LandNet *self):
 
     r = accept(self->sock, (struct sockaddr *) &address, &address_length)
     if r < 0:
-        #if defined LINUX
+        *** "if" defined(LINUX)
         if errno == EINTR or errno == EWOULDBLOCK or errno == EAGAIN:
-        #elif defined WINDOWS
+        *** "elif" defined(WINDOWS)
         if WSAGetLastError() == WSAEINTR or\
             WSAGetLastError() == WSAEWOULDBLOCK:
-        #endif
+        *** "endif"
             return
 
         sockerror("accept")
@@ -309,12 +309,14 @@ def land_net_connect(LandNet *self, char const *address):
     # Connect to the server. 
     if connect(self->sock, (struct sockaddr *) &sock_address,
         sizeof sock_address):
-        #if defined WINDOWS
-        if WSAGetLastError() != WSAEINPROGRESS and\
-            WSAGetLastError() != WSAEWOULDBLOCK:
-        #else
-        if errno != EINPROGRESS:
-        #endif
+        bool err
+        *** "if" defined(WINDOWS)
+        err = WSAGetLastError() != WSAEINPROGRESS and\
+            WSAGetLastError() != WSAEWOULDBLOCK
+        *** "else"
+        err = errno != EINPROGRESS
+        *** "endif"
+        if err:
             sockerror("connect")
             closesocket(self->sock)
             land_free(host)
@@ -341,12 +343,12 @@ static def land_net_poll_connect(LandNet *self):
     # TODO: on Windows, need to check exception descriptors to know if connection failed? 
     r = select(FD_SETSIZE, NULL, &ds, NULL, &tv)
     if r > 0:
-        #ifdef WINDOWS
+        *** "ifdef" WINDOWS
         char a;
         int as = sizeof a
-        #else
+        *** "else"
         unsigned int a, as = sizeof a
-        #endif
+        *** "endif"
         if getsockopt(self->sock, SOL_SOCKET, SO_ERROR, &a, &as) == 0:
             if a != 0:
                 errno = a
@@ -362,24 +364,26 @@ static def land_net_poll_connect(LandNet *self):
             land_net_get_address(self, 1)))
         return
 
-    #if defined WINDOWS
-    if WSAGetLastError() != WSAEINTR:
-    #else
-    if r < 0 && errno != EINTR:
-    #endif
+    bool err
+    *** "if" defined WINDOWS
+    err = WSAGetLastError() != WSAEINTR
+    *** "else"
+    err = r < 0 and errno != EINTR
+    *** "endif"
+    if err:
         sockerror("select")
         closesocket(self->sock)
         return
 
-#ifdef DEBUG_BYTES
+*** "ifdef" DEBUG_BYTES
 static def debug_packet(char const *buffer, int size):
     land_log_message("Sent %d bytes: ", size)
     int i
-    for i = 0; i < size; i++:
+    for i = 0 while i < size with i++:
         int c = (unsigned char)buffer[i];
         land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 127 ? c : '.')
     land_log_message_nostamp("\n")
-#endif
+*** "endif"
 
 # FIXME: this is unfinished, it has to use a proper dynamic data structure to
 # hold the packets
@@ -438,21 +442,21 @@ static int def _create_datagram_socket(LandNet *self):
         else:
             return 1
 
-        #if defined WINDOWS
+        *** "if" defined(WINDOWS)
         u_long b = 1
         r = ioctlsocket(self->sockd, FIONBIO, &b)
-        #else
+        *** "else"
         int b = 1
         r = ioctl(self->sockd, FIONBIO, &b)
-        #endif
+        *** "endif"
         if r < 0:
             sockerror("ioctl")
 
-        #ifdef WINDOWS
+        *** "ifdef" WINDOWS
         char a = 1;
-        #else
+        *** "else"
         int a = 1
-        #endif
+        *** "endif"
         r = setsockopt(self->sockd, SOL_SOCKET, SO_BROADCAST, &a, sizeof(a))
         if r < 0:
             sockerror("setsockopt")
@@ -547,20 +551,20 @@ def land_net_send(LandNet *self, char const *buffer, size_t size):
         r = send(self->sock, buffer + bytes, size - bytes, 0)
 
         if r < 0:
-            #if defined WINDOWS
+            *** "if" defined WINDOWS
             if WSAGetLastError() == WSAEINTR or\
                 WSAGetLastError() == WSAEWOULDBLOCK:
                 r = 0
             else:
                 sockerror("send")
                 return
-            #else
+            *** "else"
             if errno == EINTR or errno == EWOULDBLOCK or errno == EAGAIN:
                 r = 0
             else:
                 sockerror("send")
                 return
-            #endif
+            *** "endif"
 
         bytes += r
 
@@ -569,9 +573,9 @@ def land_net_send(LandNet *self, char const *buffer, size_t size):
 
         break
 
-    #ifdef DEBUG_BYTES
+    *** "ifdef" DEBUG_BYTES
     debug_packet(buffer, size)
-    #endif
+    *** "endif"
 
 def land_net_buffer(LandNet *self, char *buffer, size_t size):
     """
@@ -611,12 +615,13 @@ static def land_net_poll_recv(LandNet *self):
     r = recv(self->sock, self->buffer + self->full, max, 0)
 
     if r < 0:
-        #if defined WINDOWS
-        if WSAGetLastError() != WSAEINTR and\
-            WSAGetLastError() != WSAEWOULDBLOCK:
-        #else
-        if errno != EINTR && errno != EWOULDBLOCK && errno != EAGAIN:
-        #endif
+        *** "if" defined WINDOWS
+        bool err = WSAGetLastError() != WSAEINTR and\
+            WSAGetLastError() != WSAEWOULDBLOCK
+        *** "else"
+        bool err = errno != EINTR && errno != EWOULDBLOCK && errno != EAGAIN
+        *** "endif"
+        if err:
             sockerror("recv")
             return
 
@@ -627,14 +632,14 @@ static def land_net_poll_recv(LandNet *self):
 
     self->full += r
 
-    #ifdef DEBUG_BYTES
+    *** "ifdef" DEBUG_BYTES
     land_log_message("Received %d bytes: ", r)
     int i
-    for i = 0; i < r; i++:
+    for i = 0 while i < r with i++:
         int c = (unsigned char)self->buffer[self->full - r + i]
         land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 128 ? c : '.')
     land_log_message_nostamp("\n")
-    #endif
+    *** "endif"
 
 def land_net_disconnect(LandNet *self):
     if self->state == LAND_NET_INVALID:
@@ -672,4 +677,4 @@ def land_net_poll(LandNet *self):
             if self->lag_simulator: lag_simulator_add(self, None, 0)
             land_net_poll_recv(self);
             break
-#endif
+*** "endif"

@@ -11,7 +11,7 @@ class LandWidgetSlider:
 class LandWidgetHandle:
     """A handle widget is a widget which can move around inside its parent."""
     LandWidget super
-    int vertical : 1
+    bool vertical
     float minval, maxval, value
     void (*update)(LandWidget *);
     int dragged

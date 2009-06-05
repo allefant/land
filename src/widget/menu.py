@@ -10,7 +10,7 @@ class LandWidgetMenuButton:
     LandWidgetButton super
     LandWidget *menu # Menu we are part of, if any. Usually parent. 
     LandWidget *submenu # submenu to show 
-    unsigned int below : 1 # If yes, open menu below, else to the right. 
+    bool below # If yes, open menu below, else to the right. 
 
 # A button inside a menu. 
 class LandWidgetMenuItem:
@@ -88,7 +88,7 @@ def land_widget_menu_hide_complete(LandWidget *base):
     if ((base->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR):
         LandWidgetMenu *menu = LAND_WIDGET_MENU(base)
         base = menu->submenu
-        if (!base) return
+        if not base: return
         menu->submenu = NULL
         # TODO: reference count
 
@@ -347,7 +347,7 @@ def land_widget_menu_interface_initialize():
     land_widget_menubar_interface->mouse_leave = land_widget_menubar_mouse_leave
 
 def land_widget_menubutton_interface_initialize():
-    if (land_widget_menubutton_interface) return
+    if land_widget_menubutton_interface: return
 
     land_widget_button_interface_initialize()
 

@@ -90,7 +90,7 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
     pixel_y *= view->scale_y
     pixel_y += view->y
 
-    for ; pixel_y < view->y + view->h; cell_y++,\
+    for while pixel_y < view->y + view->h with cell_y++,\
         pixel_y += self->cell_h * view->scale_y:
         if cell_y >= self->y_cells:
             #FIXME
@@ -102,7 +102,7 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
         pixel_x *= view->scale_x
         pixel_x += view->x
 
-        for ; pixel_x < view->x + view->w; cell_x++,\
+        for while pixel_x < view->x + view->w with cell_x++,\
             pixel_x += self->cell_w * view->scale_x:
             if cell_x >= self->x_cells:
                 #FIXME

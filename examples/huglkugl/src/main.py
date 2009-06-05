@@ -46,7 +46,7 @@ static def game_init(LandRunner *self):
 
     int i
     int x = 64
-    for i = 1; i < 9; i++:
+    for i = 1 while i < 9 with i++:
         sprites[i] = land_sprite_new(platform_type)
         land_sprite_place_into_grid(sprites[i], game.back_grid, x, 100)
         x += 128

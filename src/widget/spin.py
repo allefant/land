@@ -108,17 +108,17 @@ LandWidget *def land_widget_spin_new(LandWidget *parent,
 
 def land_widget_spin_set_value(LandWidget *base, float val):
     LandWidgetSpin *spin = LAND_WIDGET_SPIN(base)
-    if (val < spin->min) val = spin->min
-    if (val > spin->max && spin->max > spin->min) val = spin->max
+    if val < spin->min: val = spin->min
+    if val > spin->max && spin->max > spin->min: val = spin->max
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
     LandWidget *edit = LAND_WIDGET(item->data)
     char text[256]
     char format[256]
     if spin->step > 0 && spin->step < 1:
-        uszprintf(format, sizeof format, "%%.%df", (int)(0.9 - log10(spin->step)))
+        snprintf(format, sizeof format, "%%.%df", (int)(0.9 - log10(spin->step)))
     else:
-        ustrzcpy(format, sizeof format, "%.0f")
-    uszprintf(text, sizeof text, format, val)
+        strcpy(format, "%.0f")
+    snprintf(text, sizeof text, format, val)
     land_widget_edit_set_text(edit, text)
 
 def land_widget_spin_set_minimum_text(LandWidget *base, char const *text):

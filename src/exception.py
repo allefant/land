@@ -16,7 +16,6 @@ def land_exception_handler_init():
         if !r: goto again
         abort()
 
-
 def land_exception_handler_set(int (*handler)(char const *str)):
     if init:
         land_exception_handler_init()

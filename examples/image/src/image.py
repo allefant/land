@@ -9,7 +9,7 @@ static LandImage * def create_test_image():
     image = land_image_new(w, h)
     int i
     land_set_image_display(image)
-    for i = 0; i < w * h; i++:
+    for i = 0 while i < w * h with i++:
         int x = i % w
         int y = i / w
         float red, green, blue
@@ -17,7 +17,7 @@ static LandImage * def create_test_image():
         green = max(0, (float)x / w - (float)y / h)
         blue = max(0, (float)y / h - (float)x / w)
         int b
-        for b = 1; b < 8; b++:
+        for b = 1 while b < 8 with b++:
             int mask = (1 << b) - 1
             if ((x & mask) == mask) && y < mask:
                 blue = 0
@@ -65,7 +65,7 @@ static def init(LandRunner *self):
 
 static def destroy(LandRunner *self):
     int i
-    for i = 0; i < 4; i++:
+    for i = 0 while i < 4 with i++:
         land_image_del(image_parts[i])
     land_image_del(image)
 
@@ -146,7 +146,7 @@ static def draw(LandRunner *self):
 
     glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGB)
     int i
-    for i = 0; i < 2; i++:
+    for i = 0 while i < 2 with i++:
         glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE)
         glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND0_RGB,
             i == 0 ? GL_SRC_COLOR : GL_ONE_MINUS_SRC_COLOR)

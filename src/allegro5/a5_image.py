@@ -28,25 +28,31 @@ def platform_image_empty(LandImage *super):
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
     al_set_target_bitmap(self->a5)
-    al_clear(al_map_rgba_f(0, 0, 0, 0))
+    al_clear_to_color(al_map_rgba_f(0, 0, 0, 0))
     al_restore_state(&state)
 
-LandImage *def platform_image_load(char const *filename):
+LandImage *def platform_image_load(char const *filename, bool mem):
     LandImage *super = land_display_new_image()
     super->filename = land_strdup(filename)
     super->name = land_strdup(filename)
-    ALLEGRO_BITMAP *bmp = al_iio_load(filename)
+    ALLEGRO_STATE state
+    if mem:
+        al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS)
+        al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP)
+    ALLEGRO_BITMAP *bmp = al_load_bitmap(filename)
     if bmp:        
         LandImagePlatform *self = (void *)super
         self->a5 = bmp
         super->width = al_get_bitmap_width(bmp)
         super->height = al_get_bitmap_height(bmp)
         super->flags |= LAND_LOADED
+    if mem:
+        al_restore_state(&state)
     return super
 
 def platform_image_save(LandImage *super, char const *filename):
     LandImagePlatform *self = (void *)super
-    al_iio_save(filename, self->a5)
+    al_save_bitmap(filename, self->a5)
 
 def platform_image_prepare(LandImage *super):
     pass
@@ -55,9 +61,13 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
     SELF
+    ALLEGRO_STATE state
+    bool restore = False
     if r != 1 or g != 1 or b != 1 or alpha != 1:
+        al_store_state(&state, ALLEGRO_STATE_BLENDER)
         al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
             al_map_rgba_f(r, g, b, alpha))
+        restore = True
     if super->l or super->t or super->r or super->b:
         if angle != 0 or sx != 1 or sy != 1:
             ALLEGRO_BITMAP *sub = al_create_sub_bitmap(self->a5,
@@ -78,6 +88,9 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     else:
         al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
             x, y, sx, sy, angle, 0)
+
+    if restore:
+        al_restore_state(&state)
 
 def platform_set_image_display(LandImage *super):
     SELF
@@ -106,9 +119,9 @@ def platform_image_get_rgba_data(LandImage *super, unsigned char *rgba):
     lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
         ALLEGRO_LOCK_READONLY)
     unsigned char *p2 = lock->data
-    for int y = 0; y < h; y++:
+    for int y = 0 while y < h with y++:
         unsigned char *p3 = p2
-        for int x = 0; x < w; x++:
+        for int x = 0 while x < w with x++:
             unsigned char r, g, b, a
             r = *(p3++)
             g = *(p3++)
@@ -131,9 +144,9 @@ def platform_image_set_rgba_data(LandImage *super,
     lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
         ALLEGRO_LOCK_WRITEONLY)
     unsigned char *p2 = lock->data
-    for int y = 0; y < h; y++:
+    for int y = 0 while y < h with y++:
         unsigned char *p3 = p2
-        for int x = 0; x < w; x++:
+        for int x = 0 while x < w with x++:
             int r, g, b, a
             r = *(p++)
             g = *(p++)

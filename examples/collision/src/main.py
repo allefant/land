@@ -68,7 +68,7 @@ static def game_tick(LandRunner *self):
     int overlaps = 0
 
     float f, x, y
-    for f = 0.5; f < dmax; f++:
+    for f = 0.5 while f < dmax with f++:
         x = game.x + dx / d
         y = game.y + dy / d
         overlaps = land_image_overlaps(game.img1, x, y, game.angle,

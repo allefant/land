@@ -10,11 +10,11 @@ class LandList:
 
 static import mem
 
-#ifdef LAND_MEMLOG
+*** "ifdef" LAND_MEMLOG
 
-#undef land_list_new
-#undef land_list_destroy
-#undef land_add_list_data
+*** "undef" land_list_new
+*** "undef" land_list_destroy
+*** "undef" land_add_list_data
 
 LandList *def land_list_new_memlog(char const *f, int l):
     LandList *list = land_list_new()
@@ -35,7 +35,7 @@ def land_add_list_data_memlog(LandList **list, void *data, char const *f, int l)
         *list = land_list_new_memlog(f, l)
         land_add_list_data(list, data)
 
-#endif
+*** "endif"
 
 LandList *def land_list_new():
     LandList *self
@@ -135,12 +135,10 @@ def land_remove_list_data(LandList **list, void *data):
 
         item = next
 
-#header
-
-#ifdef LAND_MEMLOG
+global *** "ifdef" LAND_MEMLOG
 
 macro land_list_new() land_list_new_memlog(__FILE__, __LINE__)
 macro land_list_destroy(x) land_list_destroy_memlog(x, __FILE__, __LINE__)
 macro land_add_list_data(x, y) land_add_list_data_memlog(x, y, __FILE__, __LINE__)
 
-#endif
+global *** "endif"

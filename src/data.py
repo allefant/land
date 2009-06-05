@@ -30,7 +30,7 @@ LandDataFile *def land_read_datafile(FILE *file):
     int i
     char name[1024]
     land_log_message("Data listing:\n")
-    for i = 0; i < count; i++:
+    for i = 0 while i < count with i++:
         int s = 0
         while s < 1024:
             int c = fgetc(self->file)
@@ -61,7 +61,7 @@ LandDataFile *def land_open_appended_datafile(char const *filename,
     land_log_message("Embedded data size: %d\n", size)
     fseek(file, -size - strlen(marker), SEEK_END)
     int i
-    for i = 0; i < (int)strlen(marker); i++:
+    for i = 0 while i < (int)strlen(marker) with i++:
         if fgetc(file) != marker[i]:
             fclose(file)
             return NULL
@@ -71,7 +71,7 @@ LandDataFile *def land_open_appended_datafile(char const *filename,
 
     LandDataFile *data = land_read_datafile(file)
 
-    for i = 0; i < data->entries->count; i++:
+    for i = 0 while i < data->entries->count with i++:
         LandDataEntry *entry = land_array_get_nth(data->entries, i)
         entry->offset += offset
 
@@ -80,9 +80,9 @@ LandDataFile *def land_open_appended_datafile(char const *filename,
 void *def land_datafile_read_entry(LandDataFile *self, char const *filename,
     int *size):
     int i
-    for i = 0; i < self->entries->count; i++:
+    for i = 0 while i < self->entries->count with i++:
         LandDataEntry *entry = land_array_get_nth(self->entries, i)
-        if not ustrcmp(entry->name, filename):
+        if not strcmp(entry->name, filename):
             fseek(self->file, entry->offset, 0)
             unsigned char *buffer = land_calloc(entry->size)
             fread(buffer, entry->size, 1, self->file)
@@ -103,7 +103,7 @@ static int def star_match(char const *pattern, char const *name):
             # A * at the end matches anything. 
             if pattern[i + 1] == '\0': return 1
             # Try to match any possible chain. 
-            for k = j; k < (int)strlen(name); k++:
+            for k = j while k < (int)strlen(name) with k++:
                 int r = star_match(pattern + i + 1, name + k)
                 if r: return r
 
@@ -124,7 +124,7 @@ int def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
     int (*callback)(const char *filename, int attrib, void *param), void *param):
     int i
     int n = 0
-    for i = 0; i < self->entries->count; i++:
+    for i = 0 while i < self->entries->count with i++:
         LandDataEntry *entry = land_array_get_nth(self->entries, i)
         if star_match(pattern, entry->name):
             if callback(entry->name, 0, param):

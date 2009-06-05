@@ -28,7 +28,7 @@ LandWidget *def land_widget_board_new(LandWidget *parent, int x, y, w, h):
 def land_widget_board_add(LandWidget *base, LandWidget *add):
     land_widget_container_add(base, add)
 
-def land_widget_board_interface_initialize(void):
+def land_widget_board_interface_initialize():
     land_widget_container_interface_initialize()
     land_widget_board_interface = land_widget_copy_interface(
         land_widget_container_interface, "board")

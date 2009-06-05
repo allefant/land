@@ -20,7 +20,7 @@ static def game_init(LandRunner *self):
     land_widget_layout_set_shrinking(hbox, 1, 1)
     LandWidget *sizer = land_widget_sizer_new(hbox, 3, 0, 0, 10, 10)
     land_widget_sizer_set_target(sizer, window)
-    LandWidget *main = land_widget_box_new(scrolling, 0, 0, 256, 256)
+    LandWidget *mainw = land_widget_box_new(scrolling, 0, 0, 256, 256)
 
 static def debug(LandWidget *w):
     land_print("* %s: %d %d %d %d %s]", w->vt->name,

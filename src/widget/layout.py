@@ -1,4 +1,4 @@
-import ../land, base
+import land/land, base
 
 # Returns 1 if layout is now inhibited, 0 if it already was.
 int def land_widget_layout_freeze(LandWidget *self):
@@ -40,8 +40,8 @@ def land_widget_layout_set_minimum_size(LandWidget *self, int w, h):
     self->box.min_height = h
     self->box.current_min_width = w
     self->box.current_min_height = h
-    self->box.w = w
-    self->box.h = h
+    #self->box.w = w
+    #self->box.h = h
 
 def land_widget_layout_set_maximum_size(LandWidget *self, int w, h):
     self->box.max_width = w

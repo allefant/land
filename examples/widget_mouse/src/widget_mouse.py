@@ -11,12 +11,12 @@ def my_draw(LandWidget *self):
     land_color(0, 0, 0, 1)
     land_text_pos(x, y)
     LandArray *history = land_widget_get_property(self, "history")
-    for int i = 0; i < land_array_count(history); i++:
+    for int i = 0 while i < land_array_count(history) with i++:
         land_print("%s", land_array_get_nth(history, i))
 
 def cleanup(void *data):
     LandArray *a = data
-    for int i = 0; i < land_array_count(a); i++:
+    for int i = 0 while i < land_array_count(a) with i++:
         land_free(land_array_get_nth(a, i))
     land_array_destroy(a)
 
@@ -24,12 +24,12 @@ def my_mouse_tick(LandWidget *self):
     if land_mouse_delta_b():
         LandArray *history = land_widget_get_property(self, "history") 
         land_free(land_array_get_nth(history, 0))
-        for int i = 0; i < land_array_count(history) - 1; i++:
+        for int i = 0 while i < land_array_count(history) - 1 with i++:
             char *str = land_array_get_nth(history, i + 1)
             land_array_replace_nth(history, i, str)
         char str[256]
 
-        uszprintf(str, sizeof str, "mouse_tick %d %d %d %d",
+        snprintf(str, sizeof str, "mouse_tick %d %d %d %d",
             land_mouse_x(), land_mouse_y(), land_mouse_b(),
             land_mouse_delta_b())
         land_array_replace_nth(history, land_array_count(history) - 1,

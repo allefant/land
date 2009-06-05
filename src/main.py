@@ -51,6 +51,7 @@ def land_tick():
     land_mouse_tick()
     land_runner_tick_active()
     land_keyboard_tick()
+    ticks++
 
 def land_draw():
     land_runner_draw_active()
@@ -98,7 +99,7 @@ double def land_get_fps():
 
 int def land_get_ticks():
     """Return the number of ticks Land has executed."""
-    return ticks
+    return _land_frames
 
 double def land_get_time():
     """Get the time in seconds since Land has started."""

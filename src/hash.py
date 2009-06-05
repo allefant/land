@@ -19,10 +19,10 @@ import array
 
 static import hash, mem
 
-#ifdef LAND_MEMLOG
+*** "ifdef" LAND_MEMLOG
 
-#undef land_hash_new
-#undef land_hash_destroy
+*** "undef" land_hash_new
+*** "undef" land_hash_destroy
 
 LandHash *def land_hash_new_memlog(char const *f, int l):
     LandHash *hash = land_hash_new()
@@ -33,7 +33,7 @@ def land_hash_destroy_memlog(LandHash *self, char const *f, int l):
     land_hash_destroy(self)
     land_memory_remove(self, "hash", 1, f, l)
 
-#endif
+*** "endif"
 
 
 #
@@ -42,7 +42,7 @@ def land_hash_destroy_memlog(LandHash *self, char const *f, int l):
 static unsigned int def hash_function(LandHash *self, char const *thekey):
     int i
     unsigned int hash = 5381
-    for i = 0; thekey[i]; i++:
+    for i = 0 while thekey[i] with i++:
         unsigned char c = thekey[i]
         hash = hash * 33 + c
 
@@ -60,12 +60,12 @@ def land_hash_destroy(LandHash *self):
     Destroy a LandHash. The data inside the hash are not freed (just
     everything else, like key names and internal data structures).
     """
-    int i
-    for i = 0; i < self->size; i++:
+    if not self: return
+    for int i = 0 while i < self->size with i++:
         LandHashEntry *entry = self->entries[i]
         if entry:
             int j
-            for j = 0; j < entry->n; j++:
+            for j = 0 while j < entry->n with j++:
                 land_free(entry[j].thekey)
 
             land_free(entry)
@@ -100,11 +100,11 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
         self->size = 1 << self->bits
         self->entries = land_calloc(self->size * sizeof *self->entries)
         self->count = 0
-        for i = 0; i < oldsize; i++:
+        for i = 0 while i < oldsize with i++:
             LandHashEntry *entry = oldentries[i]
             if entry:
                 int j
-                for j = 0; j < entry[0].n; j++:
+                for j = 0 while j < entry[0].n with j++:
                     land_hash_insert(self, entry[j].thekey, entry[j].data)
                     land_free(entry[j].thekey)
 
@@ -136,8 +136,8 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
     if !self->entries[i]: return NULL
     int n = self->entries[i][0].n
     int j
-    for j = 0; j < n; j++:
-        if not ustrcmp(self->entries[i][j].thekey, thekey):
+    for j = 0 while j < n with j++:
+        if not strcmp(self->entries[i][j].thekey, thekey):
             void *data = self->entries[i][j].data
             land_free(self->entries[i][j].thekey)
             if n > 1:
@@ -159,8 +159,8 @@ static LandHashEntry *def land_hash_get_entry(LandHash *self,
     int i = self->hash_function(self, thekey)
     if !self->entries[i]: return None
     int j
-    for j = 0; j < self->entries[i][0].n; j++:
-        if not ustrcmp(self->entries[i][j].thekey, thekey):
+    for j = 0 while j < self->entries[i][0].n with j++:
+        if not strcmp(self->entries[i][j].thekey, thekey):
             return &self->entries[i][j]
 
     return None
@@ -204,11 +204,11 @@ LandArray *def land_hash_keys(LandHash *hash):
     """
     LandArray *array = land_array_new()
     int i
-    for i = 0; i < hash->size; i++:
+    for i = 0 while i < hash->size with i++:
         if hash->entries[i]:
             int n = hash->entries[i]->n
             int j
-            for j = 0; j < n; j++:
+            for j = 0 while j < n with j++:
                 land_array_add_data(&array, hash->entries[i][j].thekey)
 
     return array   
@@ -219,7 +219,7 @@ LandArray *def land_hash_data(LandHash *hash):
     do it:
     {{{#!python
     data = land_hash_data(hash)
-    for i = 0; i < land_array_count(data); i++:
+    for i = 0 while i < land_array_count(data) with i++:
         void *entry = land_array_get_nth(data, i)
         land_free(entry)
     land_array_destroy(data)
@@ -228,11 +228,11 @@ LandArray *def land_hash_data(LandHash *hash):
     """
     LandArray *array = land_array_new()
     int i
-    for i = 0; i < hash->size; i++:
+    for i = 0 while i < hash->size with i++:
         if hash->entries[i]:
             int n = hash->entries[i]->n
             int j
-            for j = 0; j < n; j++:
+            for j = 0 while j < n with j++:
                 land_array_add_data(&array, hash->entries[i][j].data)
 
 
@@ -246,7 +246,7 @@ def land_hash_print_stats(LandHash *hash):
     int u = 0
     int c = 0
     int l = 0
-    for i = 0; i < hash->size; i++:
+    for i = 0 while i < hash->size with i++:
         if hash->entries[i]:
             int n = hash->entries[i]->n
             if n > 1: c += n
@@ -259,10 +259,9 @@ def land_hash_print_stats(LandHash *hash):
         c, hash->count, hash->count ? 100 * c / hash->count : 0,
         l)
 
-#header
-#ifdef LAND_MEMLOG
+global *** "ifdef" LAND_MEMLOG
 
 macro land_hash_new() land_hash_new_memlog(__FILE__, __LINE__)
 macro land_hash_destroy(x) land_hash_destroy_memlog(x, __FILE__, __LINE__)
 
-#endif
+global *** "endif"

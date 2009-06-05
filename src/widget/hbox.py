@@ -5,7 +5,7 @@ class LandWidgetHBox:
     """A HBox is a container where all children are layed out in columns."""
     LandWidgetContainer super
     int rows
-    int disable_updates : 1
+    bool disable_updates
 
 macro LAND_WIDGET_HBOX(widget) ((LandWidgetHBox *) land_widget_check(widget,
     LAND_WIDGET_ID_HBOX, __FILE__, __LINE__))
@@ -22,9 +22,14 @@ global LandWidgetInterface *land_widget_hbox_interface
 def land_widget_hbox_disable_updates(LandWidget *base):
     LAND_WIDGET_HBOX(base)->disable_updates = 1
 
-def land_widget_hbox_update(LandWidget *base):
+def land_widget_hbox_do_update(LandWidget *base):
     LAND_WIDGET_HBOX(base)->disable_updates = 0
     land_widget_layout(base)
+
+def land_widget_hbox_update(LandWidget *base):
+    land_widget_container_update(base)
+    if not LAND_WIDGET_HBOX(base)->disable_updates:
+        land_widget_layout(base)
 
 static def land_widget_hbox_renumber(LandWidget *base):
     int layout = land_widget_layout_freeze(base)
@@ -43,7 +48,7 @@ static def land_widget_hbox_renumber(LandWidget *base):
             item = item->next
     if layout: land_widget_layout_unfreeze(base)
     if !hbox->disable_updates:
-        land_widget_hbox_update(base)
+        land_widget_hbox_do_update(base)
 
 def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
@@ -64,7 +69,7 @@ def land_widget_hbox_add(LandWidget *base, LandWidget *add):
     if f: land_widget_layout_unfreeze(base)
 
     if !hbox->disable_updates:
-        land_widget_hbox_update(base)
+        land_widget_hbox_do_update(base)
 
 def land_widget_hbox_remove(LandWidget *base, LandWidget *rem):
     int layout = land_widget_layout_freeze(base)
@@ -99,6 +104,7 @@ LandWidget *def land_widget_hbox_new(LandWidget *parent, int x, int y, int w, in
     land_widget_hbox_initialize(widget, parent, x, y, w, h)
 
     return widget
+    
 
 def land_widget_hbox_interface_initialize():
     if land_widget_hbox_interface: return
@@ -109,3 +115,4 @@ def land_widget_hbox_interface_initialize():
     land_widget_hbox_interface->id |= LAND_WIDGET_ID_HBOX
     land_widget_hbox_interface->add = land_widget_hbox_add
     land_widget_hbox_interface->remove = land_widget_hbox_remove
+    land_widget_hbox_interface->update = land_widget_hbox_update

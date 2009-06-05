@@ -104,14 +104,14 @@ def land_grid_draw_grid(LandGrid *self, LandView *view):
     float ox = floor(cx) - cx
     float sx = self->cell_w * view->scale_x
     float x = view->x + ox * sx + 0.5
-    for ; x < view->x + view->w; x += sx:
+    for  while x < view->x + view->w with x += sx:
         land_line(x, view->y, x, view->y + view->h)
 
     float cy = view->scroll_y / self->cell_h
     float oy = floor(cy) - cy
     float sy = self->cell_h * view->scale_y
     float y = view->y + oy * sy + 0.5
-    for ; y < view->y + view->h; y += sy:
+    for  while y < view->y + view->h with y += sy:
         land_line(view->x, y, view->x + view->w, y)
 
 def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
@@ -126,7 +126,7 @@ def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
     self->vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
 
 def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
-    cell_y, *view_x, float *view_y):
+    cell_y, *view_x, *view_y):
     """
     Given a cell position, return the corresponding view position, in pixels.
 

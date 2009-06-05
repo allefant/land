@@ -15,10 +15,10 @@ static def my_draw(LandWidget *self):
     land_color(1, 1, 0, 1)
     int x, y
     x = self->box.x
-    for y = self->box.y; y < self->box.y + self->box.h; y += 8:
+    for y = self->box.y while y < self->box.y + self->box.h with y += 8:
         land_line(x + 1 + 0.5, y + 0.5, x + self->box.w - 0.5, y)
 
-     land_color(0, 1, 1, 1)
+    land_color(0, 1, 1, 1)
     y = self->box.y
     land_rectangle(x + 0.5, y + 0.5, x + self->box.w - 0.5, y + self->box.h - 0.5)
 
@@ -30,7 +30,7 @@ static def clicked2(LandWidget *self):
 static def clicked(LandWidget *self):
     static int c = 0
     char str[256]
-    uszprintf(str, sizeof str, "Remove me %d", c++)
+    snprintf(str, sizeof str, "Remove me %d", c++)
     LandWidget *entry = land_widget_button_new(vbox, str, clicked2,
         0, 0, 1, 1)
     land_widget_layout_set_expanding(entry, 1, 1)
@@ -51,23 +51,23 @@ static def init(LandRunner *self):
     LandWidget *mover = land_widget_mover_new(window, "move", 0, 0, 100, 20)
     LandWidget *panel = land_widget_panel_new(window, 0, 0, 100, 100)
     scrolling1 = land_widget_scrolling_new(panel, 0, 0, 100, 100)
-    land_widget_scrolling_autohide(scrolling1, 1, 0, 2)
-    LandWidget *sizer = land_widget_sizer_new(
-        land_widget_scrolling_get_empty(scrolling1), 3, 0, 0, 10, 10)
+    land_widget_scrolling_autohide(scrolling1, 1, 1, 0)
+    LandWidget *empty = land_widget_scrolling_get_empty(scrolling1)
+    LandWidget *sizer = land_widget_sizer_new(empty, 3, 0, 0, 10, 10)
     land_widget_layout_set_expanding(sizer, 1, 1)
     LAND_WIDGET_SIZER(sizer)->target = window
     outside = land_widget_box_new(scrolling1, 102, 202, 200, 200)
     land_widget_create_interface(outside, "mine")
     outside->vt->draw = my_draw
 
-    LandWidget *text =  land_widget_text_new(desktop, "Land Widgets Example", 0, 10, 10, 100, 20)
+    #LandWidget *text = land_widget_text_new(desktop, "Land Widgets Example", 0, 10, 10, 100, 20)
 
-    button = land_widget_button_new(desktop, "Add entry below", clicked, 10, 30, 2, 2)
-    panel = land_widget_panel_new(desktop, 10, 50, 50, 50)
-    vbox = land_widget_vbox_new(panel, 0, 0, 2, 2)
+    #button = land_widget_button_new(desktop, "Add entry below", clicked, 10, 30, 2, 2)
+    #panel = land_widget_panel_new(desktop, 10, 50, 50, 50)
+    #vbox = land_widget_vbox_new(panel, 0, 0, 2, 2)
 
-    land_widget_text_new(desktop, "Slider", 0, 100, 30, 3, 3)
-    slider = land_widget_slider_new(desktop, -1, 1, False, None, 100, 50, 100, 10)
+    #land_widget_text_new(desktop, "Slider", 0, 100, 30, 3, 3)
+    #slider = land_widget_slider_new(desktop, -1, 1, False, None, 100, 50, 100, 10)
 
 static def tick(LandRunner *self):
     if land_key(LandKeyEscape):

@@ -13,15 +13,19 @@ LandSound *def land_sound_load(char const *filename):
     return sound
 
 def land_sound_play(LandSound *s, float volume, pan, frequency):
+    if not s: return
     platform_sound_play(s, volume, pan, frequency, false)
 
 def land_sound_loop(LandSound *s, float volume, pan, frequency):
+    if not s: return
     platform_sound_play(s, volume, pan, frequency, true)
 
 def land_sound_stop(LandSound *s):
+    if not s: return
     platform_sound_stop(s)
 
 def land_sound_destroy(LandSound *s):
+    if not s: return
     platform_sound_destroy(s)
 
 def land_sound_init():

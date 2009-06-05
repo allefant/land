@@ -1,4 +1,4 @@
-import base, ../list
+import base, land/list
 static import land/land
 
 class LandWidgetContainer:
@@ -72,7 +72,7 @@ def land_widget_container_keyboard_enter(LandWidget *super):
     if self->children:
         LandListItem *item, *next
         item = self->children->first
-        for ; item; item = next:
+        for  while item with item = next:
             next = item->next
             LandWidget *child = item->data
 
@@ -137,7 +137,7 @@ def land_widget_container_draw(LandWidget *base):
     land_get_clip(&cl, &ct, &cr, &cb)
 
     LandListItem *item = self->children->first
-    for ; item; item = item->next:
+    for  while item with item = item->next:
         LandWidget *child = item->data
         if child->hidden: continue
         if not base->dont_clip:
@@ -189,7 +189,7 @@ LandWidget *def land_widget_container_get_child_at_pos(LandWidget *super,
     if not self->children:
         return None
     LandListItem *item = self->children->last
-    for ; item; item = item->prev:
+    for  while item with item = item->prev:
         LandWidget *child = item->data
         if child->hidden: continue
         if (x >= child->box.x
@@ -328,7 +328,7 @@ def land_widget_container_mouse_tick(LandWidget *super):
         LandListItem *item, *next, *last
         item = self->children->first
         last = self->children->last
-        for ; item; item = next:
+        for  while item with item = next:
             next = item->next
             LandWidget *child = item->data
 
@@ -388,7 +388,7 @@ def land_widget_container_add(LandWidget *super, LandWidget *add):
 # sure to also fix up the layout structure when a widget is removed, and should
 # then call this method.
 def land_widget_container_remove(LandWidget *base, LandWidget *rem):
-    ASSERT(rem->parent == base)
+    assert(rem->parent == base)
 
     rem->parent = NULL
     land_remove_list_data(&LAND_WIDGET_CONTAINER(base)->children, rem)
@@ -446,7 +446,7 @@ LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
     return &self->super
 
 def land_widget_container_interface_initialize():
-    if (land_widget_container_interface) return
+    if land_widget_container_interface: return
 
     land_alloc(land_widget_container_interface)
     land_widget_interface_register(land_widget_container_interface)

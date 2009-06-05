@@ -1,5 +1,7 @@
 import global stdbool
 
+import land/allegro5/a5_main
+
 enum LandKeyboardKeys:
     LandKeyNone = 0
     LandKeyInsert = 1
@@ -15,34 +17,34 @@ enum LandKeyboardKeys:
     LandKeyPadMinus = 11
     LandKeyPadPlus = 12
     LandKeyEnter = 13
-    LandKeyUnknown = 14 /* 14=U+0, ..., 26=U+12 */
+    LandKeyUnknown = 14 # 14=U+0, ..., 26=U+12
     LandKeyEscape = 27
     LandKeyPadDelete = 28
     LandKeyPadEnter = 29
     LandKeyLeftWin = 30
-    LandKeyRightWin = 31 /* 32=space */
-    LandKeyUnknown2 = 33 /* 33=U'+0, ..., 38=U'+6, 39=quote */
+    LandKeyRightWin = 31 # 32=space
+    LandKeyUnknown2 = 33 # 33=U'+0, ..., 38=U'+6, 39=quote
     LandKeyLeftShift = '('
     LandKeyRightShift = ')'
-    LandKeyScrollLock = '*' /* 42 */
-    LandKeyNumLock = '+' /* 44=, 45=- 46=. 47=/ */
-    LandKeyNumber = '0' /* 48=0, ..., 57=9, 58=:, 59=; */
-    LandKeyLeftAlt= '<' /* 61== */
+    LandKeyScrollLock = '*' # 42
+    LandKeyNumLock = '+' # 44=, 45=- 46=. 47=/
+    LandKeyNumber = '0' # 48=0, ..., 57=9, 58=:, 59=;
+    LandKeyLeftAlt= '<' # 61== */
     LandKeyRightAlt= '>'
     LandKeyMenu = '?'
-    LandKeyFunction = '@' /* 65=F+1, 76=F+12 */
-    LandKeyPad = 'M' /* 77=P+0, 86=P+9 */
+    LandKeyFunction = '@' # 65=F+1, 76=F+12
+    LandKeyPad = 'M' # 77=P+0, 86=P+9
     LandKeyLeft = 'W'
     LandKeyRight = 'X'
     LandKeyUp = 'Y'
-    LandKeyDown = 'Z' /* 91=[, 92=\, 93=], 94=^ */
+    LandKeyDown = 'Z' # 91=[, 92=\, 93=], 94=^
     LandKeyCapsLock= '_'
     LandKeyPrint = '`'
-    LandKeyLetter = 'a' /* 97=a, ..., 122=z */
+    LandKeyLetter = 'a' # 97=a, ..., 122=z
     LandKeyLeftControl = '{'
     LandKeyPause = '|'
-    LandKeyRightControl = '}' /* 126=~ */
-    LandKeyUnknown3 = 127 /* 127=U''+0, ..., 227=U''+100 */
+    LandKeyRightControl = '}' # 126=~
+    LandKeyUnknown3 = 127 # 127=U''+0, ..., 227=U''+100
     LandKeysCount = 228
 
 static int key_state[LandKeysCount]
@@ -71,7 +73,7 @@ int def land_key_pressed(int k):
 
 def land_keyboard_tick():
     int i
-    for i = 0; i < LandKeysCount; i++:
+    for i = 0 while i < LandKeysCount with i++:
         key_pressed[i] = 0
     keybuffer_first = 0
     keybuffer_last = 0
@@ -90,3 +92,6 @@ def land_keybuffer_next(int *k, int *u):
         *k = keybuffer_keycode[keybuffer_first]
         *u = keybuffer_unicode[keybuffer_first]
         keybuffer_first++
+
+char const *def land_key_name(int k):
+    return platform_key_name(k)

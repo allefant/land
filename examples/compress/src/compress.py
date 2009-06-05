@@ -24,7 +24,7 @@ int def main():
         printf("dictionary identifier (4 bytes): %08x", *((uint32_t *)(b->buffer + 6)))
     printf("Checksum (4 bytes): %08x\n", *((uint32_t *)(b->buffer + b->n - 4)))
     printf("Bitstream (%d bytes):", b->n - 4 - start)
-    for int i = start; i < b->n - 4; i++:
+    for int i = start while i < b->n - 4 with i++:
         printf(" %02x", (unsigned char)b->buffer[i])
     printf("\n")
     land_buffer_decompress(b)

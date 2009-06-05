@@ -14,13 +14,13 @@ class LandIniFile:
     LandIniSection *sections
 
 static void *def _get(LandIniSection *s, char const *key):
-    for int i = 0; i < s->n; i++:
+    for int i = 0 while i < s->n with i++:
         if not strcmp(s->entries[i].key, key) && s->entries[i].val:
             return s->entries[i].val
     return None
 
 static def _add(LandIniSection *s, char const *key, void *val):
-    for int i = 0; i < s->n; i++:
+    for int i = 0 while i < s->n with i++:
         if not strcmp(s->entries[i].key, key):
             land_free(s->entries[i].val)
             s->entries[i].val = val
@@ -33,7 +33,7 @@ static def _add(LandIniSection *s, char const *key, void *val):
     s->entries[i].val = val
 
 static def _del(LandIniSection *s):
-    for int i = 0; i < s->n; i++:
+    for int i = 0 while i < s->n with i++:
         land_free(s->entries[i].key)
         if s->entries[i].val: land_free(s->entries[i].val)
 
@@ -56,17 +56,17 @@ def land_ini_set_int(LandIniFile *ini,
     land_ini_set_string(ini, section, key, temp)
 
 char const *def land_ini_get_string(LandIniFile *ini,
-    char const *section, char const *key, char const *def):
+    char const *section, char const *key, char const *de):
     LandIniSection *s = _get(ini->sections, section)
-    if not s: return def
+    if not s: return de
     char *v = _get(s, key)
     if v: return v
-    return def
+    return de
 
 int def land_ini_get_int(LandIniFile *ini,
-    char const *section, char const *key, int def):
+    char const *section, char const *key, int de):
     char const *s = land_ini_get_string(ini, section, key, None)
-    if s == None: return def
+    if s == None: return de
     return strtol(s, None, 0)
 
 int def land_ini_get_number_of_entries(LandIniFile *ini,
@@ -88,10 +88,10 @@ static bool def is_whitespace(char c):
     if c == ' ' || c == '\t' || c == '\n': return true
     return false
 
-macro addc(var, len) \
-    var[len] = c; \
-    if (len < (int)sizeof(var) - 1) len++; \
-    var[len + 1] = '\0';
+macro addc(var, len):
+    var[len] = c;
+    if len < (int)sizeof(var) - 1: len++
+    var[len + 1] = '\0'
 
 static enum State:
     OUTSIDE
@@ -169,7 +169,7 @@ LandIniFile *def land_ini_read(char const *filename):
     return ini
 
 def land_ini_destroy(LandIniFile *ini):
-    for int i = 0; i < ini->sections->n; i++:
+    for int i = 0 while i < ini->sections->n with i++:
         LandIniSection *s = ini->sections->entries[i].val
         _del(s)
         ini->sections->entries[i].val = NULL
@@ -181,12 +181,12 @@ def land_ini_destroy(LandIniFile *ini):
 def land_ini_writeback(LandIniFile *ini):
     FILE *f = fopen(ini->filename, "wb")
     if not f: return
-    for int i = 0; i < ini->sections->n; i++:
+    for int i = 0 while i < ini->sections->n with i++:
         char *name = ini->sections->entries[i].key
         if name && name[0]:
             fprintf(f, "[%s]\n", name)
         LandIniSection *s = ini->sections->entries[i].val
-        for int j = 0; j < s->n; j++:
+        for int j = 0 while j < s->n with j++:
             if s->entries[j].val:
                 fprintf(f, "%s = %s\n", s->entries[j].key,
                     (char *)s->entries[j].val)
