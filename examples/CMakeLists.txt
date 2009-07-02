@@ -46,7 +46,7 @@ foreach(exsrc ${examples})
     # Step 3: Build from .c files.
     #
 
-    set(AV "4.9.11")
+    set(AV "4.9.12")
     set(WFLAGS "-W -Wall")
     set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
     set(CFLAGS "--std=gnu99")
