@@ -99,23 +99,35 @@ int def land_utf8_encode(int c, char *s):
     return 0
 
 char *def land_utf8_realloc_insert(char *s, int pos, int c):
+    """
+    (abc, 3, d) -> abcd
+    """
     int len = strlen(s)
     int clen = land_utf8_encode(c, NULL)
     s = land_realloc(s, len + clen + 1)
     char *p = s
     for int i = 0 while i < pos with i++: land_utf8_char(&p)
-    memmove(p + clen, p, len + s - p)
+    memmove(p + clen, p, len + 1 - (p - s))
     land_utf8_encode(c, p)
     return s
 
 char *def land_utf8_realloc_remove(char *s, int pos):
+    """
+    (abc, 1) -> ac
+    """
     int len = strlen(s)
     char *p = s
     for int i = 0 while i < pos with i++: land_utf8_char(&p)
     char *p2 = p
     land_utf8_char(&p2)
-    memmove(p, p2, p + len - p2)
-    s = land_realloc(s, len + p2 - p + 1)
+    # 0 1 2 3 4
+    # |a|b|c|0
+    # | | |
+    # s p p2
+    memmove(p, p2, len - (p2 - s) + 1)
+    # 0 1 2 3 4
+    # |a|c|0|0
+    s = land_realloc(s, len - (p2 - p) + 1)
     return s
 
 int def land_utf8_count(char const *s):
