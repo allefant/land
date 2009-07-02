@@ -101,10 +101,16 @@ macro LAND_CLOSE_LINES 8
 macro LAND_ANTIALIAS 16
 macro LAND_STENCIL 32
 
+macro LAND_BLEND_SOLID 1
+macro LAND_BLEND_ADD 2
+macro LAND_BLEND_TINT 4
+
 class LandDisplay:
     int w, h, flags
 
     float color_r, color_g, color_b, color_a
+
+    int blend
 
     int clip_off
     float clip_x1, clip_y1, clip_x2, clip_y2
@@ -261,6 +267,10 @@ def land_get_color(float *r, float *g, float *b, float *a):
     *g = d->color_g
     *b = d->color_b
     *a = d->color_a
+
+def land_blend(int state):
+    LandDisplay *d = _land_active_display
+    d->blend = state
 
 def land_clip(float x, float y, float x_, float y_):
     LandDisplay *d = _land_active_display

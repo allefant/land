@@ -23,7 +23,7 @@ float def land_dot2d(float ax, ay, bx, by):
     length of b projected onto a: a.b / |a| = 3.2
 
     """
-    return ax * bx + ay * by; 
+    return ax * bx + ay * by
 
 float def land_cross2d(float ax, ay, bx, by):
     """
@@ -42,7 +42,7 @@ float def land_cross2d(float ax, ay, bx, by):
     distance of a from b: axb / |b| = 3
     distance of b from a: axb / |a| = 2.4
     """
-    return ax * by - ay * bx;
+    return ax * by - ay * bx
 
 def land_ortho2d(float ax, ay, *bx, *by):
     """
@@ -57,12 +57,12 @@ bool def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
     """
     Checks if two line segments collide.
     """
-    float ax = l1x2 - l1x1;
-    float ay = l1y2 - l1y1;
-    float bx = l2x2 - l2x1;
-    float by = l2y2 - l2y1;
-    float cx = l2x1 - l1x1;
-    float cy = l2y1 - l1y1;
+    float ax = l1x2 - l1x1
+    float ay = l1y2 - l1y1
+    float bx = l2x2 - l2x1
+    float by = l2y2 - l2y1
+    float cx = l2x1 - l1x1
+    float cy = l2y1 - l1y1
 
     # They collide if:
     # cx + B bx = A ax (1)
@@ -84,11 +84,11 @@ bool def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
     # We have a collision if both A and B are within [0;1].
     
     # 0 -> parallel, >0 -> right, <0 -> left.
-    float ab = land_cross2d(ax, ay, bx, by);
+    float ab = land_cross2d(ax, ay, bx, by)
     # Where inside of b would be collision. */
-    float ca = land_cross2d(cx, cy, ax, ay);
+    float ca = land_cross2d(cx, cy, ax, ay)
     # Where inside of a would be collision. */
-    float cb = land_cross2d(cx, cy, bx, by);
+    float cb = land_cross2d(cx, cy, bx, by)
 
     # Only if a meets b and b meets a, they collide.
     if ab == 0:

@@ -1,14 +1,17 @@
-import land/image, land/display
-static import global allegro5/allegro5, allegro5/a5_iio, allegro5/a5_opengl
+import land.image, land.display
+static import global allegro5.allegro5, allegro5.a5_iio, allegro5.a5_opengl
+static import land.allegro5.a5_display
 
 static class LandImagePlatform:
     LandImage super
     ALLEGRO_BITMAP *a5
 
+static LandDisplay *global_previous_display
+static LandDisplayPlatform global_image_display
+static ALLEGRO_BITMAP *previous
+
 static macro SELF \
     LandImagePlatform *self = (void *)super;
-
-static ALLEGRO_BITMAP *previous
 
 LandImage *def platform_new_image():
     LandImagePlatform *self
@@ -61,9 +64,15 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
     SELF
+    LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
     bool restore = False
-    if r != 1 or g != 1 or b != 1 or alpha != 1:
+    if d->blend:
+        if d->blend & LAND_BLEND_SOLID:
+            al_store_state(&state, ALLEGRO_STATE_BLENDER)
+            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(1, 1, 1, 1))
+            restore = True
+    elif r != 1 or g != 1 or b != 1 or alpha != 1:
         al_store_state(&state, ALLEGRO_STATE_BLENDER)
         al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
             al_map_rgba_f(r, g, b, alpha))
@@ -94,10 +103,33 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
 
 def platform_set_image_display(LandImage *super):
     SELF
+    global_previous_display = _land_active_display
+    LandDisplayPlatform *p = (void *)global_previous_display
+    LandDisplay *d = (void *)&global_image_display
+    _land_active_display = d
+
+    global_image_display.a5 = p->a5
+    global_image_display.c = al_map_rgb_f(1, 1, 1)
+    d->w = super->width
+    d->h = super->height
+    d->flags = 0
+    d->color_r = 1
+    d->color_g = 1
+    d->color_b = 1
+    d->color_a = 1
+    d->blend = 0
+    d->clip_off = False
+    d->clip_x1 = 0
+    d->clip_y1 = 0
+    d->clip_x2 = super->width
+    d->clip_y2 = super->height
+    
     previous = al_get_target_bitmap()
     al_set_target_bitmap(self->a5)
+    
 
 def platform_unset_image_display():
+    _land_active_display = global_previous_display
     al_set_target_bitmap(previous)
 
 def platform_image_grab_into(LandImage *super,

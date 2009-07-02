@@ -3,10 +3,11 @@ static import global allegro5/allegro5
 static import global allegro5/a5_primitives
 static import global assert
 
-static class LandDisplayPlatform:
+class LandDisplayPlatform:
     LandDisplay super
     ALLEGRO_DISPLAY *a5
     ALLEGRO_COLOR c
+    ALLEGRO_STATE blend_state
 
 def platform_display_init():
     pass
@@ -28,6 +29,25 @@ static macro SELF:
     LandDisplayPlatform *self = (void *)_land_active_display
     LandDisplay *super = &self->super
     (void)super
+
+static def check_blending():
+    SELF
+    if super->blend:
+        al_store_state(&self->blend_state, ALLEGRO_STATE_BLENDER)
+        ALLEGRO_COLOR c
+        if super->blend & LAND_BLEND_TINT:
+            c = self->c
+        else:
+            c = al_map_rgba_f(1, 1, 1, 1)
+        if super->blend & LAND_BLEND_SOLID:
+            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, c)
+        elif super->blend & LAND_BLEND_ADD:
+            al_set_blender(ALLEGRO_ONE, ALLEGRO_ONE, c)
+
+static def uncheck_blending():
+    SELF
+    if super->blend:
+        al_restore_state(&self->blend_state)
 
 def platform_display_set():
     SELF
@@ -58,11 +78,15 @@ def platform_display_flip():
 
 def platform_rectangle(float x, y, x_, y_):
     SELF
+    check_blending()
     al_draw_rectangle(x, y, x_, y_, self->c, 0)
+    uncheck_blending()
 
 def platform_filled_rectangle(float x, y, x_, y_):
     SELF
+    check_blending()
     al_draw_filled_rectangle(x, y, x_, y_, self->c)
+    uncheck_blending()
 
 def platform_filled_circle(float x, y, x_, y_):
     SELF
@@ -70,7 +94,9 @@ def platform_filled_circle(float x, y, x_, y_):
     float cy = (y + y_) * 0.5
     float rx = (x_ - x) * 0.5
     float ry = (y_ - y) * 0.5
+    check_blending()
     al_draw_filled_ellipse(cx, cy, rx, ry, self->c)
+    uncheck_blending()
 
 def platform_circle(float x, y, x_, y_):
     SELF
@@ -78,11 +104,15 @@ def platform_circle(float x, y, x_, y_):
     float cy = (y + y_) * 0.5
     float rx = (x_ - x) * 0.5
     float ry = (y_ - y) * 0.5
+    check_blending()
     al_draw_ellipse(cx, cy, rx, ry, self->c, 0)
+    uncheck_blending()
 
 def platform_line(float x, y, x_, y_):
     SELF
+    check_blending()
     al_draw_line(x, y, x_, y_, self->c, 0)
+    uncheck_blending()
 
 def platform_polygon(int n, float *x, *y):
     SELF
@@ -94,7 +124,9 @@ def platform_filled_polygon(int n, float *x, *y):
 
 def platform_plot(float x, y):
     SELF
+    check_blending()
     al_draw_pixel(x, y, self->c)
+    uncheck_blending()
     
 def platform_pick_color(float x, y):
     SELF

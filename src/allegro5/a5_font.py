@@ -38,7 +38,7 @@ def platform_font_print(LandFontState *lfs,
     lfs->h = al_get_font_line_height(self->a5)
 
     if lfs->off: return
-    
+
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_BLENDER)
     LandDisplay *d = _land_active_display;
