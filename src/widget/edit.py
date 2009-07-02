@@ -84,7 +84,7 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
         land_keybuffer_next(&k, &u)
         edit->last_key = k
         edit->last_char = u
-        if u > 31:
+        if u > 31 and u != 127:
             edit->text = land_utf8_realloc_insert(edit->text, edit->cursor, u)
             edit->cursor++
             M
