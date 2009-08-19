@@ -56,6 +56,9 @@ set(DFLAGS "-g")
 set(RFLAGS "-O3")
 set(PFLAGS "-g -p -O2")
 
+# FIXME: well, this is all for linux only right now
+set(CFLAGS "${CFLAGS} -DLINUX")
+
 if (STATIC)
     if (DEBUG)
         add_library(land-static-debug STATIC ${cfiles})
