@@ -57,6 +57,7 @@ class LandSprite:
     float x, y, angle
     LandSpriteType *type
     int tag
+    bool shown
 
 # A sprite with a dynamic image, i.e. each sprite has its own image,
 # independent of its type.
@@ -146,9 +147,8 @@ static def dummy_animation(LandSprite *self, LandView *view):
         animated->r, animated->g, animated->b, animated->a)
     # land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
     #    self->angle)
-    # if animation->super.image->mask:
-    #    land_image_debug_pixelmask(animation->super.image, x, y, 0)
-
+    #if animation->super.image->mask:
+    #    land_image_debug_pixelmask(animation->super.image, x, y, self->angle)
 
 def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
@@ -165,7 +165,6 @@ LandSprite *def land_sprite_new(LandSpriteType *type):
     land_sprite_initialize(self, type)
     return self
 
-
 LandSprite *def land_sprite_with_image_new(LandSpriteType *type, LandImage
         *image):
 
@@ -181,10 +180,10 @@ def land_sprite_image_destroy(LandSprite *self):
     pass
 
 
-def land_sprite_animated_initialize(LandSpriteAnimated *self,
+def land_sprite_animated_initialize(LandSprite *super,
     LandSpriteType *type):
-
-    land_sprite_initialize(LAND_SPRITE(self), type)
+    land_sprite_initialize(super, type)
+    LandSpriteAnimated *self = (void *)super
     self->sx = 1
     self->sy = 1
     self->r = 1
@@ -192,12 +191,11 @@ def land_sprite_animated_initialize(LandSpriteAnimated *self,
     self->b = 1
     self->a = 1
 
-
 LandSprite *def land_sprite_animated_new(LandSpriteType *type):
 
     LandSpriteAnimated *self
     land_alloc(self)
-    land_sprite_animated_initialize(LAND_SPRITE_ANIMATED(self), type)
+    land_sprite_animated_initialize(LAND_SPRITE(self), type)
     return LAND_SPRITE(self)
 
 
@@ -218,11 +216,13 @@ def land_sprite_destroy(LandSprite *self):
     """Same as land_sprite_del."""
     land_sprite_del(self)
 
-def land_sprite_show(LandSprite *self):
-    pass
+def land_sprite_show(LandSprite *self, LandGrid *grid):
+    if self->shown: return
+    land_sprite_place_into_grid(self, grid, self->x, self->y)
 
-def land_sprite_hide(int sprite, int grid):
-    pass
+def land_sprite_hide(LandSprite *self, LandGrid *grid):
+    if not self->shown: return
+    land_sprite_remove_from_grid(self, grid)
 
 int def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other):
     """
@@ -467,6 +467,8 @@ def grid_place(LandSprite *self, LandSpritesGrid *grid):
     int tl, tt, tr, tb
     get_grid_extents(self, &grid->super, &tl, &tt, &tr, &tb)
 
+    self->shown = True
+
     # Add the sprite to all cells it possibly overlaps.
     for int ty = tt while ty <= tb with ty++:
         for int tx = tl while tx <= tr with tx++:
@@ -509,6 +511,8 @@ def grid_unplace(LandSprite *self, LandSpritesGrid *grid):
             # list and de-allocating the ListItem
             land_remove_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
                 self)
+
+    self->shown = False
 
 def land_sprite_remove_from_grid(LandSprite *self, LandGrid *grid):
     """
@@ -613,7 +617,7 @@ LandSpriteTypeWithImage *def land_spritetype_with_image_new():
 
 
 def land_spritetype_image_initialize(LandSpriteTypeImage *self,
-    LandImage *image):
+    LandImage *image, bool mask):
 
     LAND_SPRITE_TYPE(self)->draw = dummy_image
     LAND_SPRITE_TYPE(self)->overlap = land_sprite_overlap_pixelperfect
@@ -626,21 +630,20 @@ def land_spritetype_image_initialize(LandSpriteTypeImage *self,
     LAND_SPRITE_TYPE(self)->name = "image"
 
     # TODO: Ok, so we automatically create a mask here.. but is this wanted?
-    if !image->mask:
+    if mask and not image->mask:
         land_image_create_pixelmasks(image, 1, 128)
-
 
 # Create a new image sprite type with the given image. The source clipping of
 # the image is honored.
-LandSpriteType *def land_spritetype_image_new(LandImage *image):
+LandSpriteType *def land_spritetype_image_new(LandImage *image, bool mask):
 
     LandSpriteTypeImage *self
     land_alloc(self)
-    land_spritetype_image_initialize(self, image)
+    land_spritetype_image_initialize(self, image, mask)
     return LAND_SPRITE_TYPE(self)
 
 LandSpriteType *def land_spritetype_animation_new(LandAnimation *animation,
-    LandImage *image):
+    LandImage *image, bool mask, int n):
     """
     Create a new animation sprite type with the given animation. The image is
     used for collision detection.
@@ -652,7 +655,9 @@ LandSpriteType *def land_spritetype_animation_new(LandAnimation *animation,
     if !image:
         image = land_animation_get_frame(animation, 0)
 
-    land_spritetype_image_initialize(LAND_SPRITE_TYPE_IMAGE(self), image)
+    land_spritetype_image_initialize(LAND_SPRITE_TYPE_IMAGE(self), image, False)
+    if mask:
+        land_image_create_pixelmasks(image, n, 128)
     LAND_SPRITE_TYPE(self)->draw = dummy_animation
     LAND_SPRITE_TYPE(self)->destroy = land_sprite_animated_destroy
     LAND_SPRITE_TYPE(self)->destroy_type = land_spritetype_animation_destroy
