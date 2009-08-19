@@ -8,6 +8,8 @@ class LandPixelMask:
 
 static import font, global math
 
+#*** "define" DEBUG_MASK
+
 # TODO: 64bit version
 # TODO: Defer creation of masks?
 #       E.g. if a bitmap is used with 256 rotations, but it only ever is
@@ -26,10 +28,14 @@ static macro BB(x1, y1, x2, y2, x3, y3, x4, y4):
 
 static def get_bounding_box(float l, float t, float r, float b, float angle,
     float *bl, float *bt, float *br, float *bb):
-    if angle < LAND_PI / 2: BB(l, t, r, t, r, b, l, b)
-    elif angle < LAND_PI: BB(r, t, r, b, l, b, l, t)
-    elif angle < 3 * LAND_PI / 2: BB(r, b, l, b, l, t, r, t)
-    else BB(l, b, l, t, r, t, r, b)
+    if angle < LAND_PI / 2:
+        BB(l, t, r, t, r, b, l, b)
+    elif angle < LAND_PI:
+        BB(r, t, r, b, l, b, l, t)
+    elif angle < 3 * LAND_PI / 2:
+        BB(r, b, l, b, l, t, r, t)
+    else:
+        BB(l, b, l, t, r, t, r, b)
 
 *** "ifdef" DEBUG_MASK
 static def printout_mask(SinglePixelMask *mask):
@@ -112,6 +118,10 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
             # all 0 - useful to not need special case the right border. 
             mask->rotation[j]->data[y * mask_w + x / 32] = 0
 
+        *** "ifdef" DEBUG_MASK
+        printout_mask(mask->rotation[j])
+        *** "endif"
+
     return mask
 
 static def pixelmask_destroy(LandPixelMask *mask):
@@ -140,6 +150,10 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
     get_bounding_box(-self->x, -self->y, w - self->x, h - self->y,
         k * 2.0 * LAND_PI / self->mask->n, &ml, &mt, &mr, &mb)
 
+    land_color(1, 0, 0, 1)
+    land_rectangle(x + ml, y + mt, x + mr, y + mb)
+
+    land_color(1, 1, 1, 1)
     for i = 0 while i < self->mask->rotation[k]->h with i++:
         int j
         for j = 0 while j < mask_w with j++:
@@ -148,7 +162,6 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
             for b = 0 while b < 32 with b++:
                 if m & (1 << b):
                     land_plot(x + ml + j * 32 + b, y + mt + i)
-
 
 # Compare two rectangles of two bit masks, using efficient bit checking. 
 static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
@@ -244,7 +257,7 @@ int def land_image_overlaps(LandImage *self, float x, float y, float angle,
     float ml, mt, mr, mb, ml_, mt_, mr_, mb_
     get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * LAND_PI / self->mask->n,
         &ml, &mt, &mr, &mb)
-    get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i * 2.0 * LAND_PI / other->mask->n,
+    get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i_ * 2.0 * LAND_PI / other->mask->n,
         &ml_, &mt_, &mr_, &mb_)
 
     return pixelmask_collision(
