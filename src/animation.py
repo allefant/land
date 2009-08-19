@@ -7,6 +7,10 @@ class LandAnimation:
 static import animation, mem
 
 LandAnimation *def land_animation_new(LandArray *frames):
+    """
+    Ownership of the frames array is transferred to the animation - destroying
+    the animation later will destroy the array.
+    """
     LandAnimation *self
     land_alloc(self)
     self->fps = 10

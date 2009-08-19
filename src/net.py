@@ -253,11 +253,12 @@ static def land_net_poll_accept(LandNet *self):
     if r < 0:
         *** "if" defined(LINUX)
         if errno == EINTR or errno == EWOULDBLOCK or errno == EAGAIN:
+            return
         *** "elif" defined(WINDOWS)
         if WSAGetLastError() == WSAEINTR or\
             WSAGetLastError() == WSAEWOULDBLOCK:
-        *** "endif"
             return
+        *** "endif"
 
         sockerror("accept")
         return

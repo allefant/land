@@ -75,6 +75,7 @@ int def land_ini_get_number_of_entries(LandIniFile *ini,
     if not s: return 0
     if section:
         s = _get(s, section)
+        if not s: return 0
     return s->n
 
 char const *def land_init_get_nth_entry(LandIniFile *ini,
@@ -88,10 +89,10 @@ static bool def is_whitespace(char c):
     if c == ' ' || c == '\t' || c == '\n': return true
     return false
 
-macro addc(var, len):
+static macro addc(var, len):
     var[len] = c;
     if len < (int)sizeof(var) - 1: len++
-    var[len + 1] = '\0'
+    var[len] = '\0'
 
 static enum State:
     OUTSIDE
@@ -102,7 +103,7 @@ static enum State:
     COMMENT
 
 LandIniFile *def land_ini_read(char const *filename):
-    char section_name[1024] = "", key_name[1024], value[1024] = ""
+    char section_name[1024] = "", key_name[1024] = "", value[1024] = ""
     int slen = 0, klen = 0, vlen = 0
     State state = OUTSIDE
     LandIniFile *ini = calloc(1, sizeof *ini)
@@ -118,6 +119,7 @@ LandIniFile *def land_ini_read(char const *filename):
             c = '\n'
 
         if c == '\r': continue
+
         if state == OUTSIDE: # outside
             if c == '[':
                 slen = 0
@@ -129,7 +131,7 @@ LandIniFile *def land_ini_read(char const *filename):
             elif not is_whitespace(c):
                 klen = 0
                 addc(key_name, klen)
-                state = 2
+                state = KEY
 
 
         elif  state == SECTION: # section name
@@ -166,6 +168,12 @@ LandIniFile *def land_ini_read(char const *filename):
                 state = OUTSIDE
 
     fclose(f)
+    return ini
+
+LandIniFile *def land_ini_new(char const *filename):
+    LandIniFile *ini = calloc(1, sizeof *ini)
+    ini->filename = strdup(filename)
+    ini->sections = calloc(1, sizeof *ini->sections)
     return ini
 
 def land_ini_destroy(LandIniFile *ini):
