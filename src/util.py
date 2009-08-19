@@ -10,6 +10,7 @@ macro LAND_PI 3.1415926535897931
 
 char *def land_read_text(char const *filename):
     FILE *pf = fopen(filename, "rb")
+    if not pf: return None
     int s = 1
     char *buf = land_malloc(s)
     int n = 0
@@ -21,6 +22,7 @@ char *def land_read_text(char const *filename):
         if n >= s:
             s *= 2
             buf = land_realloc(buf, s)
+    fclose(pf)
     buf[n] = 0
     n++
     buf = land_realloc(buf, n)
