@@ -11,6 +11,11 @@ class LandFontState:
     bool off
     float wordwrap_width, wordwrap_height
 
+enum:
+    LandAlignLeft
+    LandAlignRight
+    LandAlignCenter
+
 static import global stdio
 static import font, exception, main
 
@@ -43,11 +48,6 @@ LandFont *def land_font_load(char const *filename, float size):
     LandFont *self = platform_font_load(filename, size)
 
     land_font_state->font = self
-    return self
-
-LandFont *def land_font_default():
-    LandFont *self = None
-    assert(0)
     return self
 
 def land_font_destroy(LandFont *self):
@@ -172,64 +172,71 @@ static int def _wordwrap_helper(char const *text, int w, h,
     void (*cb)(int a, int b, void *data), void *data):
     int y = land_text_y_pos()
     float fh = land_font_state->font->size
-    char const *a = text
 
+    char const *line_start_p = text
     printf("wordwrap %d %d\n", w, h)
 
     while 1:
-        char *ptr = (char *)a
+        # A new line begins.
         if h > 0 and land_text_y_pos() >= y + h: break
-        int n = 0, ok_n = 0
-        float offset = 0
-        float www = 0
+        float width_of_line = 0
+        int word_end_glyphs = 0
+        char const *word_end_p = line_start_p
+        char const *prev_word_end_p = line_start_p
+        char const *ptr
         int c
         while 1:
             # Find next possible break location.
-            bool skip = True
+            bool inside_leading_whitespace = True
+            ptr = word_end_p
+            int glyphs = word_end_glyphs
             while 1:
-                c = land_utf8_char(&ptr)
+                c = land_utf8_char_const(&ptr)
                 if c == 0: break
                 if c == '\n': break
                 if c == ' ':
-                    if not skip: break
+                    if not inside_leading_whitespace: break
                 else:
-                    skip = False
-                n++
-
-            offset = land_text_get_char_offset(a, n)
-
-            int x = offset
-            if x > w:
-                if ok_n > 0:
-                    n = ok_n
+                    inside_leading_whitespace = False
+                if inside_leading_whitespace and word_end_glyphs == 0:
+                    line_start_p = ptr
                 else:
-                    www = x
+                    glyphs++
+                    word_end_p = ptr
 
+            int x = land_text_get_char_offset(line_start_p, glyphs)
+            if x > w: # found break point
+                if word_end_glyphs == 0: # uh oh, only a single word
+                    word_end_glyphs = glyphs
+                    width_of_line = x
+                else:
+                    c = ' ' # in case it was 0 so we don't lose the last word
+                    ptr = word_end_p = prev_word_end_p
                 break
-            www = x
-            if c == 0 or c == '\n': break
-            ok_n = n
-            n++
-        if www > land_font_state->wordwrap_width:
-            land_font_state->wordwrap_width = www
+            width_of_line = x
+            word_end_glyphs = glyphs
+            prev_word_end_p = word_end_p
+            if c == 0 or c == '\n':
+                break
+        if width_of_line > land_font_state->wordwrap_width:
+            land_font_state->wordwrap_width = width_of_line
         land_font_state->wordwrap_height += fh
-        cb(a - text, a + n - text, data)
-
-        a += n + 1
+        cb(line_start_p - text, word_end_p - text, data)
+        line_start_p = ptr
         if c == 0: break
-    return a - text
+    return line_start_p - text
 
 static def _print_wordwrap_cb(int a, b, void *data):
     void **p = data
     char *text = p[0]
-    int *alignement = p[1]
+    int *alignment = p[1]
 
     char s[b - a + 1]
     strncpy(s, text + a, b - a + 1)
     s[b - a] = 0
-    land_print_string(s, 1, *alignement)
+    land_print_string(s, 1, *alignment)
 
-int def land_print_string_wordwrap(char const *text, int w, h, alignement):
+int def land_print_string_wordwrap(char const *text, int w, h, alignment):
     """
     Print text inside, and starts a new line whenever the text goes over the
     given width, wrapping at whitespace. If a single word is bigger than w, it
@@ -238,7 +245,7 @@ int def land_print_string_wordwrap(char const *text, int w, h, alignement):
     The return value is the offset into text in bytes of one past the last
     printed character.
     """
-    void *data[] = {(void *)text, &alignement}
+    void *data[] = {(void *)text, &alignment}
     return _wordwrap_helper(text, w, h, _print_wordwrap_cb, data)
 
 int def land_print_wordwrap(int w, h, char const *text, ...):
@@ -281,6 +288,14 @@ LandArray *def land_wordwrap_text(int w, h, char const *str):
         _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
     return lines
 
+def land_text_destroy_lines(LandArray *lines):
+    if not lines: return
+    int n = land_array_count(lines)
+    for int i = 0 while i < n with i++:
+        char *s = land_array_get_nth(lines, i)
+        land_free(s)
+    land_array_destroy(lines)
+
 LandArray *def land_text_splitlines(char const *str):
     """
     Splits the text into lines, and updates the wordwrap extents.
@@ -308,10 +323,10 @@ LandArray *def land_text_splitlines(char const *str):
     return lines
 
 def land_wordwrap_extents(float *w, float *h):
-    *w = land_font_state->wordwrap_width
-    *h = land_font_state->wordwrap_height
+    if w: *w = land_font_state->wordwrap_width
+    if h: *h = land_font_state->wordwrap_height
 
-def land_print_lines(LandArray *lines, int alignement):
+def land_print_lines(LandArray *lines, int alignment):
     """
     Given an array of lines, print the visible ones.
     """
@@ -327,4 +342,4 @@ def land_print_lines(LandArray *lines, int alignement):
     land_font_state->y_pos += fh * first
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
-        land_print_string(s, 1, alignement)
+        land_print_string(s, 1, alignment)
