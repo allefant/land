@@ -1,5 +1,5 @@
 import land/color
-static import global allegro5/a5_color
+static import global allegro5/allegro_color
 
 LandColor def platform_color_hsv(float hue, sat, val):
     LandColor c

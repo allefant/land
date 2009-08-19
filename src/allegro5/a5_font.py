@@ -1,6 +1,6 @@
 import land/font
-static import global allegro5/allegro5, allegro5/a5_font
-static import global allegro5/a5_ttf
+static import global allegro5/allegro5, allegro5/allegro_font
+static import global allegro5/allegro_ttf
 
 static class LandFontPlatform:
     LandFont super
@@ -22,7 +22,8 @@ LandFont *def platform_font_load(char const *filename, float size):
 
     land_log_message_nostamp("%s.\n", self->a5 ? "success" : "failure")
     LandFont *super = (void *)self
-    super->size = al_get_font_line_height(self->a5)
+    if self->a5:
+        super->size = al_get_font_line_height(self->a5)
     return super
 
 def platform_font_print(LandFontState *lfs,

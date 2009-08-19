@@ -1,6 +1,6 @@
 import land/display
 static import global allegro5/allegro5
-static import global allegro5/a5_primitives
+static import global allegro5/allegro_primitives
 static import global assert
 
 class LandDisplayPlatform:
@@ -42,7 +42,7 @@ static def check_blending():
         if super->blend & LAND_BLEND_SOLID:
             al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, c)
         elif super->blend & LAND_BLEND_ADD:
-            al_set_blender(ALLEGRO_ONE, ALLEGRO_ONE, c)
+            al_set_blender(ALLEGRO_ALPHA, ALLEGRO_ONE, c)
 
 static def uncheck_blending():
     SELF

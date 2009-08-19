@@ -1,5 +1,5 @@
 import land/main
-static import global allegro5/allegro5, allegro5/a5_font
+static import global allegro5/allegro5, allegro5/allegro_font
 static import land/land
 
 double def platform_get_time():
@@ -29,7 +29,7 @@ static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 9
 
 static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
-    LandKeyNone, /* 0 */
+    LandKeyNone, # 0
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
     'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
     'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
@@ -37,7 +37,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyPad + 0,
     LandKeyPad + 1,
     LandKeyPad + 2,
-    LandKeyPad + 3, /* 40 */
+    LandKeyPad + 3, # 40
     LandKeyPad + 4,
     LandKeyPad + 5,
     LandKeyPad + 6,
@@ -47,7 +47,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyFunction + 1,
     LandKeyFunction + 2,
     LandKeyFunction + 3,
-    LandKeyFunction + 4, /* 50 */
+    LandKeyFunction + 4, # 50
     LandKeyFunction + 5,
     LandKeyFunction + 6,
     LandKeyFunction + 7,
@@ -57,7 +57,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyFunction + 11,
     LandKeyFunction + 12,
     LandKeyEscape,
-    '~', /* 60 */
+    '~', # 60
     '-',
     '=',
     LandKeyBackspace,
@@ -67,7 +67,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyEnter,
     ';',
     '\'',
-    '\\', /* 70 */
+    '\\', # 70
     LandKeyUnknown + 0,
     ',',
     '.',
@@ -77,7 +77,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyDelete,
     LandKeyHome,
     LandKeyEnd,
-    LandKeyPageUp, /* 80 */
+    LandKeyPageUp, # 80
     LandKeyPageDown,
     LandKeyLeft,
     LandKeyRight,
@@ -87,7 +87,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyPadStar,
     LandKeyPadMinus,
     LandKeyPadPlus,
-    LandKeyPadDelete, /* 90 */
+    LandKeyPadDelete, # 90
     LandKeyPadEnter,
 
     LandKeyPrint,
@@ -99,7 +99,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyUnknown + 4,
     LandKeyUnknown + 5,
     '@',
-    '^', /* 100 */
+    '^', # 100
     ':',
     LandKeyUnknown + 6,
     
@@ -110,7 +110,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyUnknown + 11,
     LandKeyUnknown + 12,
     LandKeyUnknown2 + 0,
-    LandKeyUnknown2 + 1, /* 110 */
+    LandKeyUnknown2 + 1, # 110
     LandKeyUnknown2 + 2,
     LandKeyUnknown2 + 3,
     LandKeyUnknown2 + 4,
@@ -121,17 +121,17 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyUnknown3 + 2,
     LandKeyUnknown3 + 3,
     LandKeyUnknown3 + 4,
-    LandKeyUnknown3 + 5, /* 120 */
+    LandKeyUnknown3 + 5, # 120
     
-    _UnkKey(6), /* 130 */
-    _UnkKey(16), /* 140 */
-    _UnkKey(26), /* 150 */
-    _UnkKey(36), /* 160 */
-    _UnkKey(46), /* 170 */
-    _UnkKey(56), /* 180 */
-    _UnkKey(66), /* 190 */
-    _UnkKey(76), /* 200 */
-    _UnkKey(86), /* 210 */
+    _UnkKey(6), # 130
+    _UnkKey(16), # 140
+    _UnkKey(26), # 150
+    _UnkKey(36), # 160
+    _UnkKey(46), # 170
+    _UnkKey(56), # 180
+    _UnkKey(66), # 190
+    _UnkKey(76), # 200
+    _UnkKey(86), # 210
     
     LandKeyUnknown3 + 96,
     LandKeyUnknown3 + 97,
@@ -143,7 +143,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyLeftControl,
     LandKeyRightControl,
     LandKeyLeftAlt,
-    LandKeyRightAlt, /* 120 */
+    LandKeyRightAlt, # 120
     LandKeyLeftWin,
     LandKeyRightWin,
     LandKeyMenu,
