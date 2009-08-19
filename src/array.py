@@ -126,6 +126,7 @@ void *def land_array_replace_nth(LandArray *array, int i, void *data):
     Replace the array entry at the given index, and return the previous
     contents.
     """
+    if i >= array->count: return None
     void *old = array->data[i]
     array->data[i] = data
     return old
