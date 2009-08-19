@@ -179,6 +179,7 @@ import global stdio, stdlib, string, stdarg, stdbool, math
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
+import file
 
 import land/allegro5/a5_opengl
 
@@ -194,14 +195,15 @@ macro land_use_main(m):
         return land_get_exitcode()
     END_OF_MAIN()
 
-macro land_begin_shortcut(w, h, bpp, hz, flags, init, enter, tick, draw,
+macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
     leave, destroy):
     int def main(int argc, char **argv):
         land_argc = argc
         land_argv = argv
         land_init()
-        shortcut_runner = land_runner_new("shortcut", init, enter, tick, draw,
-            leave, destroy)
+        shortcut_runner = land_runner_new("shortcut",
+            (void *)init, (void *)enter, (void *)tick, (void *)draw,
+            (void *)leave, (void *)destroy)
         land_runner_register(shortcut_runner)
         land_set_display_parameters(w, h, flags)
         land_set_initial_runner(shortcut_runner)
