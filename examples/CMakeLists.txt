@@ -46,7 +46,7 @@ foreach(exsrc ${examples})
     # Step 3: Build from .c files.
     #
 
-    set(AV "4.9.12")
+    set(AV "4.9.14")
     set(WFLAGS "-W -Wall")
     set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
     set(CFLAGS "--std=gnu99")
@@ -129,13 +129,13 @@ foreach(exsrc ${examples})
             target_link_libraries(${ex}-debug
                 land-debug
                 allegro-debug-${AV}
-                a5_font-debug-${AV}
-                a5_ttf-debug-${AV}
-                a5_primitives-debug-${AV}
-                a5_iio-debug-${AV}
-                a5_color-debug-${AV}
-                a5_acodec-debug-${AV}
-                kcm_audio-debug-${AV}
+                allegro_font-debug-${AV}
+                allegro_ttf-debug-${AV}
+                allegro_primitives-debug-${AV}
+                allegro_image-debug-${AV}
+                allegro_color-debug-${AV}
+                allegro_vorbis-debug-${AV}
+                allegro_audio-debug-${AV}
                 )
         endif (DEBUG)
         if (RELEASE)

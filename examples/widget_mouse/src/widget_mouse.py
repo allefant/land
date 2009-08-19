@@ -90,6 +90,6 @@ def draw(LandRunner *self):
 def done(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 32, 100,
+land_begin_shortcut(640, 480, 100,
     LAND_WINDOWED | LAND_OPENGL,
     init, NULL, tick, draw, NULL, done)

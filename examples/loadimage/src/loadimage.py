@@ -13,5 +13,5 @@ static def draw(LandRunner *self):
     land_clear(0, 0, 0, 0)
     land_image_draw(image, 0, 0)
 
-land_begin_shortcut(1024, 768, 0, 60, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(1024, 768, 60, LAND_WINDOWED | LAND_OPENGL,
     init, None, tick, draw, None, None)

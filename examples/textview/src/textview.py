@@ -13,13 +13,16 @@ def create_dialog():
 
     char *text = land_read_text("../../data/GPL-2")
 
-    LandWidget *window =  land_widget_vbox_new(desktop, 100, 100, 4, 4)
+    LandWidget *window = land_widget_vbox_new(desktop, 100, 100, 200, 200)
     LandWidget *mover = land_widget_mover_new(window, "GPL-2", 0, 0, 4, 4)
 
-    scrolling = land_widget_scrolling_text_new(window,
-        text, 2,
-        100, 100, 200, 200)
-    land_widget_scrolling_autohide(scrolling, 1, 1, 1)
+    scrolling = land_widget_scrolling_new(window,
+        0, 0, 0, 0)
+
+    LandWidget *textview = land_widget_text_new(scrolling, text, 2, 0, 0, 75, 0)
+    land_widget_layout_set_expanding(textview, 1, 1)
+    land_widget_scrolling_update(scrolling)
+    land_widget_scrolling_autohide(scrolling, 1, 1, 0)
 
     LandWidget *empty = land_widget_scrolling_get_empty(scrolling)
     LandWidget *sizer = land_widget_sizer_new(empty, 3, 0, 0, 10, 10)
@@ -47,6 +50,6 @@ def tick(LandRunner *r):
 def draw(LandRunner *r):
     land_widget_draw(desktop)
 
-land_begin_shortcut(640, 480, 0, 60,
+land_begin_shortcut(640, 480, 60,
     LAND_OPENGL | LAND_WINDOWED,
     init, None, tick, draw, None, None)

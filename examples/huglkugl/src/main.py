@@ -38,8 +38,8 @@ static def game_init(LandRunner *self):
     platform_image = land_image_load("../../data/platform1.png")
     land_image_center(platform_image)
 
-    player_type = land_spritetype_image_new(player_image)
-    platform_type = land_spritetype_image_new(platform_image)
+    player_type = land_spritetype_image_new(player_image, True)
+    platform_type = land_spritetype_image_new(platform_image, True)
 
     sprites[0] = land_sprite_new(player_type)
     land_sprite_place_into_grid(sprites[0], game.front_grid, 0, 0)
@@ -86,5 +86,5 @@ static def game_draw(LandRunner *self):
 static def game_exit(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 32, 60, LAND_OPENGL | LAND_WINDOWED,
+land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_WINDOWED,
     game_init, NULL, game_tick, game_draw, NULL, game_exit)

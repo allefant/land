@@ -349,7 +349,7 @@ def init(LandRunner *self):
     if land_argc > 1:
         address = land_argv[1]
 
-    land_font_default()
+    land_font_load("../../data/DejaVuSand.ttf", 10)
 
     create_gui()
 

@@ -103,5 +103,5 @@ static def game_draw(LandRunner *self):
 static def game_exit(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 32, 60, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL,
     game_init, NULL, game_tick, game_draw, NULL, game_exit)

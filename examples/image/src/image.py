@@ -169,5 +169,5 @@ static def draw(LandRunner *self):
 
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 
-land_begin_shortcut(640, 480, 0, 60, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL,
     init, NULL, tick, draw, NULL, destroy)

@@ -125,6 +125,6 @@ static def done(LandRunner *self):
     land_widget_theme_destroy(theme)
     land_font_destroy(my_font)
 
-land_begin_shortcut(640, 480, 32, 60, LAND_WINDOWED | LAND_OPENGL, init, NULL, tick,
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL, init, NULL, tick,
         draw, NULL, done)
 

@@ -73,5 +73,5 @@ def draw(LandRunner *self):
     #land_clear(1, 0, 0, 1)
     #land_image_draw(cache, 0, 0)
 
-land_begin_shortcut(640, 480, 0, 60, LAND_OPENGL | LAND_FULLSCREEN,
+land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_FULLSCREEN,
     init, NULL, tick, draw, NULL, NULL)

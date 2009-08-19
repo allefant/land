@@ -39,5 +39,5 @@ static def game_draw(LandRunner *self):
             land_clip(0, 0, clip, 480)
             land_image_draw_tinted(image, x, y, 0, 1, 0, 0.8)
 
-land_begin_shortcut(640, 480, 32, 120, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(640, 480, 120, LAND_WINDOWED | LAND_OPENGL,
     game_init, NULL, game_tick, game_draw, NULL, NULL)
