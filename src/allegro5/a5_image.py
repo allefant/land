@@ -1,5 +1,5 @@
 import land.image, land.display
-static import global allegro5.allegro5, allegro5.a5_iio, allegro5.a5_opengl
+static import global allegro5.allegro5, allegro5.allegro_image, allegro5.allegro_opengl
 static import land.allegro5.a5_display
 
 static class LandImagePlatform:
@@ -28,11 +28,13 @@ def platform_image_empty(LandImage *super):
     SELF
     if not self->a5:
         self->a5 = al_create_bitmap(super->width, super->height)
-    ALLEGRO_STATE state
-    al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
-    al_set_target_bitmap(self->a5)
-    al_clear_to_color(al_map_rgba_f(0, 0, 0, 0))
-    al_restore_state(&state)
+    int f = al_get_bitmap_format(self->a5)
+    ALLEGRO_LOCKED_REGION *lock = al_lock_bitmap(self->a5, f, ALLEGRO_LOCK_WRITEONLY)
+    int rowbytes = al_get_pixel_size(f) * super->width
+    for int i = 0 while i < super->height with i++:
+        memset(lock->data + lock->pitch * i, 0, rowbytes)
+    al_unlock_bitmap(self->a5)
+    
 
 LandImage *def platform_image_load(char const *filename, bool mem):
     LandImage *super = land_display_new_image()
@@ -53,12 +55,27 @@ LandImage *def platform_image_load(char const *filename, bool mem):
         al_restore_state(&state)
     return super
 
+LandImage *def platform_image_sub(LandImage *parent, float x, y, w, h):
+    LandImage *super = land_display_new_image()
+    super->flags |= LAND_SUBIMAGE
+    super->filename = parent->filename
+    super->name = parent->name
+
+    LandImagePlatform *self = (void *)super
+    LandImagePlatform *parentself = (void *)parent
+
+    self->a5 = al_create_sub_bitmap(parentself->a5, x, y, w, h)
+    super->width = al_get_bitmap_width(self->a5)
+    super->height = al_get_bitmap_height(self->a5)
+    return super
+
 def platform_image_save(LandImage *super, char const *filename):
     LandImagePlatform *self = (void *)super
     al_save_bitmap(filename, self->a5)
 
 def platform_image_prepare(LandImage *super):
-    pass
+    LandImagePlatform *self = (void *)super
+    al_remove_opengl_fbo(self->a5)
 
 def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     float y, float sx, float sy,
@@ -70,7 +87,11 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
     if d->blend:
         if d->blend & LAND_BLEND_SOLID:
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
-            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(1, 1, 1, 1))
+            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(r, g, b, alpha))
+            restore = True
+        if d->blend & LAND_BLEND_ADD:
+            al_store_state(&state, ALLEGRO_STATE_BLENDER)
+            al_set_blender(ALLEGRO_ALPHA, ALLEGRO_ONE, al_map_rgba_f(r, g, b, alpha))
             restore = True
     elif r != 1 or g != 1 or b != 1 or alpha != 1:
         al_store_state(&state, ALLEGRO_STATE_BLENDER)
@@ -86,7 +107,7 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
             float cx = super->x - super->l
             float cy = super->y - super->t
             al_draw_rotated_scaled_bitmap(sub, cx, cy,
-                x, y, sx, sy, angle, 0)
+                x, y, sx, sy, -angle, 0)
             al_destroy_bitmap(sub)
         else:
             al_draw_bitmap_region(self->a5, super->l, super->t,
@@ -96,7 +117,7 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
                 y + super->t, 0)
     else:
         al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
-            x, y, sx, sy, angle, 0)
+            x, y, sx, sy, -angle, 0)
 
     if restore:
         al_restore_state(&state)

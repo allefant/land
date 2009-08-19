@@ -278,9 +278,9 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
                         nr = 255 - (255 - red) * base_sum / sum
                         ng = 255 - (255 - green) * base_sum / sum
                         nb = 255 - (255 - blue) * base_sum / sum
-                    *(p + 0) = r
-                    *(p + 1) = g
-                    *(p + 2) = b
+                    *(p + 0) = nr
+                    *(p + 1) = ng
+                    *(p + 2) = nb
             p += 4
 
     land_image_set_rgba_data(self, rgba)
@@ -385,21 +385,7 @@ LandArray *def land_load_images(char const *pattern, int center, int optimize):
     return land_load_images_cb(pattern, defcb, data)
 
 LandImage *def land_image_sub(LandImage *parent, float x, float y, float w, float h):
-    LandImage *self = land_display_new_image()
-    self->flags |= LAND_SUBIMAGE
-    
-    assert(0)
-    
-    #self->vt->sub(self, parent)
-
-    #self->bitmap = parent->bitmap
-    #self->memory_cache = parent->memory_cache
-    self->l = x
-    self->t = y
-    self->r = land_image_width(parent) - x - w
-    self->b = land_image_height(parent) - y - h
-    self->x = x
-    self->y = y
+    LandImage *self = platform_image_sub(parent, x, y, w, h)
     return self
 
 # Loads an image, and returns a list of sub-images out of it. 
