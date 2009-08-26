@@ -268,9 +268,11 @@ def land_get_color(float *r, float *g, float *b, float *a):
     *b = d->color_b
     *a = d->color_a
 
-def land_blend(int state):
+int def land_blend(int state):
     LandDisplay *d = _land_active_display
+    int prev = d->blend
     d->blend = state
+    return prev
 
 def land_clip(float x, float y, float x_, float y_):
     LandDisplay *d = _land_active_display

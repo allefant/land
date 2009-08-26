@@ -125,11 +125,11 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
 def platform_set_image_display(LandImage *super):
     SELF
     global_previous_display = _land_active_display
-    LandDisplayPlatform *p = (void *)global_previous_display
+    LandDisplayPlatform *prev = (void *)global_previous_display
     LandDisplay *d = (void *)&global_image_display
     _land_active_display = d
 
-    global_image_display.a5 = p->a5
+    global_image_display.a5 = prev->a5
     global_image_display.c = al_map_rgb_f(1, 1, 1)
     d->w = super->width
     d->h = super->height

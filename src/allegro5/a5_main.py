@@ -172,8 +172,8 @@ def platform_show_mouse_cursor():
 def platform_mainloop(LandParameters *parameters):
     ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue()
     ALLEGRO_TIMER *timer = al_install_timer(1.0 / parameters->fps)
-    al_register_event_source(queue, (void *)al_get_keyboard())
-    al_register_event_source(queue, (void *)al_get_mouse())
+    al_register_event_source(queue, (void *)al_get_keyboard_event_source())
+    al_register_event_source(queue, (void *)al_get_mouse_event_source())
 
     al_register_event_source(queue, (void *)al_get_current_display())
 

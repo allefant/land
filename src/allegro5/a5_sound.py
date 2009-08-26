@@ -105,9 +105,8 @@ def platform_stream_destroy(LandStream *super):
 void *def platform_stream_buffer(LandStream *super):
     LandStreamPlatform *self = (void *)super
     if al_get_available_stream_fragments(self->a5) == 0: return None
-    if al_get_stream_fragment(self->a5, &self->fragment):
-        return self->fragment
-    return None
+    self->fragment = al_get_stream_fragment(self->a5):
+    return self->fragment
 
 def platform_stream_fill(LandStream *super):
     LandStreamPlatform *self = (void *)super
