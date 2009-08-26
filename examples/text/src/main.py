@@ -4,7 +4,7 @@ char *text
 LandFont *font
 LandArray *lines
 
-int wrap_w = 75
+int wrap_w = 640
 int scroll = 0
 float height
 
@@ -16,7 +16,6 @@ def wrap():
 def init():
     font = land_font_load("../../data/DejaVuSans.ttf", 10)
     text = land_read_text("../../data/GPL-2")
-    text = land_strdup("Welcome, stranger. Barhan I be called. I be the local weaponsmith.");
     wrap()
 
 def done():
@@ -50,6 +49,6 @@ def draw():
     land_filled_rectangle(wrap_w, 0, 640, 480)
     land_color(0, 0, 0, 1)
     land_text_pos(0, -scroll)
-    land_print_lines(lines, LandAlignLeft)
+    land_print_lines(lines, LandAlignAdjust)
 
 land_begin_shortcut(640, 480, 60, 0, init, None, tick, draw, None, done)

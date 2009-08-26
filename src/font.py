@@ -6,6 +6,7 @@ class LandFont:
 
 class LandFontState:
     float x_pos, y_pos
+    float adjust_width
     LandFont *font
     float x, y, w, h
     bool off
@@ -15,6 +16,7 @@ enum:
     LandAlignLeft
     LandAlignRight
     LandAlignCenter
+    LandAlignAdjust
 
 static import global stdio
 static import font, exception, main
@@ -59,6 +61,9 @@ def land_font_set(LandFont *self):
 def land_text_pos(float x, float y):
     land_font_state->x_pos = x
     land_font_state->y_pos = y
+
+def land_text_set_width(float w):
+    land_font_state->adjust_width = w
 
 # Current cursor X coordinate.
 float def land_text_x_pos():
@@ -174,6 +179,7 @@ static int def _wordwrap_helper(char const *text, int w, h,
     float fh = land_font_state->font->size
 
     char const *line_start_p = text
+    land_font_state->adjust_width = w
     printf("wordwrap %d %d\n", w, h)
 
     while 1:
