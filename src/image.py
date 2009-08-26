@@ -241,6 +241,12 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     the usual floating point colors would be difficult otherwise. The
     array ''rgb'' should have 3 * n integers, consisting of consecutive
     R, G, B triplets to replace.
+
+    The first rgb triplet has a special meaning - it determines the image color
+    which is mapped to the current color. All matching colors with a larger
+    rgb sum then are mapped to a color between the first color and pure weight,
+    depending on their rgb sum. All colors with a smaller rgb sum are mapped
+    to a range from total black to the first color.
     """
     int w = land_image_width(self)
     int h = land_image_height(self)
@@ -275,9 +281,11 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
                         ng = green * sum / base_sum
                         nb = blue * sum / base_sum
                     else:
-                        nr = 255 - (255 - red) * base_sum / sum
-                        ng = 255 - (255 - green) * base_sum / sum
-                        nb = 255 - (255 - blue) * base_sum / sum
+                        int isum = 255 * 3 - sum
+                        int ibase_sum = 255 * 3 - base_sum
+                        nr = 255 - (255 - red) * isum / ibase_sum
+                        ng = 255 - (255 - green) * isum / ibase_sum
+                        nb = 255 - (255 - blue) * isum / ibase_sum
                     *(p + 0) = nr
                     *(p + 1) = ng
                     *(p + 2) = nb

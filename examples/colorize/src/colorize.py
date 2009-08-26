@@ -54,7 +54,7 @@ static def tick(LandRunner *self):
         land_quit()
 
 static def draw(LandRunner *self):
-    land_clear(0, 0, 0, 0)
+    land_clear(0.25, 0.2, 0.15, 1)
     for int i = 1 while i < 33 with i++:
         float *rgb = colorkey_colors + i * 3
         land_color(rgb[0], rgb[1], rgb[2], 1)
