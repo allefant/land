@@ -492,7 +492,10 @@ def gul_layout_updated(LandWidget *self):
     # though.
     update_lookup_grid(self)
     if self->parent and not (self->parent->box.flags & GUL_NO_LAYOUT):
-        gul_layout_updated(self->parent)
+        if self->no_layout_notify == 0:
+            self->no_layout_notify = 1
+            gul_layout_updated(self->parent)
+            self->no_layout_notify = 0
     else:
         gul_box_fit_children(self)
 

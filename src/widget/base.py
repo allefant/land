@@ -262,6 +262,9 @@ class LandWidget:
     unsigned int hidden with 1 
     # inhibit layout updates, for performance reasons
     unsigned int no_layout with 1
+    # when changing the layout from within the layout update this flag
+    # is used to avoid (infinite) recursion
+    unsigned int no_layout_notify with 1
 
     unsigned int layout_hack with 1 # signals that the layout calculation needs to
                                     # start over
