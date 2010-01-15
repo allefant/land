@@ -77,9 +77,9 @@ def platform_image_prepare(LandImage *super):
     LandImagePlatform *self = (void *)super
     al_remove_opengl_fbo(self->a5)
 
-def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
+def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float y, float sx, float sy,
-    float angle, float r, float g, float b, float alpha):
+    float angle, float r, float g, float b, float alpha, int flip):
     SELF
     LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
@@ -98,6 +98,11 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
         al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
             al_map_rgba_f(r, g, b, alpha))
         restore = True
+
+    int flags = 0
+    if flip == 1 or flags == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
+    if flip == 2 or flags == 3: flags |= ALLEGRO_FLIP_VERTICAL
+
     if super->l or super->t or super->r or super->b:
         if angle != 0 or sx != 1 or sy != 1:
             ALLEGRO_BITMAP *sub = al_create_sub_bitmap(self->a5,
@@ -107,17 +112,17 @@ def platform_image_draw_scaled_rotated_tinted(LandImage *super, float x,
             float cx = super->x - super->l
             float cy = super->y - super->t
             al_draw_rotated_scaled_bitmap(sub, cx, cy,
-                x, y, sx, sy, -angle, 0)
+                x, y, sx, sy, -angle, flags)
             al_destroy_bitmap(sub)
         else:
             al_draw_bitmap_region(self->a5, super->l, super->t,
                 super->width - super->l - super->r,
                 super->height - super->t - super->b,
                 x + super->l,
-                y + super->t, 0)
+                y + super->t, flags)
     else:
         al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
-            x, y, sx, sy, -angle, 0)
+            x, y, sx, sy, -angle, flags)
 
     if restore:
         al_restore_state(&state)

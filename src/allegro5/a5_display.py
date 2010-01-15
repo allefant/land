@@ -56,6 +56,18 @@ def platform_display_set():
         return
     if super->flags & LAND_FULLSCREEN:
         al_set_new_display_flags(ALLEGRO_FULLSCREEN)
+    
+    ALLEGRO_MONITOR_INFO info;
+    al_get_monitor_info(0, &info);
+    land_log_message("Monitor resolution: %d %d %d %d\n", info.x1, info.y1, info.x2, info.y2);
+
+    if super->w == 0:
+        super->w = info.x2 - info.x1;
+        super->clip_x2 = super->w
+    if super->h == 0:
+        super->h = info.y2 - info.y1;
+        super->clip_y2 = super->h
+        
     self->a5 = al_create_display(super->w, super->h)
     if not self->a5:
         land_log_message("Failed activating Allegro display.\n");
@@ -114,13 +126,27 @@ def platform_line(float x, y, x_, y_):
     al_draw_line(x, y, x_, y_, self->c, 0)
     uncheck_blending()
 
-def platform_polygon(int n, float *x, *y):
+def platform_polygon(int n, float *xy):
     SELF
-    assert(0)
+    ALLEGRO_VERTEX v[n]
+    ALLEGRO_PRIM_COLOR pc = al_get_prim_color(self->c)
+    int j = 0
+    for int i = 0 while i < n with i++:
+        v[i].x = xy[j++]
+        v[i].y = xy[j++]
+        v[i].color = pc
+    al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_LINE_LOOP)
 
-def platform_filled_polygon(int n, float *x, *y):
+def platform_filled_polygon(int n, float *xy):
     SELF
-    assert(0)
+    ALLEGRO_VERTEX v[n]
+    ALLEGRO_PRIM_COLOR pc = al_get_prim_color(self->c)
+    int j = 0
+    for int i = 0 while i < n with i++:
+        v[i].x = xy[j++]
+        v[i].y = xy[j++]
+        v[i].color = pc
+    al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
 
 def platform_plot(float x, y):
     SELF

@@ -12,7 +12,7 @@ static class LandSoundPlatform:
 
 static class LandStreamPlatform:
     LandStream super
-    ALLEGRO_STREAM *a5
+    ALLEGRO_AUDIO_STREAM *a5
     void *fragment
 
 static bool def get_params(int channels, bits, *chan_conf, *depth):
@@ -90,24 +90,24 @@ LandStream *def platform_stream_new(int samples, fragments,
     super->fragments = fragments
     super->samples = samples
     super->sample_size = al_get_channel_count(chan_conf) * al_get_depth_size(depth);
-    self->a5 = al_create_stream(fragments, samples, frequency, depth,
+    self->a5 = al_create_audio_stream(fragments, samples, frequency, depth,
         chan_conf)
 
-    al_attach_stream_to_mixer(self->a5, al_get_default_mixer())
+    al_attach_audio_stream_to_mixer(self->a5, al_get_default_mixer())
 
     return super
 
 def platform_stream_destroy(LandStream *super):
     LandStreamPlatform *self = (void *)super
-    al_destroy_stream(self->a5)
+    al_destroy_audio_stream(self->a5)
     land_free(super)
 
 void *def platform_stream_buffer(LandStream *super):
     LandStreamPlatform *self = (void *)super
-    if al_get_available_stream_fragments(self->a5) == 0: return None
-    self->fragment = al_get_stream_fragment(self->a5):
+    if al_get_available_audio_stream_fragments(self->a5) == 0: return None
+    self->fragment = al_get_audio_stream_fragment(self->a5):
     return self->fragment
 
 def platform_stream_fill(LandStream *super):
     LandStreamPlatform *self = (void *)super
-    al_set_stream_fragment(self->a5, self->fragment)
+    al_set_audio_stream_fragment(self->a5, self->fragment)
