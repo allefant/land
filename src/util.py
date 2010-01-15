@@ -180,4 +180,15 @@ bool def land_fnmatch(char const *pattern, char const *name):
 
 LandArray *def land_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data), void *data):
+    """
+    Returns an array of files in the given directory. Before a file is added,
+    the filter function is called, with the name about to be added and an
+    indication whether it is a filename or a directory.
+
+    The return value of the filter decides what is done with the name:
+    0 - Discard it.
+    1 - Append if to the returned list.
+    2 - If it is a directory, recurse into it.
+    3 - Like 1 and 2 combined.
+    """
     return platform_filelist(dir, filter, data)
