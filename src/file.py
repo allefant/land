@@ -23,6 +23,9 @@ int def land_file_read(LandFile *self, char *buffer, int bytes):
 int def land_file_getc(LandFile *self):
     return fgetc(self->f)
 
+def land_file_ungetc(LandFile *self, int c):
+    ungetc(c, self->f)
+
 bool def land_file_eof(LandFile *self):
     return feof(self->f) != 0
 
