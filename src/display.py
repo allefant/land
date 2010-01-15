@@ -358,11 +358,11 @@ def land_circle(float x, y, x_, y_):
 def land_line(float x, y, x_, y_):
     platform_line(x, y, x_, y_)
 
-def land_polygon(int n, float *x, *y):
-    platform_polygon(n, x, y)
+def land_polygon(int n, float *xy):
+    platform_polygon(n, xy)
 
-def land_filled_polygon(int n, float *x, *y):
-    platform_filled_polygon(n, x, y)
+def land_filled_polygon(int n, float *xy):
+    platform_filled_polygon(n, xy)
 
 def land_plot(float x, y):
     platform_plot(x, y)
