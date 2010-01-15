@@ -1,12 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 project(land) 
-#add_subdirectory(examples)
 
 # This is so generated .h files will be found.
 include_directories(${CMAKE_BINARY_DIR}/c)
-
-# FIXME: Should be auto-detected or specified by user instead.
-include_directories(/home/elias/prog/allegro/install4.9/include)
 
 # Settings.
 set(SHARED 1 CACHE BOOL "Whether to build the shared library.")
@@ -55,9 +51,20 @@ set(CFLAGS "--std=gnu99")
 set(DFLAGS "-g")
 set(RFLAGS "-O3")
 set(PFLAGS "-g -p -O2")
+set(AV "4.9.17")
 
-# FIXME: well, this is all for linux only right now
-set(CFLAGS "${CFLAGS} -DLINUX")
+string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
+
+if (WINDOWS)
+    message("Windows version")
+    set(CFLAGS "${CFLAGS} -DWINDOWS")
+else ()
+    message("Linux version")
+    set(CFLAGS "${CFLAGS} -DLINUX")
+    
+    # FIXME: Should be auto-detected or specified by user instead.
+    include_directories(/home/elias/prog/allegro/install/include)
+endif ()
 
 if (STATIC)
     if (DEBUG)
@@ -98,6 +105,20 @@ if (SHARED)
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
             )
+        target_link_libraries(land
+                allegro-${AV}
+                allegro_audio-${AV}
+                allegro_color-${AV}
+                allegro_dialog-${AV}
+                allegro_font-${AV}
+                allegro_image-${AV}
+                allegro_memfile-${AV}
+                allegro_primitives-${AV}
+                allegro_ttf-${AV}
+                allegro_vorbis-${AV}
+                z
+                wsock32
+                )
     endif (RELEASE)
 endif (SHARED)
 

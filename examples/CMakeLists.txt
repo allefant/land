@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 2.6)
  
 cmake_policy(SET CMP0009 NEW) # don't follow symlinks
-include_directories(${CMAKE_BINARY_DIR}/examples/c)
+include_directories(${CMAKE_BINARY_DIR}/c)
 include_directories(${CMAKE_BINARY_DIR}/examples/c)
 
 # FIXME: Should be auto-detected or specified by user instead.
-include_directories(/home/elias/prog/allegro/install4.9/include)
-link_directories(/home/elias/prog/allegro/install4.9/lib)
+include_directories(/home/elias/prog/allegro/install/include)
+link_directories(/home/elias/prog/allegro/install/lib)
 
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
@@ -19,9 +19,10 @@ foreach(exsrc ${examples})
     
     message(STATUS "Example found: ${ex}")
 
-    #_______________________________________________________________________
-    # Step 2: Rules to create .c and .h files.
-    #
+#_______________________________________________________________________
+# Step 2: Rules to create .c and .h files.
+#
+
     file(GLOB_RECURSE example_pyfiles RELATIVE ${CMAKE_SOURCE_DIR}/examples
         ${ex}/src/*.py)
     set(example_cfiles)
@@ -46,7 +47,6 @@ foreach(exsrc ${examples})
     # Step 3: Build from .c files.
     #
 
-    set(AV "4.9.14")
     set(WFLAGS "-W -Wall")
     set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
     set(CFLAGS "--std=gnu99")
@@ -122,6 +122,9 @@ foreach(exsrc ${examples})
     if (SHARED)
         if (DEBUG)
             add_executable(${ex}-debug ${example_cfiles})
+            
+            list(APPEND example_exes ${ex}-debug)
+            
             set_target_properties(${ex}-debug
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
