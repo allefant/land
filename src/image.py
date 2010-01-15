@@ -296,6 +296,7 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
             p += 4
 
     land_image_set_rgba_data(self, rgba)
+    land_image_prepare(self)
 
 LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     int *rgb):
@@ -437,11 +438,17 @@ LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
     land_image_del(sheet)
     return array
 
+def land_image_draw_scaled_rotated_tinted_flipped(LandImage *self, float x,
+    float y, float sx, float sy,
+    float angle, float r, float g, float b, float alpha, int flip):
+    platform_image_draw_scaled_rotated_tinted_flipped(self, x, y, sx, sy,
+        angle, r, g, b, alpha, flip)
+
 def land_image_draw_scaled_rotated_tinted(LandImage *self, float x,
     float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha):
-    platform_image_draw_scaled_rotated_tinted(self, x, y, sx, sy,
-        angle, r, g, b, alpha)
+    land_image_draw_scaled_rotated_tinted_flipped(self, x, y, sx, sy,
+        angle, r, g, b, alpha, 0)
 
 def land_image_draw_scaled_rotated(LandImage *self, float x, float y, float sx, float sy,
     float angle):
@@ -462,6 +469,9 @@ def land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, f
 
 def land_image_draw(LandImage *self, float x, float y):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, 1, 1, 1, 1)
+
+def land_image_draw_flipped(LandImage *self, float x, float y):
+    land_image_draw_scaled_rotated_tinted_flipped(self, x, y, 1, 1, 0, 1, 1, 1, 1, 1)
 
 def land_image_draw_tinted(LandImage *self, float x, float y, float r, float g,
     float b, float alpha):
