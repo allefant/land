@@ -1,5 +1,6 @@
 import global stdio, stdint, stdbool
 import land/mem
+import allegro5/a5_file
 
 class LandFile:
     char *path
@@ -19,6 +20,12 @@ def land_file_destroy(LandFile *self):
 
 int def land_file_read(LandFile *self, char *buffer, int bytes):
     return fread(buffer, bytes, 1, self->f)
+
+int def land_file_write(LandFile *self, char *buffer, int bytes):
+    return fwrite(buffer, bytes, 1, self->f)
+
+int def land_file_fputs(LandFile *self, char const *string):
+    return fputs(string, self->f)
 
 int def land_file_getc(LandFile *self):
     return fgetc(self->f)
@@ -55,3 +62,7 @@ uint16_t def land_file_get16be(LandFile *self):
     uint16_t a = fgetc(self->f)
     uint16_t b = fgetc(self->f)
     return b | (a << 8)
+
+bool def land_file_is_dir(char const *name):
+    return platform_is_dir(name)
+
