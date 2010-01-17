@@ -12,12 +12,14 @@ static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
             break
         ALLEGRO_PATH const *path = al_get_fs_entry_name(next)
         char const *name = al_get_path_filename(path)
+        if not name[0]:
+            name = al_get_path_component(path, -1)
         if strcmp(name, ".") and strcmp(name, ".."):
-            char const *name = al_path_cstr(path, '/')
             bool is_dir = al_fs_entry_is_directory(next)
-            int f = filter(name, is_dir, data)
+            char const *fpath = al_path_cstr(path, '/')
+            int f = filter(fpath, is_dir, data)
             if f & 1:
-                land_array_add_data(array, land_strdup(name))
+                land_array_add_data(array, land_strdup(fpath))
             if (f & 2) and is_dir:
                 add_files(array, next, filter, data)
         al_destroy_fs_entry(next)
@@ -30,3 +32,9 @@ LandArray *def platform_filelist(char const *dir,
     add_files(&array, entry, filter, data)
     al_destroy_fs_entry(entry)
     return array
+
+bool def platform_is_dir(char const *path):
+    ALLEGRO_FS_ENTRY *fse = al_create_fs_entry(path)
+    bool r = al_fs_entry_is_directory(fse)
+    al_destroy_fs_entry(fse)
+    return r
