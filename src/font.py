@@ -53,7 +53,11 @@ LandFont *def land_font_load(char const *filename, float size):
     return self
 
 def land_font_destroy(LandFont *self):
-    land_display_del_font(self)
+    platform_font_destroy(self)
+    
+LandFont *def land_font_new():
+    LandFont *f = platform_font_new()
+    return f
 
 def land_font_set(LandFont *self):
     land_font_state->font = self

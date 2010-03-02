@@ -366,6 +366,8 @@ LandArray *def land_load_images_cb(char const *pattern,
         filenames = land_filelist(dir, filter, (void *)pattern)
         if filenames:
             count = filenames->count
+    
+    land_free(dir)
 
     if not filenames: return None
 

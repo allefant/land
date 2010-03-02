@@ -36,7 +36,7 @@ class LandSpriteType:
     void (*destroy_type)(LandSpriteType *self)
 
     # Identification of this sprite type.
-    char const *name
+    char *name
 
 # Each sprite of this type has its own image.
 class LandSpriteTypeWithImage:
@@ -94,6 +94,17 @@ LandGrid *def land_sprites_grid_new(int cell_w, cell_h, x_cells, y_cells):
 
     return &self->super
 
+def land_sprites_grid_resize(LandGrid *super, int cell_w, cell_h, x_cells, y_cells):
+    LandSpritesGrid *self = (void *)super
+    # FIXME: transfer old sprites into new grid
+    land_sprites_grid_clear(super)
+    land_free(self->sprites)
+    self->sprites = land_calloc(x_cells * y_cells * sizeof *self->sprites)
+    super->x_cells = x_cells
+    super->y_cells = y_cells
+    super->cell_w = cell_w
+    super->cell_h = cell_h
+    
 def land_sprites_grid_clear(LandGrid *super):
     """
     Removes all sprites from a grid, but does not destroy them.
@@ -253,6 +264,23 @@ static def get_grid_extents(LandSprite *self, LandGrid *grid,
     if *tt < 0: *tt = 0
     if *tr >= grid->x_cells: *tr = grid->x_cells - 1
     if *tb >= grid->y_cells: *tb = grid->y_cells - 1
+
+LandArray *def land_sprites_grid_get_all(LandGrid *sprites_grid):
+    LandArray *a = land_array_new()
+    LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
+    grid->tag++
+    for int ty = 0 while ty < sprites_grid->y_cells with ty++:
+        for int tx = 0 while tx < sprites_grid->x_cells with tx++:
+            LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
+            if list:
+                LandListItem *item = list->first
+                while item:
+                    LandSprite *sprite = item->data
+                    if sprite->tag != grid->tag:
+                        sprite->tag = grid->tag
+                        land_array_add(a, sprite)
+                    item = item->next
+    return a
 
 LandList *def land_sprites_grid_overlap(LandSprite *self,
     LandGrid *sprites_grid):
@@ -456,7 +484,7 @@ LandList *def land_sprites_grid_get_in_view(LandGrid *sprites_grid,
     b += view->scroll_y + view->y + view->h
     return land_sprites_grid_get_rectangle(sprites_grid, l, t, r, b)
 
-def grid_place(LandSprite *self, LandSpritesGrid *grid):
+static def grid_place(LandSprite *self, LandSpritesGrid *grid):
     """
     Place a sprite into a grid.
     Note: This *must not* be called more than once for a sprite.
@@ -607,6 +635,7 @@ LandSpriteType *def land_spritetype_new():
 def land_spritetype_destroy(LandSpriteType *self):
 
     if self->destroy_type: self->destroy_type(self)
+    land_free(self->name)
     land_free(self)
 
 
@@ -616,18 +645,20 @@ LandSpriteTypeWithImage *def land_spritetype_with_image_new():
     return NULL
 
 
-def land_spritetype_image_initialize(LandSpriteTypeImage *self,
+def land_spritetype_image_initialize(LandSpriteType *super,
     LandImage *image, bool mask):
+        
+    LandSpriteTypeImage *self = (void *)super
 
-    LAND_SPRITE_TYPE(self)->draw = dummy_image
-    LAND_SPRITE_TYPE(self)->overlap = land_sprite_overlap_pixelperfect
-    LAND_SPRITE_TYPE(self)->destroy = land_sprite_image_destroy
-    LAND_SPRITE_TYPE(self)->x = image->x - image->l
-    LAND_SPRITE_TYPE(self)->y = image->y - image->t
-    LAND_SPRITE_TYPE(self)->w = land_image_width(image) - image->l - image->r
-    LAND_SPRITE_TYPE(self)->h = land_image_height(image) - image->t - image->b
+    super->draw = dummy_image
+    super->overlap = land_sprite_overlap_pixelperfect
+    super->destroy = land_sprite_image_destroy
+    super->x = image->x - image->l
+    super->y = image->y - image->t
+    super->w = land_image_width(image) - image->l - image->r
+    super->h = land_image_height(image) - image->t - image->b
     self->image = image
-    LAND_SPRITE_TYPE(self)->name = "image"
+    LAND_SPRITE_TYPE(self)->name = land_strdup("image")
 
     # TODO: Ok, so we automatically create a mask here.. but is this wanted?
     if mask and not image->mask:
@@ -639,30 +670,38 @@ LandSpriteType *def land_spritetype_image_new(LandImage *image, bool mask):
 
     LandSpriteTypeImage *self
     land_alloc(self)
-    land_spritetype_image_initialize(self, image, mask)
+    land_spritetype_image_initialize((void *)self, image, mask)
     return LAND_SPRITE_TYPE(self)
 
-LandSpriteType *def land_spritetype_animation_new(LandAnimation *animation,
-    LandImage *image, bool mask, int n):
-    """
-    Create a new animation sprite type with the given animation. The image is
-    used for collision detection.
-    If no image is given, the first frame of the animation is used instead.
-    """
-
-    LandSpriteTypeAnimation *self
-    land_alloc(self)
-    if !image:
+def land_spritetype_animation_initialize(LandSpriteType *super,
+    LandAnimation *animation, LandImage *image, bool mask, int n):
+    LandSpriteTypeAnimation *self = (void *)super
+    
+    if not image:
         image = land_animation_get_frame(animation, 0)
 
-    land_spritetype_image_initialize(LAND_SPRITE_TYPE_IMAGE(self), image, False)
+    land_spritetype_image_initialize((void *)self, image, False)
     if mask:
         land_image_create_pixelmasks(image, n, 128)
-    LAND_SPRITE_TYPE(self)->draw = dummy_animation
-    LAND_SPRITE_TYPE(self)->destroy = land_sprite_animated_destroy
-    LAND_SPRITE_TYPE(self)->destroy_type = land_spritetype_animation_destroy
+    super->draw = dummy_animation
+    super->destroy = land_sprite_animated_destroy
+    super->destroy_type = land_spritetype_animation_destroy
     self->animation = animation
-    self->super.super.name = "animation"
+    land_free(super->name)
+    super->name = land_strdup("animation")
+
+LandSpriteType *def land_spritetype_animation_new(
+    LandAnimation *animation, LandImage *image, bool mask, int n):
+    """
+    Create a new animation sprite type with the given animation. The
+    image is used for collision detection.  If no image is given, the
+    first frame of the animation is used instead.
+    """
+    LandSpriteTypeAnimation *self
+    land_alloc(self)
+    land_spritetype_animation_initialize((void *)self, animation, image,
+        mask, n)
+    
     return LAND_SPRITE_TYPE(self)
 
 def land_spritetype_animation_destroy(LandSpriteType *base):

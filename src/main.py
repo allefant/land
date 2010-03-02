@@ -48,10 +48,12 @@ def land_init():
     platform_init()
 
 def land_tick():
+    land_display_tick()
     land_mouse_tick()
     land_runner_tick_active()
     land_keyboard_tick()
     ticks++
+    x_clicked = False
 
 def land_draw():
     land_runner_draw_active()
@@ -63,6 +65,9 @@ def land_quit():
     exit.
     """
     _land_quit = True
+
+def land_closebutton_event():
+    x_clicked = True
 
 int def land_closebutton():
     """Check if the closebutton has been clicked.

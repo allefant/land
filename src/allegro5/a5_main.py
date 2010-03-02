@@ -193,7 +193,7 @@ def platform_mainloop(LandParameters *parameters):
 
         switch event.type:
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                _land_quit = True
+                land_closebutton_event()
                 break
             case ALLEGRO_EVENT_TIMER:
                 land_tick()
@@ -223,4 +223,8 @@ def platform_mainloop(LandParameters *parameters):
                 break
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 land_mouse_button_up_event(event.mouse.button - 1)
+                break
+            case ALLEGRO_EVENT_DISPLAY_RESIZE:
+                al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
+                land_resize_event(event.display.width, event.display.height)
                 break

@@ -119,6 +119,7 @@ int def land_array_find(LandArray *self, void *data):
     return -1
 
 void *def land_array_get_nth(LandArray *array, int i):
+    if i < 0: i += array->count
     return array->data[i]
 
 void *def land_array_replace_nth(LandArray *array, int i, void *data):

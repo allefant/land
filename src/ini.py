@@ -29,7 +29,7 @@ static def _add(LandIniSection *s, char const *key, void *val):
     int i = s->n
     s->n++
     s->entries = land_realloc(s->entries, s->n * sizeof(LandIniEntry))
-    s->entries[i].key = strdup(key)
+    s->entries[i].key = land_strdup(key)
     s->entries[i].val = val
 
 static def _del(LandIniSection *s):
@@ -44,10 +44,10 @@ def land_ini_set_string(LandIniFile *ini,
     char const *section, char const *key, char const *val):
     LandIniSection *s = _get(ini->sections, section)
     if not s:
-        s = calloc(1, sizeof *s)
+        s = land_calloc(sizeof *s)
         _add(ini->sections, section, s)
 
-    _add(s, key, val ? strdup(val) : NULL)
+    _add(s, key, val ? land_strdup(val) : None)
 
 def land_ini_set_int(LandIniFile *ini,
     char const *section, char const *key, int val):
@@ -106,9 +106,9 @@ LandIniFile *def land_ini_read(char const *filename):
     char section_name[1024] = "", key_name[1024] = "", value[1024] = ""
     int slen = 0, klen = 0, vlen = 0
     State state = OUTSIDE
-    LandIniFile *ini = calloc(1, sizeof *ini)
-    ini->filename = strdup(filename)
-    ini->sections = calloc(1, sizeof *ini->sections)
+    LandIniFile *ini = land_calloc(sizeof *ini)
+    ini->filename = land_strdup(filename)
+    ini->sections = land_calloc(sizeof *ini->sections)
     FILE *f = fopen(filename, "rb")
     if not f: return ini
     int done = 0
@@ -171,20 +171,20 @@ LandIniFile *def land_ini_read(char const *filename):
     return ini
 
 LandIniFile *def land_ini_new(char const *filename):
-    LandIniFile *ini = calloc(1, sizeof *ini)
-    ini->filename = strdup(filename)
-    ini->sections = calloc(1, sizeof *ini->sections)
+    LandIniFile *ini = land_calloc(sizeof *ini)
+    ini->filename = land_strdup(filename)
+    ini->sections = land_calloc(sizeof *ini->sections)
     return ini
 
 def land_ini_destroy(LandIniFile *ini):
     for int i = 0 while i < ini->sections->n with i++:
         LandIniSection *s = ini->sections->entries[i].val
         _del(s)
-        ini->sections->entries[i].val = NULL
+        ini->sections->entries[i].val = None
 
     _del(ini->sections)
-    free(ini->filename)
-    free(ini)
+    land_free(ini->filename)
+    land_free(ini)
 
 def land_ini_writeback(LandIniFile *ini):
     FILE *f = fopen(ini->filename, "wb")

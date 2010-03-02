@@ -14,9 +14,9 @@ def platform_font_exit():
     pass
 
 LandFont *def platform_font_load(char const *filename, float size):
-    land_log_message("Loading font %s..", filename);
-    LandFontPlatform *self;
-    land_alloc(self);
+    land_log_message("Loading font %s..", filename)
+    LandFontPlatform *self
+    land_alloc(self)
 
     self->a5 = al_load_font(filename, size, 0)
 
@@ -43,7 +43,7 @@ def platform_font_print(LandFontState *lfs,
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_BLENDER)
     LandDisplay *d = _land_active_display;
-    al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, al_map_rgba_f(
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, al_map_rgba_f(
         d->color_r, d->color_g, d->color_b, d->color_a))
 
     if alignment == LandAlignAdjust:
@@ -58,3 +58,11 @@ def platform_font_print(LandFontState *lfs,
         al_draw_text(self->a5, x, y, 0, str)
     
     al_restore_state(&state)
+
+LandFont *def platform_font_new():
+    return None
+
+def platform_font_destroy(LandFont *super):
+    LandFontPlatform *self = (void *)super
+    al_destroy_font(self->a5)
+    land_free(self)

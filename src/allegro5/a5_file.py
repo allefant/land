@@ -19,7 +19,8 @@ static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
             char const *fpath = al_path_cstr(path, '/')
             int f = filter(fpath, is_dir, data)
             if f & 1:
-                land_array_add_data(array, land_strdup(fpath))
+                if not *array: *array = land_array_new()
+                land_array_add(*array, land_strdup(fpath))
             if (f & 2) and is_dir:
                 add_files(array, next, filter, data)
         al_destroy_fs_entry(next)

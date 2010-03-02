@@ -11,6 +11,8 @@ set(RELEASE 1 CACHE BOOL "Whether to build the release library.")
 set(DEBUG 0 CACHE BOOL "Whether to build the debug library.")
 set(PROFILE 0 CACHE BOOL "Whether to build the profile library.")
 
+set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
+
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
 #
@@ -48,10 +50,14 @@ endforeach(py)
 set(WFLAGS "-W -Wall")
 set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
 set(CFLAGS "--std=gnu99")
-set(DFLAGS "-g")
+set(DFLAGS "-g3")
 set(RFLAGS "-O3")
-set(PFLAGS "-g -p -O2")
-set(AV "4.9.17")
+set(PFLAGS "-g3 -p -O2")
+set(AV "4.9.18")
+
+if (MEMLOG)
+    set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
+endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
 
@@ -97,6 +103,7 @@ if (SHARED)
         set_target_properties(land-debug
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
+            LINK_FLAGS -rdynamic
             )
     endif (DEBUG)
     if (RELEASE)

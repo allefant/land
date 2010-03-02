@@ -1,5 +1,6 @@
 import global land/land
 
+LandFont *font
 LandWidgetTheme *theme, *classic, *green
 LandWidget *desktop, *panel
 int page = 0
@@ -113,7 +114,7 @@ def panel_5():
 
 def init(LandRunner *self):
     gul_debug = 0;
-    land_font_load("../../data/galaxy.ttf", 12)
+    font = land_font_load("../../data/galaxy.ttf", 12)
     theme = classic = land_widget_theme_new("../../data/classic.cfg")
     green = land_widget_theme_new("../../data/green.cfg")
     land_widget_theme_set_default(theme)
@@ -156,7 +157,10 @@ def draw(LandRunner *self):
     land_print("Dialog is inside a 300x300 pixel square")
 
 def done(LandRunner *self):
-    pass
+    land_widget_unreference(desktop)
+    land_widget_theme_destroy(classic)
+    land_widget_theme_destroy(green)
+    land_font_destroy(font)
 
 land_begin_shortcut(640, 480, 100,
     LAND_WINDOWED | LAND_OPENGL,

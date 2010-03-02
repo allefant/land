@@ -32,6 +32,11 @@ LandLayer *def land_map_base_layer(LandMap *map):
     """
     return map->first_layer
 
+LandLayer *def land_map_find_layer(LandMap *map, char const *name):
+    for LandLayer *l = map->first_layer while l with l = l->next_in_map:
+        if not strcmp(name, l->name): return l
+    return None
+
 LandMap *def land_map_new():
     """
     Create a new map. This is not called directly normally, as you likely want

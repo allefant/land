@@ -53,6 +53,10 @@ foreach(exsrc ${examples})
     set(DFLAGS "-g")
     set(PFLAGS "-g -p")
     set(RFLAGS "-O3")
+    
+    if (MEMLOG)
+        set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
+    endif ()
 
     if (STATIC)
         if (DEBUG)

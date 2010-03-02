@@ -13,6 +13,53 @@ class LandBufferAsFile:
     int pos
     int ungetc
 
+*** "ifdef" LAND_MEMLOG
+
+*** "undef" land_buffer_new
+*** "undef" land_buffer_del
+*** "undef" land_buffer_finish
+*** "undef" land_buffer_read_from_file
+*** "undef" land_buffer_split
+
+LandBuffer *def land_buffer_new_memlog(char const *f, int l):
+    LandBuffer *self = land_buffer_new()
+    land_memory_add(self, "buffer", 1, f, l)
+    return self
+
+def land_buffer_del_memlog(LandBuffer *self, char const *f, int l):
+    land_memory_remove(self, "buffer", 1, f, l)
+    land_buffer_del(self)
+
+char *def land_buffer_finish_memlog(LandBuffer *self, char const *f, int l):
+    land_memory_remove(self, "buffer", 1, f, l)
+    char *s = land_buffer_finish(self)
+    
+    # Give line number of finish call to returned memory block.
+    land_memory_remove(s, "", 1, f, l)
+    land_memory_add(s, "", strlen(s), f, l)
+    return s
+
+LandBuffer *def land_buffer_read_from_file_memlog(char const *filename, char const *f, int l):
+    LandBuffer *self = land_buffer_read_from_file(filename)
+    land_memory_add(self, "buffer", 1, f, l)
+    return self
+
+LandArray *def land_buffer_split_memlog(LandBuffer const *self, char delim, char const *f, int line):
+    LandArray *a = land_array_new_memlog(f, line)
+    int start = 0
+    for int i = 0 while i < self->n with i++:
+        if self->buffer[i] == delim:
+            LandBuffer *l = land_buffer_new_memlog(f, line)
+            land_buffer_add(l, self->buffer + start, i - start)
+            land_array_add_memlog(a, l, f, line)
+            start = i + 1
+    LandBuffer *l = land_buffer_new_memlog(f, line)
+    land_buffer_add(l, self->buffer + start, self->n - start)
+    land_array_add_memlog(a, l, f, line)
+    return a
+
+*** "endif"
+
 LandBuffer *def land_buffer_new():
     LandBuffer *self
     land_alloc(self)
@@ -47,7 +94,7 @@ def land_buffer_crop(LandBuffer *self):
     """
     Make the buffer use up only the minimum required amount of memory.
     """
-    self->buffer = realloc(self->buffer, self->n)
+    self->buffer = land_realloc(self->buffer, self->n)
     self->size = self->n
 
 char *def land_buffer_finish(LandBuffer *self):
@@ -274,3 +321,12 @@ static int def pf_ferror(void *userdata):
 
 
 
+global *** "ifdef" LAND_MEMLOG
+
+macro land_buffer_new() land_buffer_new_memlog(__FILE__, __LINE__)
+macro land_buffer_del(x) land_buffer_del_memlog(x, __FILE__, __LINE__)
+macro land_buffer_finish(x) land_buffer_finish_memlog(x, __FILE__, __LINE__)
+macro land_buffer_read_from_file(x) land_buffer_read_from_file_memlog(x, __FILE__, __LINE__)
+macro land_buffer_split(x, y) land_buffer_split_memlog(x, y, __FILE__, __LINE__)
+
+global *** "endif"

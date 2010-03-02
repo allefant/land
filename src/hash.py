@@ -219,7 +219,7 @@ LandArray *def land_hash_data(LandHash *hash):
     do it:
     {{{#!python
     data = land_hash_data(hash)
-    for i = 0 while i < land_array_count(data) with i++:
+    for int i = 0 while i < land_array_count(data) with i++:
         void *entry = land_array_get_nth(data, i)
         land_free(entry)
     land_array_destroy(data)

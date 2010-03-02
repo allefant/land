@@ -193,7 +193,6 @@ macro land_use_main(m):
         m()
         land_log_message("Return code is %d.\n", land_get_exitcode())
         return land_get_exitcode()
-    END_OF_MAIN()
 
 macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
     leave, destroy):
@@ -210,7 +209,6 @@ macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
         land_set_fps(hz); land_mainloop()
         land_log_message("Return code is %d.\n", land_get_exitcode())
         return land_get_exitcode()
-    END_OF_MAIN()
 
 def land_set_exitcode(int code):
     _exitcode = code

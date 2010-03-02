@@ -4,15 +4,17 @@ macro land_alloc(self) self = land_calloc(sizeof *self)
 
 static import global stdio
 
-# static macro LOGALL
+#static macro LOGALL
 
 static import log
+static import execinfo
 
 *** "ifdef" LAND_MEMLOG
 
 static macro LOGFILE "memlog.log"
 
 static macro MAX_BLOCKS 1024 * 1024
+macro LAND_MEMBLOCK_INFO_MAX_STACK 32
 
 class LandMemBlockInfo:
     void *ptr
@@ -20,6 +22,9 @@ class LandMemBlockInfo:
     const char *file
     int line
     int size
+    
+    int trace_depth
+    void *trace[LAND_MEMBLOCK_INFO_MAX_STACK]
 
 static int installed = 0
 
@@ -46,10 +51,12 @@ static def done():
         fprintf(lf, "%s: %d: %d elements [%s] not freed: %p\n",
                 not_freed[n].file, not_freed[n].line,
                 not_freed[n].size, not_freed[n].id, not_freed[n].ptr)
-        int i
+        fflush(lf)
+        backtrace_symbols_fd(not_freed[n].trace, not_freed[n].trace_depth, fileno(lf))
+        
         if !strcmp(not_freed[n].id, ""):
             fprintf(lf, "    first bytes: [")
-            for i = 0 while i < 16 with i++:
+            for int i = 0 while i < 16 with i++:
                 if i >= not_freed[n].size: break
                 int c = *((unsigned char *)(not_freed[n].ptr) + i)
                 if c >= 32 and c <= 127:
@@ -86,6 +93,9 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     not_freed[_num].line = l
     not_freed[_num].id = id
     not_freed[_num].size = size
+
+    not_freed[_num].trace_depth = backtrace(not_freed[_num].trace, LAND_MEMBLOCK_INFO_MAX_STACK)
+
     _num++
     _size += size
     if _num > _maxnum: _maxnum = _num
@@ -160,8 +170,8 @@ char *def land_strdup_memlog(char const *str, char const *f, int l):
     return p
 
 def land_free_memlog(void *ptr, char const *f, int l):
-    free(ptr)
     land_memory_remove(ptr, "", 0, f, l)
+    free(ptr)
 
 *** "else" # LAND_MEMLOG
 

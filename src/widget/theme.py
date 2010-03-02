@@ -434,12 +434,12 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
         char name[1024]
         # First, try to find "widget.selected"
         strncpy(name, widget->vt->name, sizeof name)
-        strncat(name, ".selected", sizeof name)
+        strncat(name, ".selected", sizeof name - strlen(name) - 1)
         element->selected = find_element(theme->elements, name)
         # If it doesn't exist, try "base.selected"
         if not element->selected:
             strncpy(name, element->name, sizeof name)
-            strncat(name, ".selected", sizeof name)
+            strncat(name, ".selected", sizeof name - strlen(name) - 1)
             element->selected = find_element(theme->elements, name)
         # If that doesn't exist as well, use the same as non-selected.
         if not element->selected:

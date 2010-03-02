@@ -40,9 +40,9 @@ static def check_blending():
         else:
             c = al_map_rgba_f(1, 1, 1, 1)
         if super->blend & LAND_BLEND_SOLID:
-            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, c)
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO, c)
         elif super->blend & LAND_BLEND_ADD:
-            al_set_blender(ALLEGRO_ALPHA, ALLEGRO_ONE, c)
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE, c)
 
 static def uncheck_blending():
     SELF
@@ -51,12 +51,15 @@ static def uncheck_blending():
 
 def platform_display_set():
     SELF
+    int f = 0
     if self->a5:
         # FIXME: check for changed parameters
         return
     if super->flags & LAND_FULLSCREEN:
-        al_set_new_display_flags(ALLEGRO_FULLSCREEN)
-    
+        f |= ALLEGRO_FULLSCREEN_WINDOW
+    if super->flags & LAND_RESIZE:
+        f |= ALLEGRO_RESIZABLE
+
     ALLEGRO_MONITOR_INFO info;
     al_get_monitor_info(0, &info);
     land_log_message("Monitor resolution: %d %d %d %d\n", info.x1, info.y1, info.x2, info.y2);
@@ -67,7 +70,9 @@ def platform_display_set():
     if super->h == 0:
         super->h = info.y2 - info.y1;
         super->clip_y2 = super->h
-        
+    
+    if f:
+        al_set_new_display_flags(f)
     self->a5 = al_create_display(super->w, super->h)
     if not self->a5:
         land_log_message("Failed activating Allegro display.\n");
@@ -162,11 +167,3 @@ def platform_pick_color(float x, y):
         &super->color_g,
         &super->color_b,
         &super->color_a)
-
-LandFont *def platform_new_font():
-    return None
-
-
-
-def platform_del_font(LandFont *self):
-    pass

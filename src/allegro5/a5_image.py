@@ -44,7 +44,11 @@ LandImage *def platform_image_load(char const *filename, bool mem):
     if mem:
         al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS)
         al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP)
-    ALLEGRO_BITMAP *bmp = al_load_bitmap(filename)
+    ALLEGRO_BITMAP *bmp
+    if strchr(filename, '.'):
+        bmp = al_load_bitmap(filename)
+    else:
+        bmp = al_load_png(filename)
     if bmp:        
         LandImagePlatform *self = (void *)super
         self->a5 = bmp
@@ -87,15 +91,15 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     if d->blend:
         if d->blend & LAND_BLEND_SOLID:
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
-            al_set_blender(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(r, g, b, alpha))
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(r, g, b, alpha))
             restore = True
         if d->blend & LAND_BLEND_ADD:
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
-            al_set_blender(ALLEGRO_ALPHA, ALLEGRO_ONE, al_map_rgba_f(r, g, b, alpha))
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE, al_map_rgba_f(r, g, b, alpha))
             restore = True
     elif r != 1 or g != 1 or b != 1 or alpha != 1:
         al_store_state(&state, ALLEGRO_STATE_BLENDER)
-        al_set_blender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
             al_map_rgba_f(r, g, b, alpha))
         restore = True
 

@@ -100,10 +100,13 @@ macro LAND_OPENGL 4
 macro LAND_CLOSE_LINES 8
 macro LAND_ANTIALIAS 16
 macro LAND_STENCIL 32
+macro LAND_RESIZE 64
 
 macro LAND_BLEND_SOLID 1
 macro LAND_BLEND_ADD 2
 macro LAND_BLEND_TINT 4
+
+macro LAND_MAX_CLIP_DEPTH 64
 
 class LandDisplay:
     int w, h, flags
@@ -114,11 +117,15 @@ class LandDisplay:
 
     int clip_off
     float clip_x1, clip_y1, clip_x2, clip_y2
-    LandList *clip_stack
+    int clip_stack_depth
+    int clip_stack[LAND_MAX_CLIP_DEPTH * 5]
 
 static import allegro5/a5_display
 static import allegro5/a5_image
 static import main
+
+static int resize_event_counter
+static int was_resized
 
 static LandList *_previous
 global LandDisplay *_land_active_display
@@ -143,10 +150,8 @@ LandDisplay *def land_display_new(int w, int h, int flags):
 def land_display_destroy(LandDisplay *self):
     if self == _land_active_display: land_display_unselect()
 
-    if self->clip_stack:
-        if self->clip_stack->count:
-            land_log_message("Error: non-empty clip stack in display.\n")
-        land_list_destroy(self->clip_stack)
+    if self->clip_stack_depth:
+        land_log_message("Error: non-empty clip stack in display.\n")
 
     platform_display_del(self)
     land_free(self)
@@ -292,26 +297,27 @@ def land_clip_intersect(float x, float y, float x_, float y_):
 
 def land_clip_push():
     LandDisplay *d = _land_active_display
-    int *clip = land_malloc(5 * sizeof *clip)
+    if d->clip_stack_depth > LAND_MAX_CLIP_DEPTH:
+        return
+    int *clip = d->clip_stack + d->clip_stack_depth * 5
     clip[0] = d->clip_x1
     clip[1] = d->clip_y1
     clip[2] = d->clip_x2
     clip[3] = d->clip_y2
     clip[4] = d->clip_off
-    land_add_list_data(&d->clip_stack, clip)
+    d->clip_stack_depth++
 
 def land_clip_pop():
     LandDisplay *d = _land_active_display
-    LandListItem *item = d->clip_stack->last
-    land_list_remove_item(d->clip_stack, item)
-    int *clip = item->data
+    if d->clip_stack_depth < 1:
+        return
+    d->clip_stack_depth--
+    int *clip = d->clip_stack + d->clip_stack_depth * 5
     d->clip_x1 = clip[0]
     d->clip_y1 = clip[1]
     d->clip_x2 = clip[2]
     d->clip_y2 = clip[3]
     d->clip_off = clip[4]
-    land_free(clip)
-    land_free(item)
     platform_display_clip()
 
 def land_clip_on():
@@ -386,15 +392,8 @@ LandImage *def land_display_new_image():
     LandImage *image = platform_new_image()
     return image
 
-LandFont *def land_display_new_font():
-    LandFont *f = platform_new_font()
-    return f
-
 def land_display_del_image(LandImage *image):
     return platform_del_image(image)
-
-def land_display_del_font(LandFont *f):
-    return platform_del_font(f)
 
 def land_display_select(LandDisplay *display):
     if _land_active_display:
@@ -423,3 +422,17 @@ def land_screenshot_autoname(char const *name):
         # if not exists(path):
         #    land_screenshot(path)
         #    break
+
+def land_resize_event(int w, h):
+    resize_event_counter++
+    _land_active_display->w = w
+    _land_active_display->h = h
+    _land_active_display->clip_x2 = w
+    _land_active_display->clip_y2 = h
+
+int def land_was_resized():
+    return was_resized
+
+def land_display_tick():
+    was_resized = resize_event_counter
+    resize_event_counter = 0
