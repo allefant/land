@@ -93,7 +93,6 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     # Need to resize? 
     if (self->count + 1) * 2 > self->size:
         int oldsize = self->size
-        int oldcount = self->count
         LandHashEntry **oldentries = self->entries
         if !self->size: self->bits = 1 # for first entry, we already want size 2 
         else: self->bits++

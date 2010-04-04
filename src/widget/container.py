@@ -397,6 +397,12 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
     # reference to it, which it has to give up now.
     land_widget_unreference(rem)
 
+def land_widget_container_remove_all(LandWidget *base):
+    while True:
+        LandWidget *child = land_widget_container_child(base)
+        if not child: break
+        land_widget_container_remove(base, child)
+
 def land_widget_container_update(LandWidget *widget):
     """
     The update method is called after the add method. We simply defer it to

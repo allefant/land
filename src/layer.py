@@ -1,4 +1,4 @@
-import global stdbool
+import global stdbool, math
 import array, grid, sprite
 
 class LandLayer:
@@ -24,6 +24,9 @@ class LandLayer:
 
     LandLayer *next_in_map
 
+    # Just the same as removing the layer, but if a layer is toggled
+    # on and off it may be easier to use the flag then removing and
+    # re-adding it.
     bool hidden
 
 def land_layer_draw(LandLayer *self, LandView *view):
@@ -40,6 +43,57 @@ def land_layer_draw(LandLayer *self, LandView *view):
     v.h += self->view_h
     # TODO: can a layer have more than one grid?
     if self->grid: land_grid_draw(self->grid, &v)
+
+def land_layer_draw_grid(LandLayer *self, LandView *view):
+    LandGrid *grid = self->grid
+    LandView v = *view
+    
+    v.scroll_x += self->view_x - self->x
+    v.scroll_y += self->view_y - self->y
+    v.scroll_x *= self->scrolling_x
+    v.scroll_y *= self->scrolling_y
+    v.x += self->view_x
+    v.y += self->view_y
+    v.w += self->view_w
+    v.h += self->view_h
+    
+    view = &v
+
+    land_color(0, 0, 1, 0.5)
+
+    # FIXME: Can't assume rectangular grid, might be iso/hex
+    float cx = view->scroll_x / grid->cell_w
+    float cy = view->scroll_y / grid->cell_h
+    float ox = floor(cx) - cx
+    float oy = floor(cy) - cy
+    float sx = grid->cell_w * view->scale_x
+    float sy = grid->cell_h * view->scale_y
+    float min_x = view->x + ox * sx + 0.5
+    float min_y = view->y + oy * sy + 0.5
+    if cx < 0:
+        min_x -= floor(cx) * sx
+    if cy < 0:
+        min_y -= floor(cy) * sy
+    float max_x = view->x + sx * (grid->x_cells - cx) + 1
+    float max_y = view->y + sy * (grid->y_cells - cy) + 1
+    
+    float vy1 = view->y
+    float vy2 = view->y + view->h
+    if vy1 < min_y: vy1 = min_y
+    if vy2 > max_y: vy2 = max_y
+    
+    float vx1 = view->x
+    float vx2 = view->x + view->w
+    if vx1 < min_x: vx1 = min_x
+    if vx2 > max_x: vx2 = max_x
+    
+    for float x = min_x while x < view->x + view->w with x += sx:
+        if x > max_x: break
+        land_line(x, vy1, x, vy2)
+
+    for float y = min_y while y < view->y + view->h with y += sy:
+        if y > max_y: break
+        land_line(vx1, y, vx2, y)
 
 LandLayer *def land_layer_new():
     LandLayer * self

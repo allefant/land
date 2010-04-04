@@ -1,5 +1,6 @@
 static import global string, stdlib, stdbool, stdio
 static import land/mem
+static import land/allegro5/a5_main
 
 class LandIniEntry:
     char *key
@@ -199,3 +200,10 @@ def land_ini_writeback(LandIniFile *ini):
                 fprintf(f, "%s = %s\n", s->entries[j].key,
                     (char *)s->entries[j].val)
     fclose(f)
+
+LandIniFile *def land_ini_app_settings(char const *appname):
+    char *name = platform_get_app_settings_file(appname)
+    LandIniFile *ini = land_ini_read(name)
+    land_free(name)
+    return ini
+

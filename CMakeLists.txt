@@ -53,7 +53,6 @@ set(CFLAGS "--std=gnu99")
 set(DFLAGS "-g3")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
-set(AV "4.9.18")
 
 if (MEMLOG)
     set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
@@ -112,20 +111,6 @@ if (SHARED)
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
             )
-        target_link_libraries(land
-                allegro-${AV}
-                allegro_audio-${AV}
-                allegro_color-${AV}
-                allegro_dialog-${AV}
-                allegro_font-${AV}
-                allegro_image-${AV}
-                allegro_memfile-${AV}
-                allegro_primitives-${AV}
-                allegro_ttf-${AV}
-                allegro_vorbis-${AV}
-                z
-                wsock32
-                )
     endif (RELEASE)
 endif (SHARED)
 

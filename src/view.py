@@ -112,3 +112,7 @@ def land_view_ensure_inside_grid(LandView *self, LandGrid *grid):
 
 def land_view_clip(LandView *self):
     land_clip(self->x, self->y, self->x + self->w, self->y + self->h)
+
+def land_view_to_world(LandView *self, float vx, vy, *wx, *wy):
+    *wx = self->scroll_x + (vx - self->x) / self->scale_x
+    *wy = self->scroll_y + (vy - self->y) / self->scale_y

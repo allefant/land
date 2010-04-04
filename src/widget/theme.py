@@ -30,6 +30,7 @@ class LandWidgetThemeElement:
     int hgap, vgap # If there are child elements, space between them.
     
     LandWidgetThemeElement *selected
+    LandWidgetThemeElement *disabled
     LandWidgetTheme *theme
 
 class LandWidgetTheme:
@@ -444,11 +445,21 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
         # If that doesn't exist as well, use the same as non-selected.
         if not element->selected:
             element->selected = element
+    
+    if not element->disabled:
+        char name[1024]
+        # First, try to find "widget.disabled"
+        strncpy(name, widget->vt->name, sizeof name)
+        strncat(name, ".disabled", sizeof name - strlen(name) - 1)
+        element->disabled = find_element(theme->elements, name)
+        if not element->disabled:
+            element->disabled = element
 
     return element
 
 LandWidgetThemeElement *def land_widget_theme_element(LandWidget *self):
     if self->selected: return self->element->selected
+    if self->disabled: return self->element->disabled
     return self->element
 
 def land_widget_theme_draw(LandWidget *self):

@@ -19,12 +19,12 @@ class LandImage:
 
     int flags
 
-    LandPixelMask *mask; # Bit-mask of the image.
+    LandPixelMask *mask # Bit-mask of the image.
 
     int width, height
-    float x, y; # Offset to origin. 
+    float x, y # Offset to origin. 
 
-    float l, t, r, b; # Cut-away left, top, right, bottom. 
+    float l, t, r, b # Cut-away left, top, right, bottom. 
 
 # TODO
 class LandSubImage:
@@ -123,11 +123,14 @@ LandImage *def land_image_create(int w, int h):
 
 def land_image_del(LandImage *self):
     if not self: return
-    land_image_destroy_pixelmasks(self)
-    if self->name: land_free(self->name)
-    if self->filename && self->filename != self->name: land_free(self->filename)
-    bitmap_count--
-    bitmap_memory -= self->width * self->height * 4
+    # Sub-bitmaps have no own names or masks or anything. They are
+    # just a reference with their own cut-out rectangle.
+    if not (self->flags & LAND_SUBIMAGE):
+        land_image_destroy_pixelmasks(self)
+        if self->name: land_free(self->name)
+        if self->filename && self->filename != self->name: land_free(self->filename)
+        bitmap_count--
+        bitmap_memory -= self->width * self->height * 4
     land_display_del_image(self)
 
 def land_image_destroy(LandImage *self):

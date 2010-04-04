@@ -78,6 +78,24 @@ def land_buffer_add(LandBuffer *self, char const *buffer, int n):
         self->buffer = land_realloc(self->buffer, self->size)
     memcpy(self->buffer + self->n - n, buffer, n)
 
+def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
+    land_buffer_add_char(self, i & 255)
+    land_buffer_add_char(self, (i >> 8) & 255)
+    land_buffer_add_char(self, (i >> 16) & 255)
+    land_buffer_add_char(self, (i >> 24) & 255)
+
+uint32_t def land_buffer_get_uint32_t(LandBuffer *self, int pos):
+    unsigned char *uc = (unsigned char *)self->buffer + pos
+    uint32_t u = *(uc++)
+    u += *(uc++) << 8
+    u += *(uc++) << 16
+    u += *(uc++) << 24
+    return u
+
+def land_buffer_add_float(LandBuffer *self, float f):
+    uint32_t *i = (void *)&f
+    land_buffer_add_uint32_t(self, *i)
+
 def land_buffer_add_char(LandBuffer *self, char c):
     land_buffer_add(self, &c, 1)
 

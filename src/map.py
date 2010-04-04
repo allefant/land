@@ -5,6 +5,9 @@ class LandMap:
     A tilemap.
     """
     LandLayer *first_layer
+    
+    # This is a bit game specific - it's never used by Land itself.
+    LandLayer *main_layer
 
 def land_map_draw(LandMap *self, LandView *view):
     """

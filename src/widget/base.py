@@ -319,6 +319,30 @@ void *def land_widget_check(void const *ptr, int id, char const *file,
     land_exception("%s: %d: Widget cannot be converted.", file, linenum)
     return NULL
 
+char const *def land_widget_info_string(LandWidget *w):
+    static char str[1024]
+    if not w:
+        strcpy(str, "none")
+    elif land_widget_is(w, LAND_WIDGET_ID_MENU):
+        LandWidgetContainer *c = (void *)w
+        int n = 0
+        if c->children: n = c->children->count
+        sprintf(str, "menu (%d items)", n)
+    elif land_widget_is(w, LAND_WIDGET_ID_MENUBAR):
+        LandWidgetContainer *c = (void *)w
+        int n = 0
+        if c->children: n = c->children->count
+        sprintf(str, "menubar (%d items)", n)
+    elif land_widget_is(w, LAND_WIDGET_ID_MENUITEM):
+        LandWidgetButton *b = (void *)w
+        sprintf(str, "menuitem %s", b->text)
+    elif land_widget_is(w, LAND_WIDGET_ID_MENUBUTTON):
+        LandWidgetButton *b = (void *)w
+        sprintf(str, "menubutton %s", b->text)
+    else:
+        sprintf(str, "unknown")
+    return str
+
 def land_widget_set_property(LandWidget *self, char const *property,
     void *data, void (*destroy)(void *data)):
     if not self->properties: self->properties = land_hash_new()
@@ -334,10 +358,10 @@ def land_widget_del_property(LandWidget *self, char const *property):
     if prop->destroy: prop->destroy(prop)
 
 void *def land_widget_get_property(LandWidget *self, char const *property):
-    if not self->properties: return NULL
+    if not self->properties: return None
     LandWidgetProperty *prop = land_hash_get(self->properties, property)
     if prop: return prop->data
-    return NULL
+    return None
 
 def land_widget_remove_all_properties(LandWidget *self):
     LandHash *hash = self->properties
@@ -352,7 +376,7 @@ def land_widget_remove_all_properties(LandWidget *self):
                 land_free(prop)
 
     land_hash_destroy(self->properties)
-    self->properties = NULL
+    self->properties = None
 
 def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     land_widget_base_interface_initialize()

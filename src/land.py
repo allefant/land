@@ -109,6 +109,10 @@ mydata = land_retrieve_named_data(sprite, "mydata")
   elements can differ, so can allocate items in advance, or not de-allocate
   items in case more are added shortly.
   
+  LandQueue - like an array but the items are always kept sorted. Useful
+  for something like a priority queue or if you want to (heap-)sort some
+  other container.
+  
   LandHash - a mapping of strings to the data. Useful if there are many strings
   to look up, in which case this is faster than looping through a list/array.
 

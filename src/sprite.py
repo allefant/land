@@ -115,7 +115,7 @@ def land_sprites_grid_clear(LandGrid *super):
         if self->sprites[j]:
             land_list_destroy(self->sprites[j])
             self->sprites[j] = None
-        
+
 def land_sprites_grid_del(LandGrid *super):
     """
     Deletes a sprites grid. The sprites themselves are not destroyed.
@@ -148,6 +148,7 @@ static def dummy_image(LandSprite *self, LandView *view):
 static def dummy_animation(LandSprite *self, LandView *view):
 
     LandSpriteTypeAnimation *animation = (LandSpriteTypeAnimation *)self->type
+    if not animation->animation: return
     LandSpriteAnimated *animated = (LandSpriteAnimated *)self
     float x = (self->x - view->scroll_x) * view->scale_x + view->x
     float y = (self->y - view->scroll_y) * view->scale_y + view->y
@@ -653,15 +654,18 @@ def land_spritetype_image_initialize(LandSpriteType *super,
     super->draw = dummy_image
     super->overlap = land_sprite_overlap_pixelperfect
     super->destroy = land_sprite_image_destroy
-    super->x = image->x - image->l
-    super->y = image->y - image->t
-    super->w = land_image_width(image) - image->l - image->r
-    super->h = land_image_height(image) - image->t - image->b
+    if image:
+        super->x = image->x - image->l
+        super->y = image->y - image->t
+        super->w = land_image_width(image) - image->l - image->r
+        super->h = land_image_height(image) - image->t - image->b
+    else:
+        super->x = super->y = super->w = super->h = 0
     self->image = image
     LAND_SPRITE_TYPE(self)->name = land_strdup("image")
 
     # TODO: Ok, so we automatically create a mask here.. but is this wanted?
-    if mask and not image->mask:
+    if image and mask and not image->mask:
         land_image_create_pixelmasks(image, 1, 128)
 
 # Create a new image sprite type with the given image. The source clipping of
@@ -677,11 +681,11 @@ def land_spritetype_animation_initialize(LandSpriteType *super,
     LandAnimation *animation, LandImage *image, bool mask, int n):
     LandSpriteTypeAnimation *self = (void *)super
     
-    if not image:
+    if not image and animation:
         image = land_animation_get_frame(animation, 0)
 
     land_spritetype_image_initialize((void *)self, image, False)
-    if mask:
+    if image and mask:
         land_image_create_pixelmasks(image, n, 128)
     super->draw = dummy_animation
     super->destroy = land_sprite_animated_destroy
@@ -707,5 +711,5 @@ LandSpriteType *def land_spritetype_animation_new(
 def land_spritetype_animation_destroy(LandSpriteType *base):
 
     LandSpriteTypeAnimation *self = LAND_SPRITE_TYPE_ANIMATION(base)
-    land_animation_destroy(self->animation)
+    if self->animation: land_animation_destroy(self->animation)
 

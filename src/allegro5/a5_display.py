@@ -161,7 +161,7 @@ def platform_plot(float x, y):
     
 def platform_pick_color(float x, y):
     SELF
-    self->c = al_get_pixel(al_get_backbuffer(), x, y)
+    self->c = al_get_pixel(al_get_target_bitmap(), x, y)
     al_unmap_rgba_f(self->c,
         &super->color_r,
         &super->color_g,

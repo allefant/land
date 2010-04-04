@@ -117,6 +117,10 @@ static def menubutton_clicked(LandWidget *base):
     self->submenu->send_to_top = 1
     land_widget_unhide(self->submenu)
 
+    # in case menu items were added/removed while it was hidden (which
+    # inhibits all layout updates)
+    land_widget_layout(self->submenu)
+
 static def menuitem_clicked(LandWidget *base):
     LandWidgetMenuItem *self = LAND_WIDGET_MENUITEM(base)
 
@@ -156,7 +160,7 @@ def land_widget_menu_add(LandWidget *base, LandWidget *item):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(base)
     land_widget_container_add(base, item)
     int n = container->children->count
-    
+
     land_widget_layout_freeze(base)
 
     land_widget_layout_set_grid(base, 1, n)
@@ -198,8 +202,9 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
     land_widget_menubutton_interface_initialize()
     menuitem->menu = parent
     menuitem->callback = callback
-    land_widget_button_initialize((LandWidget *)menuitem, parent, name, NULL,
-        menuitem_clicked, 0, 0, 10, 10)
+
+    land_widget_button_initialize((LandWidget *)menuitem, parent, name,
+        None, menuitem_clicked, 0, 0, 10, 10)
 
     LandWidget *self = LAND_WIDGET(menuitem)
     self->vt = land_widget_menuitem_interface
@@ -240,6 +245,24 @@ LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
     # have no parent - but see the FIXME above in land_widget_menu_add
     land_widget_layout(parent)
     return button
+
+LandWidget *def land_widget_menu_find(LandWidget *super, int n,
+    char const *names[]):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(super)
+    LandList *l = container->children
+    if l:
+        LandListItem *listitem = l->first
+        while listitem:
+            if land_widget_is(listitem->data, LAND_WIDGET_ID_BUTTON):
+                LandWidgetButton *button = listitem->data
+                if not strcmp(button->text, names[0]):
+                    if n <= 1: return (void *)button
+                    if land_widget_is(listitem->data, LAND_WIDGET_ID_MENUBUTTON):
+                        LandWidgetMenuButton *mb = listitem->data
+                        return land_widget_menu_find(mb->submenu, n - 1, names + 1)
+            listitem = listitem->next
+    
+    return None
 
 def land_widget_menu_mouse_enter(LandWidget *self):
     pass

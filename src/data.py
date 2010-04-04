@@ -85,7 +85,8 @@ void *def land_datafile_read_entry(LandDataFile *self, char const *filename,
         if not strcmp(entry->name, filename):
             fseek(self->file, entry->offset, 0)
             unsigned char *buffer = land_calloc(entry->size)
-            fread(buffer, entry->size, 1, self->file)
+            int r = fread(buffer, entry->size, 1, self->file)
+            entry->size = r;
             if size: *size = entry->size
             return buffer
 
