@@ -50,7 +50,8 @@ def land_widget_edit_draw(LandWidget *base):
 
     if self->text:
         int x = get_x_offset(base)
-        int y = base->box.y + base->element->it
+        int y = base->box.y + base->box.h - base->element->ib
+        y -= land_font_height(land_font_current())
         land_widget_theme_color(base)
 
         land_text_pos(x, y)

@@ -3,6 +3,7 @@ static import global assert
 
 macro LAND_SUBIMAGE 1
 macro LAND_LOADED 2
+macro LAND_IMAGE_WAS_CENTERED 4 # Used in the level editor only.
 
 static macro LOG_COLOR_STATS 0
 
@@ -498,6 +499,7 @@ def land_image_memory_draw(LandImage *self, float x, float y):
 def land_image_center(LandImage *self):
     self->x = 0.5 * self->width
     self->y = 0.5 * self->height
+    self->flags |= LAND_IMAGE_WAS_CENTERED
 
 def land_image_init():
     pass
