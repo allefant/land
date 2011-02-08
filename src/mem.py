@@ -7,7 +7,10 @@ static import global stdio
 #static macro LOGALL
 
 static import log
+
+*** "ifndef" WINDOWS
 static import execinfo
+*** "endif"
 
 *** "ifdef" LAND_MEMLOG
 

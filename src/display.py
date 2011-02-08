@@ -101,6 +101,7 @@ macro LAND_CLOSE_LINES 8
 macro LAND_ANTIALIAS 16
 macro LAND_STENCIL 32
 macro LAND_RESIZE 64
+macro LAND_MULTISAMPLE 128
 
 macro LAND_BLEND_SOLID 1
 macro LAND_BLEND_ADD 2
@@ -114,11 +115,14 @@ class LandDisplay:
     float color_r, color_g, color_b, color_a
 
     int blend
+    float thickness
 
     int clip_off
     float clip_x1, clip_y1, clip_x2, clip_y2
     int clip_stack_depth
     int clip_stack[LAND_MAX_CLIP_DEPTH * 5]
+    
+    #float matrix[16]
 
 static import allegro5/a5_display
 static import allegro5/a5_image
@@ -158,6 +162,14 @@ def land_display_destroy(LandDisplay *self):
 
 def land_display_del(LandDisplay *self):
     land_display_destroy(self)
+
+# how = 0: keep stripes to have the complete wxh visible
+# how = 1: zoom to fill the whole window
+# how = 2: fit width
+# how = 3: fit height
+# how = -1: stretch (non-square pixels, not recommended)
+def land_scale_to_fit(float w, h, int how):
+    platform_display_scale_to_fit(w, h, how)
 
 def land_set_image_display(LandImage *image):
     """
@@ -263,6 +275,10 @@ def land_color(float r, float g, float b, float a):
     d->color_a = a
     platform_display_color()
 
+def land_thickness(float t):
+    LandDisplay *d = _land_active_display
+    d->thickness = t
+
 def land_get_color(float *r, float *g, float *b, float *a):
     """
     Retrieve the current color.
@@ -363,6 +379,9 @@ def land_circle(float x, y, x_, y_):
 
 def land_line(float x, y, x_, y_):
     platform_line(x, y, x_, y_)
+
+def land_ribbon(int n, float *xy):
+    platform_ribbon(n, xy)
 
 def land_polygon(int n, float *xy):
     platform_polygon(n, xy)

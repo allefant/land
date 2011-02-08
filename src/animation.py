@@ -38,7 +38,9 @@ LandAnimation *def land_animation_load_cb(char const *pattern,
     frame.
     """
     LandArray *pics = land_load_images_cb(pattern, cb, data)
-    if not pics: return None
+    if not pics:
+        land_log_message("Could not locate: %s\n", pattern);
+        return None
     return land_animation_new(pics)
 
 def land_animation_draw_frame(LandAnimation *self, int i,

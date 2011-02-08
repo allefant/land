@@ -28,6 +28,7 @@ static int active
 
 def land_font_init():
     if active: return
+    land_log_message("land_font_init\n");
     land_alloc(land_font_state)
     platform_font_init()
     active = 1
@@ -184,7 +185,7 @@ static int def _wordwrap_helper(char const *text, int w, h,
 
     char const *line_start_p = text
     land_font_state->adjust_width = w
-    printf("wordwrap %d %d\n", w, h)
+    #printf("wordwrap %d %d\n", w, h)
 
     while 1:
         # A new line begins.
@@ -231,7 +232,10 @@ static int def _wordwrap_helper(char const *text, int w, h,
         if width_of_line > land_font_state->wordwrap_width:
             land_font_state->wordwrap_width = width_of_line
         land_font_state->wordwrap_height += fh
-        cb(line_start_p - text, word_end_p - text, data)
+        if word_end_p < line_start_p:
+            cb(line_start_p - text, line_start_p - text, data)
+        else
+            cb(line_start_p - text, word_end_p - text, data)
         line_start_p = ptr
         if c == 0: break
     return line_start_p - text

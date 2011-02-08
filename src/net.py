@@ -592,7 +592,7 @@ def land_net_flush(LandNet *self, size_t size):
     if size == 0:
         self->full = 0
     else:
-        if self->full > size:
+        if self->full >= size:
             memmove(self->buffer, self->buffer + size, self->full - size)
         self->full -= size
 

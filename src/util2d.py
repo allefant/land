@@ -85,9 +85,9 @@ bool def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
     
     # 0 -> parallel, >0 -> right, <0 -> left.
     float ab = land_cross2d(ax, ay, bx, by)
-    # Where inside of b would be collision. */
+    # Where inside of b would be collision.
     float ca = land_cross2d(cx, cy, ax, ay)
-    # Where inside of a would be collision. */
+    # Where inside of a would be collision.
     float cb = land_cross2d(cx, cy, bx, by)
 
     # Only if a meets b and b meets a, they collide.

@@ -50,7 +50,7 @@ endforeach(py)
 set(WFLAGS "-W -Wall")
 set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
 set(CFLAGS "--std=gnu99")
-set(DFLAGS "-g3")
+set(DFLAGS "-g3 -O0")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
 
@@ -104,6 +104,20 @@ if (SHARED)
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
             LINK_FLAGS -rdynamic
             )
+        if (WINDOWS)
+            target_link_libraries(land-debug
+                allegro-debug
+                allegro_font-debug
+                allegro_primitives-debug
+                allegro_audio-debug
+                allegro_acodec-debug
+                allegro_color-debug
+                allegro_ttf-debug
+                allegro_image-debug
+                wsock32
+                z
+                )
+        endif (WINDOWS)
     endif (DEBUG)
     if (RELEASE)
         add_library(land SHARED ${cfiles})
@@ -111,6 +125,20 @@ if (SHARED)
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
             )
+        if (WINDOWS)
+            target_link_libraries(land
+                allegro
+                allegro_font
+                allegro_primitives
+                allegro_audio
+                allegro_acodec
+                allegro_color
+                allegro_ttf
+                allegro_image
+                wsock32
+                z
+                )
+        endif (WINDOWS)
     endif (RELEASE)
 endif (SHARED)
 

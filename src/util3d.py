@@ -33,32 +33,32 @@ LandVector def land_vector(LandFloat x, y, z):
     LandVector v = {x, y, z}
     return v
 
-def land_vector_iadd(LandVector v, w):
-    v.x += w.x
-    v.y += w.y
-    v.z += w.z
+def land_vector_iadd(LandVector *v, LandVector w):
+    v->x += w.x
+    v->y += w.y
+    v->z += w.z
 
-def land_vector_isub(LandVector v, w):
-    v.x -= w.x
-    v.y -= w.y
-    v.z -= w.z
+def land_vector_isub(LandVector *v, LandVector w):
+    v->x -= w.x
+    v->y -= w.y
+    v->z -= w.z
 
-def land_vector_imul(LandVector v, LandFloat s):
-    v.x *= s
-    v.y *= s
-    v.z *= s
+def land_vector_imul(LandVector *v, LandFloat s):
+    v->x *= s
+    v->y *= s
+    v->z *= s
 
-def land_vector_idiv(LandVector v, LandFloat s):
-    v.x /= s
-    v.y /= s
-    v.z /= s
+def land_vector_idiv(LandVector *v, LandFloat s):
+    v->x /= s
+    v->y /= s
+    v->z /= s
 
 LandVector def land_vector_neg(LandVector v):
     LandVector r = {-v.x, -v.y, -v.z}
     return r
 
 LandVector def land_vector_mul(LandVector v, LandFloat s):
-    LandVector r  = {v.x * s, v.y * s, v.z * s}
+    LandVector r = {v.x * s, v.y * s, v.z * s}
     return r
 
 LandVector def land_vector_div(LandVector v, LandFloat s):
@@ -146,9 +146,9 @@ LandVector def land_vector_backtransform(LandVector v, p, r, u, b):
     LandVector y = land_vector_mul(u, v.y)
     LandVector z = land_vector_mul(b, v.z)
     LandVector a = p
-    land_vector_iadd(a, x)
-    land_vector_iadd(a, y)
-    land_vector_iadd(a, z)
+    land_vector_iadd(&a, x)
+    land_vector_iadd(&a, y)
+    land_vector_iadd(&a, z)
     return a
 
 LandVector def land_vector_rotate(LandVector v, a, double angle):
@@ -192,25 +192,41 @@ LandVector def land_vector_reflect(LandVector v, n):
     """
     LandFloat d = land_vector_dot(v, n)
     LandVector r = n
-    land_vector_imul(r, -2 * d)
-    land_vector_iadd(r, v)
+    land_vector_imul(&r, -2 * d)
+    land_vector_iadd(&r, v)
     return r
 
 LandQuaternion def land_quaternion(LandFloat w, x, y, z):
     LandQuaternion q = {w, x, y, z}
     return q
 
-def land_quaternion_iadd(LandQuaternion q, p):
-    q.w += p.w
-    q.x += p.x
-    q.y += p.y
-    q.z += p.z
+def land_quaternion_iadd(LandQuaternion *q, LandQuaternion p):
+    q->w += p.w
+    q->x += p.x
+    q->y += p.y
+    q->z += p.z
 
-def land_quaternion_imul(LandQuaternion q, LandFloat s):
-    q.w *= s
-    q.x *= s
-    q.y *= s
-    q.z *= s
+def land_quaternion_imul(LandQuaternion *q, LandFloat s):
+    q->w *= s
+    q->x *= s
+    q->y *= s
+    q->z *= s
+
+LandQuaternion def land_quaternion_combine(LandQuaternion qa, LandQuaternion qb):
+
+    LandVector qav = {qa.x, qa.y, qa.z}
+    LandVector qbv = {qb.x, qb.y, qb.z}
+    LandVector va = land_vector_cross(qav, qbv)
+    LandVector vb = land_vector_mul(qav, qb.w)
+    LandVector vc = land_vector_mul(qbv, qa.w)
+    land_vector_iadd(&va, vb)
+    LandVector qrv = land_vector_add(va, vc)
+    
+    double w = land_vector_dot(qav, qbv)
+    LandQuaternion qr = {qrv.x, qrv.y, qrv.z, w}
+
+    land_quaternion_normalize(&qr)
+    return qr
 
 def land_quaternion_vectors(LandQuaternion q, LandVector *r, *u, *b):
     """
@@ -241,15 +257,15 @@ def land_quaternion_vectors(LandQuaternion q, LandVector *r, *u, *b):
     u->z = yz + wx
     b->z = ww - xx - yy + zz
 
-def land_quaternion_normalize(LandQuaternion q):
+def land_quaternion_normalize(LandQuaternion *q):
     """
     Normalize the quaternion. This may be useful to prevent deteriorating
     the quaternion if it is used for a long time, due to Fing point
     inaccuracies.
     """
-    LandFloat n = SQRT(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z)
-    q.w /= n
-    q.x /= n
-    q.y /= n
-    q.z /= n
+    LandFloat n = SQRT(q->w * q->w + q->x * q->x + q->y * q->y + q->z * q->z)
+    q->w /= n
+    q->x /= n
+    q->y /= n
+    q->z /= n
 

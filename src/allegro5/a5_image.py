@@ -48,7 +48,7 @@ LandImage *def platform_image_load(char const *filename, bool mem):
     if strchr(filename, '.'):
         bmp = al_load_bitmap(filename)
     else:
-        bmp = al_load_png(filename)
+        bmp = al_load_bitmap(filename)
     if bmp:        
         LandImagePlatform *self = (void *)super
         self->a5 = bmp
@@ -79,6 +79,7 @@ def platform_image_save(LandImage *super, char const *filename):
 
 def platform_image_prepare(LandImage *super):
     LandImagePlatform *self = (void *)super
+    land_log_message("platform_image_prepare\n")
     al_remove_opengl_fbo(self->a5)
 
 def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
@@ -91,21 +92,22 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     if d->blend:
         if d->blend & LAND_BLEND_SOLID:
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
-            al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(r, g, b, alpha))
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO)
             restore = True
         if d->blend & LAND_BLEND_ADD:
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
-            al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE, al_map_rgba_f(r, g, b, alpha))
+            al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE)
             restore = True
     elif r != 1 or g != 1 or b != 1 or alpha != 1:
         al_store_state(&state, ALLEGRO_STATE_BLENDER)
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
-            al_map_rgba_f(r, g, b, alpha))
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA)
         restore = True
 
     int flags = 0
     if flip == 1 or flags == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
     if flip == 2 or flags == 3: flags |= ALLEGRO_FLIP_VERTICAL
+    
+    ALLEGRO_COLOR tint = al_map_rgba_f(r, g, b, alpha)
 
     if super->l or super->t or super->r or super->b:
         if angle != 0 or sx != 1 or sy != 1:
@@ -115,17 +117,19 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
                 super->height - super->t - super->b)
             float cx = super->x - super->l
             float cy = super->y - super->t
-            al_draw_rotated_scaled_bitmap(sub, cx, cy,
+            al_draw_tinted_scaled_rotated_bitmap(sub, tint, cx, cy,
                 x, y, sx, sy, -angle, flags)
             al_destroy_bitmap(sub)
         else:
-            al_draw_bitmap_region(self->a5, super->l, super->t,
+            al_draw_tinted_bitmap_region(self->a5, tint,
+                super->l, super->t,
                 super->width - super->l - super->r,
                 super->height - super->t - super->b,
                 x + super->l,
                 y + super->t, flags)
     else:
-        al_draw_rotated_scaled_bitmap(self->a5, super->x, super->y,
+        al_draw_tinted_scaled_rotated_bitmap(self->a5, tint,
+            super->x, super->y,
             x, y, sx, sy, -angle, flags)
 
     if restore:

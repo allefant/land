@@ -1,7 +1,6 @@
-import global allegro5/allegro5
+import global allegro5.allegro, allegro5.allegro_acodec
 
 import land/sound, land/mem
-static import global allegro5.allegro_vorbis
 static import global allegro5.allegro_audio
 
 static class LandSoundPlatform:
@@ -37,10 +36,10 @@ LandSound *def platform_sound_new(int samples, float frequency, int bits,
     channels):
     LandSoundPlatform *self
     land_alloc(self)
-    int chan_conf, depth
+    int chan_conf = 0, depth = 0
     get_params(channels, bits, &chan_conf, &depth)
 
-    int sample_size = al_get_channel_count(chan_conf) * al_get_depth_size(depth)
+    int sample_size = al_get_channel_count(chan_conf) * al_get_audio_depth_size(depth)
     int bytes = samples * sample_size;
 
     self->buffer = land_malloc(bytes)
@@ -71,8 +70,8 @@ def platform_sound_destroy(LandSound *s):
     land_free(s)
 
 def platform_sound_init():
-    al_install_audio(ALLEGRO_AUDIO_DRIVER_AUTODETECT)
-    al_init_ogg_vorbis_addon()
+    al_init_acodec_addon()
+    al_install_audio()
     al_reserve_samples(8)
 
 def platform_sound_exit():
@@ -84,12 +83,12 @@ LandStream *def platform_stream_new(int samples, fragments,
     land_alloc(self)
     LandStream *super = (void *)self
 
-    int chan_conf, depth
+    int chan_conf = 0, depth = 0
     get_params(channels, bits, &chan_conf, &depth)
 
     super->fragments = fragments
     super->samples = samples
-    super->sample_size = al_get_channel_count(chan_conf) * al_get_depth_size(depth);
+    super->sample_size = al_get_channel_count(chan_conf) * al_get_audio_depth_size(depth);
     self->a5 = al_create_audio_stream(fragments, samples, frequency, depth,
         chan_conf)
 

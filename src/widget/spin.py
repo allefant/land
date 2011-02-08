@@ -1,11 +1,12 @@
 import base, hbox, button
 
-# A spin control is a container, who contains and edit box and two buttons,
-# with which the value of the edit box can be increased/decreased.
-# 
+# A spin control is a container, who contains an edit box and two
+# buttons, with which the value of the edit box can
+# be increased/decreased.
 class LandWidgetSpin:
     LandWidgetHBox super
     double min, max, step
+    bool wrap # jump to first/last value when going over min/max
 
 class LandWidgetSpinButton:
     LandWidgetButton button
@@ -32,6 +33,11 @@ LandWidgetInterface *land_widget_spinbutton_interface
 # FIXME: should come from theme
 static LandImage *image_up
 static LandImage *image_down
+
+LandWidget *def land_widget_spin_get_edit(LandWidget *spin):
+    LandListItem *item = LAND_WIDGET_CONTAINER(spin)->children->first
+    LandWidget *edit = item->data
+    return edit
 
 static def updated(LandWidget *base):
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
@@ -108,8 +114,12 @@ LandWidget *def land_widget_spin_new(LandWidget *parent,
 
 def land_widget_spin_set_value(LandWidget *base, float val):
     LandWidgetSpin *spin = LAND_WIDGET_SPIN(base)
-    if val < spin->min: val = spin->min
-    if val > spin->max && spin->max > spin->min: val = spin->max
+    if spin->wrap:
+        if val < spin->min: val += spin->max - spin->min
+        if val > spin->max: val -= spin->max - spin->min
+    else:
+        if val < spin->min and spin->min < spin->max: val = spin->min
+        if val > spin->max && spin->max > spin->min: val = spin->max
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
     LandWidget *edit = LAND_WIDGET(item->data)
     char text[256]
@@ -132,7 +142,7 @@ float def land_widget_spin_get_value(LandWidget *base):
     LandWidget *edit = LAND_WIDGET(item->data)
     char const *text = land_widget_edit_get_text(edit)
     float val = strtod(text, NULL)
-    if val < spin->min: val = spin->min
+    if val < spin->min and spin->min < spin->max: val = spin->min
     if val > spin->max and spin->max > spin->min: val = spin->max
     return val
 

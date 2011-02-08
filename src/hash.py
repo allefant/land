@@ -110,7 +110,6 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
                 land_free(entry)
 
         if oldentries: land_free(oldentries)
-        assert(self->count == oldcount)
 
     # Now there should be ample room to add the new one. 
     i = self->hash_function(self, thekey)

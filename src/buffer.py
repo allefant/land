@@ -65,6 +65,12 @@ LandBuffer *def land_buffer_new():
     land_alloc(self)
     return self
 
+LandBuffer *def land_buffer_copy(LandBuffer *other):
+    LandBuffer *self
+    land_alloc(self)
+    land_buffer_add(self, other->buffer, other->n)
+    return self
+
 def land_buffer_del(LandBuffer *self):
     if self->buffer: land_free(self->buffer)
     land_free(self)

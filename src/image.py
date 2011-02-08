@@ -63,6 +63,8 @@ static LandImage *def _load(char const *filename, bool mem):
 
         if not mem:
             land_image_prepare(self)
+            
+        land_log_message("prepared\n")
 
         *** "ifdef" LOG_COLOR_STATS
         float red = 0, green = 0, blue = 0, alpha = 0
@@ -354,7 +356,7 @@ LandArray *def land_load_images_cb(char const *pattern,
     LandBuffer *dirbuf = land_buffer_new()
     int j = 0
     for int i = 0 while pattern[i] with i++:
-        if pattern[i] == '/':
+        if pattern[i] == '/' or pattern[i] == '\\':
             land_buffer_add(dirbuf, pattern + j, i - j + 1)
             j = i + 1
         if pattern[i] == '?' or pattern[i] == '*': break
@@ -370,7 +372,9 @@ LandArray *def land_load_images_cb(char const *pattern,
         filenames = land_filelist(dir, filter, (void *)pattern)
         if filenames:
             count = filenames->count
-    
+        else:
+            land_log_message("No files at all match %s.\n", pattern)
+
     land_free(dir)
 
     if not filenames: return None
@@ -546,6 +550,7 @@ int def land_image_width(LandImage *self):
 # maintaining the correct offset.
 static LandImage *def optimize_bitmap(LandImage *self, int *x, int *y):
     assert(0)
+    return None
 
 def land_image_optimize(LandImage *self):
     assert(0)

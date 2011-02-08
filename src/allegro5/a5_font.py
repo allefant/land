@@ -43,19 +43,20 @@ def platform_font_print(LandFontState *lfs,
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_BLENDER)
     LandDisplay *d = _land_active_display;
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, al_map_rgba_f(
-        d->color_r, d->color_g, d->color_b, d->color_a))
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA)
+    
+    ALLEGRO_COLOR c = al_map_rgba_f(d->color_r, d->color_g, d->color_b, d->color_a)
 
     if alignment == LandAlignAdjust:
-        al_draw_justified_text(self->a5, x, x + lfs->adjust_width, y,
+        al_draw_justified_text(self->a5, c, x, x + lfs->adjust_width, y,
             lfs->adjust_width * 0.5,
             ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == LandAlignCenter:
-        al_draw_text(self->a5, x, y, ALLEGRO_ALIGN_CENTRE, str)
+        al_draw_text(self->a5, c, x, y, ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == LandAlignRight:
-        al_draw_text(self->a5, x, y, ALLEGRO_ALIGN_RIGHT, str)
+        al_draw_text(self->a5, c, x, y, ALLEGRO_ALIGN_RIGHT, str)
     else:
-        al_draw_text(self->a5, x, y, 0, str)
+        al_draw_text(self->a5, c, x, y, 0, str)
     
     al_restore_state(&state)
 

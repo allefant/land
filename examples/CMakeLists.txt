@@ -135,14 +135,14 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-debug
                 land-debug
-                allegro-debug-${AV}
-                allegro_font-debug-${AV}
-                allegro_ttf-debug-${AV}
-                allegro_primitives-debug-${AV}
-                allegro_image-debug-${AV}
-                allegro_color-debug-${AV}
-                allegro_vorbis-debug-${AV}
-                allegro_audio-debug-${AV}
+                allegro-debug
+                allegro_font-debug
+                allegro_ttf-debug
+                allegro_primitives-debug
+                allegro_image-debug
+                allegro_color-debug
+                allegro_audio-debug
+                allegro_acodec-debug
                 )
         endif (DEBUG)
         if (RELEASE)

@@ -45,6 +45,11 @@ def land_init():
     land_seed(seed)
     land_log_message("Random seed is %d.\n", seed)
     
+    char cd[1024]
+    if not getcwd(cd, sizeof cd):
+        sprintf(cd, "<none>")
+    land_log_message("Current path: %s\n", cd)
+
     platform_init()
 
 def land_tick():
@@ -145,14 +150,20 @@ def land_mainloop():
     LandDisplay *display = land_display_new(parameters->w,
         parameters->h, parameters->flags)
 
+    land_log_message("About to create the main window.\n")
     land_display_set()
+    land_log_message("Video initialized.\n")
     land_sound_init()
+    land_log_message("Audio initialized.\n")
 
     land_mouse_init()
+    land_log_message("Mouse initialized.\n")
     land_keyboard_init()
+    land_log_message("Keyboard initialized.\n")
 
     land_runner_switch_active(parameters->start)
 
+    land_log_message("Commencing operations.\n")
     platform_mainloop(parameters)
     
     land_runner_switch_active(NULL)
