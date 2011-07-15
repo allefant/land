@@ -62,6 +62,8 @@ def platform_display_set():
     if super->flags & LAND_MULTISAMPLE:
         al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
+    if super->flags & LAND_DEPTH:
+        al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
 
     ALLEGRO_MONITOR_INFO info;
     al_get_monitor_info(0, &info);
@@ -200,7 +202,7 @@ def platform_ribbon(int n, float *xy):
         #al_draw_line(xy8[2], xy8[3], xy8[4], xy8[5], c, 0)
         #c = al_map_rgba_f(1, 0, 0, 0.25)
         #al_draw_circle(xy8[0], xy8[1], 5, c, 0)
-        al_draw_spline(xy8, self->c, 0)
+        al_draw_spline(xy8, self->c, self->super.thickness)
 
     uncheck_blending()
 
@@ -213,22 +215,28 @@ def platform_line(float x, y, x_, y_):
 def platform_polygon(int n, float *xy):
     SELF
     ALLEGRO_VERTEX v[n]
+    memset(v, 0, n * sizeof(ALLEGRO_VERTEX))
     int j = 0
     for int i = 0 while i < n with i++:
         v[i].x = xy[j++]
         v[i].y = xy[j++]
         v[i].color = self->c
+    check_blending()
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_LINE_LOOP)
+    uncheck_blending()
 
 def platform_filled_polygon(int n, float *xy):
     SELF
     ALLEGRO_VERTEX v[n]
+    memset(v, 0, n * sizeof(ALLEGRO_VERTEX))
     int j = 0
     for int i = 0 while i < n with i++:
         v[i].x = xy[j++]
         v[i].y = xy[j++]
         v[i].color = self->c
+    check_blending()
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
+    uncheck_blending()
 
 def platform_plot(float x, y):
     SELF

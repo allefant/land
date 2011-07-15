@@ -124,6 +124,7 @@ foreach(exsrc ${examples})
     endif (STATIC)
 
     if (SHARED)
+        set(AD -debug)
         if (DEBUG)
             add_executable(${ex}-debug ${example_cfiles})
             
@@ -135,14 +136,15 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${ex}-debug
                 land-debug
-                allegro-debug
-                allegro_font-debug
-                allegro_ttf-debug
-                allegro_primitives-debug
-                allegro_image-debug
-                allegro_color-debug
-                allegro_audio-debug
-                allegro_acodec-debug
+                allegro${AD}
+                allegro_font${AD}
+                allegro_ttf${AD}
+                allegro_primitives${AD}
+                allegro_image${AD}
+                allegro_color${AD}
+                allegro_audio${AD}
+                allegro_acodec${AD}
+                yaml
                 )
         endif (DEBUG)
         if (RELEASE)

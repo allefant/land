@@ -215,14 +215,14 @@ LandArray *def land_hash_data(LandHash *hash):
     """Return an array with all the data pointers in the hash. If you want to
     destroy a hash including all its data, this may be a convenient way to
     do it:
-    {{{#!python
-    data = land_hash_data(hash)
+
+    LandArray *data = land_hash_data(hash)
     for int i = 0 while i < land_array_count(data) with i++:
         void *entry = land_array_get_nth(data, i)
         land_free(entry)
     land_array_destroy(data)
     land_hash_destroy(hash)
-    }}}
+
     """
     LandArray *array = land_array_new()
     int i

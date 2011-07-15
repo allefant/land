@@ -42,16 +42,21 @@ LandList *def land_list_new():
     land_alloc(self)
     return self
 
-# Destroys a list and all iterators, but not the data. If you want to destroy
-# the data, first loop through the list and destroy them all.
-# 
-def land_list_destroy(LandList *list):
+def land_list_clear(LandList *list):
     LandListItem *item = list->first
     while item:
         LandListItem *next = item->next
         land_listitem_destroy(item)
         item = next
+    list->first = None
+    list->last = None
+    list->count = 0
 
+# Destroys a list and all iterators, but not the data. If you want to destroy
+# the data, first loop through the list and destroy them all.
+# 
+def land_list_destroy(LandList *list):
+    land_list_clear(list)
     land_free(list)
 
 LandListItem *def land_listitem_new(void *data):

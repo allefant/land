@@ -216,7 +216,7 @@ static def draw(LandRunner *self):
         Slot *s = slots + i
         float *rgb = s->rgb
         land_color(rgb[0], rgb[1], rgb[2], 1)
-    
+
         int xi = pos & 7
         int yi = pos >> 3
         draw_corners(xi * 80, yi * 80, 9)

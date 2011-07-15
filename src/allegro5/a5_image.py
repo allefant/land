@@ -80,7 +80,7 @@ def platform_image_save(LandImage *super, char const *filename):
 def platform_image_prepare(LandImage *super):
     LandImagePlatform *self = (void *)super
     land_log_message("platform_image_prepare\n")
-    al_remove_opengl_fbo(self->a5)
+    #al_remove_opengl_fbo(self->a5)
 
 def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float y, float sx, float sy,
@@ -98,14 +98,10 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
             al_store_state(&state, ALLEGRO_STATE_BLENDER)
             al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE)
             restore = True
-    elif r != 1 or g != 1 or b != 1 or alpha != 1:
-        al_store_state(&state, ALLEGRO_STATE_BLENDER)
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA)
-        restore = True
 
     int flags = 0
-    if flip == 1 or flags == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
-    if flip == 2 or flags == 3: flags |= ALLEGRO_FLIP_VERTICAL
+    if flip == 1 or flip == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
+    if flip == 2 or flip == 3: flags |= ALLEGRO_FLIP_VERTICAL
     
     ALLEGRO_COLOR tint = al_map_rgba_f(r, g, b, alpha)
 
