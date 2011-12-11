@@ -17,9 +17,10 @@ def platform_init():
         land_exception("Error in allegro_init.")
 
     al_init_image_addon()
-    al_install_keyboard();
-    al_install_mouse();
-    al_init_primitives_addon();
+    al_install_keyboard()
+    al_install_mouse()
+    al_init_primitives_addon()
+    al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
 
 static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 0, \
@@ -254,3 +255,5 @@ char *def platform_get_app_settings_file(char const *appname):
     al_destroy_path(path)
     return dup
 
+def platform_wait(double seconds):
+    al_rest(seconds)

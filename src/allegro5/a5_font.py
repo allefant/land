@@ -1,6 +1,7 @@
 import land/font
 static import global allegro5/allegro5, allegro5/allegro_font
 static import global allegro5/allegro_ttf
+static import land/allegro5/a5_display
 
 static class LandFontPlatform:
     LandFont super
@@ -43,7 +44,13 @@ def platform_font_print(LandFontState *lfs,
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_BLENDER)
     LandDisplay *d = _land_active_display;
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA)
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA)
+    
+    if d->matrix_modified:
+        LandDisplayPlatform *dp = (void *)d
+        memcpy(dp->transform.m, d->matrix, sizeof(d->matrix))
+        al_use_transform(&dp->transform)
+        d->matrix_modified = False
     
     ALLEGRO_COLOR c = al_map_rgba_f(d->color_r, d->color_g, d->color_b, d->color_a)
 

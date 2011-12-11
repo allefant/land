@@ -46,6 +46,9 @@ def paint(int x, y, w, h, xp, yp, tw, th):
             land_plot(x + i - xp + 0.5, y + j - yp + 0.5)
 
 def draw(LandRunner *self):
+    float w = land_display_width()
+    float h = land_display_height()
+    float s
     if not cached:
         int i, j
         for i = 0 while i < 1024 with i += 256:
@@ -58,9 +61,10 @@ def draw(LandRunner *self):
         cached = 1
         land_image_center(cache)
 
-    land_image_draw_scaled_rotated(cache, 320, 240,
-        0.9 + 0.1 * sin(land_get_time()),
-        0.9 + 0.1 * sin(land_get_time()),
+    s = sqrt(w * w + h * h) / 1024.0
+    land_image_draw_scaled_rotated(cache, w / 2, h / 2,
+        s * (1.1 + 0.1 * sin(land_get_time())),
+        s * (1.1 + 0.1 * sin(land_get_time())),
         land_get_time() * (1 + 4 * fabs(sin(land_get_time() * 0.2))))
     #land_clear(1, 0.9, 0.8, 1)
     #land_image_draw(cache, 0, 0)
@@ -73,5 +77,5 @@ def draw(LandRunner *self):
     #land_clear(1, 0, 0, 1)
     #land_image_draw(cache, 0, 0)
 
-land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_FULLSCREEN,
+land_begin_shortcut(0, 0, 60, LAND_OPENGL | LAND_FULLSCREEN,
     init, NULL, tick, draw, NULL, NULL)

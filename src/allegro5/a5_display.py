@@ -1,4 +1,5 @@
 import land/display
+import a5_image
 static import global allegro5/allegro5
 static import global allegro5/allegro_primitives
 static import global assert, math
@@ -8,6 +9,7 @@ class LandDisplayPlatform:
     ALLEGRO_DISPLAY *a5
     ALLEGRO_COLOR c
     ALLEGRO_STATE blend_state
+    ALLEGRO_TRANSFORM transform
 
 def platform_display_init():
     pass
@@ -30,8 +32,14 @@ static macro SELF:
     LandDisplay *super = &self->super
     (void)super
 
-static def check_blending():
+static def check_blending_and_transform():
     SELF
+
+    if super->matrix_modified:
+        memcpy(self->transform.m, super->matrix, sizeof(super->matrix))
+        al_use_transform(&self->transform)
+        super->matrix_modified = False
+
     if super->blend:
         al_store_state(&self->blend_state, ALLEGRO_STATE_BLENDER)
         #ALLEGRO_COLOR c
@@ -131,13 +139,13 @@ def platform_display_flip():
 
 def platform_rectangle(float x, y, x_, y_):
     SELF
-    check_blending()
+    check_blending_and_transform()
     al_draw_rectangle(x, y, x_, y_, self->c, self->super.thickness)
     uncheck_blending()
 
 def platform_filled_rectangle(float x, y, x_, y_):
     SELF
-    check_blending()
+    check_blending_and_transform()
     al_draw_filled_rectangle(x, y, x_, y_, self->c)
     uncheck_blending()
 
@@ -147,7 +155,7 @@ def platform_filled_circle(float x, y, x_, y_):
     float cy = (y + y_) * 0.5
     float rx = (x_ - x) * 0.5
     float ry = (y_ - y) * 0.5
-    check_blending()
+    check_blending_and_transform()
     al_draw_filled_ellipse(cx, cy, rx, ry, self->c)
     uncheck_blending()
 
@@ -157,13 +165,23 @@ def platform_circle(float x, y, x_, y_):
     float cy = (y + y_) * 0.5
     float rx = (x_ - x) * 0.5
     float ry = (y_ - y) * 0.5
-    check_blending()
+    check_blending_and_transform()
     al_draw_ellipse(cx, cy, rx, ry, self->c, self->super.thickness)
+    uncheck_blending()
+
+def platform_arc(float x, y, x_, y_, a, a_):
+    SELF
+    float cx = (x + x_) * 0.5
+    float cy = (y + y_) * 0.5
+    float rx = (x_ - x) * 0.5
+    #float ry = (y_ - y) * 0.5
+    check_blending_and_transform()
+    al_draw_arc(cx, cy, rx, a, (a_ - a), self->c, self->super.thickness)
     uncheck_blending()
 
 def platform_ribbon(int n, float *xy):
     SELF
-    check_blending()
+    check_blending_and_transform()
     
     for int i = 0 while i < n - 1 with i++:
         float xy8[8]
@@ -208,7 +226,7 @@ def platform_ribbon(int n, float *xy):
 
 def platform_line(float x, y, x_, y_):
     SELF
-    check_blending()
+    check_blending_and_transform()
     al_draw_line(x, y, x_, y_, self->c, self->super.thickness)
     uncheck_blending()
 
@@ -221,7 +239,7 @@ def platform_polygon(int n, float *xy):
         v[i].x = xy[j++]
         v[i].y = xy[j++]
         v[i].color = self->c
-    check_blending()
+    check_blending_and_transform()
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_LINE_LOOP)
     uncheck_blending()
 
@@ -234,13 +252,41 @@ def platform_filled_polygon(int n, float *xy):
         v[i].x = xy[j++]
         v[i].y = xy[j++]
         v[i].color = self->c
-    check_blending()
+    check_blending_and_transform()
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
+    uncheck_blending()
+
+def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):
+    SELF
+    
+    LandImagePlatform *pim = (void *)image;
+    
+    ALLEGRO_VERTEX v[n]
+    memset(v, 0, n * sizeof(ALLEGRO_VERTEX))
+    int j = 0
+    int k = 0
+    for int i = 0 while i < n with i++:
+        v[i].x = xy[j++]
+        v[i].y = xy[j++]
+        v[i].u = uv[k++]
+        v[i].v = uv[k++]
+        v[i].color = self->c
+    check_blending_and_transform()
+    al_draw_prim(v, None, pim->a5, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
+    uncheck_blending()
+
+def platform_filled_polygon_with_holes(int n, float *xy,
+    int holes_count, int *holes):
+    SELF
+
+    check_blending_and_transform()
+    al_draw_filled_polygon_with_holes(xy, n,
+        holes, holes_count, self->c)
     uncheck_blending()
 
 def platform_plot(float x, y):
     SELF
-    check_blending()
+    check_blending_and_transform()
     al_draw_pixel(x, y, self->c)
     uncheck_blending()
     

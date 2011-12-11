@@ -188,7 +188,7 @@ global *** "undef" yn
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
-import file, yaml
+import file, yaml, thread
 
 import land/allegro5/a5_opengl
 
@@ -234,6 +234,9 @@ def land_exit_functions():
         void (*function)(void) = land_array_get_nth(exit_functions, i)
         function()
     land_array_destroy(exit_functions)
+
+def land_wait(double seconds):
+    platform_wait(seconds)
 
 global int land_argc
 global char **land_argv

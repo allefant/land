@@ -33,7 +33,7 @@ foreach(py ${pyfiles})
     add_custom_command(
         OUTPUT "c/${out}.c" "c/${out}.h"
         COMMAND ${CMAKE_COMMAND} -E make_directory "c/land/${path}"
-        COMMAND scramble.py
+        COMMAND scramble
             -i "${CMAKE_SOURCE_DIR}/src/${py}"
             -c "c/${out}.c"
             -h "c/${out}.h"

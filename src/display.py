@@ -93,6 +93,7 @@ Like circle, but filled.
 
 import global stdlib
 import list, image, log, mem, font
+static import global math
 
 macro LAND_WINDOWED 1
 macro LAND_FULLSCREEN 2
@@ -123,7 +124,8 @@ class LandDisplay:
     int clip_stack_depth
     int clip_stack[LAND_MAX_CLIP_DEPTH * 5]
     
-    #float matrix[16]
+    float matrix[16]
+    bool matrix_modified
 
 static import allegro5/a5_display
 static import allegro5/a5_image
@@ -149,6 +151,8 @@ LandDisplay *def land_display_new(int w, int h, int flags):
     self->clip_off = 0
 
     land_display_select(self)
+    
+    land_reset_transform()
 
     return self
 
@@ -378,6 +382,9 @@ def land_filled_circle(float x, y, x_, y_):
 def land_circle(float x, y, x_, y_):
     platform_circle(x, y, x_, y_)
 
+def land_arc(float x, y, x_, y_, a, a_):
+    platform_arc(x, y, x_, y_, a, a_)
+
 def land_line(float x, y, x_, y_):
     platform_line(x, y, x_, y_)
 
@@ -389,6 +396,13 @@ def land_polygon(int n, float *xy):
 
 def land_filled_polygon(int n, float *xy):
     platform_filled_polygon(n, xy)
+
+def land_textured_polygon(LandImage *image, int n, float *xy, *uv):
+    platform_textured_polygon(image, n, xy, uv):
+
+def land_filled_polygon_with_holes(int n, float *xy,
+    int holes_count, int *holes):
+    platform_filled_polygon_with_holes(n, xy, holes_count, holes)
 
 def land_plot(float x, y):
     platform_plot(x, y)
@@ -456,3 +470,56 @@ int def land_was_resized():
 def land_display_tick():
     was_resized = resize_event_counter
     resize_event_counter = 0
+
+def land_rotate(float angle):
+    float *m = _land_active_display->matrix
+    float c = cosf(angle)
+    float s = sinf(angle)
+    float x, y
+        
+    x = m[0]
+    y = m[1]
+    m[0] = x * c - y * s
+    m[1] = x * s + y * c
+    
+    x = m[4]
+    y = m[5]
+    m[4] = x * c - y * s
+    m[5] = x * s + y * c
+    
+    x = m[12]
+    y = m[13]
+    m[12] = x * c - y * s
+    m[13] = x * s + y * c
+    
+    _land_active_display->matrix_modified = True
+
+def land_scale(float x, y):
+    float *m = _land_active_display->matrix
+    m[0] *= x
+    m[1] *= y
+    m[4] *= x
+    m[5] *= y
+    m[12] *= x
+    m[13] *= y
+
+    _land_active_display->matrix_modified = True
+
+def land_translate(float x, y):
+    float *m = _land_active_display->matrix
+    m[12] += x
+    m[13] += y
+    _land_active_display->matrix_modified = True
+
+def land_reset_transform():
+    float *m = _land_active_display->matrix
+    
+    float i[16] = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    }
+    memcpy(m, i, sizeof i)
+
+    _land_active_display->matrix_modified = True

@@ -2,7 +2,7 @@ import land.image, land.display
 static import global allegro5.allegro5, allegro5.allegro_image, allegro5.allegro_opengl
 static import land.allegro5.a5_display
 
-static class LandImagePlatform:
+class LandImagePlatform:
     LandImage super
     ALLEGRO_BITMAP *a5
 
@@ -78,7 +78,7 @@ def platform_image_save(LandImage *super, char const *filename):
     al_save_bitmap(filename, self->a5)
 
 def platform_image_prepare(LandImage *super):
-    LandImagePlatform *self = (void *)super
+    #LandImagePlatform *self = (void *)super
     land_log_message("platform_image_prepare\n")
     #al_remove_opengl_fbo(self->a5)
 
@@ -178,7 +178,7 @@ def platform_image_get_rgba_data(LandImage *super, unsigned char *rgba):
     int h = super->height
     unsigned char *p = rgba
     ALLEGRO_LOCKED_REGION *lock
-    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
+    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
         ALLEGRO_LOCK_READONLY)
     unsigned char *p2 = lock->data
     for int y = 0 while y < h with y++:
@@ -203,7 +203,7 @@ def platform_image_set_rgba_data(LandImage *super,
     int h = super->height
     unsigned char const *p = rgba
     ALLEGRO_LOCKED_REGION *lock
-    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
+    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
         ALLEGRO_LOCK_WRITEONLY)
     unsigned char *p2 = lock->data
     for int y = 0 while y < h with y++:
