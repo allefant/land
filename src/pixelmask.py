@@ -50,6 +50,7 @@ static def printout_mask(SinglePixelMask *mask):
                 printf("%c", m & (1 << b) ? '1' : '0')
 
         printf("\n")
+    printf("---\n")
 *** "endif"
 
 # Creates n prerotated bitmasks for the given bitmap. A single bit
@@ -89,8 +90,19 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
         int th = ceil(h)
         LandImage *temp = land_image_create(tw, th)
         land_set_image_display(temp)
+        float backup_x = image->x
+        float backup_y = image->y
+        image->x = 0.5 * image->width
+        image->y = 0.5 * image->height
         land_image_draw_rotated(image, w / 2.0, h / 2.0, angle)
+        image->x = backup_x
+        image->y = backup_y
         land_unset_image_display()
+        
+        #char name[1024]
+        #static int si
+        #sprintf(name, "mask%04d.png", si++)
+        #land_image_save(temp, name)
 
         int mask_w = 1 + (w + 31) / 32
 

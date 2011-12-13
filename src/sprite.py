@@ -8,6 +8,8 @@ macro LAND_SPRITES_GRID(x) ((LandSpritesGrid *)(x))
 import array, display, grid, animation
 static import tilegrid, pixelmask
 
+#*** "define" DEBUG_MASK
+
 class LandSpriteType:
     # TODO: Sprites may have dynamic dimensions. There should be a vtable
     # entry to query the current dimensions, which is used by the sprites
@@ -136,13 +138,16 @@ static def dummy(LandSprite *self, LandView *view):
 
 
 static def dummy_image(LandSprite *self, LandView *view):
-
+    LandSpriteTypeImage *image = (LandSpriteTypeImage *)self->type
     float x = (self->x - view->scroll_x) * view->scale_x + view->x
     float y = (self->y - view->scroll_y) * view->scale_y + view->y
     land_image_draw_scaled_rotated(LAND_SPRITE_TYPE_IMAGE(self->type)->image,
         x, y, view->scale_x, view->scale_y, self->angle)
-    # if self->type->image->mask:
-    #    land_image_debug_pixelmask(self->type->image, x, y, 0)
+    
+    *** "ifdef" DEBUG_MASK
+    if image->image->mask:
+        land_image_debug_pixelmask(image->image, x, y, 0)
+    *** "endif"
 
 
 static def dummy_animation(LandSprite *self, LandView *view):
@@ -159,8 +164,10 @@ static def dummy_animation(LandSprite *self, LandView *view):
         animated->r, animated->g, animated->b, animated->a)
     # land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
     #    self->angle)
-    #if animation->super.image->mask:
-    #    land_image_debug_pixelmask(animation->super.image, x, y, self->angle)
+    *** "ifdef" DEBUG_MASK
+    if animation->super.image->mask:
+        land_image_debug_pixelmask(animation->super.image, x, y, self->angle)
+    *** "endif"
 
 def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 

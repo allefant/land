@@ -155,6 +155,9 @@ static def tick(LandRunner *self):
                 s->y += dy / d * 4
             else:
                 s->moving = False
+                # Help with multisampling.
+                s->x = (int)(s->x)
+                s->y = (int)(s->y)
         elif ticks >= s->next_time:
             s->next_time += land_rand(60 * 2, 60 * 5)
             int what = land_rand(0, 5):
@@ -230,5 +233,6 @@ static def draw(LandRunner *self):
             slots[i].frames[k], s->x + ox,
             s->y + oy + 1 * sin((ticks + s->offset) * LAND_PI * 2 / 30))
 
-land_begin_shortcut(80 * 8, 80 * 4, 60, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(80 * 8, 80 * 4, 60,
+    LAND_WINDOWED | LAND_OPENGL | LAND_MULTISAMPLE,
     init, None, tick, draw, None, None)

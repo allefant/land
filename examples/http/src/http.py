@@ -28,7 +28,7 @@ def tick(LandRunner *self):
         if not connected:
             connected = True
             land_buffer_cat(text, "connected\n")
-            land_net_send(net, "/\r\n\r\n", 5)
+            land_net_send(net, "GET /feed\r\n\r\n", 9 + 4)
     if net->full > 0:
         land_buffer_add(text, buffer, net->full)
         land_net_flush(net, net->full)

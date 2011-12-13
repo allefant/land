@@ -42,7 +42,7 @@ static def game_draw(LandRunner *self):
     land_font_set(muli)
     land_color(0, 0, 0, 1)
     land_text_pos(w / 2, land_font_height(muli))
-    char const *s1 = "Tulip Rose Lili Daffodil Iris Orchid Narcissus Violet"
+    char const *s1 = "Tulip Rose Lily Daffodil Iris Orchid Narcissus Violet"
     int n = strlen(s1) + 1
     char s2[n]
     land_print_center(s1)
@@ -60,9 +60,22 @@ static def game_draw(LandRunner *self):
     land_font_set(big)
     float x = w / 2
     float y = h / 2 - land_font_height(big) / 2
-    land_color(0, 1, 0, ((int)land_get_time()) & 1 ? 0.5 : 0)
-    land_line(x - 3, y, x + 3, y)
-    land_line(x, y - 3, x, y + 3)
+    float alpha =((int)land_get_time()) & 1 ? 0.5 : 0;
+    land_color(alpha, alpha, 0, alpha)
+    land_reset_transform()
+    land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
+    land_translate(x, y)
+    land_line(0 - 3, 0, 0 + 3, 0)
+    land_line(0, 0 - 3, 0, 0 + 3)
+    
+    for int i in range(21):
+        land_reset_transform()
+        land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4 - LAND_PI / 4)
+        land_rotate(LAND_PI / 2 * i / 20)
+        land_translate(x, y)
+        land_line(0, 0.02 * h, 0, h * 0.35)
+
+    land_reset_transform()
     land_color(0, 0, 1, 1)
     land_text_pos(x, y)
     land_print_center("Land Fonts")
@@ -80,8 +93,9 @@ static def game_draw(LandRunner *self):
     land_color(1, 1, 1, 1)
 
     land_reset_transform()
+    land_translate(0, h * 0.35)
     land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
-    land_translate(land_display_width() / 2, land_display_height() * 0.7)
+    land_translate(x, y)
     land_text_pos(0, 0)
     land_print_center("Truecolor")
 
@@ -111,7 +125,8 @@ static def game_draw(LandRunner *self):
 
 def my_main():
     land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480,
+        LAND_WINDOWED | LAND_OPENGL | LAND_MULTISAMPLE)
     LandRunner *game_runner = land_runner_new("font example",
         game_init, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)
