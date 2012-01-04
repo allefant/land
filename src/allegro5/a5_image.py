@@ -105,28 +105,12 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     
     ALLEGRO_COLOR tint = al_map_rgba_f(r, g, b, alpha)
 
-    if super->l or super->t or super->r or super->b:
-        if angle != 0 or sx != 1 or sy != 1:
-            ALLEGRO_BITMAP *sub = al_create_sub_bitmap(self->a5,
-                super->l, super->t,
-                super->width - super->l - super->r,
-                super->height - super->t - super->b)
-            float cx = super->x - super->l
-            float cy = super->y - super->t
-            al_draw_tinted_scaled_rotated_bitmap(sub, tint, cx, cy,
-                x, y, sx, sy, -angle, flags)
-            al_destroy_bitmap(sub)
-        else:
-            al_draw_tinted_bitmap_region(self->a5, tint,
-                super->l, super->t,
-                super->width - super->l - super->r,
-                super->height - super->t - super->b,
-                x + super->l,
-                y + super->t, flags)
-    else:
-        al_draw_tinted_scaled_rotated_bitmap(self->a5, tint,
-            super->x, super->y,
-            x, y, sx, sy, -angle, flags)
+    al_draw_tinted_scaled_rotated_bitmap_region(self->a5,
+        super->l, super->t,
+        super->width - super->l - super->r,
+        super->height - super->t - super->b,
+        tint, super->x - super->l, super->y - super->t,
+        x, y, sx, sy, -angle, flags)
 
     if restore:
         al_restore_state(&state)

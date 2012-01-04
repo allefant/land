@@ -4,6 +4,7 @@ import image
 class LandPixelMask:
     int w, h, x, y
     int n
+    bool flipped
     SinglePixelMask *rotation[0]
 
 static import font, global math
@@ -55,20 +56,25 @@ static def printout_mask(SinglePixelMask *mask):
 
 # Creates n prerotated bitmasks for the given bitmap. A single bit
 # represents one pixel.
-static LandPixelMask *def pixelmask_create(LandImage *image,
-    int n, int threshold):
+static LandPixelMask *def pixelmask_create_flip(LandImage *image,
+    int n, int threshold, bool flipped):
     LandPixelMask *mask
     int j
+    int angle_count = n
+    if flipped: n *= 2
     mask = land_malloc(sizeof *mask + sizeof(SinglePixelMask *) * n)
     mask->n = n
-    int bmpw = land_image_width(image)
-    int bmph = land_image_height(image)
+    mask->flipped = flipped
+    int bmpw = land_image_width(image) - image->l - image->r
+    int bmph = land_image_height(image) - image->t - image->b
     mask->w = bmpw
     mask->h = bmph
-    mask->x = 0
-    mask->y = 0
+    mask->x = image->l
+    mask->y = image->t
     for j = 0 while j < n with j++:
-        float angle = j * LAND_PI * 2 / n
+        int j2 = j
+        if j2 >= angle_count: j2 -= angle_count
+        float angle = j2 * LAND_PI * 2 / angle_count
         float w, h
         if angle < LAND_PI / 2:
             w = bmpw * cos(angle) + bmph * sin(angle)
@@ -92,19 +98,23 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
         land_set_image_display(temp)
         float backup_x = image->x
         float backup_y = image->y
-        image->x = 0.5 * image->width
-        image->y = 0.5 * image->height
-        land_image_draw_rotated(image, w / 2.0, h / 2.0, angle)
+        image->x = image->l + 0.5 * bmpw
+        image->y = image->t + 0.5 * bmph
+        if flipped and j >= n / 2:
+            land_image_draw_rotated_flipped(image, w / 2.0, h / 2.0, angle)
+        else:
+            land_image_draw_rotated(image, w / 2.0, h / 2.0, angle)
         image->x = backup_x
         image->y = backup_y
         land_unset_image_display()
         
         #char name[1024]
         #static int si
-        #sprintf(name, "mask%04d.png", si++)
+        #sprintf(name, "mask%04d_%d_%d_%s.png", si++, j,
+        #    (int)(angle * 180 / LAND_PI), flipped and j >= n / 2 ? "flipped" : "normal")
         #land_image_save(temp, name)
 
-        int mask_w = 1 + (w + 31) / 32
+        int mask_w = 1 + (tw + 31) / 32
 
         mask->rotation[j] = land_malloc(sizeof *mask->rotation[j] +
             mask_w * th * sizeof(uint32_t))
@@ -127,7 +137,7 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
                 mask->rotation[j]->data[y * mask_w + x / 32] = bits
 
             # Extra 0 padding, so if *pos is valid, *(pos + 1) will point to
-            # all 0 - useful to not need special case the right border. 
+            # all 0 - useful to not need special case the right border.
             mask->rotation[j]->data[y * mask_w + x / 32] = 0
 
         *** "ifdef" DEBUG_MASK
@@ -136,6 +146,12 @@ static LandPixelMask *def pixelmask_create(LandImage *image,
 
     return mask
 
+static LandPixelMask *def pixelmask_create(LandImage *image,
+    int n, int threshold):
+    bool flipped = n < 0
+    if flipped: n = -n
+    return pixelmask_create_flip(image, n, threshold, flipped)
+
 static def pixelmask_destroy(LandPixelMask *mask):
     int j
     for j = 0 while j < mask->n with j++:
@@ -143,29 +159,35 @@ static def pixelmask_destroy(LandPixelMask *mask):
 
     land_free(mask)
 
-static int def mask_get_rotation_frame(LandPixelMask *mask, float angle):
-    float r = mask->n * angle / (2 * LAND_PI)
+static int def mask_get_rotation_frame(LandPixelMask *mask,
+    float angle, bool flipped):
+    int n = mask->n
+    if mask->flipped: n /= 2
+    float r = n * angle / (2 * LAND_PI)
     if r > 0: r += 0.5
     else: r -= 0.5
-    int i = (int)(r) % mask->n
-    if i < 0: i += mask->n
+    int i = (int)(r) % n
+    if i < 0: i += n
+    if mask->flipped and flipped: i += mask->n / 2
     return i
 
-def land_image_debug_pixelmask(LandImage *self, float x, float y, float angle):
+def land_image_debug_pixelmask(LandImage *self, float x, float y,
+    float angle, bool flipped):
     int i
-    int k = mask_get_rotation_frame(self->mask, angle)
+    int k = mask_get_rotation_frame(self->mask, angle, flipped)
     int mask_w = self->mask->rotation[k]->w
 
-    int w = land_image_width(self)
-    int h = land_image_height(self)
+    int w = land_image_width(self) - self->l - self->r
+    int h = land_image_height(self) - self->t - self->b
     float ml, mt, mr, mb
-    get_bounding_box(-self->x, -self->y, w - self->x, h - self->y,
+    get_bounding_box(self->l - self->x, self->t - self->y,
+        w - self->x + self->l, h - self->y + self->t,
         k * 2.0 * LAND_PI / self->mask->n, &ml, &mt, &mr, &mb)
 
     land_color(1, 0, 0, 1)
     land_rectangle(x + ml, y + mt, x + mr, y + mb)
 
-    land_color(1, 1, 1, 1)
+    land_color(0, 1, 0, 1)
     for i = 0 while i < self->mask->rotation[k]->h with i++:
         int j
         for j = 0 while j < mask_w with j++:
@@ -248,8 +270,8 @@ def land_image_destroy_pixelmasks(LandImage *self):
     if self->mask: pixelmask_destroy(self->mask)
 
 # Returns 1 if non-transparent pixels overlap, 0 otherwise. 
-int def land_image_overlaps(LandImage *self, float x, float y, float angle,
-    LandImage *other, float x_, float y_, float angle_):
+int def land_image_overlaps(LandImage *self, float x, y, angle, flipped,
+    LandImage *other, float x_, y_, angle_, flipped_):
     if not self->mask: return 0
     if not other->mask: return 0
 
@@ -258,8 +280,8 @@ int def land_image_overlaps(LandImage *self, float x, float y, float angle,
     int w_ = other->mask->w
     int h_ = other->mask->h
 
-    int i = mask_get_rotation_frame(self->mask, angle)
-    int i_ = mask_get_rotation_frame(other->mask, angle_)
+    int i = mask_get_rotation_frame(self->mask, angle, flipped)
+    int i_ = mask_get_rotation_frame(other->mask, angle_, flipped_)
     
     int mx = self->mask->x - self->x
     int my = self->mask->y - self->y

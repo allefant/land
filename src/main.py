@@ -10,7 +10,7 @@ class LandParameters:
 
 static import allegro5/a5_main
 
-static bool active
+static bool land_active
 global bool _land_quit
 static LandParameters *parameters
 static bool x_clicked
@@ -20,15 +20,15 @@ global bool _land_synchronized
 static bool _maximize_fps
 
 static def land_exit():
-    if not active: return
-    active = False
+    if not land_active: return
+    land_active = False
     land_free(parameters)
     land_log_message("land_exit\n")
 
 def land_init():
     """Initialize Land. This must be called before anything else."""
-    if active: return
-    active = True
+    if land_active: return
+    land_active = True
 
     land_log_message("land_init\n")
     land_alloc(parameters)

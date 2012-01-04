@@ -65,3 +65,7 @@ void *def land_stream_buffer(LandStream *self):
 
 def land_stream_fill(LandStream *self):
     platform_stream_fill(self)
+
+def land_stream_music(LandStream *self, char const *filename):
+    platform_stream_music(self, filename)
+

@@ -155,7 +155,27 @@ def land_image_auto_crop(LandImage *self):
     This will optimize an image by cropping away any completely transparent
     borders it may have.
     """
-    assert(0)
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+    unsigned char *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba)
+    int mini = w
+    int maxi = -1
+    int minj = h
+    int maxj = -1
+    for int j = 0 while j < h with j++:
+        uint32_t *row = (void *)(rgba + j * w * 4)
+        for int i = 0 while i < w with i++:
+            if row[i] & 0xff000000:
+                if i < mini: mini = i
+                if i > maxi: maxi = i
+                if j < minj: minj = j
+                if j > maxj: maxj = j
+    land_free(rgba)
+    self->l = mini
+    self->t = minj
+    self->r = w - 1 - maxi
+    self->b = h - 1 - maxj
 
 LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     """
@@ -397,14 +417,14 @@ LandArray *def land_load_images_cb(char const *pattern,
 static def defcb(LandImage *image, void *p):
     int *data = p
     if data[0]: land_image_center(image)
-    if data[1]: land_image_optimize(image)
+    if data[1]: land_image_auto_crop(image)
 
-LandArray *def land_load_images(char const *pattern, int center, int optimize):
+LandArray *def land_load_images(char const *pattern, int center, int auto_crop):
     """
     Load all images matching the file name pattern, and create an array
     referencing them all.
     """
-    int data[2] = {center, optimize}
+    int data[2] = {center, auto_crop}
     return land_load_images_cb(pattern, defcb, data)
 
 LandImage *def land_image_sub(LandImage *parent, float x, float y, float w, float h):
@@ -425,6 +445,8 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
             x = offset_x + i * (grid_w + x_gap)
             y = offset_y + j * (grid_h + y_gap)
             LandImage *sub = land_image_sub(sheet, x, y, grid_w, grid_h)
+            if auto_crop:
+                land_image_auto_crop(sub)
             land_array_add_data(&array, sub)
 
     if _cb: _cb(filename, sheet)
@@ -469,6 +491,9 @@ def land_image_draw_scaled(LandImage *self, float x, float y, float sx, float sy
 
 def land_image_draw_rotated(LandImage *self, float x, float y, float a):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, 1, 1, 1, 1)
+
+def land_image_draw_rotated_flipped(LandImage *self, float x, float y, float a):
+    land_image_draw_scaled_rotated_tinted_flipped(self, x, y, 1, 1, a, 1, 1, 1, 1, 1)
 
 def land_image_draw_rotated_tinted(LandImage *self, float x, y, a, r, g, b, alpha):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, a, r, g, b, alpha)
@@ -546,15 +571,6 @@ int def land_image_height(LandImage *self):
 int def land_image_width(LandImage *self):
     return self->width
 
-# Optimizes a bitmap to take only as little space as necesary, whilst
-# maintaining the correct offset.
-static LandImage *def optimize_bitmap(LandImage *self, int *x, int *y):
-    assert(0)
-    return None
-
-def land_image_optimize(LandImage *self):
-    assert(0)
-
 def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
     platform_image_get_rgba_data(self, rgba)
 
@@ -566,3 +582,60 @@ def land_image_save(LandImage *self, char const *filename):
 
 int def land_image_opengl_texture(LandImage *self):
     return platform_image_opengl_texture(self)
+
+# FIXME: for odd width
+def land_image_flip(LandImage *self):
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+    unsigned char *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba)
+    for int j = 0 while j < h with j++:
+        uint32_t *row = (void *)(rgba + j * w * 4)
+        for int i = 0 while i < w / 2 with i++:
+            uint32_t temp = row[i]
+            row[i] = row[w - 1 - i]
+            row[w - 1 - i] = temp
+
+    land_image_set_rgba_data(self, rgba)
+    land_free(rgba)
+   
+LandImage *def land_image_clone(LandImage *self):
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+    LandImage *clone = land_image_new(w, h)
+    unsigned char *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba)
+    land_image_set_rgba_data(clone, rgba)
+    land_free(rgba)
+    clone->x = self->x
+    clone->y = self->y
+    return clone
+
+def land_image_fade_to_color(LandImage *self):
+    int w = land_image_width(self)
+    int h = land_image_height(self)
+    unsigned char *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba)
+    
+    float fr, fg, fb, fa
+    land_get_color(&fr, &fg, &fb, &fa)
+    int red = fr * 255
+    int green = fg * 255
+    int blue = fb * 255
+    int alpha = fa * 255
+    
+    for int j = 0 while j < h with j++:
+        unsigned char *row = rgba + j * w * 4
+        for int i = 0 while i < w with i++:
+            int a = row[i * 4 + 3]
+            if not a: continue
+            int ar = row[i * 4 + 0]
+            int ag = row[i * 4 + 1]
+            int ab = row[i * 4 + 2]
+            row[i * 4 + 0] = (red * alpha * a + ar * (255 - alpha) * 255) / (255 * 255)
+            row[i * 4 + 1] = (green * alpha * a + ag * (255 - alpha) * 255) / (255 * 255)
+            row[i * 4 + 2] = (blue * alpha * a + ab * (255 - alpha) * 255) / (255 * 255)
+
+    land_image_set_rgba_data(self, rgba)
+    land_free(rgba)
+    

@@ -36,7 +36,8 @@ static def land_tilegrid_draw_cell(LandGrid *self, LandView *view,
     LandImage *image = LAND_TILE_GRID(self)->tiles[
         cell_y * self->x_cells + cell_x]
     if image:
-        land_image_draw(image, pixel_x, pixel_y)
+        land_image_draw_scaled(image, pixel_x, pixel_y,
+            view->scale_x, view->scale_y)
 
 
 # Convert a view position inside the grid into cell and pixel position. 

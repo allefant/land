@@ -1,8 +1,6 @@
 *** "ifndef" LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
-import global land/land, unistd
-
 *** "ifdef" WINDOWS
 static import global winsock2, ws2tcpip
 static macro SHUT_RDWR SD_BOTH
@@ -11,6 +9,10 @@ static import global stdlib, string, signal
 static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet
 static import global netdb
 *** "endif"
+
+import global unistd, stdbool
+static import global stdlib, stdio
+static import land.random, land.mem, land.log, land.main
 
 # Pseudocode for server:
 # 

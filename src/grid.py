@@ -89,6 +89,10 @@ class LandGrid:
     LandGridInterface *vt
     int x_cells, y_cells # in cells 
     int cell_w, cell_h # in pixels
+    
+    # A scale factor applied to cell_w/cell_h as well as the contents
+    # of the grid.
+    float scale_x, scale_y
     bool wrap
 
 static import grid, log, tilegrid, isometric, sprite, global math
@@ -125,6 +129,7 @@ def land_grid_initialize(LandGrid *self,
     self->y_cells = y_cells
     self->cell_w = cell_w
     self->cell_h = cell_h
+
 
 def land_grid_init():
     land_log_message("land_grid_init\n")

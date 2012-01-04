@@ -31,6 +31,8 @@ class LandSpriteType:
     void (*draw)(LandSprite *self, LandView *view)
     # Sprite-sprite collision detection.
     int (*overlap)(LandSprite *self, LandSprite *other)
+    # How to initialize sprites of this type
+    void (*initialize)(LandSprite *self)
     # How to destroy sprites of this type.
     void (*destroy)(LandSprite *self)
     
@@ -60,6 +62,7 @@ class LandSprite:
     LandSpriteType *type
     int tag
     bool shown
+    bool flipped
 
 # A sprite with a dynamic image, i.e. each sprite has its own image,
 # independent of its type.
@@ -138,40 +141,47 @@ static def dummy(LandSprite *self, LandView *view):
 
 
 static def dummy_image(LandSprite *self, LandView *view):
-    LandSpriteTypeImage *image = (LandSpriteTypeImage *)self->type
+    LandSpriteTypeImage *image = LAND_SPRITE_TYPE_IMAGE(self->type)
     float x = (self->x - view->scroll_x) * view->scale_x + view->x
     float y = (self->y - view->scroll_y) * view->scale_y + view->y
-    land_image_draw_scaled_rotated(LAND_SPRITE_TYPE_IMAGE(self->type)->image,
-        x, y, view->scale_x, view->scale_y, self->angle)
+    land_image_draw_scaled_rotated_tinted(image->image,
+        x, y, view->scale_x, view->scale_y, self->angle,
+        view->r, view->g, view->b, view->a)
     
     *** "ifdef" DEBUG_MASK
     if image->image->mask:
-        land_image_debug_pixelmask(image->image, x, y, 0)
+        land_image_debug_pixelmask(image->image, x, y, 0, False)
     *** "endif"
 
 
 static def dummy_animation(LandSprite *self, LandView *view):
 
     LandSpriteTypeAnimation *animation = (LandSpriteTypeAnimation *)self->type
-    if not animation->animation: return
     LandSpriteAnimated *animated = (LandSpriteAnimated *)self
     float x = (self->x - view->scroll_x) * view->scale_x + view->x
     float y = (self->y - view->scroll_y) * view->scale_y + view->y
-    LandImage *image = land_animation_get_frame(animation->animation,
-        animated->frame)
+    LandImage *image
+    if animation->animation:
+        image = land_animation_get_frame(animation->animation,
+            animated->frame)
+    else:
+        image = animation->super.image
     land_image_draw_scaled_rotated_tinted(image, x, y,
         animated->sx * view->scale_x, animated->sy * view->scale_y, self->angle,
-        animated->r, animated->g, animated->b, animated->a)
+        animated->r * view->r, animated->g * view->g, animated->b * view->b,
+        animated->a * view->b)
     # land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
     #    self->angle)
     *** "ifdef" DEBUG_MASK
     if animation->super.image->mask:
-        land_image_debug_pixelmask(animation->super.image, x, y, self->angle)
+        land_image_debug_pixelmask(animation->super.image, x, y,
+            self->angle, self->flipped)
     *** "endif"
 
 def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
     self->type = type
+    self->type->initialize(self)
 
 
 LandSprite *def land_sprite_new(LandSpriteType *type):
@@ -198,10 +208,10 @@ LandSprite *def land_sprite_with_image_new(LandSpriteType *type, LandImage
 def land_sprite_image_destroy(LandSprite *self):
     pass
 
+def land_sprite_image_initialize(LandSprite *super):
+    pass
 
-def land_sprite_animated_initialize(LandSprite *super,
-    LandSpriteType *type):
-    land_sprite_initialize(super, type)
+def land_sprite_animated_initialize(LandSprite *super):
     LandSpriteAnimated *self = (void *)super
     self->sx = 1
     self->sy = 1
@@ -211,12 +221,10 @@ def land_sprite_animated_initialize(LandSprite *super,
     self->a = 1
 
 LandSprite *def land_sprite_animated_new(LandSpriteType *type):
-
     LandSpriteAnimated *self
     land_alloc(self)
-    land_sprite_animated_initialize(LAND_SPRITE(self), type)
+    land_sprite_initialize(LAND_SPRITE(self), type)
     return LAND_SPRITE(self)
-
 
 def land_sprite_animated_destroy(LandSprite *sprite):
     pass
@@ -249,9 +257,9 @@ int def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other):
     test, and return 0 if they don't overlap.
     """
     return land_image_overlaps(LAND_SPRITE_TYPE_IMAGE(self->type)->image,
-    self->x, self->y, self->angle,
-    LAND_SPRITE_TYPE_IMAGE(other->type)->image,
-    other->x, other->y, other->angle)
+        self->x, self->y, self->angle, self->flipped,
+        LAND_SPRITE_TYPE_IMAGE(other->type)->image,
+        other->x, other->y, other->angle, other->flipped)
 
 def land_sprite_grid_ysorted(LandGrid *self):
     LandSpritesGrid *sg = (void *)self
@@ -661,6 +669,7 @@ def land_spritetype_image_initialize(LandSpriteType *super,
     super->draw = dummy_image
     super->overlap = land_sprite_overlap_pixelperfect
     super->destroy = land_sprite_image_destroy
+    super->initialize = land_sprite_image_initialize
     if image:
         super->x = image->x - image->l
         super->y = image->y - image->t
@@ -697,6 +706,7 @@ def land_spritetype_animation_initialize(LandSpriteType *super,
     super->draw = dummy_animation
     super->destroy = land_sprite_animated_destroy
     super->destroy_type = land_spritetype_animation_destroy
+    super->initialize = land_sprite_animated_initialize
     self->animation = animation
     land_free(super->name)
     super->name = land_strdup("animation")
@@ -705,8 +715,12 @@ LandSpriteType *def land_spritetype_animation_new(
     LandAnimation *animation, LandImage *image, bool mask, int n):
     """
     Create a new animation sprite type with the given animation. The
-    image is used for collision detection.  If no image is given, the
+    image is used for collision detection. If no image is given, the
     first frame of the animation is used instead.
+    
+    If a mask is request n is the number of rotations. A negative n
+    means two variants are made for each rotation (one flipped
+    horizontally).
     """
     LandSpriteTypeAnimation *self
     land_alloc(self)

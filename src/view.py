@@ -2,10 +2,11 @@ import grid, array
 
 class LandView:
     # position of upper left corner inside the map, independent of scaling.
-    float scroll_x, scroll_y;
+    float scroll_x, scroll_y
     float scale_x, scale_y
     # (origin of view relative to origin of map) 
-    int x, y, w, h; # screen area 
+    int x, y, w, h # screen area
+    float r, g, b, a # give a tint to the view
 
 static import mem, display
 
@@ -21,6 +22,10 @@ LandView *def land_view_new(int x, int y, int w, int h):
     self->h = h
     self->scale_x = 1
     self->scale_y = 1
+    self->r = 1
+    self->g = 1
+    self->b = 1
+    self->a = 1
     return self
 
 def land_view_destroy(LandView *self):
