@@ -144,13 +144,14 @@ static def dummy_image(LandSprite *self, LandView *view):
     LandSpriteTypeImage *image = LAND_SPRITE_TYPE_IMAGE(self->type)
     float x = (self->x - view->scroll_x) * view->scale_x + view->x
     float y = (self->y - view->scroll_y) * view->scale_y + view->y
-    land_image_draw_scaled_rotated_tinted(image->image,
+
+    land_image_draw_scaled_rotated_tinted_flipped(image->image,
         x, y, view->scale_x, view->scale_y, self->angle,
-        view->r, view->g, view->b, view->a)
+        view->r, view->g, view->b, view->a, self->flipped)
     
     *** "ifdef" DEBUG_MASK
     if image->image->mask:
-        land_image_debug_pixelmask(image->image, x, y, 0, False)
+        land_image_debug_pixelmask(image->image, x, y, self->angle, self->flipped)
     *** "endif"
 
 
@@ -662,7 +663,7 @@ LandSpriteTypeWithImage *def land_spritetype_with_image_new():
 
 
 def land_spritetype_image_initialize(LandSpriteType *super,
-    LandImage *image, bool mask):
+    LandImage *image, bool mask, int n):
         
     LandSpriteTypeImage *self = (void *)super
 
@@ -682,15 +683,16 @@ def land_spritetype_image_initialize(LandSpriteType *super,
 
     # TODO: Ok, so we automatically create a mask here.. but is this wanted?
     if image and mask and not image->mask:
-        land_image_create_pixelmasks(image, 1, 128)
+        land_image_create_pixelmasks(image, n, 128)
 
 # Create a new image sprite type with the given image. The source clipping of
 # the image is honored.
-LandSpriteType *def land_spritetype_image_new(LandImage *image, bool mask):
+LandSpriteType *def land_spritetype_image_new(LandImage *image, bool mask,
+    int n):
 
     LandSpriteTypeImage *self
     land_alloc(self)
-    land_spritetype_image_initialize((void *)self, image, mask)
+    land_spritetype_image_initialize((void *)self, image, mask, n)
     return LAND_SPRITE_TYPE(self)
 
 def land_spritetype_animation_initialize(LandSpriteType *super,
@@ -700,7 +702,7 @@ def land_spritetype_animation_initialize(LandSpriteType *super,
     if not image and animation:
         image = land_animation_get_frame(animation, 0)
 
-    land_spritetype_image_initialize((void *)self, image, False)
+    land_spritetype_image_initialize((void *)self, image, False, 0)
     if image and mask:
         land_image_create_pixelmasks(image, n, 128)
     super->draw = dummy_animation

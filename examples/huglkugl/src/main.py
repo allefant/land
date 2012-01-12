@@ -19,7 +19,7 @@ Game game
 LandSprite *sprites[100]
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 10)
+    land_font_load("../../data/Muli-Regular.ttf", 12)
 
     game.map = land_map_new()
     game.back_layer = land_layer_new()
@@ -38,8 +38,8 @@ static def game_init(LandRunner *self):
     platform_image = land_image_load("../../data/platform1.png")
     land_image_center(platform_image)
 
-    player_type = land_spritetype_image_new(player_image, True)
-    platform_type = land_spritetype_image_new(platform_image, True)
+    player_type = land_spritetype_image_new(player_image, True, -1)
+    platform_type = land_spritetype_image_new(platform_image, True, 1)
 
     sprites[0] = land_sprite_new(player_type)
     land_sprite_place_into_grid(sprites[0], game.front_grid, 0, 0)
@@ -60,6 +60,9 @@ static def game_tick(LandRunner *self):
     if land_key(LandKeyRight): kx = 1
     if land_key(LandKeyUp): ky = -1
     if land_key(LandKeyDown): ky = 1
+    
+    if kx == -1: sprites[0]->flipped = True
+    if kx == 1: sprites[0]->flipped = False
 
     land_sprite_move(sprites[0], game.front_grid, kx * 3, ky * 3)
 

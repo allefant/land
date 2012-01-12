@@ -80,6 +80,10 @@ def platform_display_set():
     int monw = info.x2 - info.x1
     int monh = info.y2 - info.y1
     
+    if super->flags & LAND_RESIZE:
+        if super->w > monw: super->w = monw
+        if super->h > monh: super->h = monh
+    
     if super->w == monw and super->h == monh:
         f |= ALLEGRO_FULLSCREEN_WINDOW
 
