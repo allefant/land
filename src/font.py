@@ -357,3 +357,9 @@ def land_print_lines(LandArray *lines, int alignment):
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
         land_print_string(s, 1, alignment)
+
+LandFont *def land_font_from_image(LandImage *image, int n_ranges,
+        int *ranges):
+    LandFont *self = platform_font_from_image(image, n_ranges, ranges)
+    land_font_state->font = self
+    return self

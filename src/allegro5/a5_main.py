@@ -20,7 +20,6 @@ def platform_init():
     al_install_keyboard()
     al_install_mouse()
     al_init_primitives_addon()
-    al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
 
 static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 0, \

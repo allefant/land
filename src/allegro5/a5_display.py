@@ -32,6 +32,24 @@ static macro SELF:
     LandDisplay *super = &self->super
     (void)super
 
+def platform_display_desktop_size(int *w, *h):
+    ALLEGRO_MONITOR_INFO info;
+    al_get_monitor_info(0, &info)
+    *w = info.x2 - info.x1
+    *h = info.y2 - info.y1
+
+def platform_display_title(char const *title):
+    SELF
+    al_set_window_title(self->a5, title)
+
+def platform_display_move(int x, y):
+    SELF
+    al_set_window_position(self->a5, x, y)
+
+def platform_display_resize(int w, h):
+    SELF
+    al_resize_display(self->a5, w, h)
+
 static def check_blending_and_transform():
     SELF
 
@@ -72,6 +90,9 @@ def platform_display_set():
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
     if super->flags & LAND_DEPTH:
         al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
+    
+    if super->flags & LAND_ANTIALIAS:
+        al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
 
     ALLEGRO_MONITOR_INFO info;
     al_get_monitor_info(0, &info);

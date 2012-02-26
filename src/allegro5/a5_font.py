@@ -27,6 +27,18 @@ LandFont *def platform_font_load(char const *filename, float size):
         super->size = al_get_font_line_height(self->a5)
     return super
 
+LandFont *def platform_font_from_image(LandImage *image, int n_ranges,
+    int *ranges):
+    LandFontPlatform *self
+    LandImagePlatform *i = (void *)image
+    land_alloc(self)
+
+    self->a5 = al_grab_font_from_bitmap(i->a5, n_ranges, ranges);
+    LandFont *super = (void *)self
+    if self->a5:
+        super->size = al_get_font_line_height(self->a5)
+    return super
+
 def platform_font_print(LandFontState *lfs,
     char const *str, int alignment):
     LandFont *super = lfs->font
