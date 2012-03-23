@@ -140,9 +140,9 @@ def land_widget_container_draw(LandWidget *base):
     for  while item with item = item->next:
         LandWidget *child = item->data
         if child->hidden: continue
-        if not base->dont_clip:
+        if not base->dont_clip and not child->no_clip_check:
             if (child->box.x <= cr and child->box.x + child->box.w >= cl and
-                child->box.y <= cb and child->box.y + child->box.h >= ct):
+                    child->box.y <= cb and child->box.y + child->box.h >= ct):
                 land_widget_draw(child)
 
         else:

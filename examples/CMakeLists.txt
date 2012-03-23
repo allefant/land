@@ -13,7 +13,7 @@ link_directories(/home/elias/prog/allegro/install/lib)
 #
 
 set(example_exes)
-file(GLOB examples RELATIVE ${CMAKE_SOURCE_DIR}/examples */src)
+file(GLOB examples RELATIVE ${CMAKE_SOURCE_DIR}/examples */src RELATIVE ${CMAKE_SOURCE_DIR}/examples */*/src)
 foreach(exsrc ${examples})
     get_filename_component(ex ${exsrc} PATH)
     
@@ -57,15 +57,17 @@ foreach(exsrc ${examples})
     if (MEMLOG)
         set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
     endif ()
+    
+    string (REGEX REPLACE "widget/" "" exname ${ex})
 
     if (STATIC)
         if (DEBUG)
-            add_executable(${ex}-static-debug ${example_cfiles})
-            set_target_properties(${ex}-static-debug
+            add_executable(${exname}-static-debug ${example_cfiles})
+            set_target_properties(${exname}-static-debug
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 )
-            target_link_libraries(${ex}-static-debug
+            target_link_libraries(${exname}-static-debug
                 land-static-debug
                 allegro-debug-static-${AV}
                 a5_font-debug-static-${AV}
@@ -84,13 +86,13 @@ foreach(exsrc ${examples})
                 )
         endif (DEBUG)
         if (PROFILE)
-            add_executable(${ex}-static-profile ${example_cfiles})
-            set_target_properties(${ex}-static-profile
+            add_executable(${exname}-static-profile ${example_cfiles})
+            set_target_properties(${exname}-static-profile
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
                 LINK_FLAGS -p
                 )
-            target_link_libraries(${ex}-static-profile
+            target_link_libraries(${exname}-static-profile
                 land-static-profile
                 allegro-profile-static-${AV}
                 a5_font-profile-static-${AV}
@@ -109,12 +111,12 @@ foreach(exsrc ${examples})
                 )
         endif (PROFILE)
         if (RELEASE)
-            add_executable(${ex}-static ${example_cfiles})
-            set_target_properties(${ex}-static
+            add_executable(${exname}-static ${example_cfiles})
+            set_target_properties(${exname}-static
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
-            target_link_libraries(${ex}-static
+            target_link_libraries(${exname}-static
                 land-static
 
                 alleg-4.3.11 alleg_unsharable agl
@@ -126,15 +128,15 @@ foreach(exsrc ${examples})
     if (SHARED)
         set(AD -debug)
         if (DEBUG)
-            add_executable(${ex}-debug ${example_cfiles})
+            add_executable(${exname}-debug ${example_cfiles})
             
-            list(APPEND example_exes ${ex}-debug)
+            list(APPEND example_exes ${exname}-debug)
             
-            set_target_properties(${ex}-debug
+            set_target_properties(${exname}-debug
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 )
-            target_link_libraries(${ex}-debug
+            target_link_libraries(${exname}-debug
                 land-debug
                 allegro${AD}
                 allegro_font${AD}
@@ -148,9 +150,9 @@ foreach(exsrc ${examples})
                 )
         endif (DEBUG)
         if (RELEASE)
-            add_executable(${ex} ${example_cfiles})
-            list(APPEND example_exes ${ex})
-            set_target_properties(${ex}
+            add_executable(${exname} ${example_cfiles})
+            list(APPEND example_exes ${exname})
+            set_target_properties(${exname}
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )

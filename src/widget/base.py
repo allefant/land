@@ -81,7 +81,7 @@ and leave the user to deal with possible problems like circular references.
 
 In the normal case, it works like this: You create a widget, and have to
 pass along a parent widget to the constructor. Now, the parent will hold a
-reference to the new window. There is no reference from the child to he
+reference to the new widget. There is no reference from the child to the
 parent, despite the parent field referencing the parent. This is done to
 avoid complications with cyclic references. If your own widgets contain
 cyclic references in another way, you should understand how the reference
@@ -148,14 +148,14 @@ either is from each other.
 
 Simple rule here would be: The watchdog only ever should watch a sibling or
 unrelated widget, never a parent. Of course, in practice, widgets could get
-reparented and whatever, so things like this need watching out. And there
+reparented and whatever, so things like this need watching out for. And there
 are many other cases. Also, you never have to use the reference counting. You
 just need to understand that Land provides no way to directly and forcefully
 delete one of its widgets, and why it is like that.
 """
 import land/hash, gul
 
-# A widget ID must contain the buts of the parent.
+# A widget ID must contain the bits of the parent.
 macro LAND_WIDGET_ID_BASE           0x00000001 # no visual, no layout
 macro LAND_WIDGET_ID_CONTAINER      0x00000011 # no visual, no layout
 macro LAND_WIDGET_ID_SCROLLING      0x00000111 # visual, layout
@@ -256,6 +256,8 @@ class LandWidget:
     unsigned int send_to_top with 1 # move this widget to top in next tick
     unsigned int want_focus with 1 # give keyboard focus to this widget
     unsigned int dont_clip with 1 # children can draw outside this widget
+    unsigned int no_clip_check with 1 # even when the parent does use clipping,
+        # do not skip drawing of this child if it is outside the clip bounds
     unsigned int no_decoration with 1 # draw nothing except contents
     unsigned int only_border with 1 # draw only a border, for performance reasons
     # Widget is not displayed at all, e.g. hidden scrollbar.

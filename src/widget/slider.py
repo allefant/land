@@ -26,7 +26,7 @@ LandWidgetInterface *land_widget_slider_interface
 LandWidgetInterface *land_widget_handle_horizontal_interface
 
 LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
-    int vertical, void (*update)(LandWidget *), int x, y, w, h):
+    bool vertical, void (*update)(LandWidget *), int x, y, w, h):
     LandWidgetHandle *self
     land_alloc(self)
     LandWidget *super = (void *)self
@@ -40,11 +40,18 @@ LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
     self->maxval = maxval
     self->update = update
     self->value = minval
+    super->no_clip_check = 1
+    
+    self->super.box.w = self->super.box.min_width
+    self->super.box.h = self->super.box.min_height
 
     return super
 
 LandWidget *def land_widget_slider_new(LandWidget *parent, float minval, maxval,
-    int vertical, void (*update)(LandWidget *), int x, y, w, h):
+        bool vertical, void (*update)(LandWidget *), int x, y, w, h):
+    """
+    vertical - whether the slider is vertical
+    """
     LandWidgetSlider *self
     land_widget_slider_interface_initialize()
     land_alloc(self)
@@ -84,6 +91,7 @@ def land_widget_handle_update(LandWidget *super, int set):
     minpos = super->parent->box.x + super->parent->element->il
     maxpos = super->parent->box.x + super->parent->box.w - super->parent->element->ir
     maxpos -= super->box.w
+
     if set:
         self->value = self->minval + (super->box.x - minpos) * n /\
             (maxpos - minpos)
