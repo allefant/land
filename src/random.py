@@ -169,10 +169,14 @@ static macro MAX_NUMBER 4294967295U
 def land_seed(int seed):
     init_genrand(&default_state, seed)
 
-float def land_rnd(float min, float max):
+double def land_rnd(double min, double max):
+    """
+    Random value in the half-open interval [min, max[, that is min is inclusive
+    but max is exclusive.
+    """
     if min >= max: return min
     return min + (
-        (float)genrand_int32(&default_state) / MAX_NUMBER) * (max - min)
+        (double)genrand_int32(&default_state) / MAX_NUMBER) * (max - min)
 
 int def land_rand(int min, int max):
     if min >= max: return min

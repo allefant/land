@@ -75,14 +75,28 @@ def land_buffer_del(LandBuffer *self):
     if self->buffer: land_free(self->buffer)
     land_free(self)
 
-def land_buffer_add(LandBuffer *self, char const *buffer, int n):
+def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
     self->n += n
     if self->n > self->size:
         if not self->size: self->size = 1
         while self->size < self->n:
             self->size *= 2
         self->buffer = land_realloc(self->buffer, self->size)
-    memcpy(self->buffer + self->n - n, buffer, n)
+    memmove(self->buffer + pos + n, self->buffer + pos, self->n - n - pos)
+    memcpy(self->buffer + pos, buffer, n)
+    
+def land_buffer_add(LandBuffer *self, char const *b, int n):
+    land_buffer_insert(self, self->n, b, n)
+
+def land_buffer_addf(LandBuffer *self, char const *format, ...):
+    va_list args
+    va_start(args, format)
+    int n = vsnprintf(None, 0, format, args)
+    if n < 0: n = 1023
+    char s[n + 1]
+    vsnprintf(s, n + 1, format, args)
+    land_buffer_add(self, s, n)
+    va_end(args)
 
 def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, i & 255)

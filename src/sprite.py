@@ -182,7 +182,8 @@ static def dummy_animation(LandSprite *self, LandView *view):
 def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
     self->type = type
-    self->type->initialize(self)
+    if self->type->initialize:
+        self->type->initialize(self)
 
 
 LandSprite *def land_sprite_new(LandSpriteType *type):

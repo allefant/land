@@ -29,6 +29,9 @@ LandSound *def land_sound_new(int samples, float frequency, int bits,
 void *def land_sound_sample_pointer(LandSound *self):
     return platform_sound_sample_pointer(self)
 
+int def land_sound_length(LandSound *self):
+    return platform_sound_length(self)
+
 def land_sound_play(LandSound *s, float volume, pan, frequency):
     if not s: return
     platform_sound_play(s, volume, pan, frequency, false)

@@ -51,6 +51,10 @@ void *def platform_sound_sample_pointer(LandSound *super):
     LandSoundPlatform *self = (void *)super
     return al_get_sample_data(self->a5)
 
+int def platform_sound_length(LandSound *super):
+    LandSoundPlatform *self = (void *)super
+    return al_get_sample_length(self->a5)
+
 def platform_sound_play(LandSound *s, float volume, pan, frequency,
     bool loop):
     LandSoundPlatform *self = (void *)s

@@ -126,7 +126,7 @@ static def game_draw(LandRunner *self):
 def my_main():
     land_init()
     land_set_display_parameters(640, 480,
-        LAND_WINDOWED | LAND_OPENGL | LAND_MULTISAMPLE)
+        LAND_WINDOWED | LAND_OPENGL | LAND_MULTISAMPLE | LAND_ANTIALIAS)
     LandRunner *game_runner = land_runner_new("font example",
         game_init, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)

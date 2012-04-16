@@ -68,7 +68,7 @@ else ()
     set(CFLAGS "${CFLAGS} -DLINUX")
     
     # FIXME: Should be auto-detected or specified by user instead.
-    include_directories(/home/elias/prog/allegro/install/include)
+    #include_directories(/home/elias/prog/allegro/install/include)
 endif ()
 
 if (STATIC)
