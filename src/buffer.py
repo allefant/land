@@ -92,11 +92,13 @@ def land_buffer_addf(LandBuffer *self, char const *format, ...):
     va_list args
     va_start(args, format)
     int n = vsnprintf(None, 0, format, args)
+    va_end(args)
     if n < 0: n = 1023
     char s[n + 1]
+    va_start(args, format)
     vsnprintf(s, n + 1, format, args)
-    land_buffer_add(self, s, n)
     va_end(args)
+    land_buffer_add(self, s, n)
 
 def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, i & 255)
