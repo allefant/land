@@ -10,8 +10,8 @@ macro LAND_WIDGET_LIST(widget) ((LandWidgetList *) land_widget_check(widget,
 
 static import land/land, button
 
-LandWidgetInterface *land_widget_list_interface
-LandWidgetInterface *land_widget_listitem_interface
+static LandWidgetInterface *land_widget_list_interface
+static LandWidgetInterface *land_widget_listitem_interface
 
 # Call this before adding *many* items to the list, then call
 # land_widget_list_update when done. This can speed things up, since there is

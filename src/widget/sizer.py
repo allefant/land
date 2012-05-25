@@ -12,7 +12,7 @@ class LandWidgetSizer:
 
 macro LAND_WIDGET_SIZER(widget) ((LandWidgetSizer *)widget)
 
-LandWidgetInterface *land_widget_sizer_interface[8]
+static LandWidgetInterface *land_widget_sizer_interface[8]
 
 def land_widget_sizer_draw(LandWidget *widget):
     land_widget_theme_draw(widget)

@@ -27,8 +27,8 @@ macro LAND_WIDGET_SPINBUTTON(widget) ((LandWidgetSpinButton *)
 
 static import land/land
 
-LandWidgetInterface *land_widget_spin_interface
-LandWidgetInterface *land_widget_spinbutton_interface
+static LandWidgetInterface *land_widget_spin_interface
+static LandWidgetInterface *land_widget_spinbutton_interface
 
 # FIXME: should come from theme
 static LandImage *image_up

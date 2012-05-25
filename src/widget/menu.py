@@ -20,10 +20,10 @@ class LandWidgetMenuItem:
 
 static import theme, menu
 
-LandWidgetInterface *land_widget_menu_interface
-LandWidgetInterface *land_widget_menubutton_interface
-LandWidgetInterface *land_widget_menubar_interface
-LandWidgetInterface *land_widget_menuitem_interface
+static LandWidgetInterface *land_widget_menu_interface
+static LandWidgetInterface *land_widget_menubutton_interface
+static LandWidgetInterface *land_widget_menubar_interface
+static LandWidgetInterface *land_widget_menuitem_interface
 
 macro LAND_WIDGET_MENU(widget) ((LandWidgetMenu *) land_widget_check(widget, LAND_WIDGET_ID_MENU, __FILE__, __LINE__))
 macro LAND_WIDGET_MENUBUTTON(widget) ((LandWidgetMenuButton *) land_widget_check(widget, LAND_WIDGET_ID_MENUBUTTON, __FILE__, __LINE__))

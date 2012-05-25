@@ -1,4 +1,4 @@
-import array, log, pixelmask, util, buffer
+import array, log, pixelmask, file, util, buffer
 static import global assert
 
 macro LAND_SUBIMAGE 1
@@ -389,7 +389,7 @@ LandArray *def land_load_images_cb(char const *pattern,
             &filenames)
 
     if not count:
-        filenames = land_filelist(dir, filter, (void *)pattern)
+        filenames = land_filelist(dir, filter, LAND_FULL_PATH, (void *)pattern)
         if filenames:
             count = filenames->count
         else:

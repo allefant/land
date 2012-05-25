@@ -13,14 +13,14 @@ macro LAND_WIDGET_BOOK(widget) ((LandWidgetBook *) land_widget_check(widget,
 
 static import land/land, hbox
 
-LandWidgetInterface *land_widget_book_interface
-LandWidgetInterface *land_widget_tab_interface
-LandWidgetInterface *land_widget_tab_l_interface
-LandWidgetInterface *land_widget_tab_m_interface
-LandWidgetInterface *land_widget_tab_r_interface
-LandWidgetInterface *land_widget_tabbar_interface
-LandWidgetInterface *land_widget_bookpage_interface
-LandWidgetInterface *land_widget_bookpage_tabless_interface
+static LandWidgetInterface *land_widget_book_interface
+static LandWidgetInterface *land_widget_tab_interface
+static LandWidgetInterface *land_widget_tab_l_interface
+static LandWidgetInterface *land_widget_tab_m_interface
+static LandWidgetInterface *land_widget_tab_r_interface
+static LandWidgetInterface *land_widget_tabbar_interface
+static LandWidgetInterface *land_widget_bookpage_interface
+static LandWidgetInterface *land_widget_bookpage_tabless_interface
 
 def land_widget_book_initialize(LandWidget *base,
     LandWidget *parent, int x, int y, int w, int h):

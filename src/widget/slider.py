@@ -22,8 +22,8 @@ macro LAND_WIDGET_SLIDER(widget) ((LandWidgetSlider *) land_widget_check(widget,
 macro LAND_WIDGET_HANDLE(widget) ((LandWidgetHandle *) land_widget_check(widget,
     LAND_WIDGET_ID_HANDLE, __FILE__, __LINE__))
 
-LandWidgetInterface *land_widget_slider_interface
-LandWidgetInterface *land_widget_handle_horizontal_interface
+static LandWidgetInterface *land_widget_slider_interface
+static LandWidgetInterface *land_widget_handle_horizontal_interface
 
 LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
     bool vertical, void (*update)(LandWidget *), int x, y, w, h):

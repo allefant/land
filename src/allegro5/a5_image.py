@@ -34,7 +34,7 @@ def platform_image_empty(LandImage *super):
     for int i = 0 while i < super->height with i++:
         memset(lock->data + lock->pitch * i, 0, rowbytes)
     al_unlock_bitmap(self->a5)
-    
+
 
 LandImage *def platform_image_load(char const *filename, bool mem):
     LandImage *super = land_display_new_image()
@@ -49,7 +49,7 @@ LandImage *def platform_image_load(char const *filename, bool mem):
         bmp = al_load_bitmap(filename)
     else:
         bmp = al_load_bitmap(filename)
-    if bmp:        
+    if bmp:
         LandImagePlatform *self = (void *)super
         self->a5 = bmp
         super->width = al_get_bitmap_width(bmp)
@@ -87,7 +87,14 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float angle, float r, float g, float b, float alpha, int flip):
     SELF
     LandDisplay *d = _land_active_display
+    LandDisplayPlatform *da5 = (void *)_land_active_display
     ALLEGRO_STATE state
+
+    if d->matrix_modified:
+        memcpy(da5->transform.m, d->matrix, sizeof(d->matrix))
+        al_use_transform(&da5->transform)
+        d->matrix_modified = False
+
     bool restore = False
     if d->blend:
         if d->blend & LAND_BLEND_SOLID:
@@ -102,7 +109,7 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     int flags = 0
     if flip == 1 or flip == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
     if flip == 2 or flip == 3: flags |= ALLEGRO_FLIP_VERTICAL
-    
+
     ALLEGRO_COLOR tint = al_map_rgba_f(r, g, b, alpha)
 
     al_draw_tinted_scaled_rotated_bitmap_region(self->a5,
@@ -137,10 +144,10 @@ def platform_set_image_display(LandImage *super):
     d->clip_y1 = 0
     d->clip_x2 = super->width
     d->clip_y2 = super->height
-    
+
     previous = al_get_target_bitmap()
     al_set_target_bitmap(self->a5)
-    
+
 
 def platform_unset_image_display():
     _land_active_display = global_previous_display

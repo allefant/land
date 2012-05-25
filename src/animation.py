@@ -30,6 +30,16 @@ def land_animation_destroy(LandAnimation *self):
 LandImage *def land_animation_get_frame(LandAnimation *self, int i):
     return land_array_get_nth(self->frames, i)
 
+int def land_animation_length(LandAnimation *self):
+    if self->frames:
+        return land_array_count(self->frames)
+    return 0
+
+def land_animation_add_frame(LandAnimation *self, LandImage *frame):
+    if not self->frames:
+        self->frames = land_array_new()
+    land_array_add(self->frames, frame)
+
 LandAnimation *def land_animation_load_cb(char const *pattern,
     void (*cb)(LandImage *image, void *data), void *data):
     """

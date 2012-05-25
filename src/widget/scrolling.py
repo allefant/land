@@ -30,9 +30,9 @@ macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
 static import box, scrollbar
 
 global LandWidgetInterface *land_widget_scrolling_interface
-LandWidgetInterface *land_widget_scrolling_contents_container_interface
-LandWidgetInterface *land_widget_scrolling_vertical_container_interface
-LandWidgetInterface *land_widget_scrolling_horizontal_container_interface
+static LandWidgetInterface *land_widget_scrolling_contents_container_interface
+static LandWidgetInterface *land_widget_scrolling_vertical_container_interface
+static LandWidgetInterface *land_widget_scrolling_horizontal_container_interface
 
 LandWidget *def land_widget_scrolling_get_container(LandWidget *base):
     LandList *children = LAND_WIDGET_CONTAINER(base)->children

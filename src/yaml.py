@@ -1,12 +1,14 @@
 import land.array, land.hash, land.mem
 static import global yaml
 
+union LandYamlDataType:
+    char *scalar
+    LandArray *sequence
+    LandHash *mapping
+
 class LandYAMLEntry:
     int type # 0=scalar, 1=sequence, 2=mapping
-    union data:
-        char *scalar
-        LandArray *sequence
-        LandHash *mapping
+    LandYamlDataType data
 
 class LandYAML:
     LandYAMLEntry *root

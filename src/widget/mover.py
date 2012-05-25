@@ -9,7 +9,7 @@ macro LAND_WIDGET_MOVER(widget) ((LandWidgetMover *)widget)
 
 static import land/land
 
-LandWidgetInterface *land_widget_mover_interface = NULL
+static LandWidgetInterface *land_widget_mover_interface
 
 def land_widget_mover_mouse_tick(LandWidget *super):
     LandWidgetMover *self = LAND_WIDGET_MOVER(super)

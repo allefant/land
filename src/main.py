@@ -44,7 +44,7 @@ def land_init():
     int seed = time(NULL)
     land_seed(seed)
     land_log_message("Random seed is %d.\n", seed)
-    
+
     char cd[1024]
     if not getcwd(cd, sizeof cd):
         sprintf(cd, "<none>")
@@ -54,8 +54,8 @@ def land_init():
 
 def land_tick():
     land_display_tick()
-    land_mouse_tick()
     land_runner_tick_active()
+    land_mouse_tick()
     land_keyboard_tick()
     ticks++
     x_clicked = False
@@ -146,7 +146,7 @@ def land_mainloop():
     land_font_init()
     land_image_init()
     land_grid_init()
-    
+
     LandDisplay *display = land_display_new(parameters->w,
         parameters->h, parameters->flags)
 
@@ -165,10 +165,10 @@ def land_mainloop():
 
     land_log_message("Commencing operations.\n")
     platform_mainloop(parameters)
-    
+
     land_runner_switch_active(NULL)
     land_runner_destroy_all()
-    
+
     land_display_destroy(display)
 
     land_sound_exit()

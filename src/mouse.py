@@ -2,10 +2,9 @@ import global stdbool
 static import exception, land/allegro5/a5_main
 static import global assert
 
-static int _mx, _my, _mz, _mb
-static int mx, my, mz, omx, omy, omz
-static int mb, omb
-static int _buttons[5], buttons[5], obuttons[5]
+static int mx, my, mz, mb
+static int omx, omy, omz, omb
+static int buttons[5], obuttons[5], clicks[5]
 
 def land_mouse_init():
     land_show_mouse_cursor()
@@ -15,30 +14,28 @@ def land_mouse_tick():
     omy = my
     omz = mz
     omb = mb
-    mx = _mx
-    my = _my
-    mz = _mz
-    mb = _mb
-    
+
     for int i = 0 while i < 5 with i++:
         obuttons[i] = buttons[i]
-        buttons[i] = _buttons[i]
-        if _buttons[i] == 2: _buttons[i] = 0
+        if buttons[i] == 2: buttons[i] = 0
+        clicks[i] = 0
 
-def land_mouse_move_event(int mx, int my, int mz):
-    _mx = mx
-    _my = my
-    _mz = mz
+def land_mouse_move_event(int x, int y, int z):
+    mx = x
+    my = y
+    mz = z
 
 def land_mouse_button_down_event(int b):
     # FIXME: can lose fast clicks this way, should simply treat the
     # mouse buttons as additional keys in the keyboard module
-    _mb |= 1 << b
-    _buttons[b] |= 1 + 2
+    mb |= 1 << b
+    if not (buttons[b] & 1):
+        clicks[b]++
+    buttons[b] |= 1 + 2
 
 def land_mouse_button_up_event(int b):
-    _mb &= ~(1 << b)
-    _buttons[b] &= ~1
+    mb &= ~(1 << b)
+    buttons[b] &= ~1
 
 int def land_mouse_x():
     """Return the mouse X coordinate for the current tick."""
@@ -55,7 +52,7 @@ int def land_mouse_z():
 int def land_mouse_b():
     """Short for land_mouse_button."""
     return mb
-    
+
 int def land_mouse_button(int i):
     """Return the mouse button state for the current tick."""
     return buttons[i] & 1
@@ -76,7 +73,7 @@ int def land_mouse_delta_button(int i):
     return (buttons[i] & 1) ^ (obuttons[i] & 1)
 
 int def land_mouse_button_clicked(int i):
-    return buttons[i]
+    return clicks[i]
 
 def land_mouse_set_pos(int x, int y):
     platform_mouse_set_pos(x, y)

@@ -25,7 +25,7 @@ static import land/land
 # 
 static double land_widget_cursor_blink_rate = 2
 
-LandWidgetInterface *land_widget_edit_interface
+static LandWidgetInterface *land_widget_edit_interface
 
 static int def get_x_offset(LandWidget *base):
     int x = base->box.x + base->element->il
