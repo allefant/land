@@ -86,7 +86,7 @@ class LandSpritesGrid:
 
     int tag
 
-LandGridInterface *land_grid_vtable_sprites
+static LandGridInterface *land_grid_vtable_sprites
 
 LandGrid *def land_sprites_grid_new(int cell_w, cell_h, x_cells, y_cells):
 
@@ -544,7 +544,7 @@ static def grid_place(LandSprite *self, LandSpritesGrid *grid):
                 land_add_list_data(&grid->sprites[ty * grid->super.x_cells + tx],
                     self)
 
-def grid_unplace(LandSprite *self, LandSpritesGrid *grid):
+static def grid_unplace(LandSprite *self, LandSpritesGrid *grid):
     """
     Remove a sprite from a grid.
     """

@@ -299,7 +299,7 @@ macro LAND_WIDGET(widget) ((LandWidget *) land_widget_check(widget,
 static import layout, land/util
 
 global LandWidgetInterface *land_widget_base_interface
-LandArray *land_widget_interfaces
+static LandArray *land_widget_interfaces
 
 int def land_widget_is(LandWidget const *self, int id):
     """
@@ -446,7 +446,7 @@ def land_widget_create_interface(LandWidget *widget, char const *name):
 
 def land_widget_base_destroy(LandWidget *self):
     land_widget_remove_all_properties(self)
-    gul_box_deinitialize(&self->box)
+    _land_gul_box_deinitialize(&self->box)
     land_free(self)
 
 static def land_widget_really_destroy(LandWidget *self):

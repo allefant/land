@@ -8,7 +8,7 @@ static import view, display, log, mem
 
 macro LAND_TILE_GRID(_) ((LandTileGrid *)(_))
 
-LandGridInterface *land_grid_vtable_tilegrid
+static LandGridInterface *land_grid_vtable_tilegrid
 
 LandGrid *def land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells):
     LandTileGrid *self

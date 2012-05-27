@@ -67,10 +67,10 @@ def land_widget_layout_set_expanding(LandWidget *self, int x, int y):
 
 def land_widget_layout(LandWidget *self):
     if not self->no_layout:
-        gul_layout_updated(self)
+        _land_gul_layout_updated(self)
 
 def land_widget_layout_initialize(LandWidget *self, int x, y, w, h):
-    gul_box_initialize(&self->box)
+    _land_gul_box_initialize(&self->box)
     self->box.x = x
     self->box.y = y
     self->box.w = w

@@ -69,7 +69,7 @@ static import container, theme
 static import global stdio, stdlib, assert, string, stdarg
 static import land/log, land/mem
 
-int gul_debug;
+static int gul_debug;
 
 static macro D(_) if (gul_debug) _
 #static macro D(_) (void)0;
@@ -86,23 +86,13 @@ static def ERR(char const *format, ...):
 
     #printf("\n")
 
-def gul_box_initialize(LandLayoutBox *self):
+def _land_gul_box_initialize(LandLayoutBox *self):
     memset(self, 0, sizeof *self)
 
-LandLayoutBox *def gul_box_new():
-    LandLayoutBox *self = land_malloc(sizeof *self)
-
-    gul_box_initialize(self)
-    return self
-
-def gul_box_deinitialize(LandLayoutBox *self):
+def _land_gul_box_deinitialize(LandLayoutBox *self):
     if self->lookup_grid:
         land_free(self->lookup_grid)
         self->lookup_grid = None
-
-def gul_box_del(LandLayoutBox * self):
-    gul_box_deinitialize(self)
-    land_free(self)
 
 # Find box which contains the specified grid position. 
 #static LandLayoutBox *find_box_in_grid(LandLayoutBox *self, int col, int row)
@@ -461,7 +451,7 @@ static def gul_box_top_down(LandWidget *self):
                     gul_box_top_down(c)
 
 # Given a box, (recursively) fit its children into it.
-def gul_box_fit_children(LandWidget *self):
+static def gul_box_fit_children(LandWidget *self):
     D(printf("gul_box_fit_children %s[%p]\n", self->vt->name, self);)
 
     gul_box_bottom_up(self)
@@ -475,7 +465,7 @@ def gul_box_fit_children(LandWidget *self):
 
 # TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.
-def gul_layout_updated(LandWidget *self):
+def _land_gul_layout_updated(LandWidget *self):
     """
     This is used if the size of a widget may have changed and therefore its own
     as well as its parent's layout needs updating.
@@ -494,12 +484,12 @@ def gul_layout_updated(LandWidget *self):
     if self->parent and not (self->parent->box.flags & GUL_NO_LAYOUT):
         if self->no_layout_notify == 0:
             self->no_layout_notify = 1
-            gul_layout_updated(self->parent)
+            _land_gul_layout_updated(self->parent)
             self->no_layout_notify = 0
     else:
         gul_box_fit_children(self)
 
-def gul_layout_updated_during_layout(LandWidget *self):
+def _land_gul_layout_updated_during_layout(LandWidget *self):
     """
     FIXME: What the hell is this? Can't we do it the proper way?
     If widgets are added or removed in the middle of a layout algorithm run,

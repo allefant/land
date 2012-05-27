@@ -12,7 +12,7 @@ class LandDataFile:
 
 static import global string
 
-LandDataFile *_land_datafile
+global LandDataFile *_land_datafile
 
 static int def read32(FILE *f):
     unsigned int u = fgetc(f)
