@@ -1,6 +1,6 @@
 import land/land, base
 
-enum LandWidgetThemeFlags:
+static enum LandWidgetThemeFlags:
     TILE_H = 0
     TILE_V = 0
     STRETCH_H = 1
@@ -14,7 +14,7 @@ enum LandWidgetThemeFlags:
 class LandWidgetThemeElement:
     char *name
     LandImage *bmp
-    LandWidgetThemeFlags flags
+    int flags
     int bl, bt, br, bb # border to cut out of the image 
     int minw, minh
     LandWidget *anchor # for the ALIGNED modes 
@@ -74,7 +74,7 @@ static inline void def _masked_stretched_blit(LandImage *s,
     land_image_draw_scaled(s, dx - sx, dy - sy, (float)dw / w,
         (float)dh / h)
 
-enum COLUMN_TYPE:
+static enum COLUMN_TYPE:
     COLUMN_CENTER = 1
     COLUMN_STRETCH
     COLUMN_LEFT

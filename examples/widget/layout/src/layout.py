@@ -113,7 +113,6 @@ def panel_5():
     land_widget_layout_set_grid_position(box5, 1, 1)
 
 def init(LandRunner *self):
-    gul_debug = 0;
     font = land_font_load("../../data/galaxy.ttf", 12)
     theme = classic = land_widget_theme_new("../../data/classic.cfg")
     green = land_widget_theme_new("../../data/green.cfg")

@@ -86,7 +86,7 @@ static def tick(LandRunner *self):
         land_widget_scrolling_scroll(scrolling1, 0, 1)
 
     if land_key_pressed('u'):
-        gul_layout_updated(scrolling1)
+        _land_gul_layout_updated(scrolling1)
 
     if land_key_pressed('a'):
         land_widget_scrolling_autobars(scrolling1)
