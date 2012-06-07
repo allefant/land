@@ -2,7 +2,7 @@ import global stdio, stdint, stdbool
 import land/mem
 import allegro5/a5_file
 
-macro LAND_FULL_PATH 1
+enum: LAND_FULL_PATH = 1
 
 class LandFile:
     char *path

@@ -45,7 +45,7 @@ static import land.mem
 #
 
 # Period parameters 
-macro LAND_RANDOM_N 624
+enum: LAND_RANDOM_N = 624
 static macro N LAND_RANDOM_N
 static macro M 397
 static macro MATRIX_A 0x9908b0dfUL   # constant vector a 

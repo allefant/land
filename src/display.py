@@ -95,21 +95,50 @@ import global stdlib
 import list, image, log, mem, font
 static import global math
 
-macro LAND_WINDOWED 1
-macro LAND_FULLSCREEN 2
-macro LAND_OPENGL 4
-macro LAND_CLOSE_LINES 8
-macro LAND_ANTIALIAS 16
-macro LAND_STENCIL 32
-macro LAND_RESIZE 64
-macro LAND_MULTISAMPLE 128
-macro LAND_DEPTH 256
+enum:
+    LAND_WINDOWED = 1
+    LAND_FULLSCREEN = 2
+    LAND_OPENGL = 4
+    LAND_CLOSE_LINES = 8
+    LAND_ANTIALIAS = 16
+    LAND_STENCIL = 32
+    LAND_RESIZE = 64
+    LAND_MULTISAMPLE = 128
+    LAND_DEPTH = 256
 
-macro LAND_BLEND_SOLID 1
-macro LAND_BLEND_ADD 2
-macro LAND_BLEND_TINT 4
+enum:
+    LAND_BLEND_SOLID = 1
+    LAND_BLEND_ADD = 2
+    LAND_BLEND_TINT = 4
 
-macro LAND_MAX_CLIP_DEPTH 64
+enum: LAND_MAX_CLIP_DEPTH = 64
+
+enum:
+    LAND_NEVER
+    LAND_ALWAYS
+    LAND_LESS
+    LAND_EQUAL
+    LAND_LESS_EQUAL
+    LAND_GREATER
+    LAND_NOT_EQUAL
+    LAND_GREATER_EQUAL
+
+enum:
+    LAND_ALPHA_TEST
+    LAND_ALPHA_FUNCTION
+    LAND_ALPHA_VALUE
+    LAND_WRITE_MASK
+    LAND_DEPTH_TEST
+    LAND_DEPTH_FUNCTION
+
+enum:
+    LAND_RED_MASK = 1
+    LAND_GREEN_MASK = 2
+    LAND_BLUE_MASK = 4
+    LAND_ALPHA_MASK = 8
+    LAND_DEPTH_MASK = 16
+    LAND_RGB_MASK = 7
+    LAND_RGBA_MASK = 15  
 
 class LandDisplay:
     int w, h, flags
@@ -258,6 +287,10 @@ def land_clear(float r, float g, float b, float a):
     """
     LandDisplay *d = _land_active_display
     platform_display_clear(d, r, g, b, a)
+
+def land_clear_depth(float z):
+    LandDisplay *d = _land_active_display
+    platform_display_clear_depth(d, z)
 
 def land_color(float r, float g, float b, float a):
     """
@@ -532,3 +565,6 @@ def land_reset_transform():
     memcpy(m, i, sizeof i)
 
     _land_active_display->matrix_modified = True
+
+def land_render_state(int state, value):
+    platform_render_state(state, value)

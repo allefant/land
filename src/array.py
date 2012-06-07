@@ -4,6 +4,9 @@ class LandArray:
     int size
     void **data
 
+class LandArrayIterator:
+    int i
+
 static import mem
 
 *** "ifdef" LAND_MEMLOG
@@ -27,6 +30,17 @@ def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
     land_memory_add(self, "array", self->size, f, l)
 
 *** "endif"
+
+LandArrayIterator def LandArrayIterator_first(LandArray *a):
+    LandArrayIterator i = {0}
+    return i
+
+void *def LandArrayIterator_item(LandArray *a, LandArrayIterator *i):
+    return i->i < a->count ? a->data[i->i] : None
+
+bool def LandArrayIterator_next(LandArray *a, LandArrayIterator *i):
+    i->i++
+    return i->i <= a->count
 
 LandArray *def land_array_new():
     """

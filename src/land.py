@@ -219,6 +219,9 @@ macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
         land_log_message("Return code is %d.\n", land_get_exitcode())
         return land_get_exitcode()
 
+def land_without_main(void (*cb)(void)):
+    platform_without_main(cb)
+
 def land_set_exitcode(int code):
     _exitcode = code
 

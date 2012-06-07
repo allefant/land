@@ -8,6 +8,9 @@ class LandList:
     int count
     LandListItem *first, *last
 
+class LandListIterator:
+    LandListItem *i
+
 static import mem
 
 *** "ifdef" LAND_MEMLOG
@@ -36,6 +39,18 @@ def land_add_list_data_memlog(LandList **list, void *data, char const *f, int l)
         land_add_list_data(list, data)
 
 *** "endif"
+
+LandListIterator def LandListIterator_first(LandList *a):
+    LandListIterator i = {a->first}
+    return i
+
+void *def LandListIterator_item(LandList *a, LandListIterator *i):
+    return i->i ? i->i->data : None
+
+bool def LandListIterator_next(LandList *a, LandListIterator *i):
+    bool left = i->i != None
+    i->i = i->i->next
+    return left
 
 LandList *def land_list_new():
     LandList *self

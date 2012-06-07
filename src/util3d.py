@@ -1,6 +1,6 @@
 import math
 
-macro LandFloat double
+typedef double LandFloat
 
 class LandVector:
     """

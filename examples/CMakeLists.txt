@@ -69,12 +69,7 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}-static-debug
                 land-static-debug
-                allegro-debug-static-${AV}
-                a5_font-debug-static-${AV}
-                a5_ttf-debug-static-${AV}
-                a5_primitives-debug-static-${AV}
-                a5_iio-debug-static-${AV}
-                a5_color-debug-static-${AV}
+                allegro_monolith-debug-static-${AV}
                 z
                 png
                 jpeg
@@ -94,12 +89,7 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}-static-profile
                 land-static-profile
-                allegro-profile-static-${AV}
-                a5_font-profile-static-${AV}
-                a5_ttf-profile-static-${AV}
-                a5_primitives-profile-static-${AV}
-                a5_iio-profile-static-${AV}
-                a5_color-profile-static-${AV}
+                allegro_monolith-profile-static-${AV}
                 z
                 png
                 jpeg
@@ -117,11 +107,7 @@ foreach(exsrc ${examples})
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
             target_link_libraries(${exname}-static
-                land-static
-
-                alleg-4.3.11 alleg_unsharable agl
-                fudgefont ldpng logg
-                png jpeg ogg vorbis vorbisfile)
+                land-static)
         endif (RELEASE)
     endif (STATIC)
 
@@ -138,14 +124,6 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}-debug
                 land-debug
-                allegro${AD}
-                allegro_font${AD}
-                allegro_ttf${AD}
-                allegro_primitives${AD}
-                allegro_image${AD}
-                allegro_color${AD}
-                allegro_audio${AD}
-                allegro_acodec${AD}
                 yaml
                 )
         endif (DEBUG)
@@ -159,8 +137,6 @@ foreach(exsrc ${examples})
             target_link_libraries(${ex}
                 land
                 allegro-${AV}
-                a5_font-${AV}
-                a5_primitives-${AV}
                 )
         endif (RELEASE)
     endif (SHARED)

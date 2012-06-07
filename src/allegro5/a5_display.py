@@ -159,6 +159,9 @@ def platform_display_clip():
 def platform_display_clear(LandDisplay *self, float r, g, b, a):
     al_clear_to_color(al_map_rgba_f(r, g, b, a))
 
+def platform_display_clear_depth(LandDisplay *self, float z):
+    al_clear_depth_buffer(z)
+
 def platform_display_flip():
     al_flip_display()
 
@@ -323,3 +326,37 @@ def platform_pick_color(float x, y):
         &super->color_g,
         &super->color_b,
         &super->color_a)
+
+static int a5state[] = {
+    ALLEGRO_ALPHA_TEST,
+    ALLEGRO_ALPHA_FUNCTION,
+    ALLEGRO_ALPHA_TEST_VALUE,
+    ALLEGRO_WRITE_MASK,
+    ALLEGRO_DEPTH_TEST,
+    ALLEGRO_DEPTH_FUNCTION
+    }
+
+static int a5func[] = {
+    ALLEGRO_RENDER_NEVER,
+    ALLEGRO_RENDER_ALWAYS,
+    ALLEGRO_RENDER_LESS,
+    ALLEGRO_RENDER_EQUAL,
+    ALLEGRO_RENDER_LESS_EQUAL,
+    ALLEGRO_RENDER_GREATER,
+    ALLEGRO_RENDER_NOT_EQUAL,
+    ALLEGRO_RENDER_GREATER_EQUAL
+
+    }
+
+def platform_render_state(int state, value):
+    int value2 = value
+    if state == LAND_ALPHA_FUNCTION or state == LAND_DEPTH_FUNCTION:
+        value2 = a5func[value]
+    elif state == LAND_WRITE_MASK:
+        value2 = 0
+        if value & LAND_RED_MASK: value2 |= ALLEGRO_MASK_RED
+        if value & LAND_GREEN_MASK: value2 |= ALLEGRO_MASK_GREEN
+        if value & LAND_BLUE_MASK: value2 |= ALLEGRO_MASK_BLUE
+        if value & LAND_ALPHA_MASK: value2 |= ALLEGRO_MASK_ALPHA
+        if value & LAND_DEPTH_MASK: value2 |= ALLEGRO_MASK_DEPTH
+    al_set_render_state(a5state[state], value2)

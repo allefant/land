@@ -117,6 +117,11 @@ if (SHARED)
                 wsock32
                 z
                 )
+        else (WINDOWS)
+            target_link_libraries(land-debug
+                allegro_monolith-debug
+                yaml
+                )
         endif (WINDOWS)
     endif (DEBUG)
     if (RELEASE)

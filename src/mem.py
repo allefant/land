@@ -17,7 +17,7 @@ static import execinfo
 static macro LOGFILE "memlog.log"
 
 static macro MAX_BLOCKS 1024 * 1024
-macro LAND_MEMBLOCK_INFO_MAX_STACK 32
+enum: LAND_MEMBLOCK_INFO_MAX_STACK = 32
 
 class LandMemBlockInfo:
     void *ptr

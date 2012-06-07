@@ -5,6 +5,16 @@ static import global allegro5.allegro_primitives
 static import land/land
 static import land/allegro5/a5_display
 
+static void (*global_cb)(void)
+
+static int def replacement_main(int argc, char **argv):
+    global_cb()
+    return 0
+
+def platform_without_main(void (*cb)(void)):
+    global_cb = cb
+    al_run_main(0, None, replacement_main);
+
 double def platform_get_time():
     return al_current_time()
 

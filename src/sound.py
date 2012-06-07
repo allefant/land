@@ -72,3 +72,12 @@ def land_stream_fill(LandStream *self):
 def land_stream_music(LandStream *self, char const *filename):
     platform_stream_music(self, filename)
 
+def land_stream_volume(LandStream *self, float volume):
+    platform_stream_volume(self, volume)
+
+bool def land_stream_is_playing(LandStream *self):
+    return platform_stream_is_playing(self)
+
+def land_stream_set_playing(LandStream *self, bool onoff):
+    platform_stream_set_playing(self, onoff)
+
