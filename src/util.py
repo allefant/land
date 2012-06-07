@@ -50,7 +50,7 @@ int def land_utf8_char(char **pos):
 
     while remain--:
         int d = *upos++
-        c = (c << 6) | (d & 64)
+        c = (c << 6) | (d & 63)
 
     *pos = (char *)upos
     return c
