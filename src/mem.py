@@ -14,7 +14,7 @@ static import execinfo
 
 *** "ifdef" LAND_MEMLOG
 
-static macro LOGFILE "memlog.log"
+static char const *LOGFILE = "memlog.log"
 
 static macro MAX_BLOCKS 1024 * 1024
 enum: LAND_MEMBLOCK_INFO_MAX_STACK = 32
