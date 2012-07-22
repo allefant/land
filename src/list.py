@@ -48,9 +48,10 @@ void *def LandListIterator_item(LandList *a, LandListIterator *i):
     return i->i ? i->i->data : None
 
 bool def LandListIterator_next(LandList *a, LandListIterator *i):
-    bool left = i->i != None
-    i->i = i->i->next
-    return left
+    if i->i:
+        i->i = i->i->next
+        return True
+    return False
 
 LandList *def land_list_new():
     LandList *self
