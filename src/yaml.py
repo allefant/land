@@ -49,7 +49,7 @@ LandYAML *def land_yaml_load(char const *filename):
                 else:
                     land_alloc(entry)
                     entry->type = 0
-                    entry->data.scalar = strdup(v)
+                    entry->data.scalar = land_strdup(v)
 
             elif event.type == YAML_MAPPING_END_EVENT:
                 expect_key = False
