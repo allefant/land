@@ -9,6 +9,9 @@ class LandVector:
     """
     LandFloat x, y, z
 
+class Land4x4Matrix:
+    LandFloat v[16]
+
 class LandQuaternion:
     """
     A quaternion can be useful to hold rotations, as it is much easier to use
@@ -31,6 +34,10 @@ static macro SIN sin
 
 LandVector def land_vector(LandFloat x, y, z):
     LandVector v = {x, y, z}
+    return v
+
+LandVector def land_vector_from_array(LandFloat *a):
+    LandVector v = {a[0], a[1], a[2]}
     return v
 
 def land_vector_iadd(LandVector *v, LandVector w):
@@ -200,6 +207,16 @@ LandQuaternion def land_quaternion(LandFloat w, x, y, z):
     LandQuaternion q = {w, x, y, z}
     return q
 
+LandQuaternion def land_quaternion_from_array(LandFloat *f):
+    LandQuaternion q = {f[0], f[1], f[2], f[3]}
+    return q
+
+def land_quaternion_to_array(LandQuaternion *q, LandFloat *f):
+    f[0] = q->w
+    f[1] = q->x
+    f[2] = q->y
+    f[3] = q->z
+
 def land_quaternion_iadd(LandQuaternion *q, LandQuaternion p):
     q->w += p.w
     q->x += p.x
@@ -213,6 +230,8 @@ def land_quaternion_imul(LandQuaternion *q, LandFloat s):
     q->z *= s
 
 LandQuaternion def land_quaternion_combine(LandQuaternion qa, LandQuaternion qb):
+
+    # FIXME: what is this?
 
     LandVector qav = {qa.x, qa.y, qa.z}
     LandVector qbv = {qb.x, qb.y, qb.z}
@@ -257,10 +276,82 @@ def land_quaternion_vectors(LandQuaternion q, LandVector *r, *u, *b):
     u->z = yz + wx
     b->z = ww - xx - yy + zz
 
+Land4x4Matrix def land_quaternion_4x4_matrix(LandQuaternion q):
+    LandVector r, u, b
+    land_quaternion_vectors(q, &r, &u, &b)
+    Land4x4Matrix m
+    m.v[0] = r.x
+    m.v[1] = u.x
+    m.v[2] = b.x
+    m.v[3] = 0
+    m.v[4] = r.y
+    m.v[5] = u.y
+    m.v[6] = b.y
+    m.v[7] = 0
+    m.v[8] = r.z
+    m.v[9] = u.z
+    m.v[10] = b.z
+    m.v[11] = 0
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
+Land4x4Matrix def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b):
+    Land4x4Matrix m
+    for int i in range(4):
+        for int j in range(4):
+            LandFloat x = 0
+            for int k in range(4):
+                x += a.v[i * 4 + k] * b.v[k * 4 + j]
+            m.v[i * 4 + j] = x
+    return m
+
+Land4x4Matrix def land_4x4_matrix_from_vectors(LandVector *p, *r, *u, *b):
+    Land4x4Matrix m
+    m.v[0] = r->x
+    m.v[1] = u->x
+    m.v[2] = b->x
+    m.v[3] = p->x
+    m.v[4] = r->y
+    m.v[5] = u->y
+    m.v[6] = b->y
+    m.v[7] = p->y
+    m.v[8] = r->z
+    m.v[9] = u->z
+    m.v[10] = b->z
+    m.v[11] = p->z
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
+Land4x4Matrix def land_4x4_matrix_inverse_from_vectors(LandVector *p, *r, *u, *b):
+    Land4x4Matrix m
+    m.v[0] = r->x
+    m.v[1] = r->y
+    m.v[2] = r->z
+    m.v[3] = r->x * -p->x + r->y * -p->y + r->z * -p->z
+    m.v[4] = u->x
+    m.v[5] = u->y
+    m.v[6] = u->z
+    m.v[7] = u->x * -p->x + u->y * -p->y + u->z * -p->z
+    m.v[8] = b->x
+    m.v[9] = b->y
+    m.v[10] = b->z
+    m.v[11] = b->x * -p->x + b->y * -p->y + b->z * -p->z
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
 def land_quaternion_normalize(LandQuaternion *q):
     """
     Normalize the quaternion. This may be useful to prevent deteriorating
-    the quaternion if it is used for a long time, due to Fing point
+    the quaternion if it is used for a long time, due to floating point
     inaccuracies.
     """
     LandFloat n = SQRT(q->w * q->w + q->x * q->x + q->y * q->y + q->z * q->z)
@@ -269,3 +360,34 @@ def land_quaternion_normalize(LandQuaternion *q):
     q->y /= n
     q->z /= n
 
+LandQuaternion def land_quaternion_slerp(LandQuaternion qa, qb, double t):
+    """
+    Given two quaternions, interpolate a quaternion in between. If t is 0
+    this will return, if t is 1 it will return qb.
+
+    The rotation will be along the shortest path (not necessarily the shorter
+    direction though) and the rotation angle will linearly correspond to t.
+    """
+    LandQuaternion q
+    double c = qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z
+
+    if c < 0:
+        c = -c
+        qb.w = -qb.w
+        qb.x = -qb.x
+        qb.y = -qb.y
+        qb.z = -qb.z
+
+    double theta = acos(c);
+
+    double s = sin(theta)
+
+    double fs = sin((1 - t) * theta) / s;
+    double ts = sin(t * theta) / s;
+
+    q.w = qa.w * fs + qb.w * ts;
+    q.x = qa.x * fs + qb.x * ts;
+    q.y = qa.y * fs + qb.y * ts;
+    q.z = qa.z * fs + qb.z * ts;
+
+    return q;
