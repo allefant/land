@@ -575,6 +575,10 @@ def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
     platform_image_get_rgba_data(self, rgba)
 
 def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
+    """
+    Copies the rgba data, overwriting the image contents. Since data are copied
+    rgba can be safely deleted after returning from the function.
+    """
     platform_image_set_rgba_data(self, rgba)
 
 def land_image_save(LandImage *self, char const *filename):

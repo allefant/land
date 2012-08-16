@@ -154,6 +154,8 @@ class LandDisplay:
     int clip_stack[LAND_MAX_CLIP_DEPTH * 5]
     
     float matrix[16]
+    float matrix_stack[16][16]
+    int matrix_stack_depth
     bool matrix_modified
 
 static import allegro5/a5_display
@@ -549,9 +551,23 @@ def land_scale(float x, y):
 
 def land_translate(float x, y):
     float *m = _land_active_display->matrix
-    m[12] += x
-    m[13] += y
+    m[12] = x * m[0] + y * m[4]
+    m[13] = x * m[1] + y * m[5]
     _land_active_display->matrix_modified = True
+
+def land_push_transform():
+    if _land_active_display->matrix_stack_depth < 16:
+        int i = _land_active_display->matrix_stack_depth++
+        memcpy(_land_active_display->matrix_stack[i],
+            _land_active_display->matrix, sizeof _land_active_display->matrix)
+
+def land_pop_transform():
+    if _land_active_display->matrix_stack_depth > 0:
+        int i = --_land_active_display->matrix_stack_depth
+        memcpy(_land_active_display->matrix,
+            _land_active_display->matrix_stack[i],
+            sizeof _land_active_display->matrix)
+        _land_active_display->matrix_modified = True
 
 def land_reset_transform():
     float *m = _land_active_display->matrix
