@@ -144,6 +144,12 @@ LandVector def land_vector_transform(LandVector v, p, r, u, b):
         land_vector_dot(w, b)}
     return a
 
+LandVector def land_vector_matmul(LandVector v, Land4x4Matrix *m):
+    LandFloat x = m->v[0] * v.x + m->v[1] * v.y + m->v[2] * v.z + m->v[3]
+    LandFloat y = m->v[4] * v.x + m->v[5] * v.y + m->v[6] * v.z + m->v[7]
+    LandFloat z = m->v[8] * v.x + m->v[9] * v.y + m->v[10] * v.z + m->v[11]
+    return land_vector(x, y, z)
+
 LandVector def land_vector_backtransform(LandVector v, p, r, u, b):
     """
     Do the inverse of transform, i.e. you can use it to transform from
@@ -306,6 +312,149 @@ Land4x4Matrix def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b):
             for int k in range(4):
                 x += a.v[i * 4 + k] * b.v[k * 4 + j]
             m.v[i * 4 + j] = x
+    return m
+
+Land4x4Matrix def land_4x4_matrix_scale(LandFloat x, y, z):
+    Land4x4Matrix m
+    m.v[0] = x
+    m.v[1] = 0
+    m.v[2] = 0
+    m.v[3] = 0
+    m.v[4] = 0
+    m.v[5] = y
+    m.v[6] = 0
+    m.v[7] = 0
+    m.v[8] = 0
+    m.v[9] = 0
+    m.v[10] = z
+    m.v[11] = 0
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
+Land4x4Matrix def land_4x4_matrix_rotate(LandFloat x, y, z, angle):
+    Land4x4Matrix m
+
+    double s = sin(angle);
+    double c = cos(angle);
+    double cc = 1 - c;
+
+    m.v[0] = (cc * x * x) + c
+    m.v[4] = (cc * x * y) + (z * s)
+    m.v[8] = (cc * x * z) - (y * s)
+    m.v[12] = 0
+    m.v[1] = (cc * x * y) - (z * s)
+    m.v[5] = (cc * y * y) + c
+    m.v[9] = (cc * z * y) + (x * s)
+    m.v[13] = 0
+    m.v[2] = (cc * x * z) + (y * s)
+    m.v[6] = (cc * y * z) - (x * s)
+    m.v[10] = (cc * z * z) + c
+    m.v[14] = 0
+    m.v[3] = 0
+    m.v[7] = 0
+    m.v[11] = 0
+    m.v[15] = 1
+
+    return m
+
+Land4x4Matrix def land_4x4_matrix_perspective(LandFloat z):
+    Land4x4Matrix m
+    m.v[0] = 1
+    m.v[1] = 0
+    m.v[2] = 0
+    m.v[3] = 0
+    m.v[4] = 0
+    m.v[5] = 1
+    m.v[6] = 0
+    m.v[7] = 0
+    m.v[8] = 0
+    m.v[9] = 0
+    m.v[10] = 1
+    m.v[11] = 0
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 1 / z
+    m.v[15] = 1
+    return m
+
+Land4x4Matrix def land_4x4_matrix_identity():
+    Land4x4Matrix m
+    m.v[0] = 1
+    m.v[1] = 0
+    m.v[2] = 0
+    m.v[3] = 0
+    m.v[4] = 0
+    m.v[5] = 1
+    m.v[6] = 0
+    m.v[7] = 0
+    m.v[8] = 0
+    m.v[9] = 0
+    m.v[10] = 1
+    m.v[11] = 0
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
+Land4x4Matrix def land_4x4_matrix_translate(LandFloat x, y, z):
+    Land4x4Matrix m
+    m.v[0] = 1
+    m.v[1] = 0
+    m.v[2] = 0
+    m.v[3] = x
+    m.v[4] = 0
+    m.v[5] = 1
+    m.v[6] = 0
+    m.v[7] = y
+    m.v[8] = 0
+    m.v[9] = 0
+    m.v[10] = 1
+    m.v[11] = z
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
+# note: "near" and "far" are keywords in certain windows compilers
+Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
+        right, bottom, farz):
+    """
+    Orthographic means no projection so this would be just an identity matrix.
+    But as convenience this scales and translates to fit into the
+    left/top/right/bottom rectangle and also scales depth.
+
+    The point at (left, top, near) will end up at (-1, -1, -1) and the point
+    at (right, bottom, far) will end up at (1, 1, 1).
+    """
+    Land4x4Matrix m
+    LandFloat w = right - left
+    LandFloat h = bottom - top
+    LandFloat depth = farz - nearz
+    LandFloat x = (right + left) / 2
+    LandFloat y = (bottom + top) / 2
+    LandFloat z = (farz + nearz) / 2
+    
+    m.v[0] = 2 / w
+    m.v[1] = 0
+    m.v[2] = 0
+    m.v[3] = 0
+    m.v[4] = 2 / w * -x
+    m.v[5] = 2 / h
+    m.v[6] = 0
+    m.v[7] = 0
+    m.v[8] = 0
+    m.v[9] = 2 / h * -y
+    m.v[10] = 2 / depth
+    m.v[11] = 2 / depth * -z
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
     return m
 
 Land4x4Matrix def land_4x4_matrix_from_vectors(LandVector *p, *r, *u, *b):
