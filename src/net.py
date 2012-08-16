@@ -2,7 +2,8 @@
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
 *** "ifdef" WINDOWS
-static import global winsock2, ws2tcpip
+static import global winsock2
+static import global ws2tcpip
 static macro SHUT_RDWR SD_BOTH
 *** "else"
 static import global stdlib, string, signal

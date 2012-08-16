@@ -50,7 +50,7 @@ endforeach(py)
 set(WFLAGS "-W -Wall")
 set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
 set(CFLAGS "--std=gnu99")
-set(DFLAGS "-g3 -O0")
+set(DFLAGS "-g3 -O2")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
 

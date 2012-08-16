@@ -1,7 +1,11 @@
-static import global stdio, stdlib, string, zlib
+static import global stdio, stdlib, string
 static import mem
 import global allegro5/allegro5
 import array, util
+
+*** "ifndef" LAND_NO_COMPRESS
+static import global zlib
+*** "endif"
 
 class LandBuffer:
     int size # reserved memory
