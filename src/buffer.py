@@ -241,9 +241,11 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
         return None
     LandBuffer *self = land_buffer_new()
     while 1:
-        int c = fgetc(pf)
-        if c < 0: break
-        land_buffer_add(self, (char *)&c, 1)
+        char kb[16384]
+        size_t n = fread(kb, 16384, 1, pf)
+        land_buffer_add(self, kb, n)
+        if n < 16384:
+            break
     fclose(pf)
     return self
 
