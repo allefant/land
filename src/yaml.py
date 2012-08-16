@@ -1,4 +1,5 @@
 import land.array, land.hash, land.mem
+*** "ifndef" LAND_NO_YAML
 static import global yaml
 
 union LandYamlDataType:
@@ -133,3 +134,4 @@ static def land_yaml_dump_entry(LandYAMLEntry *self, int indent):
 
 def land_yaml_dump(LandYAML *self):
     land_yaml_dump_entry(self->root, 0)
+*** "endif"
