@@ -264,5 +264,20 @@ char *def platform_get_app_settings_file(char const *appname):
     al_destroy_path(path)
     return dup
 
+char *def platform_get_save_file(char const *appname, char const *name):
+    al_set_org_name("")
+    al_set_app_name(appname)
+    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH)
+    const char *str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
+    if not al_filename_exists(str):
+        land_log_message("Creating new settings path %s.\n", str);
+        al_make_directory(str)
+    al_set_path_filename(path, name)
+    str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
+    land_log_message("Using save file %s.\n", str);
+    char *dup = land_strdup(str)
+    al_destroy_path(path)
+    return dup
+
 def platform_wait(double seconds):
     al_rest(seconds)

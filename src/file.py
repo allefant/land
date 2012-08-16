@@ -68,3 +68,5 @@ uint16_t def land_file_get16be(LandFile *self):
 bool def land_file_is_dir(char const *name):
     return platform_is_dir(name)
 
+char *def land_get_save_file(char const *appname, char const *name):
+    return platform_get_save_file(appname, name)
