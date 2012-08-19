@@ -114,7 +114,7 @@ LandIniFile *def land_ini_read(char const *filename):
     if not f: return ini
     int done = 0
     while not done:
-        char c = fgetc(f)
+        int c = fgetc(f)
         if c == EOF:
             done = 1
             c = '\n'

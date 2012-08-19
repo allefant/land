@@ -351,7 +351,7 @@ static def land_net_poll_connect(LandNet *self):
         char a;
         int as = sizeof a
         *** "else"
-        unsigned int a, as = sizeof a
+        socklen_t a, as = sizeof a
         *** "endif"
         if getsockopt(self->sock, SOL_SOCKET, SO_ERROR, &a, &as) == 0:
             if a != 0:
