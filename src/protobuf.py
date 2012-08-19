@@ -46,6 +46,7 @@ def land_protobuf_sub_start(LandProtobuf *self, uint64_t *size):
     *size = end
 
 def land_protobuf_sub_end(LandProtobuf *self, uint64_t end):
+    self->pos = self->end
     self->end = end
 
 static macro R(T):

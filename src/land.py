@@ -188,7 +188,7 @@ global *** "undef" yn
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
-import file, yaml, thread
+import file, yaml, thread, protobuf
 
 import land/allegro5/a5_opengl
 
