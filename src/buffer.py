@@ -242,7 +242,7 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
     LandBuffer *self = land_buffer_new()
     while 1:
         char kb[16384]
-        size_t n = fread(kb, 16384, 1, pf)
+        size_t n = fread(kb, 1, 16384, pf)
         land_buffer_add(self, kb, n)
         if n < 16384:
             break
