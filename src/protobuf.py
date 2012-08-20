@@ -57,7 +57,7 @@ static macro R(T):
 double def land_protobuf_double(LandProtobuf *self):
     R(double)
 
-double def land_protobuf_float(LandProtobuf *self):
+float def land_protobuf_float(LandProtobuf *self):
     R(float)
 
 uint32_t def land_protobuf_fixed32(LandProtobuf *self):
