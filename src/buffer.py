@@ -364,8 +364,15 @@ static int def pf_ferror(void *userdata):
     #PACKFILE *pf = pack_fopen_vtable(&vt, lbaf)
     #return pf
 
+char *def land_string_copy(char *target, char const *source, int size):
+    """
+    size is the size of target in bytes (including the terminating 0)
 
-
+    Returns target.
+    """
+    strncpy(target, source, size - 1)
+    target[size - 1] = 0
+    return target
 
 global *** "ifdef" LAND_MEMLOG
 
