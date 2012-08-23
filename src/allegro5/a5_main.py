@@ -1,9 +1,13 @@
-import land/main
+import land.main
 static import global allegro5.allegro, allegro5.allegro_font
 static import global allegro5.allegro_image
 static import global allegro5.allegro_primitives
-static import land/land
-static import land/allegro5/a5_display
+static import land.land
+static import land.allegro5.a5_display
+
+*** "ifdef" ANDROID
+static import global allegro5.allegro_android
+*** "endif"
 
 static void (*global_cb)(void)
 
@@ -25,6 +29,10 @@ def platform_init():
     if not al_init():
         land_log_message("Allegro initialization failed.\n")
         land_exception("Error in allegro_init.")
+
+    *** "ifdef" ANDROID
+    al_android_set_apk_file_interface()
+    *** "endif"
 
     al_init_image_addon()
     al_install_keyboard()
