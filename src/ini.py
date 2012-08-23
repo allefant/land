@@ -1,6 +1,7 @@
 static import global string, stdlib, stdbool, stdio
 static import land/mem
 static import land/allegro5/a5_main
+static import land.file
 
 class LandIniEntry:
     char *key
@@ -110,11 +111,11 @@ LandIniFile *def land_ini_read(char const *filename):
     LandIniFile *ini = land_calloc(sizeof *ini)
     ini->filename = land_strdup(filename)
     ini->sections = land_calloc(sizeof *ini->sections)
-    FILE *f = fopen(filename, "rb")
+    LandFile *f = land_file_new(filename, "rb")
     if not f: return ini
     int done = 0
     while not done:
-        int c = fgetc(f)
+        int c = land_file_getc(f)
         if c == EOF:
             done = 1
             c = '\n'
@@ -168,7 +169,7 @@ LandIniFile *def land_ini_read(char const *filename):
             if c == '\n':
                 state = OUTSIDE
 
-    fclose(f)
+    land_file_destroy(f)
     return ini
 
 LandIniFile *def land_ini_new(char const *filename):
