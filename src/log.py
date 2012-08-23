@@ -1,6 +1,10 @@
 static import global stdio, stdarg, stdlib, string, time, sys/time
 static import mem
 
+*** "ifdef" ANDROID
+static import global android.log
+*** "endif"
+
 static char *logname = NULL
 
 def land_log_overwrite(char const *name):
@@ -21,15 +25,21 @@ def land_log_del():
 
 def land_log_new(char const *base, int unique):
     static int once = 0
-    FILE *f
-    int i = 0
-    if logname: land_free(logname)
 
+    if logname: land_free(logname)
     logname = land_malloc(strlen(base) + 10)
 
     if not once:
         atexit(land_log_del)
         once++
+
+    *** "ifdef" ANDROID
+    sprintf(logname, "%s.log", base)
+    __android_log_print(ANDROID_LOG_INFO, "land", "%s",
+        "******* new log *******\n")
+    *** "else"
+    FILE *f
+    int i = 0
 
     if unique:
         do:
@@ -45,26 +55,45 @@ def land_log_new(char const *base, int unique):
     if f:
         fprintf(f, "******* new log *******\n")
         fclose(f)
+    *** "endif"
 
 def land_log_message_nostamp (char const *format, ...):
     if !logname: land_log_new("land", 0)
-    FILE *logfile
+
     va_list va_args
     va_start(va_args, format)
-    logfile = fopen(logname, "a")
+
+    *** "ifdef" ANDROID
+    char s[16382]
+    vsprintf(s, format, va_args)
+    __android_log_print(ANDROID_LOG_INFO, "land", "%s", s)
+    *** "else"
+    FILE *logfile = fopen(logname, "a")
     vfprintf(logfile, format, va_args)
     fclose(logfile)
+    *** "endif"
     #vprintf(template, va_args)
+
+
     va_end(va_args)
+    
 
 def land_log_message(char const *format, ...):
+    
     if !logname: land_log_new("land", 0)
-    FILE *logfile
+
     va_list va_args
     va_start(va_args, format)
-    logfile = fopen(logname, "a")
+
+
+    *** "ifdef" ANDROID
+    char s[16382]
+    vsprintf(s, format, va_args)
+    __android_log_print(ANDROID_LOG_INFO, "land", "%s", s)
+    *** "else"
+    
     struct timeval tv
-    *** "ifdef" ALLEGRO_WINDOWS
+    *** "ifdef" WINDOWS
     tv.tv_usec = 0
     *** "else"
     gettimeofday(&tv, NULL)
@@ -73,6 +102,8 @@ def land_log_message(char const *format, ...):
     struct tm tm
     time(&t)
     tm = *gmtime(&t)
+
+    FILE * logfile = fopen(logname, "a")
     fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
         tm.tm_year + 1900,
         tm.tm_mon + 1,
@@ -83,5 +114,8 @@ def land_log_message(char const *format, ...):
         tv.tv_usec)
     vfprintf(logfile, format, va_args)
     fclose(logfile)
-    # vprintf(template, va_args)
+    *** "endif"
+
+    #vprintf(template, va_args)
     va_end(va_args)
+
