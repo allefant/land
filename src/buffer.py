@@ -1,6 +1,6 @@
 static import global stdio, stdlib, string
 static import mem
-import global allegro5/allegro5
+static import file
 import array, util
 
 *** "ifndef" LAND_NO_COMPRESS
@@ -236,17 +236,17 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
     """
     Read a buffer from the given file. If the file cannot be read, return None.
     """
-    FILE *pf = fopen(filename, "r")
+    LandFile *pf = land_file_new(filename, "r")
     if not pf:
         return None
     LandBuffer *self = land_buffer_new()
     while 1:
         char kb[16384]
-        size_t n = fread(kb, 1, 16384, pf)
+        size_t n = land_file_read(pf, kb, 16384)
         land_buffer_add(self, kb, n)
         if n < 16384:
             break
-    fclose(pf)
+    land_file_destroy(pf)
     return self
 
 *** "ifndef" LAND_NO_COMPRESS
