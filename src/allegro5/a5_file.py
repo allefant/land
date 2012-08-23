@@ -51,3 +51,18 @@ bool def platform_is_dir(char const *path):
     bool r = al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR
     al_destroy_fs_entry(fse)
     return r
+
+char *def platform_get_save_file(char const *appname, char const *name):
+    al_set_org_name("")
+    al_set_app_name(appname)
+    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH)
+    const char *str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
+    if not al_filename_exists(str):
+        land_log_message("Creating new settings path %s.\n", str);
+        al_make_directory(str)
+    al_set_path_filename(path, name)
+    str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
+    land_log_message("Using save file %s.\n", str);
+    char *dup = land_strdup(str)
+    al_destroy_path(path)
+    return dup
