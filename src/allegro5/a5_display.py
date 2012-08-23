@@ -114,6 +114,10 @@ def platform_display_set():
     if super->h == 0:
         super->h = monh
         super->clip_y2 = super->h
+
+    *** "ifdef" ANDROID
+    f |= ALLEGRO_OPENGL | ALLEGRO_USE_PROGRAMMABLE_PIPELINE
+    *** "endif"
     
     if f:
         al_set_new_display_flags(f)
