@@ -2,6 +2,31 @@ static import global allegro5/allegro5
 import land/array, land/mem, land/log, land/file
 import global stdbool
 
+void *def platform_fopen(char const *filename, char const *mode):
+    ALLEGRO_FILE *f = al_fopen(filename, mode)
+    return f
+
+def platform_fclose(void *f):
+    al_fclose(f)
+
+int def platform_fread(void *f, char *buffer, int bytes):
+    return al_fread(f, buffer, bytes)
+
+int def platform_fwrite(void *f, char const *buffer, int bytes):
+    return al_fwrite(f, buffer, bytes)
+
+def platform_ungetc(void *f, int c):
+    al_fungetc(f, c)
+
+int def platform_fgetc(void *f):
+    return al_fgetc(f)
+
+bool def platform_feof(void *f):
+    return al_feof(f)
+
+def platform_fseek(void *f, int n):
+    al_fseek(f, n, ALLEGRO_SEEK_CUR)
+
 static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
         int (*filter)(char const *, bool is_dir, void *data), int flags,
         void *data):
