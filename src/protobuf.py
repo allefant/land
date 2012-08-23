@@ -55,10 +55,18 @@ static macro R(T):
     return x
 
 double def land_protobuf_double(LandProtobuf *self):
-    R(double)
+    double x
+    void *p = &x
+    memcpy(p, self->data->buffer + self->pos, 8)
+    self->pos += 8
+    return x
 
 float def land_protobuf_float(LandProtobuf *self):
-    R(float)
+    float x
+    void *p = &x
+    memcpy(p, self->data->buffer + self->pos, 4)
+    self->pos += 4
+    return x
 
 uint32_t def land_protobuf_fixed32(LandProtobuf *self):
     R(uint32_t)
