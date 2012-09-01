@@ -80,6 +80,9 @@ LandVector def land_vector_sub(LandVector v, w):
     LandVector r = {v.x - w.x, v.y - w.y, v.z - w.z}
     return r
 
+LandVector def land_vector_lerp(LandVector v, w, LandFloat t):
+    return land_vector_add(v, land_vector_mul(land_vector_sub(w, v), t))
+
 LandFloat def land_vector_dot(LandVector v, w):
     """
     The dot product is a number. The number corresponds to the cosine
