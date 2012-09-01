@@ -132,7 +132,7 @@ int def land_array_find(LandArray *self, void *data):
         if self->data[i] == data: return i
     return -1
 
-void *def land_array_get_nth(LandArray *array, int i):
+void *def land_array_get_nth(LandArray const *array, int i):
     if i < 0: i += array->count
     return array->data[i]
 
@@ -179,7 +179,7 @@ def land_array_sort_alphabetical(LandArray *self):
     """
     land_array_sort(self, alphacomp)
 
-int def land_array_count(LandArray *self):
+int def land_array_count(LandArray const *self):
     if not self: return 0
     return self->count
 
@@ -202,6 +202,34 @@ def land_array_clear(LandArray *self):
     Clear all elements in the array.
     """
     self->count = 0
+
+def land_array_concat(LandArray *self, LandArray const *other):
+    for int i in range(other->count):
+        land_array_add(self, other->data[i])
+
+def land_array_merge(LandArray *self, *other):
+    land_array_concat(self, other)
+    land_array_destroy(other)
+
+LandArray *def land_array_copy(LandArray const *self):
+    LandArray *copy = land_array_new()
+    land_array_concat(copy, self)
+    return copy
+
+def land_array_swap(LandArray *self, int a, b):
+    void *temp = self->data[a]
+    self->data[a] = self->data[b]
+    self->data[b] = temp
+
+def land_array_reverse(LandArray *self):
+    # count == 0: do nothing
+    # count == 1: do nothing
+    # count == 2: swap(0, 1)
+    # count == 3: swap(0, 2)
+    # count == 4: swap(0, 3) swap(1, 2)
+
+    for int i in range(self->count / 2):
+        land_array_swap(self, i, self->count - 1 - i)
 
 global *** "ifdef" LAND_MEMLOG
 
