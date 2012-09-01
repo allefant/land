@@ -205,6 +205,9 @@ def platform_mainloop(LandParameters *parameters):
     al_register_event_source(queue, al_get_keyboard_event_source())
     al_register_event_source(queue, al_get_mouse_event_source())
 
+    if (al_install_touch_input())
+        al_register_event_source(queue, al_get_touch_input_event_source());
+
     al_register_event_source(queue, al_get_display_event_source(d->a5))
 
     al_register_event_source(queue, al_get_timer_event_source(timer))
@@ -252,9 +255,25 @@ def platform_mainloop(LandParameters *parameters):
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 land_mouse_button_up_event(event.mouse.button - 1)
                 break
+            case ALLEGRO_EVENT_TOUCH_BEGIN:
+                land_mouse_button_down_event(0)
+                break
+            case ALLEGRO_EVENT_TOUCH_END:
+                land_mouse_button_up_event(0)
+                break
+            case ALLEGRO_EVENT_TOUCH_MOVE:
+                land_mouse_move_event(
+                    event.touch.x, event.touch.y, 0)
+                break
             case ALLEGRO_EVENT_DISPLAY_RESIZE:
                 al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
                 land_resize_event(event.display.width, event.display.height)
+                break
+            case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+                al_acknowledge_drawing_halt(d->a5)
+                break
+            case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+                al_acknowledge_drawing_resume(d->a5, None)
                 break
 
 char *def platform_get_app_settings_file(char const *appname):
