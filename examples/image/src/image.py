@@ -136,38 +136,7 @@ static def draw(LandRunner *self):
     int x = 50
     int y = 50
 
-    glEnable(GL_TEXTURE_2D)
-    glBindTexture(GL_TEXTURE_2D, land_image_opengl_texture(image))
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE)
-
-    GLfloat color[4] = { 1, 1, 1, 1 };
-    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGB)
-    int i
-    for i = 0 while i < 2 with i++:
-        glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE)
-        glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND0_RGB,
-            i == 0 ? GL_SRC_COLOR : GL_ONE_MINUS_SRC_COLOR)
-
-        glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR)
-        glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND1_RGB,
-            i == 0 ? GL_SRC_COLOR : GL_ONE_MINUS_SRC_COLOR)
-
-        glColor4f(1, 1, 1, 1)
-        glBegin(GL_QUADS)
-        glTexCoord2f(0, 0)
-        glVertex2f(320 - x, 240 - y)
-        glTexCoord2f(1, 0)
-        glVertex2f(320 + x, 240 - y)
-        glTexCoord2f(1, 1)
-        glVertex2f(320 + x, 240 + y)
-        glTexCoord2f(0, 1)
-        glVertex2f(320 - x, 240 + y)
-        glEnd()
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+    land_image_draw(image, 320 - x, 240 - y)
 
 land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL,
     init, NULL, tick, draw, NULL, destroy)

@@ -15,9 +15,38 @@ class LandHash:
     unsigned int (*hash_function)(LandHash *self, char const *thekey)
     LandHashEntry **entries
 
+class LandHashIterator:
+    int i, j
+
 import array
 
 static import hash, mem
+
+static bool def get_data(LandHash *self, LandHashIterator *i, void **data):
+    if not self->entries: return False
+    while i->i < self->size:
+        if self->entries[i->i]:
+            if i->j < self->entries[i->i][0].n:
+                if data: *data = self->entries[i->i][i->j].data
+                return True
+            i->j = 0
+        i->i++
+    return False
+
+LandHashIterator def LandHashIterator_first(LandHash *self):
+    LandHashIterator i = {0, 0}
+    return i
+
+void *def LandHashIterator_item(LandHash *self, LandHashIterator *i):
+    void *data = None
+    get_data(self, i, &data)
+    return data
+
+bool def LandHashIterator_next(LandHash *self, LandHashIterator *i):
+    i->j++
+    if get_data(self, i, None):
+        return True
+    return False
 
 *** "ifdef" LAND_MEMLOG
 

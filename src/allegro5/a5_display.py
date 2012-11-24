@@ -312,7 +312,8 @@ def platform_filled_polygon(int n, float *xy):
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
     uncheck_blending()
 
-def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):
+def platform_textured_colored_polygon(LandImage *image, int n,
+        float *xy, *uv, *rgba):
     SELF
     
     LandImagePlatform *pim = (void *)image;
@@ -321,15 +322,32 @@ def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):
     memset(v, 0, n * sizeof(ALLEGRO_VERTEX))
     int j = 0
     int k = 0
+    int l = 0
     for int i = 0 while i < n with i++:
         v[i].x = xy[j++]
         v[i].y = xy[j++]
-        v[i].u = uv[k++]
-        v[i].v = uv[k++]
-        v[i].color = self->c
+        if uv:
+            v[i].u = uv[k++]
+            v[i].v = uv[k++]
+        else:
+            v[i].u = 0
+            v[i].v = 0
+        if rgba:
+            v[i].color.r = rgba[l++]
+            v[i].color.g = rgba[l++]
+            v[i].color.b = rgba[l++]
+            v[i].color.a = rgba[l++]
+        else:
+            v[i].color = self->c
     check_blending_and_transform()
-    al_draw_prim(v, None, pim->a5, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
+    al_draw_prim(v, None, pim ? pim->a5 : None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
     uncheck_blending()
+
+def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):
+    platform_textured_colored_polygon(image, n, xy, uv, None)
+
+def platform_filled_colored_polygon(int n, float *xy, *rgba):
+    platform_textured_colored_polygon(None, n, xy, None, rgba)
 
 def platform_filled_polygon_with_holes(int n, float *xy,
     int holes_count, int *holes):

@@ -87,7 +87,6 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float angle, float r, float g, float b, float alpha, int flip):
     SELF
     LandDisplay *d = _land_active_display
-    LandDisplayPlatform *da5 = (void *)_land_active_display
     ALLEGRO_STATE state
 
     land_a5_display_check_transform()

@@ -190,7 +190,7 @@ LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     # blending changes only for image display which is destroyed a line later
     land_blend(LAND_BLEND_SOLID)
 
-    land_image_draw_partial(copy, 0, 0, x, y, w, h)
+    land_image_draw_partial(copy, copy->x, copy->y, x, y, w, h)
     land_unset_image_display()
     
     land_log_message_nostamp("success (%d x %d)\n", w, h)

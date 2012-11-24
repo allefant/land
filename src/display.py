@@ -430,6 +430,9 @@ def land_filled_polygon_with_holes(int n, float *xy,
     int holes_count, int *holes):
     platform_filled_polygon_with_holes(n, xy, holes_count, holes)
 
+def land_filled_colored_polygon(int n, float *xy, *rgba):
+    platform_filled_colored_polygon(n, xy, rgba):
+
 def land_plot(float x, y):
     platform_plot(x, y)
     

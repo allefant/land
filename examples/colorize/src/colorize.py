@@ -179,30 +179,16 @@ static def draw_corners(float x, y, s):
     land_filled_polygon(3, (float []){x, y + 80, x + s, y + 80, x, y + 80 - s})
     land_filled_polygon(3, (float []){x + 80 - s, y + 80, x + 80, y + 80, x + 80, y + 80 - s})
 
-static def draw_target(float x, y, x_, y_, s, r_, g_, b_):
+static def draw_target(float x, y, x_, y_, s, r, g, b):
     float dx = x_ - x, dy = y_ - y
     float d = sqrtf(dx * dx + dy * dy)
     dx /= d; dy /= d
     float nx = dy * s, ny = -dx * s
-    GLubyte r = r_ * 255
-    GLubyte g = g_ * 255
-    GLubyte b = b_ * 255
     x += 40; y += 40
     x_ += 40; y_ += 40
-    GLfloat v[] = {x_, y_, x + nx, y + ny, x, y, x - nx, y - ny};
-    GLubyte c[] = {r, g, b, 0, r, g, b, 0, r, g, b, 255, r, g, b, 0};
-    glVertexPointer(2, GL_FLOAT, 0, v);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, c)
-
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY)
-    glEnableClientState(GL_VERTEX_ARRAY)
-    glDisable(GL_TEXTURE_2D);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY)
-    glDisableClientState(GL_VERTEX_ARRAY)
-    glEnable(GL_TEXTURE_2D);
+    float v[] = {x_, y_, x + nx, y + ny, x, y, x - nx, y - ny};
+    float c[] = {0, 0, 0, 0, 0, 0, 0, 0, r, g, b, 1, 0, 0, 0, 0};
+    land_filled_colored_polygon(4, v, c)
 
 static def draw(LandRunner *self):
     land_clear(0.25, 0.2, 0.15, 1)
