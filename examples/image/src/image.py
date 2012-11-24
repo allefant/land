@@ -19,18 +19,18 @@ static LandImage * def create_test_image():
         int b
         for b = 1 while b < 8 with b++:
             int mask = (1 << b) - 1
-            if ((x & mask) == mask) && y < mask:
+            if ((x & mask) == mask) and y < mask:
                 blue = 0
                 green = 1
                 red = 1
 
-            if ((y & mask) == mask) && x < mask:
+            if ((y & mask) == mask) and x < mask:
                 blue = 1
                 green = 0
                 red = 1
 
 
-        if x >= w / 2 && y >= h / 2:
+        if x >= w / 2 and y >= h / 2:
             int ix = w * 3 / 4 - x
             int iy = h * 3 / 4 - y
             if ix <= 0:

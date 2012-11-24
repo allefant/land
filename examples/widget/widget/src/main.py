@@ -36,8 +36,6 @@ static def clicked(LandWidget *self):
     land_widget_layout_set_expanding(entry, 1, 1)
 
 static def init(LandRunner *self):
-    int i
-
     my_font = land_font_load("../../data/galaxy.ttf", 10)
     land_font_set(my_font)
 
@@ -48,7 +46,8 @@ static def init(LandRunner *self):
     land_widget_reference(desktop)
 
     LandWidget *window =  land_widget_vbox_new(desktop, 100, 200, 10, 10)
-    LandWidget *mover = land_widget_mover_new(window, "move", 0, 0, 100, 20)
+    #LandWidget *mover =
+    land_widget_mover_new(window, "move", 0, 0, 100, 20)
     LandWidget *panel = land_widget_panel_new(window, 0, 0, 100, 100)
     scrolling1 = land_widget_scrolling_new(panel, 0, 0, 100, 100)
     land_widget_scrolling_autohide(scrolling1, 1, 1, 0)

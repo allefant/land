@@ -4,7 +4,7 @@ import land/land, base
 int def land_widget_layout_freeze(LandWidget *self):
     int nl = self->no_layout
     self->no_layout = 1
-    return !nl
+    return not nl
 
 # Returns 1 if layout is now enabled, 0 if it already was.
 int def land_widget_layout_unfreeze(LandWidget *self):

@@ -13,7 +13,7 @@ def land_exception_handler_init():
     label again
     if setjmp(exception):
         int r = land_exception_handler(exception_string)
-        if !r: goto again
+        if not r: goto again
         abort()
 
 def land_exception_handler_set(int (*handler)(char const *str)):

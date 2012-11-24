@@ -385,7 +385,7 @@ static def debug_packet(char const *buffer, int size):
     int i
     for i = 0 while i < size with i++:
         int c = (unsigned char)buffer[i];
-        land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 127 ? c : '.')
+        land_log_message_nostamp("%d[%c],", c, c >= 32 and c <= 127 ? c : '.')
     land_log_message_nostamp("\n")
 *** "endif"
 
@@ -623,7 +623,7 @@ static def land_net_poll_recv(LandNet *self):
         bool err = WSAGetLastError() != WSAEINTR and\
             WSAGetLastError() != WSAEWOULDBLOCK
         *** "else"
-        bool err = errno != EINTR && errno != EWOULDBLOCK && errno != EAGAIN
+        bool err = errno != EINTR and errno != EWOULDBLOCK and errno != EAGAIN
         *** "endif"
         if err:
             sockerror("recv")
@@ -641,7 +641,7 @@ static def land_net_poll_recv(LandNet *self):
     int i
     for i = 0 while i < r with i++:
         int c = (unsigned char)self->buffer[self->full - r + i]
-        land_log_message_nostamp("%d[%c],", c, c >= 32 && c <= 128 ? c : '.')
+        land_log_message_nostamp("%d[%c],", c, c >= 32 and c <= 128 ? c : '.')
     land_log_message_nostamp("\n")
     *** "endif"
 

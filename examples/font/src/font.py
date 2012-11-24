@@ -33,10 +33,11 @@ static def game_tick(LandRunner *self):
 static def game_draw(LandRunner *self):
     float w = land_display_width()
     float h = land_display_height()
-    land_clear(0, 1, 0, 1)
+    land_clear(0, 0, 0, 1)
     float xy[] = {0, 0, w, 0, w, h, 0, h}
     float uv[] = {1, 1, 3, 1, 3, 3, 1, 3}
     land_color(1, 1, 1, 1)
+    land_reset_transform()
     land_textured_polygon(gradient, 4, xy, uv)
 
     land_font_set(muli)
@@ -63,16 +64,16 @@ static def game_draw(LandRunner *self):
     float alpha =((int)land_get_time()) & 1 ? 0.5 : 0;
     land_color(alpha, alpha, 0, alpha)
     land_reset_transform()
-    land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
     land_translate(x, y)
+    land_rotate(-sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
     land_line(0 - 3, 0, 0 + 3, 0)
     land_line(0, 0 - 3, 0, 0 + 3)
     
     for int i in range(21):
         land_reset_transform()
-        land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4 - LAND_PI / 4)
-        land_rotate(LAND_PI / 2 * i / 20)
         land_translate(x, y)
+        land_rotate(-sin(-land_get_time() * LAND_PI * 0.5) * LAND_PI / 4 + LAND_PI / 4)
+        land_rotate(-LAND_PI / 2 * i / 20)
         land_line(0, 0.02 * h, 0, h * 0.35)
 
     land_reset_transform()
@@ -93,9 +94,9 @@ static def game_draw(LandRunner *self):
     land_color(1, 1, 1, 1)
 
     land_reset_transform()
-    land_translate(0, h * 0.35)
-    land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
     land_translate(x, y)
+    land_rotate(sin(land_get_time() * LAND_PI * 0.5) * LAND_PI / 4)
+    land_translate(0, h * 0.35)
     land_text_pos(0, 0)
     land_print_center("Truecolor")
 
@@ -105,23 +106,21 @@ static def game_draw(LandRunner *self):
 
     land_reset_transform()
     land_font_set(paletted)
+    land_translate(land_display_width() / 4, 2 * land_display_height() / 5)
     land_scale(s, s)
     land_rotate(a)
-    land_translate(land_display_width() / 4, 2 * land_display_height() / 5)
-    land_color(0, 1, 0, 1)
+    land_color(1, 0, 0, 1)
     land_text_pos(0, -30)
     land_print_center("paletted")
 
     land_reset_transform()
     land_font_set(paletted)
+    land_translate(land_display_width() * 0.75, 2 * land_display_height() / 5)
     land_scale(s, s)
     land_rotate(-a)
-    land_translate(land_display_width() * 0.75, 2 * land_display_height() / 5)
-    land_color(1, 0, 0, 1)
+    land_color(0, 0.5, 0, 1)
     land_text_pos(0, -30)
     land_print_center("paletted")
-    
-    land_reset_transform()
 
 def my_main():
     land_init()

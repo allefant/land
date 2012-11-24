@@ -11,8 +11,8 @@ static def print(char const *str, ...):
     vsnprintf(t, sizeof t, str, args)
     va_end(args)
 
-    float x = land_text_x_pos()
-    float y = land_text_y_pos()
+    #float x = land_text_x_pos()
+    #float y = land_text_y_pos()
     land_color(0, 0, 0, 1)
     land_print(t)
 
@@ -46,11 +46,12 @@ static def game_init(LandRunner *self):
     desktop = land_widget_board_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
     
-    LandWidget *scrolling = land_widget_scrolling_new(desktop, 20, 20, 600, 440)
-    LandWidget *box = land_widget_box_new(scrolling, 0, 0, 1024, 1024)
+    #LandWidget *scrolling =
+    land_widget_scrolling_new(desktop, 20, 20, 600, 440)
+    #LandWidget *box = land_widget_box_new(scrolling, 0, 0, 1024, 1024)
 
 static def game_tick(LandRunner *self):
-    if land_key_pressed(LandKeyEscape) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
     
     if land_key_pressed(' '):

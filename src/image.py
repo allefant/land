@@ -131,7 +131,7 @@ def land_image_del(LandImage *self):
     if not (self->flags & LAND_SUBIMAGE):
         land_image_destroy_pixelmasks(self)
         if self->name: land_free(self->name)
-        if self->filename && self->filename != self->name: land_free(self->filename)
+        if self->filename and self->filename != self->name: land_free(self->filename)
         bitmap_count--
         bitmap_memory -= self->width * self->height * 4
     land_display_del_image(self)
@@ -438,7 +438,7 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
     # FIXME: how can the sheet be destroyed again?
     LandArray *array = NULL
     LandImage *sheet = land_image_load(filename)
-    if !sheet: return NULL
+    if not sheet: return NULL
     int x, y, i, j
     for j = 0 while j < y_count with j++:
         for i = 0 while i < x_count with i++:
@@ -458,7 +458,7 @@ LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
     int y_count, int auto_crop):
     LandArray *array = NULL
     LandImage *sheet = land_image_load_memory(filename)
-    if !sheet: return NULL
+    if not sheet: return NULL
     int x, y, i, j
     for j = 0 while j < y_count with j++:
         for i = 0 while i < x_count with i++:

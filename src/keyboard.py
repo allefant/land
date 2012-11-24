@@ -55,7 +55,7 @@ static int keybuffer_first
 static int keybuffer_last
 
 def land_key_press_event(int k):
-    if !key_state[k]:
+    if not key_state[k]:
         key_pressed[k]++
         key_state[k] = 1
 

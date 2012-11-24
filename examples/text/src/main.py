@@ -34,10 +34,10 @@ def tick():
     int ow = wrap_w
     if land_key_pressed(LandKeyLeft):
         if land_key(LandKeyLeftShift): wrap_w -= 20
-        else wrap_w--
+        else: wrap_w--
     if land_key_pressed(LandKeyRight):
         if land_key(LandKeyLeftShift): wrap_w += 20
-        else wrap_w++
+        else: wrap_w++
     if ow != wrap_w:
         wrap()
     int dz = land_mouse_delta_z()

@@ -4,7 +4,7 @@ int def string_cmp(void *s1, void *s2):
     return strcmp(s1, s2)
 
 int def print_cb(void *item, void *data):
-    printf(" * %s\n", item)
+    printf(" * %s\n", (char *)item)
     return 0
 
 int def main():

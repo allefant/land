@@ -556,7 +556,7 @@ def land_widget_draw(LandWidget *self):
     """
     if self->hidden: return
     int pop = 0
-    if !self->dont_clip:
+    if not self->dont_clip:
         land_clip_push()
         land_clip_on()
         land_clip_intersect(self->box.x, self->box.y, self->box.x + self->box.w,

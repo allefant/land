@@ -94,7 +94,7 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     if (self->count + 1) * 2 > self->size:
         int oldsize = self->size
         LandHashEntry **oldentries = self->entries
-        if !self->size: self->bits = 1 # for first entry, we already want size 2 
+        if not self->size: self->bits = 1 # for first entry, we already want size 2 
         else: self->bits++
         self->size = 1 << self->bits
         self->entries = land_calloc(self->size * sizeof *self->entries)
@@ -129,9 +129,9 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
     The returned pointer might need to be destroyed after you remove it from
     the hash, if it has no more use.
     """
-    if !self->size: return NULL
+    if not self->size: return NULL
     int i = self->hash_function(self, thekey)
-    if !self->entries[i]: return NULL
+    if not self->entries[i]: return NULL
     int n = self->entries[i][0].n
     int j
     for j = 0 while j < n with j++:
@@ -153,9 +153,9 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
 
 static LandHashEntry *def land_hash_get_entry(LandHash *self,
     char const *thekey):
-    if !self->size: return None
+    if not self->size: return None
     int i = self->hash_function(self, thekey)
-    if !self->entries[i]: return None
+    if not self->entries[i]: return None
     int j
     for j = 0 while j < self->entries[i][0].n with j++:
         if not strcmp(self->entries[i][j].thekey, thekey):

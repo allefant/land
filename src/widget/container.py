@@ -102,7 +102,7 @@ def land_widget_container_keyboard_leave(LandWidget *super):
 # Returns the item/iterator for the given child of the container.
 LandListItem *def land_widget_container_child_item(LandWidget *super, *child):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if !self->children:
+    if not self->children:
         return NULL
     LandListItem *item = self->children->first
     while item:
@@ -430,7 +430,7 @@ LandWidget *def land_widget_container_child(LandWidget *super):
 
 int def land_widget_container_is_empty(LandWidget *super):
     LandWidgetContainer *self = (LandWidgetContainer *)super
-    return !self->children || self->children->count == 0
+    return not self->children or self->children->count == 0
 
 def land_widget_container_initialize(LandWidget *super, *parent,
     int x, y, w, h):

@@ -47,7 +47,7 @@ static LandWidget *def construct_menu():
         name[0] = 'A' + h
         name[1] = '\0'
         LandWidget *submenu = land_widget_menu_new(desktop, 0, 0, 10, 10)
-        for j = 0 while  data[index[h] + j] && data[index[h] + j][0] == 'A' + h with j++:
+        for j = 0 while  data[index[h] + j] and data[index[h] + j][0] == 'A' + h with j++:
             land_widget_menuitem_new(submenu, data[index[h] + j], NULL)
 
         land_widget_hide(submenu)
@@ -61,7 +61,7 @@ static def my_mouse_tick(LandWidget *self):
     land_widget_container_mouse_tick(self)
 
     if not container->mouse:
-        if (land_mouse_b() & 2) && (land_mouse_delta_b() & 2):
+        if (land_mouse_b() & 2) and (land_mouse_delta_b() & 2):
             land_widget_container_set_mouse_focus(self, construct_menu())
 
 static def on_quit(LandWidget *self):

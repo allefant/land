@@ -5,3 +5,6 @@ static import land/allegro5/a5_misc
 
 LandColor def land_color_hsv(float hue, sat, val):
     return platform_color_hsv(hue, sat, val)
+
+LandColor def land_color_name(char const *name):
+    return platform_color_name(name)

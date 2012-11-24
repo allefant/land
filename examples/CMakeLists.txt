@@ -68,7 +68,7 @@ foreach(exsrc ${examples})
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 )
             target_link_libraries(${exname}-static-debug
-                land-static-debug
+                ${libname}-static-debug
                 allegro_monolith-debug-static-${AV}
                 z
                 png
@@ -88,7 +88,7 @@ foreach(exsrc ${examples})
                 LINK_FLAGS -p
                 )
             target_link_libraries(${exname}-static-profile
-                land-static-profile
+                ${libname}-static-profile
                 allegro_monolith-profile-static-${AV}
                 z
                 png
@@ -107,7 +107,7 @@ foreach(exsrc ${examples})
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
             target_link_libraries(${exname}-static
-                land-static)
+                ${libname}-static)
         endif (RELEASE)
     endif (STATIC)
 
@@ -123,7 +123,7 @@ foreach(exsrc ${examples})
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 )
             target_link_libraries(${exname}-debug
-                land-debug
+                ${libname}-debug
                 yaml
                 )
         endif (DEBUG)
@@ -134,9 +134,9 @@ foreach(exsrc ${examples})
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
-            target_link_libraries(${ex}
-                land
-                allegro-${AV}
+            target_link_libraries(${exname}
+                ${libname}
+                yaml
                 )
         endif (RELEASE)
     endif (SHARED)

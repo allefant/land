@@ -188,7 +188,7 @@ def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
 LandSprite *def land_sprite_new(LandSpriteType *type):
 
-    if !strcmp(type->name, "animation"):
+    if not strcmp(type->name, "animation"):
         return land_sprite_animated_new(type)
 
     LandSprite *self
@@ -325,7 +325,7 @@ LandList *def land_sprites_grid_overlap(LandSprite *self,
                 LandListItem *item = list->first
                 while item:
                     LandSprite *other = item->data
-                    if other != self && other->tag != grid->tag:
+                    if other != self and other->tag != grid->tag:
                         other->tag = grid->tag
                         if self->type->overlap(self, other):
                             land_add_list_data(&retlist, other)

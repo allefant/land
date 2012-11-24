@@ -49,13 +49,13 @@ LandDataFile *def land_read_datafile(FILE *file):
 
 LandDataFile *def land_open_datafile(char const *filename):
     FILE *file = fopen(filename, "rb")
-    if !file: return NULL
+    if not file: return NULL
     return land_read_datafile(file)
 
 LandDataFile *def land_open_appended_datafile(char const *filename,
     char const *marker):
     FILE *file = fopen(filename, "rb")
-    if !file: return NULL
+    if not file: return NULL
     fseek(file, -4, SEEK_END)
     int size = read32(file)
     land_log_message("Embedded data size: %d\n", size)

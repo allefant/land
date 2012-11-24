@@ -16,11 +16,13 @@ set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
 #
+
 file(GLOB_RECURSE pyfiles RELATIVE ${CMAKE_SOURCE_DIR}/src src/*.py)
 
 #_______________________________________________________________________
 # Step 2: Rules to create .c and .h files.
 #
+
 set(cfiles)
 foreach(py ${pyfiles})
     get_filename_component(path ${py} PATH)
@@ -53,9 +55,11 @@ set(CFLAGS "--std=gnu99")
 set(DFLAGS "-g3 -O2")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
+set(LFLAGS "")
 
 if (MEMLOG)
-    set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
+    set(CFLAGS "${CFLAGS} -DLAND_MEMLOG") #-fmudflap
+    #set(LFLAGS "${LFLAGS} -fmudflap")
 endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
@@ -71,25 +75,31 @@ else ()
     #include_directories(/home/elias/prog/allegro/install/include)
 endif ()
 
+if (MEMLOG)
+    set(libname "land-memlog")
+else ()
+    set(libname "land")
+endif ()
+
 if (STATIC)
     if (DEBUG)
-        add_library(land-static-debug STATIC ${cfiles})
-        set_target_properties(land-static-debug
+        add_library(${libname}-static-debug STATIC ${cfiles})
+        set_target_properties(${libname}-static-debug
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
             )
     endif (DEBUG)
     if (PROFILE)
-        add_library(land-static-profile STATIC ${cfiles})
-        set_target_properties(land-static-profile
+        add_library(${libname}-static-profile STATIC ${cfiles})
+        set_target_properties(${libname}-static-profile
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
             LINK_FLAGS -p
             )
     endif (PROFILE)
     if (RELEASE)
-        add_library(land-static STATIC ${cfiles})
-        set_target_properties(land-static
+        add_library(${libname}-static STATIC ${cfiles})
+        set_target_properties(${libname}-static
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
             )
@@ -98,14 +108,14 @@ endif (STATIC)
 
 if (SHARED)
     if (DEBUG)
-        add_library(land-debug SHARED ${cfiles})
-        set_target_properties(land-debug
+        add_library(${libname}-debug SHARED ${cfiles})
+        set_target_properties(${libname}-debug
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
-            LINK_FLAGS -rdynamic
+            LINK_FLAGS "-rdynamic ${LFLAGS}"
             )
         if (WINDOWS)
-            target_link_libraries(land-debug
+            target_link_libraries(${libname}-debug
                 allegro-debug
                 allegro_font-debug
                 allegro_primitives-debug
@@ -118,20 +128,20 @@ if (SHARED)
                 z
                 )
         else (WINDOWS)
-            target_link_libraries(land-debug
+            target_link_libraries(${libname}-debug
                 allegro_monolith-debug
                 yaml
                 )
         endif (WINDOWS)
     endif (DEBUG)
     if (RELEASE)
-        add_library(land SHARED ${cfiles})
-        set_target_properties(land
+        add_library(${libname} SHARED ${cfiles})
+        set_target_properties(${libname}
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
             )
         if (WINDOWS)
-            target_link_libraries(land
+            target_link_libraries(${libname}
                 allegro
                 allegro_font
                 allegro_primitives
@@ -142,6 +152,11 @@ if (SHARED)
                 allegro_image
                 wsock32
                 z
+                )
+        else (WINDOWS)
+            target_link_libraries(${libname}
+                allegro_monolith
+                yaml
                 )
         endif (WINDOWS)
     endif (RELEASE)

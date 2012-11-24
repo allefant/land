@@ -177,6 +177,12 @@ bool def land_fnmatch(char const *pattern, char const *name):
         i++
         j++
 
+bool def land_ends_with(char const *s, *end):
+    size_t n = strlen(end)
+    if strlen(end) > n:
+        return False
+    return strncmp(s + strlen(s) - n, end, n) == 0
+
 LandArray *def land_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data), int flags, void *data):
     """
@@ -189,7 +195,7 @@ LandArray *def land_filelist(char const *dir,
 
     The return value of the filter decides what is done with the name:
     0 - Discard it.
-    1 - Append if to the returned list.
+    1 - Append it to the returned list.
     2 - If it is a directory, recurse into it.
     3 - Like 1 and 2 combined.
     """

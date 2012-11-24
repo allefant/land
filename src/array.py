@@ -14,6 +14,10 @@ static import mem
 *** "undef" land_array_new
 *** "undef" land_array_destroy
 *** "undef" land_array_add
+*** "undef" land_array_clear
+*** "undef" land_array_merge
+*** "undef" land_array_concat
+*** "undef" land_array_copy
 
 LandArray *def land_array_new_memlog(char const *f, int l):
     LandArray *array = land_array_new()
@@ -26,6 +30,28 @@ def land_array_destroy_memlog(LandArray *self, char const *f, int l):
 
 def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
     land_array_add(self, data)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self->size, f, l)
+
+LandArray *def land_array_copy_memlog(LandArray const *self, char const *f, int l):
+    LandArray *copy = land_array_copy(self)
+    land_memory_add(copy, "array", copy->size, f, l)
+    return copy
+
+def land_array_concat_memlog(LandArray *self, LandArray const *other,
+        char const *f, int l):
+    land_array_concat(self, other)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self->size, f, l)
+
+def land_array_merge_memlog(LandArray *self, *other, char const *f, int l):
+    land_array_merge(self, other)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self->size, f, l)
+    land_memory_remove(other, "array", 1, f, l)
+
+def land_array_clear_memlog(LandArray *self, char const *f, int l):
+    land_array_clear(self)
     land_memory_remove(self, "array", 1, f, l)
     land_memory_add(self, "array", self->size, f, l)
 
@@ -112,7 +138,7 @@ def land_array_add_data(LandArray **array, void *data):
     with the given data, and add to the (possibly modified) array.
     """
     LandArray *self = *array
-    if !self:
+    if not self:
         *** "if" LAND_MEMLOG
         self = land_array_new_memlog(__FILE__, __LINE__)
         *** "else"
@@ -236,5 +262,9 @@ global *** "ifdef" LAND_MEMLOG
 macro land_array_new() land_array_new_memlog(__FILE__, __LINE__)
 macro land_array_destroy(x) land_array_destroy_memlog(x, __FILE__, __LINE__)
 macro land_array_add(x, y) land_array_add_memlog(x, y, __FILE__, __LINE__)
+macro land_array_copy(x) land_array_copy_memlog(x, __FILE__, __LINE__)
+macro land_array_merge(x, y) land_array_merge_memlog(x, y, __FILE__, __LINE__)
+macro land_array_concat(x, y) land_array_concat_memlog(x, y, __FILE__, __LINE__)
+macro land_array_clear(x) land_array_clear_memlog(x, __FILE__, __LINE__)
 
 global *** "endif"

@@ -13,7 +13,7 @@ static def game_init(LandRunner *self):
     glEnable(GL_POLYGON_SMOOTH)
 
 static def game_tick(LandRunner *self):
-    if land_key(LandKeyEscape) || land_closebutton():
+    if land_key(LandKeyEscape) or land_closebutton():
         land_quit()
 
 static def game_draw(LandRunner *self):

@@ -92,17 +92,21 @@ def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
 def land_buffer_add(LandBuffer *self, char const *b, int n):
     land_buffer_insert(self, self->n, b, n)
 
+def land_buffer_addv(LandBuffer *self, char const *format, va_list args):
+    va_list args2
+    va_copy(args2, args)
+    int n = vsnprintf(None, 0, format, args2)
+    va_end(args2)
+    if n < 0: n = 1023
+    char s[n + 1]
+    vsnprintf(s, n + 1, format, args)
+    land_buffer_add(self, s, n)
+
 def land_buffer_addf(LandBuffer *self, char const *format, ...):
     va_list args
     va_start(args, format)
-    int n = vsnprintf(None, 0, format, args)
+    land_buffer_addv(self, format, args)
     va_end(args)
-    if n < 0: n = 1023
-    char s[n + 1]
-    va_start(args, format)
-    vsnprintf(s, n + 1, format, args)
-    va_end(args)
-    land_buffer_add(self, s, n)
 
 def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, i & 255)

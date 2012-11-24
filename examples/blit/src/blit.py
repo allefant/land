@@ -22,6 +22,8 @@ def init(LandRunner *self):
 def tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape):
         land_quit()
+    if land_closebutton():
+        land_quit()
 
 def draw(LandRunner *self):
     land_image_draw(image1, 0, 0)

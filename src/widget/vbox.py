@@ -56,7 +56,7 @@ static def land_widget_vbox_renumber(LandWidget *base):
                 x = 0
                 y++
             item = item->next
-    if !vbox->disable_updates:
+    if not vbox->disable_updates:
         land_widget_vbox_do_update(base)
 
 def land_widget_vbox_add(LandWidget *base, LandWidget *add):
@@ -81,7 +81,7 @@ def land_widget_vbox_add(LandWidget *base, LandWidget *add):
 
     if layout: land_widget_layout_unfreeze(base)
 
-    if !vbox->disable_updates:
+    if not vbox->disable_updates:
         land_widget_vbox_do_update(base)
 
 def land_widget_vbox_remove(LandWidget *base, LandWidget *rem):

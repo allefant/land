@@ -17,7 +17,7 @@ class LandIniFile:
 
 static void *def _get(LandIniSection *s, char const *key):
     for int i = 0 while i < s->n with i++:
-        if not strcmp(s->entries[i].key, key) && s->entries[i].val:
+        if not strcmp(s->entries[i].key, key) and s->entries[i].val:
             return s->entries[i].val
     return None
 
@@ -88,7 +88,7 @@ char const *def land_init_get_nth_entry(LandIniFile *ini,
     return s->entries[i].key
 
 static bool def is_whitespace(char c):
-    if c == ' ' || c == '\t' || c == '\n': return true
+    if c == ' ' or c == '\t' or c == '\n': return true
     return false
 
 static macro addc(var, len):
@@ -137,7 +137,7 @@ LandIniFile *def land_ini_read(char const *filename):
 
 
         elif  state == SECTION: # section name
-            if c == ']' || c == '\n':
+            if c == ']' or c == '\n':
                 state = OUTSIDE
             else:
                 addc(section_name, slen)
@@ -193,7 +193,7 @@ def land_ini_writeback(LandIniFile *ini):
     if not f: return
     for int i = 0 while i < ini->sections->n with i++:
         char *name = ini->sections->entries[i].key
-        if name && name[0]:
+        if name and name[0]:
             fprintf(f, "[%s]\n", name)
         LandIniSection *s = ini->sections->entries[i].val
         for int j = 0 while j < s->n with j++:

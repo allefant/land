@@ -1,7 +1,8 @@
 import land/display
 import a5_image
-static import global allegro5/allegro5
-static import global allegro5/allegro_primitives
+static import global allegro5.allegro5
+static import global allegro5.allegro_primitives
+import global allegro5.allegro_shader_glsl
 static import global assert, math
 
 class LandDisplayPlatform:
@@ -10,6 +11,7 @@ class LandDisplayPlatform:
     ALLEGRO_COLOR c
     ALLEGRO_STATE blend_state
     ALLEGRO_TRANSFORM transform
+    ALLEGRO_SHADER *default_shader
 
 def platform_display_init():
     pass
@@ -50,13 +52,32 @@ def platform_display_resize(int w, h):
     SELF
     al_resize_display(self->a5, w, h)
 
-static def check_blending_and_transform():
+def land_a5_display_check_transform():
     SELF
 
     if super->matrix_modified:
-        memcpy(self->transform.m, super->matrix, sizeof(super->matrix))
+        self->transform.m[0][0] = super->matrix[0]
+        self->transform.m[1][0] = super->matrix[1]
+        self->transform.m[2][0] = super->matrix[2]
+        self->transform.m[3][0] = super->matrix[3]
+        self->transform.m[0][1] = super->matrix[4]
+        self->transform.m[1][1] = super->matrix[5]
+        self->transform.m[2][1] = super->matrix[6]
+        self->transform.m[3][1] = super->matrix[7]
+        self->transform.m[0][2] = super->matrix[8]
+        self->transform.m[1][2] = super->matrix[9]
+        self->transform.m[2][2] = super->matrix[10]
+        self->transform.m[3][2] = super->matrix[11]
+        self->transform.m[0][3] = super->matrix[12]
+        self->transform.m[1][3] = super->matrix[13]
+        self->transform.m[2][3] = super->matrix[14]
+        self->transform.m[3][3] = super->matrix[15]
         al_use_transform(&self->transform)
         super->matrix_modified = False
+
+static def check_blending_and_transform():
+    SELF
+    land_a5_display_check_transform()
 
     if super->blend:
         al_store_state(&self->blend_state, ALLEGRO_STATE_BLENDER)
@@ -84,7 +105,7 @@ def platform_display_set():
     if super->flags & LAND_RESIZE:
         f |= ALLEGRO_RESIZABLE
     if super->flags & LAND_OPENGL:
-        f |= ALLEGRO_OPENGL
+        f |= ALLEGRO_OPENGL | ALLEGRO_USE_PROGRAMMABLE_PIPELINE
     if super->flags & LAND_MULTISAMPLE:
         al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
@@ -129,6 +150,9 @@ def platform_display_set():
         land_log_message("    Success!\n")
     else:
         land_log_message("    Failed activating Allegro display.\n")
+
+    if f & ALLEGRO_USE_PROGRAMMABLE_PIPELINE:
+        land_display_set_default_shaders()
 
 def platform_display_scale_to_fit(float w, h, int how):
     SELF
@@ -364,3 +388,16 @@ def platform_render_state(int state, value):
         if value & LAND_ALPHA_MASK: value2 |= ALLEGRO_MASK_ALPHA
         if value & LAND_DEPTH_MASK: value2 |= ALLEGRO_MASK_DEPTH
     al_set_render_state(a5state[state], value2)
+
+def platform_set_default_shaders():
+    SELF
+    if not self->default_shader:
+        ALLEGRO_SHADER *shader
+        shader = al_create_shader(ALLEGRO_SHADER_GLSL)
+        al_attach_shader_source(shader, ALLEGRO_VERTEX_SHADER,
+            al_get_default_glsl_vertex_shader())
+        al_attach_shader_source(shader, ALLEGRO_PIXEL_SHADER,
+            al_get_default_glsl_pixel_shader())
+        al_link_shader(shader)
+        self->default_shader = shader
+    al_set_shader(self->a5, self->default_shader)

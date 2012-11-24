@@ -57,7 +57,7 @@ static def done():
         fflush(lf)
         backtrace_symbols_fd(not_freed[n].trace, not_freed[n].trace_depth, fileno(lf))
         
-        if !strcmp(not_freed[n].id, ""):
+        if not strcmp(not_freed[n].id, ""):
             fprintf(lf, "    first bytes: [")
             for int i = 0 while i < 16 with i++:
                 if i >= not_freed[n].size: break
@@ -79,8 +79,8 @@ static def install():
         fclose(lf)
 
 def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
-    if !installed: install()
-    if !ptr:
+    if not installed: install()
+    if not ptr:
         if size:
             FILE *lf = fopen(LOGFILE, "a")
             fprintf(lf, "%s: %d: allocation of %d elements [%s] failed\n", f, l,
@@ -113,8 +113,8 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
 
 def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     int n
-    if !installed: install()
-    if !ptr:
+    if not installed: install()
+    if not ptr:
         if re:
             *** "ifdef" LOGALL
             FILE *lf = fopen(LOGFILE, "a")

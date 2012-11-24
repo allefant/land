@@ -90,10 +90,7 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     LandDisplayPlatform *da5 = (void *)_land_active_display
     ALLEGRO_STATE state
 
-    if d->matrix_modified:
-        memcpy(da5->transform.m, d->matrix, sizeof(d->matrix))
-        al_use_transform(&da5->transform)
-        d->matrix_modified = False
+    land_a5_display_check_transform()
 
     bool restore = False
     if d->blend:

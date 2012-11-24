@@ -47,7 +47,7 @@ static def land_widget_hbox_renumber(LandWidget *base):
                 y = 0
             item = item->next
     if layout: land_widget_layout_unfreeze(base)
-    if !hbox->disable_updates:
+    if not hbox->disable_updates:
         land_widget_hbox_do_update(base)
 
 def land_widget_hbox_add(LandWidget *base, LandWidget *add):
@@ -68,7 +68,7 @@ def land_widget_hbox_add(LandWidget *base, LandWidget *add):
 
     if f: land_widget_layout_unfreeze(base)
 
-    if !hbox->disable_updates:
+    if not hbox->disable_updates:
         land_widget_hbox_do_update(base)
 
 def land_widget_hbox_remove(LandWidget *base, LandWidget *rem):

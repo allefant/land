@@ -321,7 +321,8 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
     float view_x = view->scroll_x
     float view_y = view->scroll_y
 
-    if !find_offset(self, view_x, view_y, &cell_x, &cell_y, &pixel_x, &pixel_y):
+    if not find_offset(self, view_x, view_y, &cell_x, &cell_y, &pixel_x,
+            &pixel_y):
         return
 
     pixel_x += view->x
@@ -366,7 +367,7 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
         row++
 
         if pixel_y + h1 + h2 <= upper_y:
-            if pixel_x + w2 - w1 > view->x && cell_y < self->y_cells - 1:
+            if pixel_x + w2 - w1 > view->x and cell_y < self->y_cells - 1:
                 pixel_x -= w1
                 pixel_y += h1
                 cell_y++

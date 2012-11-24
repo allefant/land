@@ -27,7 +27,7 @@ def land_widget_sizer_mouse_tick(LandWidget *super):
         else:
             self->dragged = 0
 
-    if ((land_mouse_b() & 1) && self->dragged):
+    if ((land_mouse_b() & 1) and self->dragged):
         float mx = 0, my = 0, sx = 0, sy = 0
         float dx = land_mouse_x() - self->target->box.x - self->drag_x
         float dy = land_mouse_y() - self->target->box.y - self->drag_y

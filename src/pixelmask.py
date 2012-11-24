@@ -130,7 +130,7 @@ static LandPixelMask *def pixelmask_create_flip(LandImage *image,
             for x = 0 while x < tw with x += 32:
                 int bits = 0
 
-                for int i = 0 while i < 32 && x + i < tw with i++:
+                for int i = 0 while i < 32 and x + i < tw with i++:
                     if rgba[y * tw * 4 + (x + i) * 4 + 3] >= threshold:
                         bits += 1 << i
                 

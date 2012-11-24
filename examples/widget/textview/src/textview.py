@@ -14,7 +14,8 @@ def create_dialog():
     char *text = land_read_text("../../data/GPL-2")
 
     LandWidget *window = land_widget_vbox_new(desktop, 100, 100, 200, 200)
-    LandWidget *mover = land_widget_mover_new(window, "GPL-2", 0, 0, 4, 4)
+    #LandWidget *mover =
+    land_widget_mover_new(window, "GPL-2", 0, 0, 4, 4)
 
     scrolling = land_widget_scrolling_new(window,
         0, 0, 0, 0)

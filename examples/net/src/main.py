@@ -200,20 +200,20 @@ def my_tick(LandWidget *self):
             int id = 0
             int got_data
 
-            do:
+            while True:
                 got_data = 0
                 land_net_poll(conn_out)
 
                 if conn_out->full >= 4:
                     id = idata[0]
 
-                if id == ID_WHO && conn_out->full >= 8:
+                if id == ID_WHO and conn_out->full >= 8:
                     MyWidget *client = (MyWidget *)clients[idata[1] * 2 + 1]
                     client->state = SELF
                     land_net_flush (conn_out, 8)
                     got_data = 1
 
-                if id == ID_JOIN && conn_out->full >= 12:
+                if id == ID_JOIN and conn_out->full >= 12:
                     MyWidget *client = (MyWidget *)clients[idata[1] * 2 + 1]
                     if idata[2]:
                         client->state = FREE
@@ -223,7 +223,7 @@ def my_tick(LandWidget *self):
                     land_net_flush (conn_out, 12)
                     got_data = 1
 
-                if id == ID_PING && conn_out->full >= 16:
+                if id == ID_PING and conn_out->full >= 16:
                     ping_out = idata[3]
                     land_net_send(conn_out, conn_out->buffer, 16)
                     land_net_flush(conn_out, 16)
@@ -236,7 +236,8 @@ def my_tick(LandWidget *self):
                     my->state = CONNECT
                     client_clear_others()
                     break
-            while (got_data)
+                if got_data:
+                    break
 
             break
 
@@ -245,17 +246,18 @@ def my_tick(LandWidget *self):
             int id = 0
             int got_data
 
-            do:
+            while True:
                 got_data = 0
                 land_net_poll(conn_server[my->id])
                 if conn_server[my->id]->full >= 4:
                     id = idata[0]
 
-                if id == ID_PING && conn_server[my->id]->full >= 16:
+                if id == ID_PING and conn_server[my->id]->full >= 16:
                     ping_server[my->id] = ticks - idata[2]
                     land_net_flush(conn_server[my->id], 16)
                     got_data = 1
-            while (got_data)
+                if got_data:
+                    break
 
             char packet[MAX_PACKET_SIZE]
 

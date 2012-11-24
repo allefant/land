@@ -42,12 +42,13 @@ def land_log_new(char const *base, int unique):
     int i = 0
 
     if unique:
-        do:
+        while True:
             sprintf(logname, "%s%04d.log", base, i)
             f = fopen(logname, "r")
             if f: fclose(f)
             i++
-        while (f)
+            if not f:
+                break
     else:
         sprintf(logname, "%s.log", base)
 
@@ -58,7 +59,7 @@ def land_log_new(char const *base, int unique):
     *** "endif"
 
 def land_log_message_nostamp (char const *format, ...):
-    if !logname: land_log_new("land", 0)
+    if not logname: land_log_new("land", 0)
 
     va_list va_args
     va_start(va_args, format)
@@ -80,7 +81,7 @@ def land_log_message_nostamp (char const *format, ...):
 
 def land_log_message(char const *format, ...):
     
-    if !logname: land_log_new("land", 0)
+    if not logname: land_log_new("land", 0)
 
     va_list va_args
     va_start(va_args, format)

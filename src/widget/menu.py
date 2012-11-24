@@ -76,7 +76,7 @@ def land_widget_menu_hide_complete(LandWidget *base):
     # Find topmost menu or menubar. 
     while 1:
         LandWidgetMenu *menu = LAND_WIDGET_MENU(base)
-        if !menu->menubutton:
+        if not menu->menubutton:
             break
         LandWidgetMenuButton *button = LAND_WIDGET_MENUBUTTON(menu->menubutton)
         if button->menu:
@@ -106,7 +106,7 @@ static def menubutton_clicked(LandWidget *base):
             base->box.x + base->box.w - self->submenu->box.x,
             base->box.y - self->submenu->box.y)
 
-    if (self->menu &&
+    if (self->menu and
         (self->menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):
         LandWidgetMenu *menu = LAND_WIDGET_MENU(self->menu)
         if menu->submenu:
@@ -345,7 +345,7 @@ def land_widget_menu_mouse_tick(LandWidget *self):
 
     land_widget_container_mouse_tick(self)
 
-    if (!container->mouse && land_mouse_delta_b() && land_mouse_b()):
+    if (not container->mouse and land_mouse_delta_b() and land_mouse_b()):
         # outside click 
         land_widget_menu_hide_complete(self)
         return

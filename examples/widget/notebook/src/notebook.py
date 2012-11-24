@@ -65,7 +65,7 @@ static def game_init(LandRunner *self):
     land_widget_layout(notebook)
 
 static def game_tick(LandRunner *self):
-    if land_key_pressed(LandKeyEscape) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
         
     if land_key_pressed(LandKeyDelete):

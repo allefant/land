@@ -10,18 +10,18 @@ macro GUL_EQUAL_X  8
 macro GUL_LEAVE_X  16
 
 #GUL_EXPAND_Y 0
-macro GUL_SHRINK_Y = (1 * 256)
+macro GUL_SHRINK_Y  (1 * 256)
 #GUL_TOP 0
-macro GUL_CENTER_Y = (2 * 256)
-macro GUL_BOTTOM   = (4 * 256)
-macro GUL_EQUAL_Y  = (8 * 256)
+macro GUL_CENTER_Y  (2 * 256)
+macro GUL_BOTTOM    (4 * 256)
+macro GUL_EQUAL_Y   (8 * 256)
 
-macro GUL_LEAVE_Y  = (16 * 256)
+macro GUL_LEAVE_Y  (16 * 256)
 
-macro GUL_HIDDEN = (1 * 65536)
-macro GUL_NO_LAYOUT = (2 * 65536)
+macro GUL_HIDDEN    (1 * 65536)
+macro GUL_NO_LAYOUT (2 * 65536)
 
-macro GUL_RESIZE = (4 * 65536)
+macro GUL_RESIZE    (4 * 65536)
 
 # EQUAL_X:
 # bottom-up: Try to use width of largest column, until parent->max_width / n
@@ -145,7 +145,7 @@ static LandWidget *def lookup_box_in_grid(LandWidget *self,
     int col, row):
     if not self->box.lookup_grid: update_lookup_grid(self)
     if not self->box.lookup_grid: return None
-    assert(col < self->box.cols && row < self->box.rows)
+    assert(col < self->box.cols and row < self->box.rows)
 
     return self->box.lookup_grid[row * self->box.cols + col]
 
@@ -157,7 +157,7 @@ static int def row_min_height(LandWidget *self, int row):
     for i = 0 while i < self->box.cols with i++:
         LandWidget *c = lookup_box_in_grid(self, i, row)
 
-        if c && c->box.current_min_height > v:
+        if c and c->box.current_min_height > v:
             v = c->box.current_min_height
 
     return v
@@ -310,9 +310,9 @@ static def gul_box_top_down(LandWidget *self):
 
     D(printf("Box (%s[%p]): %d[%d] x %d[%d] at %d/%d\n", self->vt->name, self,
         self->box.w, self->box.cols, self->box.h, self->box.rows, self->box.x,
-        self->box.y);)
+        self->box.y))
     if self->box.cols == 0 or self->box.rows == 0:
-        D(printf("    empty.\n");)
+        D(printf("    empty.\n"))
         return
 
     int minw = min_width(self)
@@ -337,8 +337,8 @@ static def gul_box_top_down(LandWidget *self):
     int want_height = expanding_rows(self)
 
     D(printf("    Children: %d (%d exp) x %d (%d exp)\n",
-        self->box.cols, want_width, self->box.rows, want_height);)
-    D(printf("              %d x %d min\n", minw, minh);)
+        self->box.cols, want_width, self->box.rows, want_height))
+    D(printf("              %d x %d min\n", minw, minh))
 
     int i, j
 
@@ -350,7 +350,7 @@ static def gul_box_top_down(LandWidget *self):
     if want_width:
         share = available_width / want_width
     available_width -= share * want_width
-    D(printf("    Columns:");)
+    D(printf("    Columns:"))
     int hgap = self->element ? element->hgap : 0
     for i = 0 while i < self->box.cols with i++:
         int cw = column_min_width(self, i)
@@ -364,10 +364,10 @@ static def gul_box_top_down(LandWidget *self):
                 cw += 1
                 available_width -= 1
 
-            D(printf(" <->%d", cw);)
+            D(printf(" <->%d", cw))
 
         else:
-            D(printf(" [-]%d", cw);)
+            D(printf(" [-]%d", cw))
         x += cw + hgap
 
         # Place all rows in the column accordingly 
@@ -381,9 +381,9 @@ static def gul_box_top_down(LandWidget *self):
                 else: # Multi-column cell.
                     c->box.w += cw + hgap
 
-    D(printf("\n");)
+    D(printf("\n"))
 
-    D(printf("    Rows:");)
+    D(printf("    Rows:"))
     # Adjust row positions and heights. 
     int y = self->box.y
     if self->element:
@@ -406,10 +406,10 @@ static def gul_box_top_down(LandWidget *self):
                 ch += 1
                 available_height -= 1
 
-            D(printf(" <->%d", ch);)
+            D(printf(" <->%d", ch))
 
         else:
-            D(printf(" [-]%d", ch);)
+            D(printf(" [-]%d", ch))
         y += ch
         y += vgap
 
@@ -424,7 +424,7 @@ static def gul_box_top_down(LandWidget *self):
                 else: # Multi-row cell.
                     c->box.h += ch + vgap
 
-    D(printf("\n");)
+    D(printf("\n"))
 
     if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
         LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
@@ -452,7 +452,7 @@ static def gul_box_top_down(LandWidget *self):
 
 # Given a box, (recursively) fit its children into it.
 static def gul_box_fit_children(LandWidget *self):
-    D(printf("gul_box_fit_children %s[%p]\n", self->vt->name, self);)
+    D(printf("gul_box_fit_children %s[%p]\n", self->vt->name, self))
 
     gul_box_bottom_up(self)
 
@@ -470,7 +470,7 @@ def _land_gul_layout_updated(LandWidget *self):
     This is used if the size of a widget may have changed and therefore its own
     as well as its parent's layout needs updating.
     """
-    D(printf("gul_layout_updated %s[%p]\n", self->vt->name, self);)
+    D(printf("gul_layout_updated %s[%p]\n", self->vt->name, self))
     # If the parent has NO_LAYOUT set, then our own layout change also does
     # not trigger propagation of the layout change over this barrier. For
     # example, a button inside a window changes its size. Its parent uses

@@ -82,7 +82,7 @@ static def init(LandRunner *self):
     current = land_image_create(128, 128)
 
 static def tick(LandRunner *self):
-    if land_key_pressed(LandKeyEscape) || land_closebutton():
+    if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)

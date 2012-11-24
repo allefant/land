@@ -391,7 +391,7 @@ int def land_get_clip(float *cx1, float *cy1, float *cx2, float *cy2):
     *cy1 = d->clip_y1
     *cx2 = d->clip_x2
     *cy2 = d->clip_y2
-    return !d->clip_off
+    return not d->clip_off
 
 def land_flip():
     platform_display_flip()
@@ -480,7 +480,7 @@ def land_display_select(LandDisplay *display):
     _land_active_display = display
 
 def land_display_unselect():
-    if _previous && _previous->count:
+    if _previous and _previous->count:
         LandListItem *last = _previous->last
         _land_active_display = last->data
         land_list_remove_item(_previous, last)
@@ -516,6 +516,9 @@ def land_display_tick():
     resize_event_counter = 0
 
 def land_rotate(float angle):
+    """
+    Pre-rotate the current transformation.
+    """
     float *m = _land_active_display->matrix
     float c = cosf(angle)
     float s = sinf(angle)
@@ -523,36 +526,38 @@ def land_rotate(float angle):
         
     x = m[0]
     y = m[1]
-    m[0] = x * c - y * s
-    m[1] = x * s + y * c
+    m[0] = x * +c + y * +s
+    m[1] = x * -s + y * +c
     
     x = m[4]
     y = m[5]
-    m[4] = x * c - y * s
-    m[5] = x * s + y * c
-    
-    x = m[12]
-    y = m[13]
-    m[12] = x * c - y * s
-    m[13] = x * s + y * c
+    m[4] = x * +c + y * +s
+    m[5] = x * -s + y * +c
     
     _land_active_display->matrix_modified = True
 
 def land_scale(float x, y):
+    """
+    Pre-scale the current transformation.
+    """
     float *m = _land_active_display->matrix
     m[0] *= x
     m[1] *= y
     m[4] *= x
     m[5] *= y
-    m[12] *= x
-    m[13] *= y
 
     _land_active_display->matrix_modified = True
 
 def land_translate(float x, y):
+    """
+    Pre-translate the current transformation. That is, any transformations in
+    effect prior to this call will be applied afterwards. And transformations
+    after this call until before the next drawing command will be applied
+    before.
+    """
     float *m = _land_active_display->matrix
-    m[12] = x * m[0] + y * m[4]
-    m[13] = x * m[1] + y * m[5]
+    m[3] += x * m[0] + y * m[1]
+    m[7] += x * m[4] + y * m[5]
     _land_active_display->matrix_modified = True
 
 def land_push_transform():
@@ -584,3 +589,10 @@ def land_reset_transform():
 
 def land_render_state(int state, value):
     platform_render_state(state, value)
+
+def land_display_set_default_shaders():
+    """
+    When using custom shaders, use this to restore the shader expected by the
+    builtin functions.
+    """
+    platform_set_default_shaders()

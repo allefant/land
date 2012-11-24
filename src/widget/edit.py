@@ -37,10 +37,10 @@ static int def get_x_offset(LandWidget *base):
 
 def land_widget_edit_draw(LandWidget *base):
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
-    if !base->no_decoration:
+    if not base->no_decoration:
         land_widget_box_draw(base)
 
-    if !base->dont_clip:
+    if not base->dont_clip:
         int l = base->box.x + base->element->il
         int t = base->box.y + base->element->it
         int r = base->box.x + base->box.w - base->element->r
@@ -65,7 +65,7 @@ def land_widget_edit_draw(LandWidget *base):
                 land_line(x + cx + 0.5, y, x + cx + 0.5, base->box.y + base->box.h -
                     base->element->ib)
 
-    if !base->dont_clip:
+    if not base->dont_clip:
         land_clip_pop()
 
 def land_widget_edit_mouse_tick(LandWidget *base):

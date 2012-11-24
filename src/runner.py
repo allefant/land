@@ -44,35 +44,35 @@ LandRunner *def land_runner_new(char const *name, void (*init)(LandRunner *self)
 def land_runner_switch_active(LandRunner *self):
     land_runner_leave_active()
     active_runner = self
-    if active_runner && !active_runner->inited:
+    if active_runner and not active_runner->inited:
         active_runner->inited = 1
         if active_runner->init: active_runner->init(active_runner)
     land_runner_enter_active()
 
 def land_runner_enter_active():
     LandRunner *self = active_runner
-    if self && self->enter:
+    if self and self->enter:
         self->enter(self)
 
 def land_runner_tick_active():
     LandRunner *self = active_runner
-    if self && self->tick:
+    if self and self->tick:
         self->tick(self)
 
 def land_runner_draw_active():
     LandRunner *self = active_runner
-    if self && self->draw:
+    if self and self->draw:
         self->draw(self)
 
 def land_runner_leave_active():
     LandRunner *self = active_runner
-    if self && self->leave:
+    if self and self->leave:
         self->leave(self)
 
 def land_runner_destroy_all():
     land_log_message("land_runner_destroy_all\n")
     LandListItem *i
-    if !runners:
+    if not runners:
         return
     for i = runners->first while i with i = i->next:
         LandRunner *self = (LandRunner *)i->data

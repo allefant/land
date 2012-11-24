@@ -119,12 +119,12 @@ def land_widget_spin_set_value(LandWidget *base, float val):
         if val > spin->max: val -= spin->max - spin->min
     else:
         if val < spin->min and spin->min < spin->max: val = spin->min
-        if val > spin->max && spin->max > spin->min: val = spin->max
+        if val > spin->max and spin->max > spin->min: val = spin->max
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
     LandWidget *edit = LAND_WIDGET(item->data)
     char text[256]
     char format[256]
-    if spin->step > 0 && spin->step < 1:
+    if spin->step > 0 and spin->step < 1:
         snprintf(format, sizeof format, "%%.%df", (int)(0.9 - log10(spin->step)))
     else:
         strcpy(format, "%.0f")

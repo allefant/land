@@ -130,14 +130,14 @@ static inline void def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
             bb = h - bt
 
         # top 
-        if bt && y + bt >= _land_active_display->clip_y1:
+        if bt and y + bt >= _land_active_display->clip_y1:
             land_clip_push()
             land_clip_intersect(0, y, land_display_width(),  min(y + h, y + bt))
             bfunc(pat->bmp, bx, 0, bw, bt, x, y, w, bt)
             land_clip_pop()
 
         # middle 
-        if h - pat->bt - pat->bb > 0 && !skip_middle:
+        if h - pat->bt - pat->bb > 0 and not skip_middle:
             land_clip_push()
             land_clip_intersect(0, min(y + h, y + pat->bt), land_display_width(), max(y, y + h - pat->bb))
             int start = max(0, (_land_active_display->clip_y1 - (y + oy)) / bm)
@@ -149,7 +149,7 @@ static inline void def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
             land_clip_pop()
 
         # bottom 
-        if bb && y + h - bb < _land_active_display->clip_y2:
+        if bb and y + h - bb < _land_active_display->clip_y2:
             land_clip_push()
             land_clip_intersect(0, max(y, y + h - bb), land_display_width(), y + h)
             bfunc(pat->bmp, bx, land_image_height(pat->bmp) - bb, bw, bb, x,
@@ -178,7 +178,7 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
     int bw = land_image_width(pat->bmp)
     int bm = bw - pat->bl - pat->br
 
-    if w < 1 || h < 1 || bm < 1:
+    if w < 1 or h < 1 or bm < 1:
         return
 
     land_clip_push()
@@ -217,7 +217,7 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
             br = w - bl
 
         # left 
-        if bl && x + bl >= _land_active_display->clip_x1:
+        if bl and x + bl >= _land_active_display->clip_x1:
             land_clip_push()
             land_clip_intersect(x, 0, min(x + w, x + bl), land_display_height())
             blit_column(pat, 0, bl, x, y, bl, h, 0)
@@ -238,7 +238,7 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
             land_clip_pop()
 
         # right 
-        if br && x + w - br < _land_active_display->clip_x2:
+        if br and x + w - br < _land_active_display->clip_x2:
             land_clip_push()
             land_clip_intersect(max(x, x + w - br), 0, x + w, land_display_height())
             blit_column(pat, bw - br, br, x + w - br, y, br, h, 0)
@@ -305,14 +305,14 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                 elif not strcmp (arg, "halign"):
                     self->flags |= ALIGN_H
 
-                elif (!strcmp (arg, "valign")):
+                elif (not strcmp (arg, "valign")):
                     self->flags |= ALIGN_V
 
-                elif (!strcmp (arg, "min")):
+                elif (not strcmp (arg, "min")):
                     read_int_arg(argc, argv, &a, &self->minw)
                     read_int_arg(argc, argv, &a, &self->minh)
 
-                elif (!strcmp (arg, "border")):
+                elif (not strcmp (arg, "border")):
                     read_int_arg(argc, argv, &a, &self->bl)
                     read_int_arg(argc, argv, &a, &self->bt)
                     read_int_arg(argc, argv, &a, &self->br)
@@ -323,17 +323,17 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     self->ir = self->br
                     self->ib = self->bb
                 
-                elif (!strcmp (arg, "inner")):
+                elif (not strcmp (arg, "inner")):
                     read_int_arg(argc, argv, &a, &self->il)
                     read_int_arg(argc, argv, &a, &self->it)
                     read_int_arg(argc, argv, &a, &self->ir)
                     read_int_arg(argc, argv, &a, &self->ib)
 
-                elif !strcmp (arg, "gap"):
+                elif not strcmp (arg, "gap"):
                     read_int_arg(argc, argv, &a, &self->hgap)
                     read_int_arg(argc, argv, &a, &self->vgap)
 
-                elif !strcmp(arg, "color"):
+                elif not strcmp(arg, "color"):
                     int c = 0
                     read_int_arg(argc, argv, &a, &c)
                     self->a = (c & 255) / 255.0; c >>= 8
@@ -341,7 +341,7 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     self->g = (c & 255) / 255.0; c >>= 8
                     self->r = (c & 255) / 255.0; c >>= 8
 
-                elif (!strcmp(arg, "transparent")):
+                elif (not strcmp(arg, "transparent")):
                     self->transparent = 1
                 
                 land_free(arg)
