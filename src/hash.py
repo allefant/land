@@ -43,8 +43,8 @@ void *def LandHashIterator_item(LandHash *self, LandHashIterator *i):
     return data
 
 bool def LandHashIterator_next(LandHash *self, LandHashIterator *i):
-    i->j++
     if get_data(self, i, None):
+        i->j++
         return True
     return False
 

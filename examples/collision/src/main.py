@@ -57,7 +57,8 @@ static def game_tick(LandRunner *self):
     if dmax > 10:
         dmax = 10
 
-    int kx = 0, ky = 0
+    int kx = 0
+    #int ky = 0
     if land_key(LandKeyLeft):
         kx = 1
     if land_key(LandKeyRight):
