@@ -233,6 +233,7 @@ def land_array_concat(LandArray *self, LandArray const *other):
     int new_count = self->count + other->count
     self->size = new_count
     self->data = land_realloc(self->data, self->size *sizeof *self->data)
+    # data is void ** so pointer arithmetic works
     memcpy(self->data + self->count, other->data,
         other->count * sizeof * other->data)
     self->count = self->size

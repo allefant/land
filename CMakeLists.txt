@@ -56,6 +56,9 @@ set(DFLAGS "-g3 -O2")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
 set(LFLAGS "")
+if (MEMLOG)
+set(DFLAGS "-g3 -O0")
+endif()
 
 if (MEMLOG)
     set(CFLAGS "${CFLAGS} -DLAND_MEMLOG") #-fmudflap

@@ -78,6 +78,7 @@ static def install():
         fprintf(lf, "Land MemLog\n")
         fclose(lf)
 
+# FIXME: not thread-safe
 def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     if not installed: install()
     if not ptr:
@@ -111,6 +112,7 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
     *** "endif"
     pass
 
+# FIXME: not thread-safe
 def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     int n
     if not installed: install()
