@@ -20,7 +20,7 @@ class LandBufferAsFile:
 *** "ifdef" LAND_MEMLOG
 
 *** "undef" land_buffer_new
-*** "undef" land_buffer_del
+*** "undef" land_buffer_destroy
 *** "undef" land_buffer_finish
 *** "undef" land_buffer_read_from_file
 *** "undef" land_buffer_split
@@ -30,9 +30,9 @@ LandBuffer *def land_buffer_new_memlog(char const *f, int l):
     land_memory_add(self, "buffer", 1, f, l)
     return self
 
-def land_buffer_del_memlog(LandBuffer *self, char const *f, int l):
+def land_buffer_destroy_memlog(LandBuffer *self, char const *f, int l):
     land_memory_remove(self, "buffer", 1, f, l)
-    land_buffer_del(self)
+    land_buffer_destroy(self)
 
 char *def land_buffer_finish_memlog(LandBuffer *self, char const *f, int l):
     land_memory_remove(self, "buffer", 1, f, l)
@@ -75,7 +75,8 @@ LandBuffer *def land_buffer_copy(LandBuffer *other):
     land_buffer_add(self, other->buffer, other->n)
     return self
 
-def land_buffer_del(LandBuffer *self):
+macro land_buffer_del land_buffer_destroy
+def land_buffer_destroy(LandBuffer *self):
     if self->buffer: land_free(self->buffer)
     land_free(self)
 
@@ -157,7 +158,7 @@ char *def land_buffer_finish(LandBuffer *self):
     land_buffer_add(self, c, 1)
     char *s = self->buffer
     self->buffer = None
-    land_buffer_del(self)
+    land_buffer_destroy(self)
     return s
 
 LandArray *def land_buffer_split(LandBuffer const *self, char delim):
@@ -292,7 +293,7 @@ char *def land_string_copy(char *target, char const *source, int size):
 global *** "ifdef" LAND_MEMLOG
 
 macro land_buffer_new() land_buffer_new_memlog(__FILE__, __LINE__)
-macro land_buffer_del(x) land_buffer_del_memlog(x, __FILE__, __LINE__)
+macro land_buffer_destroy(x) land_buffer_destroy_memlog(x, __FILE__, __LINE__)
 macro land_buffer_finish(x) land_buffer_finish_memlog(x, __FILE__, __LINE__)
 macro land_buffer_read_from_file(x) land_buffer_read_from_file_memlog(x, __FILE__, __LINE__)
 macro land_buffer_split(x, y) land_buffer_split_memlog(x, y, __FILE__, __LINE__)

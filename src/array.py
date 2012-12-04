@@ -230,8 +230,12 @@ def land_array_clear(LandArray *self):
     self->count = 0
 
 def land_array_concat(LandArray *self, LandArray const *other):
-    for int i in range(other->count):
-        land_array_add(self, other->data[i])
+    int new_count = self->count + other->count
+    self->size = new_count
+    self->data = land_realloc(self->data, self->size *sizeof *self->data)
+    memcpy(self->data + self->count, other->data,
+        other->count * sizeof * other->data)
+    self->count = self->size
 
 def land_array_merge(LandArray *self, *other):
     land_array_concat(self, other)

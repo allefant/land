@@ -244,3 +244,6 @@ def land_wait(double seconds):
 global int land_argc
 global char **land_argv
 global LandRunner *shortcut_runner
+
+bool def strequal(char const *a, char const *b):
+    return strcmp(a, b) == 0
