@@ -122,14 +122,14 @@ static def csg_plane_split_polygon(LandCSG *csg,
             a = coplanar_front
         else:
             a = coplanar_back;
-        land_array_add(a, land_csg_polygon_clone(csg, polygon))
-        #land_array_add(a, polygon)
+        #land_array_add(a, land_csg_polygon_clone(csg, polygon))
+        land_array_add(a, polygon)
     elif polygon_type == FRONT:
-        land_array_add(front, land_csg_polygon_clone(csg, polygon))
-        #land_array_add(front, polygon)
+        #land_array_add(front, land_csg_polygon_clone(csg, polygon))
+        land_array_add(front, polygon)
     elif polygon_type == BACK:
-        land_array_add(back, land_csg_polygon_clone(csg, polygon))
-        #land_array_add(back, polygon)
+        #land_array_add(back, land_csg_polygon_clone(csg, polygon))
+        land_array_add(back, polygon)
     elif polygon_type == SPANNING:
         LandArray *f = land_array_new()
         LandArray *b = land_array_new()
@@ -248,7 +248,8 @@ static def csg_node_invert(LandCSGNode *self):
 # Remove polygons inside this BSP from the passed array.
 static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
         LandArray *polygons):
-    if not self->plane.w:
+    if not self->plane.normal.z and not self->plane.normal.y and\
+            not self->plane.normal.x:
         return
 
     LandArray *front = land_array_new()
@@ -311,7 +312,8 @@ static LandCSGNode *def csg_node_new(LandCSG *csg, LandArray *polygons)
 static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
     if not land_array_count(polygons):
         return
-    if not self->plane.w:
+    if not self->plane.normal.z and\
+            not self->plane.normal.y and not self->plane.normal.x:
         LandCSGPolygon *p0 = land_array_get_nth(polygons, 0)
         self->plane = p0->plane
 
