@@ -1,6 +1,9 @@
 import runner
+
 static import global sys/time
 static import land
+
+typedef double LandFloat
 
 class LandParameters:
     int w, h

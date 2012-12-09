@@ -22,23 +22,22 @@ switched on.
 Subpixel coordinates. This is what Land uses by default, but you can easily
 change it. It is a mixture of the two modes above. You give coordinates in pixel
 positions (so positions depend on the resolution), but each integer position is
-the upper left corner of a pixel, not the pixel as the whole, as in the method
+the upper left corner of a pixel, not the pixel as a whole, as in the method
 before. To get the behavior of the previous method, you would do two things:
 
-1. Add 0.5 to all positions for drawing primitives, so they are drawn at pixel
-centers.
+1. For rectangles, draw them with their full width.
 
-2. For images, don't do this.
+2. For images, don't do anything.
 
-To make clear why, let's compare a rectangle
-and an image. The rectangle is drawn at pixel 0/0 with the pixel method, and 10x10
+To make clear why, let's compare a rectangle and an image. The rectangle is
+drawn at pixel 0/0 with the pixel method, and 10x10
 pixels big. So the pixels that are lit are from 0/0 to 9/9, inclusive. Doing the
-same with the subpixel method, we would shift this so pixel centers are used.
-That is, we would start at 0.5/0.5, and draw to 9.5/9.5.
+same with the subpixel method, we would draw a rectangle from 0/0 to 10/10.
 
 But what just happened? The rectangle of lit pixels before was 10x10 pixels big,
-from pixel 0 to pixel 9 inclusive. The new subpixel rectangle however is only
-9x9 pixels big. From 0.5 to 9.5. 
+from pixel 0 to pixel 9 inclusive. The new subpixel rectangle also is 10x10
+pixels big. Just now there is no more inclusive/exclusive pixels, the rectangle
+coordinates are independent now.
 
 The problem is, that what we really want with subpixel coordinates is not just
 an outline anymore, but a frame which is one pixel thick. Its outer rectangle
@@ -92,7 +91,8 @@ Like circle, but filled.
 """
 
 import global stdlib
-import list, image, log, mem, font
+import list, image, log, mem, font, main
+import util3d
 static import global math
 
 enum:
@@ -423,6 +423,9 @@ def land_polygon(int n, float *xy):
 def land_filled_polygon(int n, float *xy):
     platform_filled_polygon(n, xy)
 
+def land_3d_triangles(int n, LandFloat *xyzrgb):
+    platform_3d_triangles(n, xyzrgb)
+
 def land_textured_polygon(LandImage *image, int n, float *xy, *uv):
     platform_textured_polygon(image, n, xy, uv):
 
@@ -588,6 +591,12 @@ def land_reset_transform():
     }
     memcpy(m, i, sizeof i)
 
+    _land_active_display->matrix_modified = True
+
+def land_display_transform_4x4(Land4x4Matrix *matrix):
+    float *m = _land_active_display->matrix
+    for int i in range(16):
+        m[i] = matrix->v[i]
     _land_active_display->matrix_modified = True
 
 def land_render_state(int state, value):

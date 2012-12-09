@@ -99,8 +99,7 @@ A Ra = A0*c+A1*s -A0*s+A1*c A2 A3
 
 """
 import math
-
-typedef double LandFloat
+import land.main
 
 class LandVector:
     """

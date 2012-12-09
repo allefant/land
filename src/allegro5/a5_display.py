@@ -358,6 +358,23 @@ def platform_filled_polygon_with_holes(int n, float *xy,
         holes, holes_count, self->c)
     uncheck_blending()
 
+def platform_3d_triangles(int n, LandFloat *xyzrgb):
+    ALLEGRO_VERTEX v[n]
+    for int i in range(n):
+        LandFloat *f = xyzrgb + i * 6
+        v[i].x = f[0]
+        v[i].y = f[1]
+        v[i].z = f[2]
+        v[i].u = 0
+        v[i].v = 0
+        v[i].color.r = f[3]
+        v[i].color.g = f[4]
+        v[i].color.b = f[5]
+        v[i].color.a = 1
+    check_blending_and_transform()
+    al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_LIST)
+    uncheck_blending()
+
 def platform_plot(float x, y):
     SELF
     check_blending_and_transform()
