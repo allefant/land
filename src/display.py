@@ -496,16 +496,24 @@ def land_display_unselect():
         _land_active_display = NULL
 
 def land_screenshot(char const *filename):
-    assert(0)
+    int w = land_display_width()
+    int h = land_display_height()
+    LandImage *screenshot = land_image_new(w, h)
+    land_image_grab(screenshot, 0, 0)
+    land_image_save(screenshot, filename)
+    land_image_destroy(screenshot)
 
 def land_screenshot_autoname(char const *name):
-    for int i = 0 while  with i++:
-        char path[1024]
-        snprintf(path, sizeof path, "%s%d.jpg", name, i)
-        assert(0)
-        # if not exists(path):
-        #    land_screenshot(path)
-        #    break
+    LandBuffer *b = land_buffer_new()
+    time_t t = time(None)
+    land_buffer_cat(b, name)
+    land_buffer_cat(b, "_")
+    land_buffer_cat(b, ctime(&t))
+    land_buffer_strip(b, " \n")
+    land_buffer_cat(b, ".jpg")
+    char *path = land_buffer_finish(b)
+    land_screenshot(path)
+    land_free(path)
 
 def land_resize_event(int w, h):
     resize_event_counter++

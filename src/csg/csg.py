@@ -51,7 +51,8 @@ LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self):
 
 static LandArray *def clone_vertices(LandCSG *csg, LandArray *vertices):
     LandArray *clone = land_array_copy(vertices)
-    for int i in range(land_array_count(clone)):
+    int n = land_array_count(clone)
+    for int i in range(n):
         clone->data[i] = csg_vertex_clone(csg, clone->data[i])
     return clone
 
@@ -212,7 +213,8 @@ static def csg_polygon_flip(LandCSGPolygon *self):
 
 static LandArray *def clone_polygons(LandCSG *csg, LandArray *polygons):
     LandArray *clone = land_array_copy(polygons)
-    for int i in range(land_array_count(clone)):
+    int n = land_array_count(clone)
+    for int i in range(n):
         clone->data[i] = land_csg_polygon_clone(csg, clone->data[i])
     return clone
 

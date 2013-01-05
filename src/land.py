@@ -185,6 +185,7 @@ global *** "define" yn libc_yn
 import global math
 global *** "undef" y1
 global *** "undef" yn
+
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
