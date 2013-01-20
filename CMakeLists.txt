@@ -66,6 +66,7 @@ if (MEMLOG)
 endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
+string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Darwin OSX)
 
 if (WINDOWS)
     message("Windows version")
@@ -87,6 +88,11 @@ endif ()
 if (STATIC)
     if (DEBUG)
         add_library(${libname}-static-debug STATIC ${cfiles})
+        if (OSX)
+       	    target_link_libraries(${libname}-static-debug
+                allegro_monolith-debug
+                yaml)
+        endif (OSX)
         set_target_properties(${libname}-static-debug
             PROPERTIES
             COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
