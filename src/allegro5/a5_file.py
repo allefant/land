@@ -91,3 +91,11 @@ char *def platform_get_save_file(char const *appname, char const *name):
     char *dup = land_strdup(str)
     al_destroy_path(path)
     return dup
+
+char *def platform_get_current_directory():
+    char *d = al_get_current_directory()
+    # need do dup it as it's different memory managers
+    # TODO: why do we not hook into Allegro's memory allocation functions?
+    char *dup = land_strdup(d)
+    al_free(d)
+    return dup

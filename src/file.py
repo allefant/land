@@ -2,7 +2,8 @@ import global stdio, stdint, stdbool
 import land/mem
 import allegro5/a5_file
 
-enum: LAND_FULL_PATH = 1
+enum:
+    LAND_FULL_PATH = 1
 
 class LandFile:
     char *path
@@ -71,3 +72,6 @@ bool def land_file_is_dir(char const *name):
 
 char *def land_get_save_file(char const *appname, char const *name):
     return platform_get_save_file(appname, name)
+
+char *def land_get_current_directory():
+    return platform_get_current_directory()
