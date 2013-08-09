@@ -273,7 +273,7 @@ def platform_mainloop(LandParameters *parameters):
                 al_acknowledge_drawing_halt(d->a5)
                 break
             case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
-                al_acknowledge_drawing_resume(d->a5, None)
+                al_acknowledge_drawing_resume(d->a5)
                 break
 
 char *def platform_get_app_settings_file(char const *appname):

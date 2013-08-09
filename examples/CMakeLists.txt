@@ -125,6 +125,8 @@ foreach(exsrc ${examples})
             target_link_libraries(${exname}-debug
                 ${libname}-debug
                 yaml
+                m
+                GL
                 )
         endif (DEBUG)
         if (RELEASE)

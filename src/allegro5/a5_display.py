@@ -2,7 +2,6 @@ import land/display
 import a5_image
 static import global allegro5.allegro5
 static import global allegro5.allegro_primitives
-import global allegro5.allegro_shader_glsl
 static import global assert, math
 
 class LandDisplayPlatform:
@@ -105,7 +104,7 @@ def platform_display_set():
     if super->flags & LAND_RESIZE:
         f |= ALLEGRO_RESIZABLE
     if super->flags & LAND_OPENGL:
-        f |= ALLEGRO_OPENGL | ALLEGRO_USE_PROGRAMMABLE_PIPELINE
+        f |= ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE
     if super->flags & LAND_MULTISAMPLE:
         al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
@@ -151,7 +150,7 @@ def platform_display_set():
     else:
         land_log_message("    Failed activating Allegro display.\n")
 
-    if f & ALLEGRO_USE_PROGRAMMABLE_PIPELINE:
+    if f & ALLEGRO_PROGRAMMABLE_PIPELINE:
         land_display_set_default_shaders()
 
 def platform_display_scale_to_fit(float w, h, int how):
@@ -353,10 +352,12 @@ def platform_filled_polygon_with_holes(int n, float *xy,
     int holes_count, int *holes):
     SELF
 
-    check_blending_and_transform()
-    al_draw_filled_polygon_with_holes(xy, n,
-        holes, holes_count, self->c)
-    uncheck_blending()
+    #check_blending_and_transform()
+    #al_draw_filled_polygon_with_holes(xy, n,
+    #    holes, holes_count, self->c)
+    #uncheck_blending()
+
+    # FIXME
 
 def platform_3d_triangles(int n, LandFloat *xyzrgb):
     ALLEGRO_VERTEX v[n]
@@ -430,9 +431,11 @@ def platform_set_default_shaders():
         ALLEGRO_SHADER *shader
         shader = al_create_shader(ALLEGRO_SHADER_GLSL)
         al_attach_shader_source(shader, ALLEGRO_VERTEX_SHADER,
-            al_get_default_glsl_vertex_shader())
+            al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
+            ALLEGRO_VERTEX_SHADER))
         al_attach_shader_source(shader, ALLEGRO_PIXEL_SHADER,
-            al_get_default_glsl_pixel_shader())
-        al_link_shader(shader)
+            al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
+            ALLEGRO_PIXEL_SHADER))
+        al_build_shader(shader)
         self->default_shader = shader
-    al_set_shader(self->a5, self->default_shader)
+    al_use_shader(self->default_shader)
