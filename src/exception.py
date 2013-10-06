@@ -19,7 +19,7 @@ def land_exception_handler_init():
 def land_exception_handler_set(int (*handler)(char const *str)):
     if init:
         land_exception_handler_init()
-        init = 1
+        init = 0
 
     land_exception_handler = handler
 

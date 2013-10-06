@@ -69,6 +69,18 @@ T S x = xs * x + xt
     z   zs * z + zt
     1   1
 
+translate first then scale
+
+S T = xs 0  0  0   1 0 0 xt   xs 0  0  xs*xt
+      0  ys 0  0 * 0 1 0 yt = 0  ys 0  ys*yt
+      0  0  zs 0   0 0 1 zt   0  0  zs zs*zt
+      0  0  0  1   0 0 0 1    0  0  0  1
+
+S T x = xs * x + xs * xt
+    y   ys * y + ys * yt
+    z   zs * z + zs * zt
+    1   1
+
 translate first then arbitrary affine matrix
 
 A T = A0 A1 A2 A3   1 0 0 xt    A0 A1 A2 A0*xt+A1*yt+A2*zt+A3
@@ -122,7 +134,7 @@ class LandQuaternion:
     Orientation basically is a direction, with an additional rotation. For
     example, a 3d vector plus an angle would describe it. Since the length of
     the 3d vector does not matter, just 3 angles also are enough (pitch, yaw,
-    roll). Obviously, we can convert from any form to each other, quaternions
+    roll). Obviously, we can convert from any form to any other, quaternions
     just have properties which make them easy to use in physics code.
     """
     LandFloat w, x, y, z
@@ -407,6 +419,17 @@ Land4x4Matrix def land_quaternion_4x4_matrix(LandQuaternion q):
     return m
 
 Land4x4Matrix def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b):
+    """
+    This multiplies two matrices:
+
+    result = a b
+
+    When used with 3D transformations, the result has the same effect as first
+    applying b, then a.
+
+    In words, result[row,column] = a[row,...] * b[...,column].
+    
+    """
     Land4x4Matrix m
     for int i in range(4):
         for int j in range(4):
@@ -503,6 +526,12 @@ Land4x4Matrix def land_4x4_matrix_identity():
     return m
 
 Land4x4Matrix def land_4x4_matrix_translate(LandFloat x, y, z):
+    """
+    T = 1 0 0 xt
+        0 1 0 yt
+        0 0 1 zt
+        0 0 0 1
+    """
     Land4x4Matrix m
     m.v[0] = 1
     m.v[1] = 0
@@ -532,27 +561,38 @@ Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
 
     The point at (left, top, near) will end up at (-1, -1, -1) and the point
     at (right, bottom, far) will end up at (1, 1, 1).
+
+    O = 2/w 0   0   2/w*-cx
+        0   2/h 0   2/h*-cy
+        0   0   2/d 2/d*-cz
+        0   0   0   1
+
+    O x = 2/w*(x-cx)
+      y   2/h*(y-cy)
+      z   2/d*(z-cz)
+      1   1
+        
     """
     Land4x4Matrix m
     LandFloat w = right - left
     LandFloat h = bottom - top
     LandFloat depth = farz - nearz
-    LandFloat x = (right + left) / 2
-    LandFloat y = (bottom + top) / 2
-    LandFloat z = (farz + nearz) / 2
+    LandFloat cx = (right + left) / 2
+    LandFloat cy = (bottom + top) / 2
+    LandFloat cz = (farz + nearz) / 2
     
     m.v[0] = 2 / w
     m.v[1] = 0
     m.v[2] = 0
-    m.v[3] = 0
-    m.v[4] = 2 / w * -x
+    m.v[3] = 2 / w * -cx
+    m.v[4] = 0
     m.v[5] = 2 / h
     m.v[6] = 0
-    m.v[7] = 0
+    m.v[7] = 2 / h * -cy
     m.v[8] = 0
-    m.v[9] = 2 / h * -y
+    m.v[9] = 0
     m.v[10] = 2 / depth
-    m.v[11] = 2 / depth * -z
+    m.v[11] = 2 / depth * -cz
     m.v[12] = 0
     m.v[13] = 0
     m.v[14] = 0
@@ -614,7 +654,7 @@ def land_quaternion_normalize(LandQuaternion *q):
 LandQuaternion def land_quaternion_slerp(LandQuaternion qa, qb, double t):
     """
     Given two quaternions, interpolate a quaternion in between. If t is 0
-    this will return, if t is 1 it will return qb.
+    this will return qa, if t is 1 it will return qb.
 
     The rotation will be along the shortest path (not necessarily the shorter
     direction though) and the rotation angle will linearly correspond to t.

@@ -10,10 +10,13 @@ class LandFile:
     void *f
 
 LandFile *def land_file_new(char const *path, char const *mode):
+    void *f = platform_fopen(path, mode)
+    if not f:
+        return None
     LandFile *self
     land_alloc(self)
     self->path = land_strdup(path)
-    self->f = platform_fopen(path, mode)
+    self->f = f
     return self
 
 def land_file_destroy(LandFile *self):

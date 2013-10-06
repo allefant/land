@@ -15,7 +15,7 @@ class LandWidgetThemeElement:
     char *name
     LandImage *bmp
     int flags
-    int bl, bt, br, bb # border to cut out of the image 
+    int bl, bt, br, bb # border to cut out of the image
     int minw, minh
     LandWidget *anchor # for the ALIGNED modes 
     int ox, oy # extra offset into the anchor widget 
@@ -412,6 +412,8 @@ def land_widget_theme_destroy(LandWidgetTheme *self):
     land_free(self)
 
 static LandWidgetThemeElement *def find_element(LandList *list, char const *name):
+    if not list:
+        return None
     LandListItem *item = list->first
     while item:
         LandWidgetThemeElement *elem = item->data
@@ -430,6 +432,10 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
     element = find_element(theme->elements, widget->vt->name)
     if not element:
         element = find_element(theme->elements, "base")
+    if not element:
+        land_alloc(element)
+        element->name = land_strdup("")
+        element->theme = theme
 
     if not element->selected:
         char name[1024]
