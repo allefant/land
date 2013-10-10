@@ -562,6 +562,8 @@ Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
     The point at (left, top, near) will end up at (-1, -1, -1) and the point
     at (right, bottom, far) will end up at (1, 1, 1).
 
+    O = S(2/w, 2/h, 2/d) T(-cx, -cy, -cz)
+
     O = 2/w 0   0   2/w*-cx
         0   2/h 0   2/h*-cy
         0   0   2/d 2/d*-cz
@@ -571,6 +573,16 @@ Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
       y   2/h*(y-cy)
       z   2/d*(z-cz)
       1   1
+
+    inv(O) = inv(T) inv(S) = w/2 0   0   cx
+                             0   h/2 0   cy
+                             0   0   d/2 cz
+                             0   0   0   1
+
+    O inv(O) = 1 0 0 0
+               0 1 0 0
+               0 0 1 0
+               0 0 0 1
         
     """
     Land4x4Matrix m
