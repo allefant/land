@@ -90,7 +90,7 @@ if (STATIC)
         add_library(${libname}-static-debug STATIC ${cfiles})
         if (OSX)
        	    target_link_libraries(${libname}-static-debug
-                allegro_monolith-debug
+                allegro_monolith-debug-static
                 yaml)
         endif (OSX)
         set_target_properties(${libname}-static-debug
@@ -171,4 +171,4 @@ if (SHARED)
     endif (RELEASE)
 endif (SHARED)
 
-add_subdirectory(examples EXCLUDE_FROM_ALL)
+add_subdirectory(examples) # EXCLUDE_FROM_ALL)

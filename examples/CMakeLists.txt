@@ -5,8 +5,8 @@ include_directories(${CMAKE_BINARY_DIR}/c)
 include_directories(${CMAKE_BINARY_DIR}/examples/c)
 
 # FIXME: Should be auto-detected or specified by user instead.
-include_directories(/home/elias/prog/allegro/install/include)
-link_directories(/home/elias/prog/allegro/install/lib)
+#include_directories(/home/elias/prog/allegro/install/include)
+#link_directories(/home/elias/prog/allegro/install/lib)
 
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
@@ -69,7 +69,6 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}-static-debug
                 ${libname}-static-debug
-                allegro_monolith-debug-static-${AV}
                 z
                 png
                 jpeg
