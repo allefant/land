@@ -8,6 +8,8 @@ include_directories(${CMAKE_BINARY_DIR}/examples/c)
 #include_directories(/home/elias/prog/allegro/install/include)
 #link_directories(/home/elias/prog/allegro/install/lib)
 
+find_package(OPENGL)
+
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
 #
@@ -63,20 +65,46 @@ foreach(exsrc ${examples})
     if (STATIC)
         if (DEBUG)
             add_executable(${exname}-static-debug ${example_cfiles})
-            set_target_properties(${exname}-static-debug
-                PROPERTIES
-                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
-                )
-            target_link_libraries(${exname}-static-debug
-                ${libname}-static-debug
+            set(LFLAGS "")
+            macro(LFLAG f)
+                set(LFLAGS "${LFLAGS} ${f}")
+            endmacro()
+            set(libraries
                 z
                 png
                 jpeg
                 m
-                GL
-                Xinerama
-                Xcursor
                 freetype
+                vorbis
+                ogg
+                vorbisfile)
+            if (OSX)
+                list(APPEND libraries ${OPENGL_LIBRARIES})
+
+                LFLAG("-framework CoreGraphics")
+                LFLAG("-framework QuartzCore")
+                LFLAG("-framework AudioToolbox")
+                LFLAG("-framework OpenAL")
+                LFLAG("-framework Foundation")
+                LFLAG("-framework CoreFoundation")
+                LFLAG("-framework CoreServices")
+                LFLAG("-framework IOKit")
+                LFLAG("-framework AppKit")
+            else()
+                list(APPEND libraries GL)
+            endif()
+            if (LINUX)
+                list(APPEND libraries Xinerama Xcursor)
+            endif()
+
+            set_target_properties(${exname}-static-debug
+                PROPERTIES
+                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
+                LINK_FLAGS "${LFLAGS}"
+                )
+            target_link_libraries(${exname}-static-debug
+                ${libname}-static-debug
+                ${libraries}
                 )
         endif (DEBUG)
         if (PROFILE)
