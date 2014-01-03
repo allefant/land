@@ -84,13 +84,11 @@ LandHash *def land_hash_new():
     self->hash_function = hash_function
     return self
 
-def land_hash_destroy(LandHash *self):
+def land_hash_clear(LandHash *self):
     """
-    Destroy a LandHash. The data inside the hash are not freed (just
-    everything else, like key names and internal data structures).
+    Clears the hash. Referenced data are not touched though.
     """
-    if not self: return
-    for int i = 0 while i < self->size with i++:
+    for int i in range(self->size):
         LandHashEntry *entry = self->entries[i]
         if entry:
             int j
@@ -99,8 +97,17 @@ def land_hash_destroy(LandHash *self):
 
             land_free(entry)
 
+    if self->entries:
+        land_free(self->entries)
+        self->entries = None
 
-    if self->entries: land_free(self->entries)
+def land_hash_destroy(LandHash *self):
+    """
+    Destroy a LandHash. The data inside the hash are not freed (just
+    everything else, like key names and internal data structures).
+    """
+    if not self: return
+    land_hash_clear(self)
     land_free(self)
 
 void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
