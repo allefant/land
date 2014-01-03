@@ -70,14 +70,20 @@ foreach(exsrc ${examples})
                 set(LFLAGS "${LFLAGS} ${f}")
             endmacro()
             set(libraries
-                z
+                ${libname}-static-debug
+                allegro_monolith-debug-static
                 png
                 jpeg
-                m
                 freetype
                 vorbis
                 ogg
-                vorbisfile)
+                vorbisfile
+                z
+                pthread
+                m
+                dumb
+                FLAC
+                openal)
             if (OSX)
                 list(APPEND libraries ${OPENGL_LIBRARIES})
 
@@ -92,9 +98,8 @@ foreach(exsrc ${examples})
                 LFLAG("-framework AppKit")
             else()
                 list(APPEND libraries GL)
-            endif()
-            if (LINUX)
-                list(APPEND libraries Xinerama Xcursor)
+                list(APPEND libraries Xrandr X11 Xinerama Xcursor pulse asound
+                    pulse-simple)
             endif()
 
             set_target_properties(${exname}-static-debug
@@ -102,8 +107,8 @@ foreach(exsrc ${examples})
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 LINK_FLAGS "${LFLAGS}"
                 )
+
             target_link_libraries(${exname}-static-debug
-                ${libname}-static-debug
                 ${libraries}
                 )
         endif (DEBUG)
