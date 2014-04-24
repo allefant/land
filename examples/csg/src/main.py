@@ -13,6 +13,16 @@ static int n
 static LandFloat angle
 
 static def init(LandRunner *self):
+
+    if False:
+        LandCSG *cubeA = csg_cube(None)
+        LandCSG *cubeB = csg_cube(None)
+        land_csg_transform(cubeB, land_4x4_matrix_translate(4, 0, 0))
+        LandCSG *AB = land_csg_union(cubeA, cubeB)
+        printf("%d polygons", AB->polygons->count)
+        land_quit()
+        return
+    
     csg_test()
 
     land_font_load("../../data/galaxy.ttf", 12)
@@ -78,9 +88,12 @@ static def draw(LandRunner *self):
     land_3d_triangles(n, v)
 
 static def done(LandRunner *self):
-    land_widget_theme_destroy(theme)
-    land_widget_unreference(desktop)
-    land_font_destroy(land_font_current())
+    if theme:
+        land_widget_theme_destroy(theme)
+    if desktop:
+        land_widget_unreference(desktop)
+    if land_font_current():
+        land_font_destroy(land_font_current())
 
 land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_DEPTH,
     init, NULL, tick, draw, NULL, done)

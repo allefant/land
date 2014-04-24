@@ -6,10 +6,15 @@ import land.array
 import land.util3d
 static import land.mem
 import land.pool
+import csg_aabb
 
 class LandCSG:
+    """
+    This is just a list of polygons - representing a closed 3D shape.
+    """
     LandArray *polygons # LandCSGPolygon
     LandMemoryPool *pool
+    LandCSGAABB bbox
 
 class LandCSGVertex:
     LandVector pos
@@ -33,6 +38,11 @@ class LandCSGNode:
     LandCSGNode *back
     LandArray *polygons # LandCSGPolygon
 
+static const int COPLANAR = 0
+static const int FRONT = 1
+static const int BACK = 2
+static const int SPANNING = 3
+
 LandCSGVertex *def land_csg_vertex_new(LandVector pos, normal):
     LandCSGVertex *self; land_alloc(self)
     self->pos = pos
@@ -48,6 +58,47 @@ LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self):
     v->pos = self->pos
     v->normal = self->normal
     return v
+
+static int collision_code(LandVector *v, LandCSGAABB *b):
+    int c = 0
+    if v->x < b->x1: c |= 1
+    if v->x > b->x2: c |= 2
+    if v->y < b->y1: c |= 4
+    if v->y > b->y2: c |= 8
+    if v->z < b->z1: c |= 16
+    if v->z > b->z2: c |= 32
+    return c
+
+static bool def polygon_intersects_aabb(LandCSGPolygon *polygon,
+        LandCSGAABB *box):
+    # FIXME: right now, this only checks if the whole polygon is on one side
+    # of the bounding box. It will return true also for many polygons which
+    # do not actually intersect.
+
+    int a = 0, b = 0
+    for LandCSGVertex *v in LandArray *polygon->vertices:
+        int c = collision_code(&v->pos, box)
+
+        # We have an actual vertex inside the box. That was easy.
+        if c == 0:
+            return True
+
+        a |= c
+        b |= ~c
+
+    # If at least for one side, all of them are at that side, there can be no
+    # intersection.
+    # Assume collision_code always has bit 1 set. Then a will be 1. And
+    # b will be 0. And a ^ b therefore will be 1 for bit 1. And so we know
+    # that all of them are out left. As soon as one point is not out left,
+    # we would set the bit in b for it.
+    if ((a ^ b) & 63) != 0: return False
+
+    # At this point, we know that not all points are all on the same side of
+    # any one plane. So to determine intersection, we need to do more work.
+    # Which I'm too lazy for right now :P
+
+    return True
 
 static LandArray *def clone_vertices(LandCSG *csg, LandArray *vertices):
     LandArray *clone = land_array_copy(vertices)
@@ -100,21 +151,17 @@ static def csg_plane_split_polygon(LandCSG *csg,
         #LandCSGPolygon const *polygon,
         LandCSGPolygon *polygon,
         LandArray *coplanar_front, *coplanar_back, *front, *back):
-    
-    const int COPLANAR = 0
-    const int FRONT = 1
-    const int BACK = 2
-    const int SPANNING = 3
 
     int polygon_type = 0
     int n = land_array_count(polygon->vertices)
     int i = 0
     int types[n]
     for LandCSGVertex *v in LandArray *polygon->vertices:
-        LandFloat t = land_vector_dot(self->normal, v->pos) - self->w
-        int type = t < -LandCSGPlaneEPSILON ? BACK : t > LandCSGPlaneEPSILON ? FRONT : COPLANAR
-        polygon_type |= type
-        types[i++] = type
+        LandFloat dot = land_vector_dot(self->normal, v->pos) - self->w
+        int t = (dot < -LandCSGPlaneEPSILON ? BACK :
+            dot > LandCSGPlaneEPSILON ? FRONT : COPLANAR)
+        polygon_type |= t
+        types[i++] = t
     assert(i == n)
 
     if polygon_type == COPLANAR:
@@ -247,7 +294,7 @@ static def csg_node_invert(LandCSGNode *self):
     self->front = self->back
     self->back = temp
 
-# Remove polygons inside this BSP from the passed array.
+# Remove all polygons from the passed array which are inside our BSP.
 static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
         LandArray *polygons):
     if not self->plane.normal.z and not self->plane.normal.y and\
@@ -270,6 +317,7 @@ static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
     if self->back:
         csg_node_clip_polygons(csg, self->back, back)
     else:
+        # This was an outer plane, we throw away anything outside.
         clear_polygons(back)
 
     # now add back the polygons which survived 
@@ -279,7 +327,7 @@ static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
     land_array_destroy(front)
     land_array_destroy(back)
 
-# Remove all polygons which are inside bsp.
+# Remove all polygons from ourselves which are inside bsp.
 static def csg_node_clip_to(LandCSG *csg, LandCSGNode *self, LandCSGNode *bsp):
     csg_node_clip_polygons(csg, bsp, self->polygons)
     if self->front:
@@ -299,6 +347,20 @@ static LandArray *def csg_node_all_polygons(LandCSG *csg, LandCSGNode *self):
         land_array_merge(polygons, csg_node_all_polygons(csg, self->back))
 
     return polygons
+
+static def csg_add_polygons_from_node(LandCSG *csg, LandCSGNode *node):
+    
+    for LandCSGPolygon *p in LandArray *node->polygons:
+        land_array_add(csg->polygons, land_csg_polygon_clone(csg, p))
+
+    if node->front:
+        csg_add_polygons_from_node(csg, node->front)
+    if node->back:
+        csg_add_polygons_from_node(csg, node->back)
+
+static def csg_add_polygons(LandCSG *csg, LandArray *polygons):
+    for LandCSGPolygon *p in LandArray *polygons:
+        land_array_add(csg->polygons, land_csg_polygon_clone(csg, p))
 
 #static def csg_node_debug_info(LandCSGNode *self, char const *info):
 #    LandArray *temp = csg_node_all_polygons(self)
@@ -412,20 +474,78 @@ LandCSG *def land_csg_clone(LandCSG *self):
     csg->polygons = clone_polygons(self, self->polygons)
     return csg
 
-LandCSG *def land_csg_union(LandCSG *self, *csg):
+static def csg_split_on_bounding_box(LandCSG const *self, LandCSGAABB *box,
+        LandArray **inside, **outside):
+    """
+    Keep every polygon intersecting the bounding box, return the removed ones.
+
+    TODO: we could use a cached BSP for an extra fast bounding box check,
+    as soon as we see that the bounding box is on one side of a BSP node we
+    can ignore the other side completely.
+    """
+
+    *inside = land_array_new()
+    *outside = land_array_new()
+
+    for LandCSGPolygon *p in LandArray *self->polygons:
+        if polygon_intersects_aabb(p, box):
+            land_array_add(*inside, p)
+        else:
+            land_array_add(*outside, p)
+
+LandCSG *def land_csg_union(LandCSG *csg_a, *csg_b):
     LandCSG *c = land_csg_new()
-    LandCSGNode *a = csg_node_new(c, clone_polygons(c, self->polygons))
-    LandCSGNode *b = csg_node_new(c, clone_polygons(c, csg->polygons))
+
+    land_csg_aabb_update(&csg_a->bbox, csg_a->polygons)
+    land_csg_aabb_update(&csg_b->bbox, csg_b->polygons)
+    LandCSGAABB box = land_csg_aabb_intersect(csg_a->bbox, csg_b->bbox)
+
+    LandArray *a_out, *a_in, *b_out, *b_in
+    csg_split_on_bounding_box(csg_a, &box, &a_in, &a_out)
+    csg_split_on_bounding_box(csg_b, &box, &b_in, &b_out)
+    #printf("a_in: %d a_out: %d b_in: %d b_out: %d\n",
+    #    land_array_count(a_in),
+    #    land_array_count(a_out),
+    #    land_array_count(b_in),
+    #    land_array_count(b_out))
+
+    LandCSGNode *a = csg_node_new(c, clone_polygons(c, a_in))
+    LandCSGNode *b = csg_node_new(c, clone_polygons(c, b_in))
 
     csg_node_clip_to(c, a, b)
     csg_node_clip_to(c, b, a)
-    csg_node_invert(b)
-    csg_node_clip_to(c, b, a)
-    csg_node_invert(b)
 
-    csg_node_build(c, a, csg_node_all_polygons(c, b))
+    # We are done here basically. Except for the case of coplanar faces.
+    # For those we kept both so far. As a trick, we invert b and clip the
+    # inverted version to a. Since a and b don't overlap any longer this has no
+    # effect at all. Well, except for coplanar faces - those get removed from
+    # b now.
+    # FIXME: For performance reasons, maybe keep track of any co-planar faces
+    # and do this only when necessary.
+    if True:
+        csg_node_invert(b)
+        csg_node_clip_to(c, b, a)
+        csg_node_invert(b)
 
-    c->polygons = csg_node_all_polygons(c, a)
+    # TODO:
+    # We could add the polygons from a and b back to the csg in c to have
+    # a complete BSP tree - then cache this tree inside the LandCSG so it
+    # doesn't have to be re-created.
+    #
+    # This would make most sense if we'd have a way to also fast-clip such a
+    # BSP tree in a LandCSGNode to a bounding box. Otherwise we couldn't use
+    # the cached BSP if we do the bounding box optimization.
+
+    c->polygons = land_array_new()
+    csg_add_polygons_from_node(c, a)
+    csg_add_polygons_from_node(c, b)
+    csg_add_polygons(c, a_out)
+    csg_add_polygons(c, b_out)
+
+    land_array_destroy(a_in)
+    land_array_destroy(a_out)
+    land_array_destroy(b_in)
+    land_array_destroy(b_out)
 
     csg_node_destroy(a)
     csg_node_destroy(b)
@@ -433,10 +553,15 @@ LandCSG *def land_csg_union(LandCSG *self, *csg):
     return c
     
 LandCSG *def land_csg_subtract(LandCSG *self, *csg):
+    # TODO: Do the AABB trick here as well?
     LandCSG *c = land_csg_new()
     LandCSGNode *a = csg_node_new(c, clone_polygons(c, self->polygons))
     LandCSGNode *b = csg_node_new(c, clone_polygons(c, csg->polygons))
 
+    # If we just do:
+    # csg_node_clip_to(c, a, b)
+    # This subtracts b from a, but leaves a with a gaping hole.
+    #
     csg_node_invert(a)
     csg_node_clip_to(c, a, b)
     csg_node_clip_to(c, b, a)
