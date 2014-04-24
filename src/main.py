@@ -169,7 +169,7 @@ def land_mainloop():
     land_log_message("Commencing operations.\n")
     platform_mainloop(parameters)
 
-    land_runner_switch_active(NULL)
+    land_runner_switch_active(None)
     land_runner_destroy_all()
 
     land_display_destroy(display)

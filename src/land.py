@@ -216,7 +216,8 @@ macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
         land_runner_register(shortcut_runner)
         land_set_display_parameters(w, h, flags)
         land_set_initial_runner(shortcut_runner)
-        land_set_fps(hz); land_mainloop()
+        land_set_fps(hz)
+        land_mainloop()
         land_log_message("Return code is %d.\n", land_get_exitcode())
         return land_get_exitcode()
 
