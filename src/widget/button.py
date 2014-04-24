@@ -238,16 +238,24 @@ static int def _linedelcb(void *item, void *data):
     land_free(item)
     return 0
 
-def land_widget_button_set_text(LandWidget *base, char const *text):
+def land_widget_button_replace_text(LandWidget *base, char const *text):
+    """
+    Same as text but does not trigger any layout updates.
+    """
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->text: land_free(button->text)
     button->text = None
     if text:
         button->text = land_strdup(text)
+
+def land_widget_button_set_text(LandWidget *base, char const *text):
+    land_widget_button_replace_text(base, text)
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    if button->text:
         if button->multiline:
             land_widget_button_multiline(base, button->multiline)
         else:
-            land_widget_theme_set_minimum_size_for_text(base, text)
+            land_widget_theme_set_minimum_size_for_text(base, button->text)
     if base->parent: land_widget_layout(base->parent)
 
 def land_widget_button_multiline(LandWidget *self, int style):

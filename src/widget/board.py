@@ -1,6 +1,9 @@
 import container
 
 class LandWidgetBoard:
+    """
+    A board widget can have several children but has no layout of any kind.
+    """
     LandWidgetContainer super
 
 macro LAND_WIDGET_BOARD(widget) ((LandWidgetBoard *) land_widget_check(widget,

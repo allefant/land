@@ -324,7 +324,7 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     LandWidget *contents = LAND_WIDGET(item->data)
     land_widget_container_add(contents, add)
 
-    # A freshly added widget start always at the no-scroll position. 
+    # A freshly added widget starts always at the no-scroll position. 
     add->box.x = contents->box.x + contents->element->il
     add->box.y = contents->box.y + contents->element->it
 

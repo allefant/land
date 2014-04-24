@@ -20,3 +20,4 @@ import widget/spin
 import widget/board
 import widget/slider
 import widget/text
+import widget/checkbox

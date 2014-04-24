@@ -172,6 +172,7 @@ macro LAND_WIDGET_ID_MENU           0x00000611
 macro LAND_WIDGET_ID_MENUBAR        0x00001611
 macro LAND_WIDGET_ID_BOOK           0x00000711
 macro LAND_WIDGET_ID_SLIDER         0x00000811
+macro LAND_WIDGET_ID_CHECKBOX       0x00000911
 macro LAND_WIDGET_ID_BUTTON         0x00000021
 macro LAND_WIDGET_ID_MENUBUTTON     0x00000121
 macro LAND_WIDGET_ID_MENUITEM       0x00000221
@@ -259,7 +260,8 @@ class LandWidget:
     unsigned int no_clip_check with 1 # even when the parent does use clipping,
         # do not skip drawing of this child if it is outside the clip bounds
     unsigned int no_decoration with 1 # draw nothing except contents
-    unsigned int only_border with 1 # draw only a border, for performance reasons
+    unsigned int only_border with 1 # draw only a border, for performance
+        # reasons
     # Widget is not displayed at all, e.g. hidden scrollbar.
     unsigned int hidden with 1 
     # inhibit layout updates, for performance reasons
@@ -268,13 +270,13 @@ class LandWidget:
     # is used to avoid (infinite) recursion
     unsigned int no_layout_notify with 1
 
-    unsigned int layout_hack with 1 # signals that the layout calculation needs to
-                                    # start over
+    unsigned int layout_hack with 1 # signals that the layout calculation needs
+                                    # to start over
 
     # user state
     unsigned int selected with 1 # e.g. checked checkbox or pressed button
     unsigned int highlighted with 1 # item with mouse hovering over it
-    unsigned int disabled with 1 # e.g. button who cannot currently be pressed
+    unsigned int disabled with 1 # e.g. button which cannot currently be pressed
 
     int reference # reference counting
 
@@ -341,6 +343,11 @@ char const *def land_widget_info_string(LandWidget *w):
     elif land_widget_is(w, LAND_WIDGET_ID_MENUBUTTON):
         LandWidgetButton *b = (void *)w
         sprintf(str, "menubutton %s", b->text)
+    elif land_widget_is(w, LAND_WIDGET_ID_BUTTON):
+        LandWidgetButton *b = (void *)w
+        sprintf(str, "button %s", b->text)
+    elif land_widget_is(w, LAND_WIDGET_ID_CHECKBOX):
+        sprintf(str, "checkbox")
     else:
         sprintf(str, "unknown")
     return str

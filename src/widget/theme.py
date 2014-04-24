@@ -565,6 +565,8 @@ static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
             LandWidget *w = i->data
             _layout_recurse(w, theme)
             i = i->next
+
+        # TODO: what is this for?
         if self->parent and (self->parent->box.flags & GUL_NO_LAYOUT):
             land_widget_layout(self)
 
