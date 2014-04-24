@@ -63,14 +63,25 @@ foreach(exsrc ${examples})
     string (REGEX REPLACE "widget/" "" exname ${ex})
 
     if (STATIC)
-        if (DEBUG)
-            add_executable(${exname}-static-debug ${example_cfiles})
+        if (DEBUG OR PROFILE)
             set(LFLAGS "")
             macro(LFLAG f)
                 set(LFLAGS "${LFLAGS} ${f}")
             endmacro()
+            if (DEBUG)
+                set(exe ${exname}-static-debug)
+                set(lib ${libname}-static-debug)
+                set(flags ${DFLAGS})
+            else()
+                set(exe ${exname}-static-profile)
+                set(lib ${libname}-static-profile)
+                set(flags ${PFLAGS})
+                LFLAG("-p")
+            endif()
+            add_executable(${exe} ${example_cfiles})
+            
             set(libraries
-                ${libname}-static-debug
+                ${lib}
                 allegro_monolith-debug-static
                 png
                 jpeg
@@ -102,36 +113,16 @@ foreach(exsrc ${examples})
                     pulse-simple)
             endif()
 
-            set_target_properties(${exname}-static-debug
+            set_target_properties(${exe}
                 PROPERTIES
-                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
+                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${flags}"
                 LINK_FLAGS "${LFLAGS}"
                 )
 
-            target_link_libraries(${exname}-static-debug
+            target_link_libraries(${exe}
                 ${libraries}
                 )
-        endif (DEBUG)
-        if (PROFILE)
-            add_executable(${exname}-static-profile ${example_cfiles})
-            set_target_properties(${exname}-static-profile
-                PROPERTIES
-                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
-                LINK_FLAGS -p
-                )
-            target_link_libraries(${exname}-static-profile
-                ${libname}-static-profile
-                allegro_monolith-profile-static-${AV}
-                z
-                png
-                jpeg
-                m
-                GL
-                Xinerama
-                Xcursor
-                freetype
-                )
-        endif (PROFILE)
+        endif (DEBUG OR PROFILE)
         if (RELEASE)
             add_executable(${exname}-static ${example_cfiles})
             set_target_properties(${exname}-static

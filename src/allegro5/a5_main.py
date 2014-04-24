@@ -205,8 +205,8 @@ def platform_mainloop(LandParameters *parameters):
     al_register_event_source(queue, al_get_keyboard_event_source())
     al_register_event_source(queue, al_get_mouse_event_source())
 
-    if (al_install_touch_input())
-        al_register_event_source(queue, al_get_touch_input_event_source());
+    if al_install_touch_input():
+        al_register_event_source(queue, al_get_touch_input_event_source())
 
     al_register_event_source(queue, al_get_display_event_source(d->a5))
 
