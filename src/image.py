@@ -52,11 +52,14 @@ def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
 static LandImage *def _load(char const *filename, bool mem):
-    land_log_message("land_image_load %s..", filename)
+    char *path = land_path_with_prefix(filename)
+    land_log_message("land_image_load %s..", path)
 
-    LandImage *self = platform_image_load(filename, mem)
+    LandImage *self = platform_image_load(path, mem)
 
-    if self->flags & LAND_LOADED:
+    land_free(path)
+
+    if self.flags & LAND_LOADED:
         int w = land_image_width(self)
         int h = land_image_height(self)
         land_log_message_nostamp("success (%d x %d)\n", w, h)
@@ -104,8 +107,8 @@ LandImage *def land_image_new(int w, int h):
     all (this can be useful if the contents are to be added later).
     """
     LandImage *self = land_display_new_image()
-    self->width = w
-    self->height = h
+    self.width = w
+    self.height = h
     if w or h:
         platform_image_empty(self)
     bitmap_count++
@@ -117,8 +120,8 @@ LandImage *def land_image_create(int w, int h):
     Like land_image_new, but clears the image to all 0 initially.
     """
     LandImage *self = land_display_new_image()
-    self->width = w
-    self->height = h
+    self.width = w
+    self.height = h
     platform_image_empty(self)
     bitmap_count++
     bitmap_memory += w * h * 4
@@ -128,12 +131,12 @@ def land_image_del(LandImage *self):
     if not self: return
     # Sub-bitmaps have no own names or masks or anything. They are
     # just a reference with their own cut-out rectangle.
-    if not (self->flags & LAND_SUBIMAGE):
+    if not (self.flags & LAND_SUBIMAGE):
         land_image_destroy_pixelmasks(self)
-        if self->name: land_free(self->name)
-        if self->filename and self->filename != self->name: land_free(self->filename)
+        if self.name: land_free(self->name)
+        if self.filename and self->filename != self->name: land_free(self->filename)
         bitmap_count--
-        bitmap_memory -= self->width * self->height * 4
+        bitmap_memory -= self.width * self->height * 4
     land_display_del_image(self)
 
 def land_image_destroy(LandImage *self):
@@ -146,7 +149,7 @@ def land_image_crop(LandImage *self, int x, y, w, h):
     which case the additional borders are filled with transparency. The offset
     need not lie within the image.
     """
-    if self->width == w and self->height == h and x == 0 and y == 0:
+    if self.width == w and self->height == h and x == 0 and y == 0:
         return
     platform_image_crop(self, x, y, w, h)
 
@@ -172,10 +175,10 @@ def land_image_auto_crop(LandImage *self):
                 if j < minj: minj = j
                 if j > maxj: maxj = j
     land_free(rgba)
-    self->l = mini
-    self->t = minj
-    self->r = w - 1 - maxi
-    self->b = h - 1 - maxj
+    self.l = mini
+    self.t = minj
+    self.r = w - 1 - maxi
+    self.b = h - 1 - maxj
 
 LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     """
@@ -513,22 +516,22 @@ def land_image_draw_tinted(LandImage *self, float x, float y, float r, float g,
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, r, g, b, alpha)
 
 def land_image_grab(LandImage *self, int x, int y):
-    platform_image_grab_into(self, x, y, 0, 0, self->width, self->height)
+    platform_image_grab_into(self, x, y, 0, 0, self.width, self->height)
 
 def land_image_grab_into(LandImage *self, float x, y, tx, ty, tw, th):
     platform_image_grab_into(self, x, y, tx, ty, tw, th)
 
 def land_image_offset(LandImage *self, int x, int y):
-    self->x = x
-    self->y = y
+    self.x = x
+    self.y = y
 
 def land_image_memory_draw(LandImage *self, float x, float y):
     assert(0)
 
 def land_image_center(LandImage *self):
-    self->x = 0.5 * self->width
-    self->y = 0.5 * self->height
-    self->flags |= LAND_IMAGE_WAS_CENTERED
+    self.x = 0.5 * self->width
+    self.y = 0.5 * self->height
+    self.flags |= LAND_IMAGE_WAS_CENTERED
 
 def land_image_init():
     pass
@@ -541,35 +544,35 @@ def land_image_exit():
 # somewhere.
 # 
 def land_image_clip(LandImage *self, float x, float y, float x_, float y_):
-    self->l = x
-    self->t = y
-    self->r = self->width - x_
-    self->b = self->height - y_
+    self.l = x
+    self.t = y
+    self.r = self->width - x_
+    self.b = self->height - y_
 
 # Just a shortcut for land_image_clip(image, 0, 0, 0, 0); 
 def land_image_unclip(LandImage *self):
-    self->l = 0
-    self->t = 0
-    self->r = 0
-    self->b = 0
+    self.l = 0
+    self.t = 0
+    self.r = 0
+    self.b = 0
 
 def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
-    float l = self->l
-    float t = self->t
-    float r = self->r
-    float b = self->b
+    float l = self.l
+    float t = self.t
+    float r = self.r
+    float b = self.b
     land_image_clip(self, sx, sy, sx + sw, sy + sh)
     land_image_draw(self, x - sx, y - sy)
-    self->l = l
-    self->t = t
-    self->r = r
-    self->b = b
+    self.l = l
+    self.t = t
+    self.r = r
+    self.b = b
 
 int def land_image_height(LandImage *self):
-    return self->height
+    return self.height
 
 int def land_image_width(LandImage *self):
-    return self->width
+    return self.width
 
 def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
     platform_image_get_rgba_data(self, rgba)
@@ -611,8 +614,8 @@ LandImage *def land_image_clone(LandImage *self):
     land_image_get_rgba_data(self, rgba)
     land_image_set_rgba_data(clone, rgba)
     land_free(rgba)
-    clone->x = self->x
-    clone->y = self->y
+    clone->x = self.x
+    clone->y = self.y
     return clone
 
 def land_image_fade_to_color(LandImage *self):

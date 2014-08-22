@@ -25,24 +25,24 @@ static int def read32(FILE *f):
 LandDataFile *def land_read_datafile(FILE *file):
     LandDataFile *self
     land_alloc(self)
-    self->file = file
-    int count = read32(self->file)
+    self.file = file
+    int count = read32(self.file)
     int i
     char name[1024]
     land_log_message("Data listing:\n")
     for i = 0 while i < count with i++:
         int s = 0
         while s < 1024:
-            int c = fgetc(self->file)
+            int c = fgetc(self.file)
             name[s++] = c
             if c == '\0': break
 
         LandDataEntry *entry
         land_alloc(entry)
         entry->name = land_strdup(name)
-        entry->offset = read32(self->file)
-        entry->size = read32(self->file)
-        land_array_add_data(&self->entries, entry)
+        entry->offset = read32(self.file)
+        entry->size = read32(self.file)
+        land_array_add_data(&self.entries, entry)
         land_log_message(" %8d %8d %s\n", entry->offset, entry->size, entry->name)
 
     return self
@@ -80,12 +80,12 @@ LandDataFile *def land_open_appended_datafile(char const *filename,
 void *def land_datafile_read_entry(LandDataFile *self, char const *filename,
     int *size):
     int i
-    for i = 0 while i < self->entries->count with i++:
-        LandDataEntry *entry = land_array_get_nth(self->entries, i)
+    for i = 0 while i < self.entries->count with i++:
+        LandDataEntry *entry = land_array_get_nth(self.entries, i)
         if not strcmp(entry->name, filename):
-            fseek(self->file, entry->offset, 0)
+            fseek(self.file, entry->offset, 0)
             unsigned char *buffer = land_calloc(entry->size)
-            int r = fread(buffer, entry->size, 1, self->file)
+            int r = fread(buffer, entry->size, 1, self.file)
             entry->size = r;
             if size: *size = entry->size
             return buffer
@@ -125,8 +125,8 @@ int def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
     int (*callback)(const char *filename, int attrib, void *param), void *param):
     int i
     int n = 0
-    for i = 0 while i < self->entries->count with i++:
-        LandDataEntry *entry = land_array_get_nth(self->entries, i)
+    for i = 0 while i < self.entries->count with i++:
+        LandDataEntry *entry = land_array_get_nth(self.entries, i)
         if star_match(pattern, entry->name):
             if callback(entry->name, 0, param):
                 break

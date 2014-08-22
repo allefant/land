@@ -78,7 +78,7 @@ def land_list_destroy(LandList *list):
 LandListItem *def land_listitem_new(void *data):
     LandListItem *self
     land_alloc(self)
-    self->data = data
+    self.data = data
     return self
 
 def land_listitem_destroy(LandListItem *self):

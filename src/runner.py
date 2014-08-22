@@ -18,26 +18,26 @@ static LandList *runners
 static LandRunner *active_runner
 
 def land_runner_register(LandRunner *self):
-    land_log_message("land_runner_register \"%s\"\n", self->name)
+    land_log_message("land_runner_register \"%s\"\n", self.name)
     land_add_list_data(&runners, self)
 
 def land_runner_initialize(LandRunner *self, char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
     void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
-    self->name = land_strdup(name)
-    self->init = init
-    self->enter = enter
-    self->tick = tick
-    self->draw = draw
-    self->leave = leave
-    self->destroy = destroy
+    self.name = land_strdup(name)
+    self.init = init
+    self.enter = enter
+    self.tick = tick
+    self.draw = draw
+    self.leave = leave
+    self.destroy = destroy
 
 LandRunner *def land_runner_new(char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
     void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
     LandRunner *self
     land_alloc(self)
-    self->allocated = 1
+    self.allocated = 1
     land_runner_initialize(self, name, init, enter, tick, draw, leave, destroy)
     return self
 
@@ -51,23 +51,23 @@ def land_runner_switch_active(LandRunner *self):
 
 def land_runner_enter_active():
     LandRunner *self = active_runner
-    if self and self->enter:
-        self->enter(self)
+    if self and self.enter:
+        self.enter(self)
 
 def land_runner_tick_active():
     LandRunner *self = active_runner
-    if self and self->tick:
-        self->tick(self)
+    if self and self.tick:
+        self.tick(self)
 
 def land_runner_draw_active():
     LandRunner *self = active_runner
-    if self and self->draw:
-        self->draw(self)
+    if self and self.draw:
+        self.draw(self)
 
 def land_runner_leave_active():
     LandRunner *self = active_runner
-    if self and self->leave:
-        self->leave(self)
+    if self and self.leave:
+        self.leave(self)
 
 def land_runner_destroy_all():
     land_log_message("land_runner_destroy_all\n")
@@ -76,10 +76,10 @@ def land_runner_destroy_all():
         return
     for i = runners->first while i with i = i->next:
         LandRunner *self = (LandRunner *)i->data
-        if self->destroy:
-            self->destroy(self)
-        land_log_message("destroyed %s\n", self->name)
-        land_free(self->name)
-        if self->allocated: land_free(self)
+        if self.destroy:
+            self.destroy(self)
+        land_log_message("destroyed %s\n", self.name)
+        land_free(self.name)
+        if self.allocated: land_free(self)
 
     land_list_destroy(runners)

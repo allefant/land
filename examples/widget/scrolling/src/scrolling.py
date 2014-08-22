@@ -37,10 +37,12 @@ static def debug(LandWidget *w):
         land_text_pos(land_text_x_pos() - 10, land_text_y_pos())
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 12)
+    land_find_data_prefix("data/")
 
-    classic = land_widget_theme_new("../../data/classic.cfg")
-    green = land_widget_theme_new("../../data/green.cfg")
+    land_font_load("galaxy.ttf", 12)
+
+    classic = land_widget_theme_new("classic.cfg")
+    green = land_widget_theme_new("green.cfg")
     theme = classic
     land_widget_theme_set_default(theme)
     desktop = land_widget_board_new(NULL, 0, 0, 640, 480)

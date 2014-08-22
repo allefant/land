@@ -56,7 +56,7 @@ LandWidget *def land_widget_listitem_new(LandWidget *parent,
     LandWidget *self = land_widget_button_new(parent, text, clicked,
         x, y, w, h)
     land_widget_listitem_interface_initialize()
-    self->vt = land_widget_listitem_interface
+    self.vt = land_widget_listitem_interface
     land_widget_theme_initialize(self)
     land_widget_layout(parent)
     return self

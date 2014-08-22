@@ -17,7 +17,7 @@ def land_widget_panel_initialize(LandWidget *base,
     LandWidget *parent, int x, int y, int w, int h):
     LandWidgetPanel *self = (LandWidgetPanel *)base
     land_widget_panel_interface_initialize()
-    LandWidgetContainer *super = &self->super
+    LandWidgetContainer *super = &self.super
     land_widget_container_initialize(&super->super, parent, x, y, w, h)
     base->vt = land_widget_panel_interface
     land_widget_layout_enable(base)

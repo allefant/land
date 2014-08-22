@@ -64,7 +64,7 @@ def land_widget_scrolling_autohide(LandWidget *widget, int hori, vert, empty):
     2 if the empty should be hidden as soon as one bar is hidden.
     """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
-    self->autohide = hori + 2 * vert + 4 * empty
+    self.autohide = hori + 2 * vert + 4 * empty
 
     land_widget_scrolling_update(widget)
 
@@ -74,7 +74,7 @@ int def land_widget_scrolling_autobars(LandWidget *widget):
     """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
 
-    if (self->autohide & 3) == 0: return 0
+    if (self.autohide & 3) == 0: return 0
 
     LandWidget *container = land_widget_scrolling_get_container(widget)
     LandWidget *empty = land_widget_scrolling_get_empty(widget)
@@ -121,14 +121,14 @@ int def land_widget_scrolling_autobars(LandWidget *widget):
     LAND_WIDGET_SCROLLBAR(vslider)->callback(vslider, 0, &ya, &yb, &yr, &yp)
 
     # Determine which bars are needed.
-    int needh = self->autohide & 1 ? 0 : 1, needv = self->autohide & 2 ? 0 : 1
+    int needh = self.autohide & 1 ? 0 : 1, needv = self->autohide & 2 ? 0 : 1
     if xp > xa or 1 + xb - xa > xr: needh = 1
     if yp > ya or 1 + yb - ya > yr: needv = 1
 
     int neede = 1
-    if self->autohide & 4:
+    if self.autohide & 4:
         if not needh and not needv: neede = 0
-    if self->autohide & 8:
+    if self.autohide & 8:
         if not needh or not needv: neede = 0
 
     if not needh and not needv and not neede:
@@ -298,14 +298,14 @@ def land_widget_scrolling_limit(LandWidget *base):
 
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(base)
-    if land_mouse_delta_z() and self->scrollwheel:
-        if not (self->scrollwheel & 2):
+    if land_mouse_delta_z() and self.scrollwheel:
+        if not (self.scrollwheel & 2):
             float w, h
             land_widget_scrolling_get_scroll_extents(base, &w, &h)
             if h <= 0: return
         int dy = land_mouse_delta_z() * land_font_height(base->element->font)
         land_widget_scrolling_scroll(base, 0, dy)
-        if not (self->scrollwheel & 2):
+        if not (self.scrollwheel & 2):
             land_widget_scrolling_limit(base)
 
     land_widget_container_mouse_tick(base)
@@ -443,7 +443,7 @@ def land_widget_scrolling_wheel(LandWidget *widget, int wheel):
     2: unlimited scrolling
     """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
-    self->scrollwheel = wheel
+    self.scrollwheel = wheel
 
 LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
     """

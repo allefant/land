@@ -98,7 +98,7 @@ class LandGrid:
 static import grid, log, tilegrid, isometric, sprite, global math
 
 def land_grid_draw(LandGrid *self, LandView *view):
-    self->vt->draw(self, view)
+    self.vt->draw(self, view)
 
 def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
     *cell_x, *cell_y):
@@ -109,7 +109,7 @@ def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
     lie within the grid, even if the passed position or the view's scroll
     position are outside.
     """
-    self->vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
+    self.vt->get_cell_at(self, view, view_x, view_y, cell_x, cell_y)
 
 def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
     cell_y, *view_x, *view_y):
@@ -121,14 +121,14 @@ def land_grid_get_cell_position(LandGrid *self, LandView *view, float cell_x,
     the view's scroll position first (land_view_ensure_inside_grid) so it lies
     within the grid, if you experience unexpected offsets.
     """
-    self->vt->get_cell_position(self, view, cell_x, cell_y, view_x, view_y)
+    self.vt->get_cell_position(self, view, cell_x, cell_y, view_x, view_y)
 
 def land_grid_initialize(LandGrid *self,
     int cell_w, cell_h, int x_cells, y_cells):
-    self->x_cells = x_cells
-    self->y_cells = y_cells
-    self->cell_w = cell_w
-    self->cell_h = cell_h
+    self.x_cells = x_cells
+    self.y_cells = y_cells
+    self.cell_w = cell_w
+    self.cell_h = cell_h
 
 
 def land_grid_init():

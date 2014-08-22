@@ -30,7 +30,7 @@ static uint64_t varint(LandProtobuf *self):
         return x
 
 int def land_protobuf_next(LandProtobuf *self, uint64_t *size):
-    if self->pos >= self->end:
+    if self.pos >= self->end:
         return 0
 
     int x = varint(self)
@@ -41,13 +41,13 @@ int def land_protobuf_next(LandProtobuf *self, uint64_t *size):
     return x >> 3
 
 def land_protobuf_sub_start(LandProtobuf *self, uint64_t *size):
-    uint64_t end = self->end
-    self->end = self->pos + *size
+    uint64_t end = self.end
+    self.end = self->pos + *size
     *size = end
 
 def land_protobuf_sub_end(LandProtobuf *self, uint64_t end):
-    self->pos = self->end
-    self->end = end
+    self.pos = self->end
+    self.end = end
 
 static macro R(T):
     T x = *(T *)(self->data->buffer + self->pos)
@@ -57,15 +57,15 @@ static macro R(T):
 double def land_protobuf_double(LandProtobuf *self):
     double x
     void *p = &x
-    memcpy(p, self->data->buffer + self->pos, 8)
-    self->pos += 8
+    memcpy(p, self.data->buffer + self->pos, 8)
+    self.pos += 8
     return x
 
 float def land_protobuf_float(LandProtobuf *self):
     float x
     void *p = &x
-    memcpy(p, self->data->buffer + self->pos, 4)
-    self->pos += 4
+    memcpy(p, self.data->buffer + self->pos, 4)
+    self.pos += 4
     return x
 
 uint32_t def land_protobuf_fixed32(LandProtobuf *self):
@@ -75,10 +75,10 @@ int32_t def land_protobuf_sfixed32(LandProtobuf *self):
     R(int32_t)
 
 char *def land_protobuf_string(LandProtobuf *self, int size):
-    self->pos += size
-    return self->data->buffer + self->pos - size
+    self.pos += size
+    return self.data->buffer + self->pos - size
 
 def land_protobuf_destroy(LandProtobuf *self):
-    land_buffer_del(self->data)
+    land_buffer_del(self.data)
     land_free(self)
 

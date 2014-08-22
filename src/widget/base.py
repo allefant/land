@@ -311,7 +311,7 @@ int def land_widget_is(LandWidget const *self, int id):
     for i = 0 while i < 7 with i++:
         int digit = id & (0xf << (i * 4))
         if not digit: break
-        if (self->vt->id & (0xf << (i * 4))) != digit: return 0
+        if (self.vt->id & (0xf << (i * 4))) != digit: return 0
     return 1
 
 void *def land_widget_check(void const *ptr, int id, char const *file,
@@ -348,32 +348,40 @@ char const *def land_widget_info_string(LandWidget *w):
         sprintf(str, "button %s", b->text)
     elif land_widget_is(w, LAND_WIDGET_ID_CHECKBOX):
         sprintf(str, "checkbox")
+    elif land_widget_is(w, LAND_WIDGET_ID_BOOK):
+        sprintf(str, "book")
+    elif land_widget_is(w, LAND_WIDGET_ID_SCROLLING):
+        sprintf(str, "scrolling")
+    elif land_widget_is(w, LAND_WIDGET_ID_SCROLLBAR):
+        sprintf(str, "scrollbar")
+    elif land_widget_is(w, LAND_WIDGET_ID_BOOKPAGE):
+        sprintf(str, "bookpage")
     else:
         sprintf(str, "unknown")
     return str
 
 def land_widget_set_property(LandWidget *self, char const *property,
     void *data, void (*destroy)(void *data)):
-    if not self->properties: self->properties = land_hash_new()
+    if not self.properties: self->properties = land_hash_new()
     LandWidgetProperty *prop
     land_alloc(prop)
     prop->data = data
     prop->destroy = destroy
-    land_hash_insert(self->properties, property, prop)
+    land_hash_insert(self.properties, property, prop)
 
 def land_widget_del_property(LandWidget *self, char const *property):
-    if not self->properties: return
-    LandWidgetProperty *prop = land_hash_remove(self->properties, property)
+    if not self.properties: return
+    LandWidgetProperty *prop = land_hash_remove(self.properties, property)
     if prop->destroy: prop->destroy(prop)
 
 void *def land_widget_get_property(LandWidget *self, char const *property):
-    if not self->properties: return None
-    LandWidgetProperty *prop = land_hash_get(self->properties, property)
+    if not self.properties: return None
+    LandWidgetProperty *prop = land_hash_get(self.properties, property)
     if prop: return prop->data
     return None
 
 def land_widget_remove_all_properties(LandWidget *self):
-    LandHash *hash = self->properties
+    LandHash *hash = self.properties
     if not hash: return
     int i
     for i = 0 while i < hash->size with i++:
@@ -384,23 +392,23 @@ def land_widget_remove_all_properties(LandWidget *self):
                 if prop->destroy: prop->destroy(prop->data)
                 land_free(prop)
 
-    land_hash_destroy(self->properties)
-    self->properties = None
+    land_hash_destroy(self.properties)
+    self.properties = None
 
 def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
     land_widget_base_interface_initialize()
 
     land_widget_layout_initialize(self, x, y, w, h)
-    self->vt = land_widget_base_interface
+    self.vt = land_widget_base_interface
     land_widget_layout_set_minimum_size(self, w, h)
     if parent:
         # Retrieve "base" theme element.
         if parent->element:
-            self->element = land_widget_theme_find_element(
+            self.element = land_widget_theme_find_element(
                 parent->element->theme, self)
         land_call_method(parent, add, (parent, self))
     else:
-        self->element = land_widget_theme_find_element(
+        self.element = land_widget_theme_find_element(
             land_widget_theme_default(), self)
 
 LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
@@ -411,8 +419,8 @@ LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
 
 def land_widget_remove(LandWidget *self):
     """Remove a widget from its parent."""
-    if not self->parent: return
-    land_call_method(self->parent, remove, (self->parent, self))
+    if not self.parent: return
+    land_call_method(self.parent, remove, (self->parent, self))
 
 def land_widget_interfaces_destroy_all():
     int n = land_array_count(land_widget_interfaces)
@@ -453,23 +461,23 @@ def land_widget_create_interface(LandWidget *widget, char const *name):
 
 def land_widget_base_destroy(LandWidget *self):
     land_widget_remove_all_properties(self)
-    _land_gul_box_deinitialize(&self->box)
+    _land_gul_box_deinitialize(&self.box)
     land_free(self)
 
 static def land_widget_really_destroy(LandWidget *self):
-    if self->vt->destroy:
-        self->vt->destroy(self)
+    if self.vt->destroy:
+        self.vt->destroy(self)
     else:
         land_log_message("*** widget without destructor?\n")
         land_widget_base_destroy(self)
 
 def land_widget_unreference(LandWidget *self):
-    self->reference--
-    if self->reference <= 0:
+    self.reference--
+    if self.reference <= 0:
         land_widget_really_destroy(self)
 
 def land_widget_reference(LandWidget *self):
-    self->reference++
+    self.reference++
 
 def land_widget_base_mouse_enter(LandWidget *self, LandWidget *focus):
     pass
@@ -484,17 +492,17 @@ def land_widget_move(LandWidget *self, float dx, dy):
     """
     Moves the widget.
     """
-    self->box.x += dx
-    self->box.y += dy
+    self.box.x += dx
+    self.box.y += dy
     land_call_method(self, move, (self, dx, dy))
 
 def land_widget_center(LandWidget *self):
     int dw = land_display_width()
     int dh = land_display_height()
-    int x = self->box.x
-    int y = self->box.y
-    int w = self->box.w
-    int h = self->box.h
+    int x = self.box.x
+    int y = self.box.y
+    int w = self.box.w
+    int h = self.box.h
     land_widget_move(self, (dw - w) / 2 - x, (dh - h) / 2 - y)
 
 def land_widget_base_size(LandWidget *self, float dx, dy):
@@ -504,8 +512,8 @@ def land_widget_size(LandWidget *self, float dx, dy):
     """
     Resizes a widget.
     """
-    self->box.w += dx
-    self->box.h += dy
+    self.box.w += dx
+    self.box.h += dy
     land_call_method(self, size, (self, dx, dy))
 
 def land_widget_resize(LandWidget *self, float dx, dy):
@@ -513,38 +521,38 @@ def land_widget_resize(LandWidget *self, float dx, dy):
     Changes the minimum size of the widget to its current size modified by the
     given offset.
     """
-    self->box.min_width = self->box.w + dx
-    self->box.min_height = self->box.h + dy
+    self.box.min_width = self->box.w + dx
+    self.box.min_height = self->box.h + dy
     land_widget_size(self, dx, dy)
 
 def land_widget_set_size(LandWidget *self, float w, float h):
-    land_widget_resize(self, w - self->box.w, h - self->box.h)
+    land_widget_resize(self, w - self.box.w, h - self->box.h)
 
 def land_widget_retain_mouse_focus(LandWidget *self):
     """
     Called inside mouse_leave, will keep the mouse focus, and no other widget
     can get highlighted.
     """
-    self->got_mouse = 1
+    self.got_mouse = 1
 
 def land_widget_refuse_mouse_focus(LandWidget *self):
     """
     Called inside mouse_enter, inhibits highlighting of the widget.
     """
-    self->got_mouse = 0
+    self.got_mouse = 0
 
 def land_widget_request_keyboard_focus(LandWidget *self):
     """
     Called in mouse_tick (or elsewhere), will cause the widget to receive the
     keyboard focus.
     """
-    self->want_focus = 1
+    self.want_focus = 1
 
 def land_widget_retain_keyboard_focus(LandWidget *self):
     """
     Called in keyboard_leave to keep the focus. Doesn't usually make sense.
     """
-    self->got_keyboard = 1
+    self.got_keyboard = 1
 
 def land_widget_tick(LandWidget *self):
     """
@@ -561,13 +569,13 @@ def land_widget_draw(LandWidget *self):
     functions you should call on your desktop widget in each widgets using
     application.
     """
-    if self->hidden: return
+    if self.hidden: return
     int pop = 0
-    if not self->dont_clip:
+    if not self.dont_clip:
         land_clip_push()
         land_clip_on()
-        land_clip_intersect(self->box.x, self->box.y, self->box.x + self->box.w,
-            self->box.y + self->box.h)
+        land_clip_intersect(self.box.x, self->box.y, self->box.x + self->box.w,
+            self.box.y + self->box.h)
         pop = 1
 
     land_call_method(self, draw, (self))
@@ -579,49 +587,49 @@ def land_widget_hide(LandWidget *self):
     Hide the widget. It will not be displayed anymore, and also not take up any
     more space.
     """
-    if self->hidden: return
-    self->hidden = 1
-    self->box.flags |= GUL_HIDDEN
-    if self->parent: land_widget_layout(self->parent)
+    if self.hidden: return
+    self.hidden = 1
+    self.box.flags |= GUL_HIDDEN
+    if self.parent: land_widget_layout(self->parent)
 
 def land_widget_unhide(LandWidget *self):
     """
     Unhide the widget.
     """
-    if not self->hidden: return
-    self->hidden = 0
-    self->box.flags &= ~GUL_HIDDEN
-    if self->parent: land_widget_layout(self->parent)
+    if not self.hidden: return
+    self.hidden = 0
+    self.box.flags &= ~GUL_HIDDEN
+    if self.parent: land_widget_layout(self->parent)
 
 def land_widget_outer(LandWidget *self, float *x, *y, *w, *h):
-    *x = self->box.x
-    *y = self->box.y
-    *w = self->box.w
-    *h = self->box.h
+    *x = self.box.x
+    *y = self.box.y
+    *w = self.box.w
+    *h = self.box.h
 
 def land_widget_inner(LandWidget *self, float *x, *y, *w, *h):
-    *x = self->box.x
-    *y = self->box.y
-    *w = self->box.w
-    *h = self->box.h
+    *x = self.box.x
+    *y = self.box.y
+    *w = self.box.w
+    *h = self.box.h
     
-    if self->element:
-        *x += self->element->il
-        *y += self->element->it
-        *w -= self->element->ir + self->element->ir
-        *h -= self->element->ib + self->element->ib
+    if self.element:
+        *x += self.element->il
+        *y += self.element->it
+        *w -= self.element->ir + self->element->ir
+        *h -= self.element->ib + self->element->ib
 
 def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
-    *l = self->box.x
-    *t = self->box.y
-    *r = self->box.x + self->box.w
-    *b = self->box.y + self->box.h 
+    *l = self.box.x
+    *t = self.box.y
+    *r = self.box.x + self->box.w
+    *b = self.box.y + self->box.h 
     
-    if self->element:
-        *l += self->element->il
-        *t += self->element->it
-        *r -= self->element->ir
-        *b -= self->element->ib
+    if self.element:
+        *l += self.element->il
+        *t += self.element->it
+        *r -= self.element->ir
+        *b -= self.element->ib
 
 def land_widget_base_interface_initialize():
     if land_widget_base_interface: return
@@ -632,3 +640,16 @@ def land_widget_base_interface_initialize():
     land_widget_base_interface->name = land_strdup("base")
     land_widget_base_interface->size = land_widget_base_size
     land_widget_base_interface->destroy = land_widget_base_destroy
+
+def land_widget_debug(LandWidget *w, int indentation):
+    for int i in range(indentation):
+        printf("  ");
+    printf("%s %d %d %d %d\n", land_widget_info_string(w),
+        w->box.x, w->box.y, w->box.w, w->box.h)
+
+    if land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
+        LandWidgetContainer *c = LAND_WIDGET_CONTAINER(w)
+        if c.children:
+            for LandWidget *child in LandList *c.children:
+                land_widget_debug(child, indentation + 1)
+    

@@ -174,24 +174,24 @@ static int def mask_get_rotation_frame(LandPixelMask *mask,
 def land_image_debug_pixelmask(LandImage *self, float x, float y,
     float angle, bool flipped):
     int i
-    int k = mask_get_rotation_frame(self->mask, angle, flipped)
-    int mask_w = self->mask->rotation[k]->w
+    int k = mask_get_rotation_frame(self.mask, angle, flipped)
+    int mask_w = self.mask->rotation[k]->w
 
-    int w = land_image_width(self) - self->l - self->r
-    int h = land_image_height(self) - self->t - self->b
+    int w = land_image_width(self) - self.l - self->r
+    int h = land_image_height(self) - self.t - self->b
     float ml, mt, mr, mb
-    get_bounding_box(self->l - self->x, self->t - self->y,
-        w - self->x + self->l, h - self->y + self->t,
-        k * 2.0 * LAND_PI / self->mask->n, &ml, &mt, &mr, &mb)
+    get_bounding_box(self.l - self->x, self->t - self->y,
+        w - self.x + self->l, h - self->y + self->t,
+        k * 2.0 * LAND_PI / self.mask->n, &ml, &mt, &mr, &mb)
 
     land_color(1, 0, 0, 1)
     land_rectangle(x + ml, y + mt, x + mr, y + mb)
 
     land_color(0, 1, 0, 1)
-    for i = 0 while i < self->mask->rotation[k]->h with i++:
+    for i = 0 while i < self.mask->rotation[k]->h with i++:
         int j
         for j = 0 while j < mask_w with j++:
-            int m = self->mask->rotation[k]->data[mask_w * i + j]
+            int m = self.mask->rotation[k]->data[mask_w * i + j]
             int b
             for b = 0 while b < 32 with b++:
                 if m & (1 << b):
@@ -264,36 +264,36 @@ static int def pixelmask_collision(
 # The source offset and source clipping are considered for this.
 # 
 def land_image_create_pixelmasks(LandImage *self, int n, int threshold):
-    self->mask = pixelmask_create(self, n, threshold)
+    self.mask = pixelmask_create(self, n, threshold)
 
 def land_image_destroy_pixelmasks(LandImage *self):
-    if self->mask: pixelmask_destroy(self->mask)
+    if self.mask: pixelmask_destroy(self->mask)
 
 # Returns 1 if non-transparent pixels overlap, 0 otherwise. 
 int def land_image_overlaps(LandImage *self, float x, y, angle, flipped,
     LandImage *other, float x_, y_, angle_, flipped_):
-    if not self->mask: return 0
+    if not self.mask: return 0
     if not other->mask: return 0
 
-    int w = self->mask->w
-    int h = self->mask->h
+    int w = self.mask->w
+    int h = self.mask->h
     int w_ = other->mask->w
     int h_ = other->mask->h
 
-    int i = mask_get_rotation_frame(self->mask, angle, flipped)
+    int i = mask_get_rotation_frame(self.mask, angle, flipped)
     int i_ = mask_get_rotation_frame(other->mask, angle_, flipped_)
     
-    int mx = self->mask->x - self->x
-    int my = self->mask->y - self->y
+    int mx = self.mask->x - self->x
+    int my = self.mask->y - self->y
     int mx_ = other->mask->x - other->x
     int my_ = other->mask->y - other->y
 
     float ml, mt, mr, mb, ml_, mt_, mr_, mb_
-    get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * LAND_PI / self->mask->n,
+    get_bounding_box(mx, my, mx + w, my + h, i * 2.0 * LAND_PI / self.mask->n,
         &ml, &mt, &mr, &mb)
     get_bounding_box(mx_, my_, mx_ + w_, my_ + h_, i_ * 2.0 * LAND_PI / other->mask->n,
         &ml_, &mt_, &mr_, &mb_)
 
     return pixelmask_collision(
-        self->mask->rotation[i], x + ml, y + mt, mr - ml, mb - mt,
+        self.mask->rotation[i], x + ml, y + mt, mr - ml, mb - mt,
         other->mask->rotation[i_], x_ + ml_, y_ + mt_, mr_ - ml_, mb_ - mt_)

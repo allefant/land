@@ -30,8 +30,8 @@ static LandWidgetInterface *land_widget_edit_interface
 static int def get_x_offset(LandWidget *base):
     int x = base->box.x + base->element->il
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
-    if self->align_right:
-        int w = land_text_get_width(self->text)
+    if self.align_right:
+        int w = land_text_get_width(self.text)
         x = base->box.x + base->box.w - base->element->r - w - 0.5
     return x
 
@@ -48,20 +48,20 @@ def land_widget_edit_draw(LandWidget *base):
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 
-    if self->text:
+    if self.text:
         int x = get_x_offset(base)
         int y = base->box.y + base->box.h - base->element->ib
         y -= land_font_height(land_font_current())
         land_widget_theme_color(base)
 
         land_text_pos(x, y)
-        land_print(self->text)
+        land_print(self.text)
 
         if base->got_keyboard:
             double pos = land_get_time() * land_widget_cursor_blink_rate
             pos -= floor(pos)
             if pos < 0.5:
-                int cx = land_text_get_char_offset(self->text, self->cursor)
+                int cx = land_text_get_char_offset(self.text, self->cursor)
                 land_line(x + cx + 0.5, y, x + cx + 0.5, base->box.y + base->box.h -
                     base->element->ib)
 
@@ -128,11 +128,11 @@ def land_widget_edit_initialize(LandWidget *base,
     base->vt = land_widget_edit_interface
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
     if text:
-        self->text = land_strdup(text)
+        self.text = land_strdup(text)
         land_widget_theme_set_minimum_size_for_text(base, text)
         if base->box.min_width < w: base->box.min_width = w
 
-    self->modified = modified
+    self.modified = modified
 
 LandWidget *def land_widget_edit_new(LandWidget *parent, char const *text,
     void (*modified)(LandWidget *self), int x, int y, int w, int h):

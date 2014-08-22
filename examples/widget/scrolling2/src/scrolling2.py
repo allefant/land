@@ -13,9 +13,11 @@ static def colored(LandWidget *self):
         self->box.y + self->box.h)
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 12)
+    land_find_data_prefix("data/")
 
-    land_widget_theme_set_default(land_widget_theme_new("../../data/classic.cfg"))
+    land_font_load("galaxy.ttf", 12)
+
+    land_widget_theme_set_default(land_widget_theme_new("classic.cfg"))
     desktop = land_widget_board_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
     
@@ -60,8 +62,8 @@ static def game_init(LandRunner *self):
     widget = (void *)cwidget
     land_widget_base_initialize(widget, scrolling, 0, 0, 2000, 200)
     widget->vt = my_own
-    cwidget->r = 0.5
-    cwidget->g = 1
+    cwidget->r = 0.25
+    cwidget->g = 0.25
     cwidget->b = 1
     cwidget->a = 0.5
 

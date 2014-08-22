@@ -60,25 +60,25 @@ static LandGrid *def new(float cell_w1, cell_h1, cell_w2, cell_h2,
     int x_cells, y_cells):
     LandGridIsometric *self
     land_alloc(self)
-    land_grid_initialize(&self->super, cell_w1 + cell_w2, cell_h1 + cell_h2,
+    land_grid_initialize(&self.super, cell_w1 + cell_w2, cell_h1 + cell_h2,
         x_cells, y_cells)
-    self->cell_w1 = cell_w1
-    self->cell_h1 = cell_h1
-    self->cell_w2 = cell_w2
-    self->cell_h2 = cell_h2
-    return &self->super
+    self.cell_w1 = cell_w1
+    self.cell_h1 = cell_h1
+    self.cell_w2 = cell_w2
+    self.cell_h2 = cell_h2
+    return &self.super
 
 LandGrid *def land_isometric_new(float cell_w1, cell_h1, cell_w2, cell_h2,
     int x_cells, y_cells):
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
-    self->vt = land_grid_vtable_isometric
+    self.vt = land_grid_vtable_isometric
     return self
 
 LandGrid *def land_isometric_wrap_new(float cell_w1, cell_h1, cell_w2, cell_h2,
     int x_cells, y_cells):
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
-    self->vt = land_grid_vtable_isometric_wrap
-    self->wrap = true
+    self.vt = land_grid_vtable_isometric_wrap
+    self.wrap = true
     return self
 
 LandGrid *def land_isometric_custom_grid(
@@ -86,16 +86,16 @@ LandGrid *def land_isometric_custom_grid(
     void (*draw_cell)(LandGrid *self, LandView *view, int cell_x, int cell_y,
         float x, float y)):
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
-    land_alloc(self->vt)
-    self->vt->draw = wrap ? land_grid_draw_isometric_wrap :\
+    land_alloc(self.vt)
+    self.vt->draw = wrap ? land_grid_draw_isometric_wrap :\
         land_grid_draw_isometric
-    self->vt->get_cell_at = wrap ? land_grid_pixel_to_cell_isometric_wrap :\
+    self.vt->get_cell_at = wrap ? land_grid_pixel_to_cell_isometric_wrap :\
         land_grid_pixel_to_cell_isometric
-    self->vt->draw_cell = draw_cell
-    self->vt->get_cell_position = wrap ?\
+    self.vt->draw_cell = draw_cell
+    self.vt->get_cell_position = wrap ?\
         land_grid_cell_to_pixel_isometric_wrap :\
         land_grid_cell_to_pixel_isometric
-    self->wrap = wrap
+    self.wrap = wrap
     return self
 
 def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
@@ -139,8 +139,8 @@ def land_grid_cell_to_pixel_isometric_wrap(LandGrid *self, LandView *view,
 
     # We are a wrapped grid, so normalize the passed cell position first to
     # lie in the zero quadrant.
-    cell_x = cell_x - floorf(cell_x / self->x_cells) * self->x_cells
-    cell_y = cell_y - floorf(cell_y / self->y_cells) * self->y_cells
+    cell_x = cell_x - floorf(cell_x / self.x_cells) * self->x_cells
+    cell_y = cell_y - floorf(cell_y / self.y_cells) * self->y_cells
 
     # The pixel offset then also is guaranteed to be normalized.
     float mx = cell_x * iso->cell_w2 - cell_y * iso->cell_w1
@@ -157,8 +157,8 @@ def land_grid_pixel_to_cell_isometric_wrap(LandGrid *self, LandView *view,
     float mx, float my, float *partial_x, float *partial_y):
     float x, y
     land_grid_pixel_to_cell_isometric(self, view, mx, my, &x, &y)
-    *partial_x = x - floorf(x / self->x_cells) * self->x_cells
-    *partial_y = y - floorf(y / self->y_cells) * self->y_cells
+    *partial_x = x - floorf(x / self.x_cells) * self->x_cells
+    *partial_y = y - floorf(y / self.y_cells) * self->y_cells
 
 # Returns the grid position in cells below the specified view position in
 # pixels. The view position must be valid. 
@@ -181,10 +181,10 @@ static def view_to_cell_wrap(LandGrid *self, float view_x, float view_y,
     view_to_cell(self, view_x, view_y, &cx, &cy)
 
     # NOTE: C99 semantics for negative values assumed
-    cx %= self->x_cells
-    cy %= self->y_cells
-    if cx < 0: cx += self->x_cells
-    if cy < 0: cy += self->y_cells
+    cx %= self.x_cells
+    cy %= self.y_cells
+    if cx < 0: cx += self.x_cells
+    if cy < 0: cy += self.y_cells
 
     *cell_x = cx
     *cell_y = cy
@@ -222,9 +222,9 @@ static int def find_offset(LandGrid *self, float view_x, float view_y,
     float w2 = iso->cell_w2
     float h2 = iso->cell_h2
 
-    float right_x = w2 * self->x_cells
-    float right_y = h2 * self->x_cells
-    float left_y = h1 * self->y_cells
+    float right_x = w2 * self.x_cells
+    float right_y = h2 * self.x_cells
+    float left_y = h1 * self.y_cells
     float bottom_y = right_y + left_y
 
     view_to_cell(self, view_x, view_y, cell_x, cell_y)
@@ -237,13 +237,13 @@ static int def find_offset(LandGrid *self, float view_x, float view_y,
     elif *cell_x < 0 and view_x < 0 and view_y < left_y: # (4)
         *cell_x = 0
         *cell_y = view_y / h1
-    elif *cell_y >= self->y_cells: # (5)
+    elif *cell_y >= self.y_cells: # (5)
         *cell_x = (view_y - left_y) / h2
-        *cell_y = self->y_cells - 1
+        *cell_y = self.y_cells - 1
     elif *cell_y < 0: # (6)
         *cell_x = view_x / w2
         *cell_y = 0
-    elif *cell_x >= self->x_cells: # (7)
+    elif *cell_x >= self.x_cells: # (7)
         return 0
 
     cell_to_view(self, *cell_x, *cell_y, pixel_x, pixel_y)
@@ -253,8 +253,8 @@ static int def find_offset(LandGrid *self, float view_x, float view_y,
 
 static def find_offset_wrap(LandGrid *self, float view_x, float view_y,
     int *cell_x, int *cell_y, float *pixel_x, float *pixel_y):
-    float vw = (self->x_cells * self->cell_w) / 2
-    float vh = (self->y_cells * self->cell_h) / 2
+    float vw = (self.x_cells * self->cell_w) / 2
+    float vh = (self.y_cells * self->cell_h) / 2
     float x, y
     view_to_cell_wrap(self, view_x, view_y, cell_x, cell_y)
     cell_to_view(self, *cell_x, *cell_y, &x, &y)
@@ -286,8 +286,8 @@ static def find_offset_wrap(LandGrid *self, float view_x, float view_y,
 # 
 static def placeholder(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
     int x_, y_
-    int w = self->cell_w / 2
-    int h = self->cell_h / 2
+    int w = self.cell_w / 2
+    int h = self.cell_h / 2
     land_color(255, 0, 0, 1)
     x_ = x + w
     y_ = y + h
@@ -350,13 +350,13 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
 
             if pixel_y + h1 + h2 - upper_y <= h:
                 if pixel_y >= view->y + view->h: return
-                self->vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
+                self.vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
 
             pixel_x += w2
             pixel_y += h2
             cell_x++
 
-            if cell_x >= self->x_cells: break
+            if cell_x >= self.x_cells: break
 
         cell_x = line_cell_x
         cell_y = line_cell_y
@@ -367,20 +367,20 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
         row++
 
         if pixel_y + h1 + h2 <= upper_y:
-            if pixel_x + w2 - w1 > view->x and cell_y < self->y_cells - 1:
+            if pixel_x + w2 - w1 > view->x and cell_y < self.y_cells - 1:
                 pixel_x -= w1
                 pixel_y += h1
                 cell_y++
             else:
-                if cell_x >= self->x_cells - 1:
+                if cell_x >= self.x_cells - 1:
                     break
                 pixel_x += w2
                 pixel_y += h2
                 cell_x++
 
 def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
-    float w = self->cell_w / 2
-    float h = self->cell_h / 2
+    float w = self.cell_w / 2
+    float h = self.cell_h / 2
     int cell_x, cell_y
     float pixel_x, pixel_y
 
@@ -392,7 +392,7 @@ def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
     # One row up might also be in. 
     if pixel_y > -h:
         cell_y--
-        if cell_y < 0: cell_y += self->y_cells
+        if cell_y < 0: cell_y += self.y_cells
         pixel_x += w
         pixel_y -= h
 
@@ -405,17 +405,17 @@ def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
         int line_cell_x = cell_x
         int line_cell_y = cell_y
         while pixel_x - w < view->x + view->w:
-            self->vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
+            self.vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
 
             pixel_x += w
             pixel_y += h
             cell_x++
-            if cell_x >= self->x_cells: cell_x -= self->x_cells
+            if cell_x >= self.x_cells: cell_x -= self->x_cells
 
             pixel_x += w
             pixel_y -= h
             cell_y--
-            if cell_y < 0: cell_y += self->y_cells
+            if cell_y < 0: cell_y += self.y_cells
 
         cell_x = line_cell_x
         cell_y = line_cell_y
@@ -426,13 +426,13 @@ def land_grid_draw_isometric_wrap(LandGrid *self, LandView *view):
             pixel_x -= w
             pixel_y += h
             cell_y++
-            if cell_y >= self->y_cells: cell_y -= self->y_cells
+            if cell_y >= self.y_cells: cell_y -= self->y_cells
 
         else:
             pixel_x += w
             pixel_y += h
             cell_x++
-            if cell_x >= self->x_cells: cell_x -= self->x_cells
+            if cell_x >= self.x_cells: cell_x -= self->x_cells
 
 def land_isometric_init():
     land_log_message("land_isometric_init\n")

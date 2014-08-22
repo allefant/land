@@ -105,7 +105,7 @@ def land_widget_vbox_initialize(LandWidget *base, LandWidget *parent,
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_vbox_interface
     land_widget_layout_enable(base)
-    self->columns = 1
+    self.columns = 1
    
     land_widget_theme_initialize(base)
 

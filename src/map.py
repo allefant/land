@@ -13,7 +13,7 @@ def land_map_draw(LandMap *self, LandView *view):
     """
     Render the map using the given ''view''.
     """
-    LandLayer *layer = self->first_layer
+    LandLayer *layer = self.first_layer
     while layer:
         land_layer_draw(layer, view)
         layer = layer->next_in_map
@@ -54,8 +54,8 @@ def land_map_del(LandMap *self):
     """
     Destroy a map. This also destroys its layers.
     """
-    if self->first_layer:
-        LandLayer *l = self->first_layer
+    if self.first_layer:
+        LandLayer *l = self.first_layer
         while l:
             LandLayer *next = l->next_in_map
             land_layer_del(l)

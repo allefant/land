@@ -6,9 +6,11 @@ LandWidget *window
 LandWidget *scrolling
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 12)
+    land_find_data_prefix("data/")
 
-    land_widget_theme_set_default(land_widget_theme_new("../../data/green.cfg"))
+    land_font_load("galaxy.ttf", 12)
+
+    land_widget_theme_set_default(land_widget_theme_new("green.cfg"))
     desktop = land_widget_board_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
     

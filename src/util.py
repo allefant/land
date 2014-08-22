@@ -177,11 +177,20 @@ bool def land_fnmatch(char const *pattern, char const *name):
         i++
         j++
 
+bool def land_equals(char const *s, *s2):
+    return strcmp(s, s2) == 0
+
 bool def land_ends_with(char const *s, *end):
     size_t n = strlen(end)
     if strlen(end) > n:
         return False
     return strncmp(s + strlen(s) - n, end, n) == 0
+
+bool def land_starts_with(char const *s, *start):
+    size_t n = strlen(start)
+    if strlen(start) > n:
+        return False
+    return strncmp(s, start, n) == 0
 
 LandArray *def land_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data), int flags, void *data):

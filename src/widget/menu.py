@@ -96,38 +96,38 @@ def land_widget_menu_hide_complete(LandWidget *base):
 
 static def menubutton_clicked(LandWidget *base):
     LandWidgetMenuButton *self = LAND_WIDGET_MENUBUTTON(base)
-    if self->below:
-        land_widget_move(self->submenu,
-            base->box.x - self->submenu->box.x,
-            base->box.y + base->box.h - self->submenu->box.y)
+    if self.below:
+        land_widget_move(self.submenu,
+            base->box.x - self.submenu->box.x,
+            base->box.y + base->box.h - self.submenu->box.y)
 
     else:
-        land_widget_move(self->submenu,
-            base->box.x + base->box.w - self->submenu->box.x,
-            base->box.y - self->submenu->box.y)
+        land_widget_move(self.submenu,
+            base->box.x + base->box.w - self.submenu->box.x,
+            base->box.y - self.submenu->box.y)
 
-    if (self->menu and
-        (self->menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):
-        LandWidgetMenu *menu = LAND_WIDGET_MENU(self->menu)
+    if (self.menu and
+        (self.menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):
+        LandWidgetMenu *menu = LAND_WIDGET_MENU(self.menu)
         if menu->submenu:
             land_widget_menu_hide_sub(menu->submenu)
-        menu->submenu = self->submenu
+        menu->submenu = self.submenu
         # TODO: reference counts
 
-    self->submenu->send_to_top = 1
-    land_widget_unhide(self->submenu)
+    self.submenu->send_to_top = 1
+    land_widget_unhide(self.submenu)
 
     # in case menu items were added/removed while it was hidden (which
     # inhibits all layout updates)
-    land_widget_layout(self->submenu)
+    land_widget_layout(self.submenu)
 
 static def menuitem_clicked(LandWidget *base):
     LandWidgetMenuItem *self = LAND_WIDGET_MENUITEM(base)
 
-    if self->menu and land_widget_is(self->menu, LAND_WIDGET_ID_MENU):
-        land_widget_menu_hide_complete(self->menu)
+    if self.menu and land_widget_is(self->menu, LAND_WIDGET_ID_MENU):
+        land_widget_menu_hide_complete(self.menu)
 
-    if self->callback: self->callback(LAND_WIDGET(self))
+    if self.callback: self->callback(LAND_WIDGET(self))
 
 LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *submenu, float x, float y, float w, float h):
@@ -138,10 +138,10 @@ LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidgetMenuButton *self
     land_alloc(self)
     land_widget_reference(submenu)
-    self->submenu = submenu
-    self->menu = parent
+    self.submenu = submenu
+    self.menu = parent
     if ((parent->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR):
-        self->below = 1
+        self.below = 1
     LandWidget *base = (void *)self
     land_widget_button_initialize(base, parent, name, NULL,
         menubutton_clicked, x, y, w, h)
@@ -207,12 +207,12 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
         None, menuitem_clicked, 0, 0, 10, 10)
 
     LandWidget *self = LAND_WIDGET(menuitem)
-    self->vt = land_widget_menuitem_interface
+    self.vt = land_widget_menuitem_interface
 
     land_widget_theme_initialize(self)
     land_widget_layout_set_minimum_size(self,
-        self->element->il + self->element->ir + tw,
-        self->element->it + self->element->ib + th)
+        self.element->il + self->element->ir + tw,
+        self.element->it + self->element->ib + th)
         
     # FIXME: this is wrong, since we could be added to anything, or even
     # have no parent - but see the FIXME above in land_widget_menu_add
@@ -307,7 +307,7 @@ static int def is_related(LandWidget *self, LandWidget *other):
     return 0
 
 def land_widget_menu_mouse_leave(LandWidget *self):
-    if self->hidden: return
+    if self.hidden: return
 
     # If the mouse is over another menu, then switch to that.
     # TODO: Maybe add some configurable delay before switching.

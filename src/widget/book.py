@@ -154,7 +154,7 @@ static def clicked(LandWidget *button):
 def land_widget_book_add(LandWidget *widget, LandWidget *add):
     """
     Add a new item to the notebook. This will not make it visible yet, use
-    ["land_widget_book_show_page"] for that.
+    [land_widget_book_show_page] for that.
     """
 
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
@@ -175,7 +175,7 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
     land_widget_layout_set_grid(panel, 1, 1)
     land_widget_layout_set_grid_position(add, 0, 0)
 
-    land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
+    #land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
 
 def land_widget_book_pagename(LandWidget *widget, char const *name):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
@@ -248,6 +248,25 @@ LandWidget *def land_widget_book_get_current_page(LandWidget *self):
         panelitem = panelitem->next
 
     return None
+
+# Return the current active page position or -1 if it's not contained
+int def land_widget_book_get_page_n(LandWidget *self, LandWidget *page):
+    LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
+    LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
+        book->children->first->data)
+
+    LandListItem *panelitem = panel->children->first
+
+    int i = 0
+    while panelitem:
+        LandWidget *page_ = LAND_WIDGET(panelitem->data)
+        if page_ == page:
+            return i
+
+        panelitem = panelitem->next
+        i++
+
+    return -1
 
 # Return the last active page or None.
 LandWidget *def land_widget_book_get_last_page(LandWidget *self):

@@ -35,15 +35,15 @@ LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
 
     super->vt = land_widget_handle_horizontal_interface
     land_widget_theme_initialize(super)
-    self->vertical = vertical
-    self->minval = minval
-    self->maxval = maxval
-    self->update = update
-    self->value = minval
+    self.vertical = vertical
+    self.minval = minval
+    self.maxval = maxval
+    self.update = update
+    self.value = minval
     super->no_clip_check = 1
     
-    self->super.box.w = self->super.box.min_width
-    self->super.box.h = self->super.box.min_height
+    self.super.box.w = self->super.box.min_width
+    self.super.box.h = self->super.box.min_height
 
     return super
 
@@ -86,16 +86,16 @@ def land_widget_handle_update(LandWidget *super, int set):
     LandWidgetHandle *self = LAND_WIDGET_HANDLE(super)
     float minpos, maxpos
     float n, i
-    n = self->maxval - self->minval
-    i = self->value - self->minval
+    n = self.maxval - self->minval
+    i = self.value - self->minval
     minpos = super->parent->box.x + super->parent->element->il
     maxpos = super->parent->box.x + super->parent->box.w - super->parent->element->ir
     maxpos -= super->box.w
 
     if set:
-        self->value = self->minval + (super->box.x - minpos) * n /\
+        self.value = self->minval + (super->box.x - minpos) * n /\
             (maxpos - minpos)
-        if self->update: self->update(super)
+        if self.update: self->update(super)
     else:
         super->box.x = minpos + i * (maxpos - minpos) / n
         super->box.y = super->parent->box.y + super->parent->element->it
@@ -108,15 +108,15 @@ def land_widget_handle_mouse_tick(LandWidget *super):
     LandWidgetHandle *self = LAND_WIDGET_HANDLE(super)
     if land_mouse_delta_b():
         if land_mouse_b() & 1:
-            self->drag_x = land_mouse_x() - super->box.x
-            self->drag_y = land_mouse_y() - super->box.y
-            self->dragged = 1
+            self.drag_x = land_mouse_x() - super->box.x
+            self.drag_y = land_mouse_y() - super->box.y
+            self.dragged = 1
         else:
-            self->dragged = 0
+            self.dragged = 0
 
-    if (land_mouse_b() & 1) and self->dragged:
-        int newx = land_mouse_x() - self->drag_x
-        int newy = land_mouse_y() - self->drag_y
+    if (land_mouse_b() & 1) and self.dragged:
+        int newx = land_mouse_x() - self.drag_x
+        int newy = land_mouse_y() - self.drag_y
         int l = super->parent->box.x + super->parent->element->il
         int t = super->parent->box.y + super->parent->element->it
         int r = super->parent->box.x + super->parent->box.w - super->box.w - super->parent->element->ir

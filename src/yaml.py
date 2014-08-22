@@ -95,43 +95,43 @@ LandYAML *def land_yaml_load(char const *filename):
     return None
 
 static def land_yaml_destroy_entry(LandYAMLEntry *self):
-    if self->type == 0:
-        land_free(self->data.scalar)
-    elif self->type == 1:
-        for int i = 0 while i < land_array_count(self->data.sequence) with i++:
-            land_yaml_destroy_entry(land_array_get_nth(self->data.sequence, i))
-        land_array_destroy(self->data.sequence)
-    elif self->type == 2:
-        LandArray *keys = land_hash_keys(self->data.mapping)
+    if self.type == 0:
+        land_free(self.data.scalar)
+    elif self.type == 1:
+        for int i = 0 while i < land_array_count(self.data.sequence) with i++:
+            land_yaml_destroy_entry(land_array_get_nth(self.data.sequence, i))
+        land_array_destroy(self.data.sequence)
+    elif self.type == 2:
+        LandArray *keys = land_hash_keys(self.data.mapping)
         for int i = 0 while i < land_array_count(keys) with i++:
             char const *key = land_array_get_nth(keys, i)
-            land_yaml_destroy_entry(land_hash_get(self->data.mapping, key))
-        land_hash_destroy(self->data.mapping)
+            land_yaml_destroy_entry(land_hash_get(self.data.mapping, key))
+        land_hash_destroy(self.data.mapping)
         land_array_destroy(keys)
     land_free(self)
 
 def land_yaml_destroy(LandYAML *self):
-    land_yaml_destroy_entry(self->root)
+    land_yaml_destroy_entry(self.root)
     land_free(self)
 
 static def land_yaml_dump_entry(LandYAMLEntry *self, int indent):
-    if self->type == 0:
+    if self.type == 0:
         for int i = 0 while i < indent with i++: printf("    ")
-        printf("%s\n", self->data.scalar)
-    elif self->type == 1:
-        for int i = 0 while i < land_array_count(self->data.sequence) with i++:
+        printf("%s\n", self.data.scalar)
+    elif self.type == 1:
+        for int i = 0 while i < land_array_count(self.data.sequence) with i++:
             for int j = 0 while j < indent with j++: printf("    ")
             printf("-\n")
-            land_yaml_dump_entry(land_array_get_nth(self->data.sequence, i), indent + 1)
-    elif self->type == 2:
-        LandArray *keys = land_hash_keys(self->data.mapping)
+            land_yaml_dump_entry(land_array_get_nth(self.data.sequence, i), indent + 1)
+    elif self.type == 2:
+        LandArray *keys = land_hash_keys(self.data.mapping)
         for int i = 0 while i < land_array_count(keys) with i++:
             char const *key = land_array_get_nth(keys, i)
             for int j = 0 while j < indent with j++: printf("    ")
             printf("%s:\n", key)
-            land_yaml_dump_entry(land_hash_get(self->data.mapping, key), indent + 1)
+            land_yaml_dump_entry(land_hash_get(self.data.mapping, key), indent + 1)
         land_array_destroy(keys)
 
 def land_yaml_dump(LandYAML *self):
-    land_yaml_dump_entry(self->root, 0)
+    land_yaml_dump_entry(self.root, 0)
 *** "endif"

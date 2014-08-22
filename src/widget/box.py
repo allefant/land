@@ -11,7 +11,7 @@ LandWidget *def land_widget_box_new(LandWidget *parent, int x, y, w, h):
 
     land_widget_box_interface_initialize()
 
-    self->vt = land_widget_box_interface
+    self.vt = land_widget_box_interface
     
     land_widget_theme_initialize(self)
 

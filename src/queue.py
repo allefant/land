@@ -21,8 +21,8 @@ LandQueue *def land_queue_new(int (*cmp_cb)(void *data1, void *data2)):
     """
     LandQueue *self
     land_alloc(self)
-    self->array.data = None
-    self->cmp_cb = cmp_cb
+    self.array.data = None
+    self.cmp_cb = cmp_cb
     return self
 
 def land_queue_del(LandQueue *q):
@@ -114,10 +114,10 @@ int def land_queue_for_each(LandQueue *self, int (*cb)(void *item, void *data),
     order, especially it will *not* be sorted. (The first call will be the
     smallest element, but the subsequent order is random.)
     """
-    return land_array_for_each(&self->array, cb, data)
+    return land_array_for_each(&self.array, cb, data)
 
 int def land_queue_count(LandQueue *self):
-    return self->array.count
+    return self.array.count
 
 def land_queue_clear(LandQueue *self):
-    land_array_clear(&self->array)
+    land_array_clear(&self.array)

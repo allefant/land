@@ -23,11 +23,11 @@ import array
 static import hash, mem
 
 static bool def get_data(LandHash *self, LandHashIterator *i, void **data):
-    if not self->entries: return False
-    while i->i < self->size:
-        if self->entries[i->i]:
-            if i->j < self->entries[i->i][0].n:
-                if data: *data = self->entries[i->i][i->j].data
+    if not self.entries: return False
+    while i->i < self.size:
+        if self.entries[i->i]:
+            if i->j < self.entries[i->i][0].n:
+                if data: *data = self.entries[i->i][i->j].data
                 return True
             i->j = 0
         i->i++
@@ -75,21 +75,21 @@ static unsigned int def hash_function(LandHash *self, char const *thekey):
         unsigned char c = thekey[i]
         hash = hash * 33 + c
 
-    return hash & (self->size - 1)
+    return hash & (self.size - 1)
 
 LandHash *def land_hash_new():
     """Create a new LandHash."""
     LandHash *self
     land_alloc(self)
-    self->hash_function = hash_function
+    self.hash_function = hash_function
     return self
 
 def land_hash_clear(LandHash *self):
     """
     Clears the hash. Referenced data are not touched though.
     """
-    for int i in range(self->size):
-        LandHashEntry *entry = self->entries[i]
+    for int i in range(self.size):
+        LandHashEntry *entry = self.entries[i]
         if entry:
             int j
             for j = 0 while j < entry->n with j++:
@@ -97,9 +97,9 @@ def land_hash_clear(LandHash *self):
 
             land_free(entry)
 
-    if self->entries:
-        land_free(self->entries)
-        self->entries = None
+    if self.entries:
+        land_free(self.entries)
+        self.entries = None
 
 def land_hash_destroy(LandHash *self):
     """
@@ -127,14 +127,14 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     int i
 
     # Need to resize? 
-    if (self->count + 1) * 2 > self->size:
-        int oldsize = self->size
-        LandHashEntry **oldentries = self->entries
-        if not self->size: self->bits = 1 # for first entry, we already want size 2 
-        else: self->bits++
-        self->size = 1 << self->bits
-        self->entries = land_calloc(self->size * sizeof *self->entries)
-        self->count = 0
+    if (self.count + 1) * 2 > self->size:
+        int oldsize = self.size
+        LandHashEntry **oldentries = self.entries
+        if not self.size: self->bits = 1 # for first entry, we already want size 2 
+        else: self.bits++
+        self.size = 1 << self->bits
+        self.entries = land_calloc(self->size * sizeof *self->entries)
+        self.count = 0
         for i = 0 while i < oldsize with i++:
             LandHashEntry *entry = oldentries[i]
             if entry:
@@ -148,14 +148,14 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
         if oldentries: land_free(oldentries)
 
     # Now there should be ample room to add the new one. 
-    i = self->hash_function(self, thekey)
-    LandHashEntry *entry = self->entries[i]
+    i = self.hash_function(self, thekey)
+    LandHashEntry *entry = self.entries[i]
     int n = entry ? entry->n + 1 : 1
-    self->entries[i] = land_realloc(entry, n * sizeof *entry)
-    self->entries[i][n - 1].thekey = land_strdup(thekey)
-    self->entries[i][n - 1].data = data
-    self->entries[i][0].n = n
-    self->count++
+    self.entries[i] = land_realloc(entry, n * sizeof *entry)
+    self.entries[i][n - 1].thekey = land_strdup(thekey)
+    self.entries[i][n - 1].data = data
+    self.entries[i][0].n = n
+    self.count++
     return data
 
 void *def land_hash_remove(LandHash *self, char const *thekey):
@@ -165,37 +165,37 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
     The returned pointer might need to be destroyed after you remove it from
     the hash, if it has no more use.
     """
-    if not self->size: return NULL
-    int i = self->hash_function(self, thekey)
-    if not self->entries[i]: return NULL
-    int n = self->entries[i][0].n
+    if not self.size: return NULL
+    int i = self.hash_function(self, thekey)
+    if not self.entries[i]: return NULL
+    int n = self.entries[i][0].n
     int j
     for j = 0 while j < n with j++:
-        if not strcmp(self->entries[i][j].thekey, thekey):
-            void *data = self->entries[i][j].data
-            land_free(self->entries[i][j].thekey)
+        if not strcmp(self.entries[i][j].thekey, thekey):
+            void *data = self.entries[i][j].data
+            land_free(self.entries[i][j].thekey)
             if n > 1:
-                self->entries[i][j] = self->entries[i][n - 1]
-                self->entries[i] = land_realloc(self->entries[i],
-                    (n - 1) * sizeof *self->entries[i])
-                self->entries[i][0].n = n - 1
+                self.entries[i][j] = self->entries[i][n - 1]
+                self.entries[i] = land_realloc(self->entries[i],
+                    (n - 1) * sizeof *self.entries[i])
+                self.entries[i][0].n = n - 1
             else:
-                land_free(self->entries[i])
-                self->entries[i] = None
-            self->count--
+                land_free(self.entries[i])
+                self.entries[i] = None
+            self.count--
             return data
 
     return None
 
 static LandHashEntry *def land_hash_get_entry(LandHash *self,
     char const *thekey):
-    if not self->size: return None
-    int i = self->hash_function(self, thekey)
-    if not self->entries[i]: return None
+    if not self.size: return None
+    int i = self.hash_function(self, thekey)
+    if not self.entries[i]: return None
     int j
-    for j = 0 while j < self->entries[i][0].n with j++:
-        if not strcmp(self->entries[i][j].thekey, thekey):
-            return &self->entries[i][j]
+    for j = 0 while j < self.entries[i][0].n with j++:
+        if not strcmp(self.entries[i][j].thekey, thekey):
+            return &self.entries[i][j]
 
     return None
 

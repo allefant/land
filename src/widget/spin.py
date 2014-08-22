@@ -52,7 +52,7 @@ LandWidget *def land_widget_spinbutton_new(LandWidget *parent, LandImage *image,
     LandWidget *self = (LandWidget *)spinbutton
     land_widget_button_initialize(self, parent, NULL, image, clicked, x, y, w, h)
     land_widget_spinbutton_interface_initialize()
-    self->vt = land_widget_spinbutton_interface
+    self.vt = land_widget_spinbutton_interface
 
     land_widget_theme_initialize(self)
     land_widget_theme_set_minimum_size_for_image(self, image)

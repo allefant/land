@@ -89,7 +89,7 @@ def land_widget_hbox_initialize(LandWidget *base, LandWidget *parent,
     land_widget_container_initialize(base, parent, x, y, w, h)
     base->vt = land_widget_hbox_interface
     land_widget_layout_enable(base)
-    self->rows = 1
+    self.rows = 1
 
     land_widget_theme_initialize(base)
 

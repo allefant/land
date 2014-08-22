@@ -8,7 +8,8 @@ include_directories(${CMAKE_BINARY_DIR}/examples/c)
 #include_directories(/home/elias/prog/allegro/install/include)
 #link_directories(/home/elias/prog/allegro/install/lib)
 
-find_package(OPENGL)
+find_package(OpenGL)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/widget)
 
 #_______________________________________________________________________
 # Step 1: Find all .py source files.
@@ -60,7 +61,8 @@ foreach(exsrc ${examples})
         set(CFLAGS "${CFLAGS} -DLAND_MEMLOG")
     endif ()
     
-    string (REGEX REPLACE "widget/" "" exname ${ex})
+    #string (REGEX REPLACE "widget/" "" exname ${ex})
+    set(exname ${ex})
 
     if (STATIC)
         if (DEBUG OR PROFILE)

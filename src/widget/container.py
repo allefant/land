@@ -25,11 +25,11 @@ global LandWidgetInterface *land_widget_container_interface
 def land_widget_container_destroy(LandWidget *base):
     """Destroy the container and all its children."""
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base)
-    if self->mouse:
-        land_widget_unreference(self->mouse)
+    if self.mouse:
+        land_widget_unreference(self.mouse)
 
-    if self->children:
-        LandListItem *item = self->children->first
+    if self.children:
+        LandListItem *item = self.children->first
         while item:
             LandListItem *next = item->next
             LandWidget *child = item->data
@@ -39,7 +39,7 @@ def land_widget_container_destroy(LandWidget *base):
             land_widget_unreference(child)
             item = next
 
-        land_list_destroy(self->children)
+        land_list_destroy(self.children)
 
     land_widget_base_destroy(base)
 
@@ -52,26 +52,26 @@ def land_widget_container_mouse_enter(LandWidget *super):
         land_widget_reference(child)
         child->got_mouse = 1
         land_call_method(child, mouse_enter, (child))
-        self->mouse = child
+        self.mouse = child
 
 def land_widget_container_mouse_leave(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if self->mouse:
-        self->mouse->got_mouse = 0
-        land_call_method(self->mouse, mouse_leave, (self->mouse))
-        if self->mouse->got_mouse:
+    if self.mouse:
+        self.mouse->got_mouse = 0
+        land_call_method(self.mouse, mouse_leave, (self->mouse))
+        if self.mouse->got_mouse:
             super->got_mouse = 1
         else:
-            land_widget_unreference(self->mouse)
-            self->mouse = None
+            land_widget_unreference(self.mouse)
+            self.mouse = None
 
 def land_widget_container_keyboard_enter(LandWidget *super):
     """ Give keyboard focus to the container, and to children who requested
         focus."""
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if self->children:
+    if self.children:
         LandListItem *item, *next
-        item = self->children->first
+        item = self.children->first
         for  while item with item = next:
             next = item->next
             LandWidget *child = item->data
@@ -80,31 +80,31 @@ def land_widget_container_keyboard_enter(LandWidget *super):
                 child->want_focus = 0
                 child->got_keyboard = 1
                 land_call_method(child, keyboard_enter, (child))
-                self->keyboard = child
-                land_widget_reference(self->keyboard)
+                self.keyboard = child
+                land_widget_reference(self.keyboard)
                 break
 
 # Remove keyboard focus from the container and its children.
 def land_widget_container_keyboard_leave(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
 
-    if self->keyboard:
-        self->keyboard->got_keyboard = 0
-        land_call_method(self->keyboard, keyboard_leave, (self->keyboard))
-        if self->keyboard->got_keyboard:
+    if self.keyboard:
+        self.keyboard->got_keyboard = 0
+        land_call_method(self.keyboard, keyboard_leave, (self->keyboard))
+        if self.keyboard->got_keyboard:
             super->got_keyboard = 1
             return
 
-        land_widget_unreference(self->keyboard)
-        self->keyboard = NULL
+        land_widget_unreference(self.keyboard)
+        self.keyboard = NULL
 
 
 # Returns the item/iterator for the given child of the container.
 LandListItem *def land_widget_container_child_item(LandWidget *super, *child):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if not self->children:
+    if not self.children:
         return NULL
-    LandListItem *item = self->children->first
+    LandListItem *item = self.children->first
     while item:
         if item->data == child:
             return item
@@ -115,8 +115,8 @@ LandListItem *def land_widget_container_child_item(LandWidget *super, *child):
 def land_widget_container_to_top(LandWidget *super, LandWidget *child):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     LandListItem *item = land_widget_container_child_item(super, child)
-    land_list_remove_item(self->children, item)
-    land_list_insert_item(self->children, item)
+    land_list_remove_item(self.children, item)
+    land_list_insert_item(self.children, item)
 
 def land_widget_container_draw(LandWidget *base):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(base)
@@ -124,7 +124,7 @@ def land_widget_container_draw(LandWidget *base):
     # like panel or board will draw themselves here.
     land_widget_theme_draw(base)
 
-    if not self->children:
+    if not self.children:
         return
 
     if not base->dont_clip:
@@ -136,7 +136,7 @@ def land_widget_container_draw(LandWidget *base):
     float cl, ct, cr, cb
     land_get_clip(&cl, &ct, &cr, &cb)
 
-    LandListItem *item = self->children->first
+    LandListItem *item = self.children->first
     for  while item with item = item->next:
         LandWidget *child = item->data
         if child->hidden: continue
@@ -157,8 +157,8 @@ def land_widget_container_move(LandWidget *super, float dx, float dy):
     Move all children of the container when the container itself is moved.
     """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if not self->children: return
-    LandListItem *item = self->children->first
+    if not self.children: return
+    LandListItem *item = self.children->first
     while item:
         LandWidget *child = item->data
         land_widget_move(child, dx, dy)
@@ -187,9 +187,9 @@ LandWidget *def land_widget_container_get_child_at_pos(LandWidget *super,
     Returns the direct child under a specific (absolute) position.
     """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if not self->children:
+    if not self.children:
         return None
-    LandListItem *item = self->children->last
+    LandListItem *item = self.children->last
     for  while item with item = item->prev:
         LandWidget *child = item->data
         if child->hidden: continue
@@ -213,23 +213,23 @@ static def transfer_mouse_focus(LandWidget *base, LandWidget *child):
 
     # Take focus away? If the currently focused widget does not want to give up
     # focus, then so be it.
-    if self->mouse:
-        self->mouse->got_mouse = 0
-        land_call_method(self->mouse, mouse_leave, (self->mouse))
+    if self.mouse:
+        self.mouse->got_mouse = 0
+        land_call_method(self.mouse, mouse_leave, (self->mouse))
         # Retain focus?
-        if self->mouse->got_mouse:
+        if self.mouse->got_mouse:
             if child: land_widget_unreference(child)
             return
 
         # Ok, we do take away focus.
-        land_widget_unreference(self->mouse)
-        self->mouse = None
+        land_widget_unreference(self.mouse)
+        self.mouse = None
 
     # Give focus to the new widget. There is no way to refuse focus. If there
     # will arise any use case where it might make sense, can add it here.
     if child:
-        self->mouse = child
-        land_call_method(self->mouse, mouse_enter, (self->mouse))
+        self.mouse = child
+        land_call_method(self.mouse, mouse_enter, (self->mouse))
 
 static def transfer_keyboard_focus(LandWidget *base):
     # Need to take focus away first?
@@ -311,24 +311,24 @@ static def transfer_keyboard_focus(LandWidget *base):
 def land_widget_container_mouse_tick(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
 
-    if self->mouse:
-        land_call_method(self->mouse, mouse_tick, (self->mouse))
+    if self.mouse:
+        land_call_method(self.mouse, mouse_tick, (self->mouse))
 
     LandWidget *mouse = land_widget_container_get_child_at_pos(super,
         land_mouse_x(), land_mouse_y())
 
     # Transfer mouse focus?
 
-    if mouse != self->mouse and not (land_mouse_b() & 1):
+    if mouse != self.mouse and not (land_mouse_b() & 1):
         transfer_mouse_focus(super, mouse)
 
     # Transfer keyboard focus?
 
     # If any direct child wants keyboard focus, so do we.
-    if self->children:
+    if self.children:
         LandListItem *item, *next, *last
-        item = self->children->first
-        last = self->children->last
+        item = self.children->first
+        last = self.children->last
         for  while item with item = next:
             next = item->next
             LandWidget *child = item->data
@@ -349,7 +349,7 @@ def land_widget_container_set_mouse_focus(LandWidget *super, LandWidget *mouse):
     Only suceeds if the currently focused window agrees.
     """
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
-    if mouse != self->mouse:
+    if mouse != self.mouse:
         transfer_mouse_focus(super, mouse)
 
 def land_widget_container_keyboard_tick(LandWidget *super):
@@ -358,8 +358,8 @@ def land_widget_container_keyboard_tick(LandWidget *super):
     if super->want_focus:
         transfer_keyboard_focus(super)
 
-    if self->keyboard:
-        land_call_method(self->keyboard, keyboard_tick, (self->keyboard))
+    if self.keyboard:
+        land_call_method(self.keyboard, keyboard_tick, (self->keyboard))
 
 def land_widget_container_tick(LandWidget *super):
     # Don't allow anyone pulling the carpet below our feet.
@@ -380,7 +380,7 @@ def land_widget_container_add(LandWidget *super, LandWidget *add):
     # cause a cyclic dependancy! We still never get a dangling pointer, since
     # the parent cannot be destroyed without first detaching its children.
 
-    land_add_list_data(&self->children, add)
+    land_add_list_data(&self.children, add)
     land_widget_reference(add)
 
     add->parent = super
@@ -422,7 +422,7 @@ LandWidget *def land_widget_container_child(LandWidget *super):
     Return the first child of the container or None.
     """
     LandWidgetContainer *self = (LandWidgetContainer *)super
-    LandList *l = self->children
+    LandList *l = self.children
     if l:
         LandListItem *first = l->first
         if first:
@@ -431,7 +431,7 @@ LandWidget *def land_widget_container_child(LandWidget *super):
 
 int def land_widget_container_is_empty(LandWidget *super):
     LandWidgetContainer *self = (LandWidgetContainer *)super
-    return not self->children or self->children->count == 0
+    return not self.children or self->children->count == 0
 
 def land_widget_container_initialize(LandWidget *super, *parent,
     int x, y, w, h):
@@ -440,7 +440,7 @@ def land_widget_container_initialize(LandWidget *super, *parent,
     LandWidgetContainer *self = (LandWidgetContainer *)super
     land_widget_base_initialize(super, parent, x, y, w, h)
     super->vt = land_widget_container_interface
-    self->children = None
+    self.children = None
     # By default, a container does not use a layout.
     land_widget_layout_disable(super)
 
@@ -449,8 +449,8 @@ def land_widget_container_initialize(LandWidget *super, *parent,
 LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
     LandWidgetContainer *self
     land_alloc(self)
-    land_widget_container_initialize(&self->super, parent, x, y, w, h)
-    return &self->super
+    land_widget_container_initialize(&self.super, parent, x, y, w, h)
+    return &self.super
 
 def land_widget_container_interface_initialize():
     if land_widget_container_interface: return

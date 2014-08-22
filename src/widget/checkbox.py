@@ -35,8 +35,8 @@ def land_widget_checkbox_initialize(LandWidget *base,
     int x, int y, int w, int h):
 
     LandWidgetCheckBox *self = (void *)base
-    self->checkbox_selected = land_strdup(checkbox_selected)
-    self->checkbox_unselected = land_strdup(checkbox_unselected)
+    self.checkbox_selected = land_strdup(checkbox_selected)
+    self.checkbox_unselected = land_strdup(checkbox_unselected)
 
     land_widget_checkbox_interface_initialize()
 
@@ -94,6 +94,6 @@ def land_widget_checkbox_interface_initialize():
 
 def land_widget_checkbox_destroy(LandWidget *base):
     LandWidgetCheckBox *self = LAND_WIDGET_CHECKBOX(base)
-    if self->checkbox_selected: land_free(self->checkbox_selected)
-    if self->checkbox_unselected: land_free(self->checkbox_unselected)
+    if self.checkbox_selected: land_free(self->checkbox_selected)
+    if self.checkbox_unselected: land_free(self->checkbox_unselected)
     land_widget_container_destroy(base)

@@ -112,6 +112,7 @@ A Ra = A0*c+A1*s -A0*s+A1*c A2 A3
 """
 import math
 import land.main
+import land.buffer
 
 class LandVector:
     """
@@ -693,4 +694,11 @@ LandQuaternion def land_quaternion_slerp(LandQuaternion qa, qb, double t):
     q.y = qa.y * fs + qb.y * ts;
     q.z = qa.z * fs + qb.z * ts;
 
-    return q;
+    return q
+
+LandBuffer *def land_4x4_matrix_to_string(Land4x4Matrix *m):
+    LandBuffer *b = land_buffer_new()
+    for int i in range(16):
+        land_buffer_addf(b, "%-5.2f%s", m.v[i],
+            i % 4 == 3 ? "\n" : " ")
+    return b

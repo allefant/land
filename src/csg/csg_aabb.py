@@ -30,12 +30,12 @@ def land_csg_aabb_update(LandCSGAABB *self, LandArray *polygons):
     *self = land_csg_aabb_empty()
     for LandCSGPolygon *p in LandArray *polygons:
         for LandCSGVertex *v in LandArray *p->vertices:
-            if v->pos.x < self->x1: self->x1 = v->pos.x
-            if v->pos.x > self->x2: self->x2 = v->pos.x
-            if v->pos.y < self->y1: self->y1 = v->pos.y
-            if v->pos.y > self->y2: self->y2 = v->pos.y
-            if v->pos.z < self->z1: self->z1 = v->pos.z
-            if v->pos.z > self->z2: self->z2 = v->pos.z
+            if v->pos.x < self.x1: self->x1 = v->pos.x
+            if v->pos.x > self.x2: self->x2 = v->pos.x
+            if v->pos.y < self.y1: self->y1 = v->pos.y
+            if v->pos.y > self.y2: self->y2 = v->pos.y
+            if v->pos.z < self.z1: self->z1 = v->pos.z
+            if v->pos.z > self.z2: self->z2 = v->pos.z
 
 LandCSGAABB def land_csg_aabb_intersect(LandCSGAABB a, b):
     LandCSGAABB c = a

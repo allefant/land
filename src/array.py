@@ -31,7 +31,7 @@ def land_array_destroy_memlog(LandArray *self, char const *f, int l):
 def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
     land_array_add(self, data)
     land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self->size, f, l)
+    land_memory_add(self, "array", self.size, f, l)
 
 LandArray *def land_array_copy_memlog(LandArray const *self, char const *f, int l):
     LandArray *copy = land_array_copy(self)
@@ -42,18 +42,18 @@ def land_array_concat_memlog(LandArray *self, LandArray const *other,
         char const *f, int l):
     land_array_concat(self, other)
     land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self->size, f, l)
+    land_memory_add(self, "array", self.size, f, l)
 
 def land_array_merge_memlog(LandArray *self, *other, char const *f, int l):
     land_array_merge(self, other)
     land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self->size, f, l)
+    land_memory_add(self, "array", self.size, f, l)
     land_memory_remove(other, "array", 1, f, l)
 
 def land_array_clear_memlog(LandArray *self, char const *f, int l):
     land_array_clear(self)
     land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self->size, f, l)
+    land_memory_add(self, "array", self.size, f, l)
 
 *** "endif"
 
@@ -91,14 +91,14 @@ def land_array_add(LandArray *self, void *data):
     # 7     8
     # 8     8
     # 9     16
-    int i = self->count++
-    if self->count > self->size:
-        if self->size == 0:
-            self->size = 1
+    int i = self.count++
+    if self.count > self->size:
+        if self.size == 0:
+            self.size = 1
         else:
-            self->size *= 2
-        self->data = land_realloc(self->data, self->size *sizeof *self->data)
-    self->data[i] = data
+            self.size *= 2
+        self.data = land_realloc(self->data, self->size *sizeof *self->data)
+    self.data[i] = data
 
 void *def land_array_pop(LandArray *self):
     """
@@ -107,8 +107,8 @@ void *def land_array_pop(LandArray *self):
     it with the last (land_array_replace_nth) and remove the last with this
     function.
     """
-    if self->count == 0: return None
-    int i = --self->count
+    if self.count == 0: return None
+    int i = --self.count
     # We should eventually reduce the allocated memory size as well. One idea
     # would be to half the size when only 25% are filled anymore (not 50%, since
     # adding/removing at just the 50% mark will constantly grow/shrink then.)
@@ -126,7 +126,7 @@ void *def land_array_pop(LandArray *self):
     # 2     4 (25%)
     # 1     2 (25%)
     # 0     0 (0 is special cased and we completely free)
-    return self->data[i]
+    return self.data[i]
 
 def land_array_add_data(LandArray **array, void *data):
     """
@@ -154,8 +154,8 @@ int def land_array_find(LandArray *self, void *data):
     first index i so that land_array_get_nth(array, i) == data. If the data
     cannot be found, -1 is returned.
     """
-    for int i = 0 while i < self->count with i++:
-        if self->data[i] == data: return i
+    for int i = 0 while i < self.count with i++:
+        if self.data[i] == data: return i
     return -1
 
 void *def land_array_get_nth(LandArray const *array, int i):
@@ -178,7 +178,7 @@ def land_array_destroy(LandArray *self):
     through the array before and destroy the data if there are no other
     references to them.
     """
-    if self->data: land_free(self->data)
+    if self.data: land_free(self->data)
     land_free(self)
 
 def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
@@ -191,7 +191,7 @@ def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
     = 0: order is arbitrary
     > 0: a is after b
     """
-    qsort(self->data, self->count, sizeof(void *), cmpfnc)
+    qsort(self.data, self->count, sizeof(void *), cmpfnc)
 
 static int def alphacomp(void const *a, void const *b):
     char const * const *as = a
@@ -207,7 +207,7 @@ def land_array_sort_alphabetical(LandArray *self):
 
 int def land_array_count(LandArray const *self):
     if not self: return 0
-    return self->count
+    return self.count
 
 int def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
     void *data):
@@ -219,24 +219,24 @@ int def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
     """
     if not self: return 0
     int i
-    for i = 0 while i < self->count with i++:
-        if cb(self->data[i], data): break
+    for i = 0 while i < self.count with i++:
+        if cb(self.data[i], data): break
     return i
 
 def land_array_clear(LandArray *self):
     """
     Clear all elements in the array.
     """
-    self->count = 0
+    self.count = 0
 
 def land_array_concat(LandArray *self, LandArray const *other):
-    int new_count = self->count + other->count
-    self->size = new_count
-    self->data = land_realloc(self->data, self->size *sizeof *self->data)
+    int new_count = self.count + other->count
+    self.size = new_count
+    self.data = land_realloc(self->data, self->size *sizeof *self->data)
     # data is void ** so pointer arithmetic works
-    memcpy(self->data + self->count, other->data,
+    memcpy(self.data + self->count, other->data,
         other->count * sizeof * other->data)
-    self->count = self->size
+    self.count = self->size
 
 def land_array_merge(LandArray *self, *other):
     land_array_concat(self, other)
@@ -248,9 +248,9 @@ LandArray *def land_array_copy(LandArray const *self):
     return copy
 
 def land_array_swap(LandArray *self, int a, b):
-    void *temp = self->data[a]
-    self->data[a] = self->data[b]
-    self->data[b] = temp
+    void *temp = self.data[a]
+    self.data[a] = self->data[b]
+    self.data[b] = temp
 
 def land_array_reverse(LandArray *self):
     # count == 0: do nothing
@@ -259,8 +259,8 @@ def land_array_reverse(LandArray *self):
     # count == 3: swap(0, 2)
     # count == 4: swap(0, 3) swap(1, 2)
 
-    for int i in range(self->count / 2):
-        land_array_swap(self, i, self->count - 1 - i)
+    for int i in range(self.count / 2):
+        land_array_swap(self, i, self.count - 1 - i)
 
 global *** "ifdef" LAND_MEMLOG
 

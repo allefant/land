@@ -48,8 +48,9 @@ LandFont *def land_font_load(char const *filename, float size):
     height of a line in the font. But some fonts, e.g. bitmap fonts, will
     ignore it. The font also us made the current font if successfully loaded.
     """
-    LandFont *self = platform_font_load(filename, size)
-
+    char *path = land_path_with_prefix(filename)
+    LandFont *self = platform_font_load(path, size)
+    land_free(path)
     land_font_state->font = self
     return self
 
@@ -98,7 +99,7 @@ int def land_text_state():
     return land_font_state->off
 
 int def land_font_height(LandFont *self):
-    return self->size
+    return self.size
 
 LandFont *def land_font_current():
     return land_font_state->font

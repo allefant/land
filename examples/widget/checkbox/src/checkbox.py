@@ -7,9 +7,11 @@ LandWidget *desktop
 LandWidgetTheme *theme
 
 static def init(LandRunner *self):
-    land_font_load("../../data/DejaVuSans.ttf", 12)
+    land_find_data_prefix("data/")
 
-    theme = land_widget_theme_new("../../data/classic.cfg")
+    land_font_load("DejaVuSans.ttf", 12)
+
+    theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
     desktop = land_widget_board_new(None, 0, 0, 640, 480)
     land_widget_reference(desktop)

@@ -37,43 +37,43 @@ class LandLayer:
     bool hidden
 
 def land_layer_draw(LandLayer *self, LandView *view):
-    if self->hidden: return
+    if self.hidden: return
     LandView v = *view
    
-    v.scroll_x += self->view_x - self->x
-    v.scroll_y += self->view_y - self->y
-    v.scroll_x *= self->scrolling_x / self->scale_x
-    v.scroll_y *= self->scrolling_y / self->scale_y
-    v.scale_x *= self->scale_x;
-    v.scale_y *= self->scale_y;
-    v.x += self->view_x
-    v.y += self->view_y
-    v.w += self->view_w
-    v.h += self->view_h
-    v.r *= self->r
-    v.g *= self->g
-    v.b *= self->b
-    v.a *= self->a
+    v.scroll_x += self.view_x - self->x
+    v.scroll_y += self.view_y - self->y
+    v.scroll_x *= self.scrolling_x / self->scale_x
+    v.scroll_y *= self.scrolling_y / self->scale_y
+    v.scale_x *= self.scale_x;
+    v.scale_y *= self.scale_y;
+    v.x += self.view_x
+    v.y += self.view_y
+    v.w += self.view_w
+    v.h += self.view_h
+    v.r *= self.r
+    v.g *= self.g
+    v.b *= self.b
+    v.a *= self.a
     # TODO: can a layer have more than one grid?
-    if self->grid: land_grid_draw(self->grid, &v)
+    if self.grid: land_grid_draw(self->grid, &v)
 
 def land_layer_draw_grid(LandLayer *self, LandView *view):
     """
     Draws a debug grid using the layer's cell size.
     """
-    LandGrid *grid = self->grid
+    LandGrid *grid = self.grid
     LandView v = *view
     
-    v.scroll_x += self->view_x - self->x
-    v.scroll_y += self->view_y - self->y
-    v.scroll_x *= self->scrolling_x
-    v.scroll_y *= self->scrolling_y
-    v.scale_x *= self->scale_x;
-    v.scale_y *= self->scale_y;
-    v.x += self->view_x
-    v.y += self->view_y
-    v.w += self->view_w
-    v.h += self->view_h
+    v.scroll_x += self.view_x - self->x
+    v.scroll_y += self.view_y - self->y
+    v.scroll_x *= self.scrolling_x
+    v.scroll_y *= self.scrolling_y
+    v.scale_x *= self.scale_x;
+    v.scale_y *= self.scale_y;
+    v.x += self.view_x
+    v.y += self.view_y
+    v.w += self.view_w
+    v.h += self.view_h
     
     view = &v
 
@@ -114,48 +114,48 @@ def land_layer_draw_grid(LandLayer *self, LandView *view):
         land_line(vx1, y, vx2, y)
 
 def land_layer_set_name(LandLayer *self, char const *name):
-    if self->name: land_free(self->name)
-    self->name = land_strdup(name)
+    if self.name: land_free(self->name)
+    self.name = land_strdup(name)
 
 def land_layer_del(LandLayer *self):
-    land_grid_del(self->grid)
-    if self->name: land_free(self->name)
+    land_grid_del(self.grid)
+    if self.name: land_free(self->name)
     land_free(self)
 
 LandLayer *def land_layer_new_with_grid(LandGrid *grid):
     LandLayer *self
     land_alloc(self)
-    self->scrolling_x = 1
-    self->scrolling_y = 1
-    self->scale_x = 1
-    self->scale_y = 1
-    self->grid = grid
-    self->r = 1
-    self->g = 1
-    self->b = 1
-    self->a = 1
+    self.scrolling_x = 1
+    self.scrolling_y = 1
+    self.scale_x = 1
+    self.scale_y = 1
+    self.grid = grid
+    self.r = 1
+    self.g = 1
+    self.b = 1
+    self.a = 1
     return self
 
 LandLayer *def land_layer_new():
     return land_layer_new_with_grid(None)
 
 def land_layer_set_scroll_speed(LandLayer *self, float x, float y):
-    self->scrolling_x = x
-    self->scrolling_y = y
+    self.scrolling_x = x
+    self.scrolling_y = y
 
 def land_layer_set_scale(LandLayer *self, float x, float y):
-    self->scale_x = x
-    self->scale_y = y
+    self.scale_x = x
+    self.scale_y = y
 
 def land_layer_set_position(LandLayer *self, float x, float y):
-    self->x = x
-    self->y = y
+    self.x = x
+    self.y = y
 
 def land_layer_set_grid(LandLayer *self, LandGrid *grid):
-    self->grid = grid
+    self.grid = grid
 
 def land_layer_hide(LandLayer *self):
-    self->hidden = true
+    self.hidden = true
 
 def land_layer_unhide(LandLayer *self):
-    self->hidden = false
+    self.hidden = false

@@ -52,27 +52,28 @@ def platform_display_resize(int w, h):
     al_resize_display(self->a5, w, h)
 
 def land_a5_display_check_transform():
-    SELF
+    LandDisplayPlatform *self = (void *)_land_active_display
+    LandDisplay *super = &self.super
 
-    if super->matrix_modified:
-        self->transform.m[0][0] = super->matrix[0]
-        self->transform.m[1][0] = super->matrix[1]
-        self->transform.m[2][0] = super->matrix[2]
-        self->transform.m[3][0] = super->matrix[3]
-        self->transform.m[0][1] = super->matrix[4]
-        self->transform.m[1][1] = super->matrix[5]
-        self->transform.m[2][1] = super->matrix[6]
-        self->transform.m[3][1] = super->matrix[7]
-        self->transform.m[0][2] = super->matrix[8]
-        self->transform.m[1][2] = super->matrix[9]
-        self->transform.m[2][2] = super->matrix[10]
-        self->transform.m[3][2] = super->matrix[11]
-        self->transform.m[0][3] = super->matrix[12]
-        self->transform.m[1][3] = super->matrix[13]
-        self->transform.m[2][3] = super->matrix[14]
-        self->transform.m[3][3] = super->matrix[15]
-        al_use_transform(&self->transform)
-        super->matrix_modified = False
+    if super.matrix_modified:
+        self.transform.m[0][0] = super.matrix[0]
+        self.transform.m[1][0] = super.matrix[1]
+        self.transform.m[2][0] = super.matrix[2]
+        self.transform.m[3][0] = super.matrix[3]
+        self.transform.m[0][1] = super.matrix[4]
+        self.transform.m[1][1] = super.matrix[5]
+        self.transform.m[2][1] = super.matrix[6]
+        self.transform.m[3][1] = super.matrix[7]
+        self.transform.m[0][2] = super.matrix[8]
+        self.transform.m[1][2] = super.matrix[9]
+        self.transform.m[2][2] = super.matrix[10]
+        self.transform.m[3][2] = super.matrix[11]
+        self.transform.m[0][3] = super.matrix[12]
+        self.transform.m[1][3] = super.matrix[13]
+        self.transform.m[2][3] = super.matrix[14]
+        self.transform.m[3][3] = super.matrix[15]
+        al_use_transform(&self.transform)
+        super.matrix_modified = False
 
 static def check_blending_and_transform():
     SELF

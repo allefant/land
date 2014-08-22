@@ -15,13 +15,13 @@ def land_widget_mover_mouse_tick(LandWidget *super):
     LandWidgetMover *self = LAND_WIDGET_MOVER(super)
     if (land_mouse_delta_b()):
         if land_mouse_b() & 1:
-            self->target->send_to_top = 1
-            self->dragged = 1
+            self.target->send_to_top = 1
+            self.dragged = 1
         else:
-            self->dragged = 0
+            self.dragged = 0
 
-    if (land_mouse_b() & 1) and self->dragged:
-        land_widget_move(self->target, land_mouse_delta_x(), land_mouse_delta_y())
+    if (land_mouse_b() & 1) and self.dragged:
+        land_widget_move(self.target, land_mouse_delta_x(), land_mouse_delta_y())
 
 
 LandWidget *def land_widget_mover_new(LandWidget *parent, char const *text, int x, int y, int w, int h):
@@ -46,8 +46,8 @@ LandWidget *def land_widget_mover_new(LandWidget *parent, char const *text, int 
     if parent: land_widget_layout(parent)
 
     # by default, move the parent. 
-    self->target = parent
-    self->dragged = 0
+    self.target = parent
+    self.dragged = 0
     return base
 
 def land_widget_mover_set_target(LandWidget *self, LandWidget *target):

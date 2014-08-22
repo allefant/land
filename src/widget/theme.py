@@ -260,12 +260,12 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
     LandWidgetThemeElement *self
     land_alloc(self)
 
-    self->name = land_strdup(name)
-    self->a = 1
-    self->minw = 4
-    self->minh = 4
-    self->font = land_font_current()
-    self->theme = theme
+    self.name = land_strdup(name)
+    self.a = 1
+    self.minw = 4
+    self.minh = 4
+    self.font = land_font_current()
+    self.theme = theme
 
     LandBuffer *argbuf = land_buffer_new()
     land_buffer_cat(argbuf, argline)
@@ -299,61 +299,61 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
                     if ch <= 0:
                         ch += land_image_height(img)
 
-                    self->bmp = land_image_new_from(img, cx, cy, cw, ch)
+                    self.bmp = land_image_new_from(img, cx, cy, cw, ch)
                     
 
                 elif not strcmp (arg, "halign"):
-                    self->flags |= ALIGN_H
+                    self.flags |= ALIGN_H
 
                 elif (not strcmp (arg, "valign")):
-                    self->flags |= ALIGN_V
+                    self.flags |= ALIGN_V
 
                 elif (not strcmp (arg, "min")):
-                    read_int_arg(argc, argv, &a, &self->minw)
-                    read_int_arg(argc, argv, &a, &self->minh)
+                    read_int_arg(argc, argv, &a, &self.minw)
+                    read_int_arg(argc, argv, &a, &self.minh)
 
                 elif (not strcmp (arg, "border")):
-                    read_int_arg(argc, argv, &a, &self->bl)
-                    read_int_arg(argc, argv, &a, &self->bt)
-                    read_int_arg(argc, argv, &a, &self->br)
-                    read_int_arg(argc, argv, &a, &self->bb)
+                    read_int_arg(argc, argv, &a, &self.bl)
+                    read_int_arg(argc, argv, &a, &self.bt)
+                    read_int_arg(argc, argv, &a, &self.br)
+                    read_int_arg(argc, argv, &a, &self.bb)
                     # FIXME: should not overwrite a previous inner
-                    self->il = self->bl
-                    self->it = self->bt
-                    self->ir = self->br
-                    self->ib = self->bb
+                    self.il = self->bl
+                    self.it = self->bt
+                    self.ir = self->br
+                    self.ib = self->bb
                 
                 elif (not strcmp (arg, "inner")):
-                    read_int_arg(argc, argv, &a, &self->il)
-                    read_int_arg(argc, argv, &a, &self->it)
-                    read_int_arg(argc, argv, &a, &self->ir)
-                    read_int_arg(argc, argv, &a, &self->ib)
+                    read_int_arg(argc, argv, &a, &self.il)
+                    read_int_arg(argc, argv, &a, &self.it)
+                    read_int_arg(argc, argv, &a, &self.ir)
+                    read_int_arg(argc, argv, &a, &self.ib)
 
                 elif not strcmp (arg, "gap"):
-                    read_int_arg(argc, argv, &a, &self->hgap)
-                    read_int_arg(argc, argv, &a, &self->vgap)
+                    read_int_arg(argc, argv, &a, &self.hgap)
+                    read_int_arg(argc, argv, &a, &self.vgap)
 
                 elif not strcmp(arg, "color"):
                     int c = 0
                     read_int_arg(argc, argv, &a, &c)
-                    self->a = (c & 255) / 255.0; c >>= 8
-                    self->b = (c & 255) / 255.0; c >>= 8
-                    self->g = (c & 255) / 255.0; c >>= 8
-                    self->r = (c & 255) / 255.0; c >>= 8
+                    self.a = (c & 255) / 255.0; c >>= 8
+                    self.b = (c & 255) / 255.0; c >>= 8
+                    self.g = (c & 255) / 255.0; c >>= 8
+                    self.r = (c & 255) / 255.0; c >>= 8
 
                 elif (not strcmp(arg, "transparent")):
-                    self->transparent = 1
+                    self.transparent = 1
                 
                 land_free(arg)
 
-            if not self->bmp:
-                self->bmp = land_image_new_from(img, 0, 0,
+            if not self.bmp:
+                self.bmp = land_image_new_from(img, 0, 0,
                     land_image_width(img), land_image_height(img))
             land_log_message("element %s: %d x %d, %d/%d/%d/%d %.1f/%.1f/%.1f/%.1f\n",
                 name,
-                land_image_width(self->bmp), land_image_height(self->bmp),
-                self->bl, self->bt, self->br, self->bb,
-                self->r, self->g, self->b, self->a)
+                land_image_width(self.bmp), land_image_height(self->bmp),
+                self.bl, self->bt, self->br, self->bb,
+                self.r, self->g, self->b, self->a)
 
         else:
             land_log_message("element: Error: %s not found!\n", name)
@@ -379,9 +379,9 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
     
     land_buffer_cat(prefix, land_ini_get_string(config, "agup.cfg", "prefix", ""))
 
-    self->name = land_strdup(land_ini_get_string(config, "agup.cfg", "name", ""))
-    self->prefix = land_buffer_finish(prefix)
-    self->suffix = land_strdup(land_ini_get_string(config, "agup.cfg", "suffix", ""))
+    self.name = land_strdup(land_ini_get_string(config, "agup.cfg", "name", ""))
+    self.prefix = land_buffer_finish(prefix)
+    self.suffix = land_strdup(land_ini_get_string(config, "agup.cfg", "suffix", ""))
 
     int n = land_ini_get_number_of_entries(config, "agup.cfg/elements")
     for int i = 0 while i < n with i++:
@@ -391,7 +391,7 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
             v, "")
         LandWidgetThemeElement *elem = land_widget_theme_element_new(
             self, v, k)
-        land_add_list_data(&self->elements, elem)
+        land_add_list_data(&self.elements, elem)
 
     land_ini_destroy(config)
 
@@ -399,16 +399,16 @@ LandWidgetTheme *def land_widget_theme_new(char const *filename):
 
 def land_widget_theme_destroy(LandWidgetTheme *self):
     LandListItem *item
-    for item = self->elements->first while item with item = item->next:
+    for item = self.elements->first while item with item = item->next:
         LandWidgetThemeElement *elem = item->data
         land_free(elem->name)
         land_image_destroy(elem->bmp)
         land_free(elem)
 
-    land_list_destroy(self->elements)
-    land_free(self->name)
-    land_free(self->prefix)
-    land_free(self->suffix)
+    land_list_destroy(self.elements)
+    land_free(self.name)
+    land_free(self.prefix)
+    land_free(self.suffix)
     land_free(self)
 
 static LandWidgetThemeElement *def find_element(LandList *list, char const *name):
@@ -464,18 +464,18 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
     return element
 
 LandWidgetThemeElement *def land_widget_theme_element(LandWidget *self):
-    if self->selected: return self->element->selected
-    if self->disabled: return self->element->disabled
-    return self->element
+    if self.selected: return self->element->selected
+    if self.disabled: return self->element->disabled
+    return self.element
 
 def land_widget_theme_draw(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
-    if self->no_decoration: return
+    if self.no_decoration: return
     if element->transparent: return
 
-    draw_bitmap(element, self->box.x, self->box.y, self->box.w, self->box.h,
-        self->only_border)
+    draw_bitmap(element, self.box.x, self->box.y, self->box.w, self->box.h,
+        self.only_border)
 
 def land_widget_theme_color(LandWidget *self):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
@@ -491,14 +491,14 @@ def land_widget_theme_set_minimum_size_for_contents(LandWidget *self,
     int w, int h):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
-    self->inner_w = w
-    self->inner_h = h
+    self.inner_w = w
+    self.inner_h = h
     w += element->il + element->ir
     h += element->it + element->ib
     if element->minw > w: w = element->minw
     if element->minh > h: h = element->minh
-    if self->outer_w > w: w = self->outer_w
-    if self->outer_h > h: h = self->outer_h
+    if self.outer_w > w: w = self->outer_w
+    if self.outer_h > h: h = self->outer_h
     land_widget_layout_set_minimum_size(self, w, h)
 
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
@@ -523,13 +523,13 @@ def land_widget_theme_initialize(LandWidget *self):
     Initialize theming of an item. Must only called once at item creation,
     as it also calculates the minimum size.
     """
-    if not self->element: return
-    self->element = land_widget_theme_find_element(self->element->theme, self)
+    if not self.element: return
+    self.element = land_widget_theme_find_element(self->element->theme, self)
     # FIXME: Do this in land_widget_base_initialize instead
-    self->outer_w = self->box.min_width
-    self->outer_h = self->box.min_height
-    #int w = self->box.min_width - self->element->il - self->element->ir
-    #int h = self->box.min_height - self->element->it - self->element->ib
+    self.outer_w = self->box.min_width
+    self.outer_h = self->box.min_height
+    #int w = self.box.min_width - self->element->il - self->element->ir
+    #int h = self.box.min_height - self->element->it - self->element->ib
     land_widget_theme_set_minimum_size_for_contents(self, 0, 0)
 
 def land_widget_theme_update(LandWidget *self):
@@ -537,17 +537,17 @@ def land_widget_theme_update(LandWidget *self):
     Adjust the widget's theme to its class (widgets all start off as "base"
     otherwise).
     """
-    if not self->element: return
-    self->element = land_widget_theme_find_element(self->element->theme, self)
+    if not self.element: return
+    self.element = land_widget_theme_find_element(self->element->theme, self)
     land_widget_theme_set_minimum_size_for_contents(self,
-        self->inner_w, self->inner_h)
+        self.inner_w, self->inner_h)
 
 static def _theme_recurse(LandWidget *self, LandWidgetTheme *theme):
-    if not self->element: return
-    self->element = land_widget_theme_find_element(theme, self)
+    if not self.element: return
+    self.element = land_widget_theme_find_element(theme, self)
 
     land_widget_theme_set_minimum_size_for_contents(self,
-        self->inner_w, self->inner_h)
+        self.inner_w, self->inner_h)
 
     if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
         LandWidgetContainer *c = (void *)self
@@ -567,7 +567,7 @@ static def _layout_recurse(LandWidget *self, LandWidgetTheme *theme):
             i = i->next
 
         # TODO: what is this for?
-        if self->parent and (self->parent->box.flags & GUL_NO_LAYOUT):
+        if self.parent and (self->parent->box.flags & GUL_NO_LAYOUT):
             land_widget_layout(self)
 
 def land_widget_theme_apply(LandWidget *self, LandWidgetTheme *theme):

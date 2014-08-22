@@ -93,6 +93,7 @@ Like circle, but filled.
 import global stdlib
 import list, image, log, mem, font, main
 import util3d
+import color
 static import global math
 
 enum:
@@ -171,15 +172,15 @@ global LandDisplay *_land_active_display
 LandDisplay *def land_display_new(int w, int h, int flags):
     LandDisplay *self = platform_display_new()
     
-    self->w = w
-    self->h = h
-    self->flags = flags
+    self.w = w
+    self.h = h
+    self.flags = flags
 
-    self->clip_x1 = 0
-    self->clip_y1 = 0
-    self->clip_x2 = w
-    self->clip_y2 = h
-    self->clip_off = 0
+    self.clip_x1 = 0
+    self.clip_y1 = 0
+    self.clip_x2 = w
+    self.clip_y2 = h
+    self.clip_off = 0
 
     land_display_select(self)
     
@@ -190,7 +191,7 @@ LandDisplay *def land_display_new(int w, int h, int flags):
 def land_display_destroy(LandDisplay *self):
     if self == _land_active_display: land_display_unselect()
 
-    if self->clip_stack_depth:
+    if self.clip_stack_depth:
         land_log_message("Error: non-empty clip stack in display.\n")
 
     platform_display_del(self)
@@ -305,6 +306,9 @@ def land_color(float r, float g, float b, float a):
     d->color_b = b
     d->color_a = a
     platform_display_color()
+
+def land_color_set(LandColor c):
+    land_color(c.r, c.g, c.b, c.a)
 
 def land_thickness(float t):
     LandDisplay *d = _land_active_display
@@ -444,11 +448,11 @@ def land_pick_color(float x, y):
 
 int def land_display_width():
     LandDisplay *self = _land_active_display
-    return self->w
+    return self.w
 
 int def land_display_height():
     LandDisplay *self = _land_active_display
-    return self->h
+    return self.h
 
 def land_display_resize(int w, h):
     """
@@ -470,7 +474,7 @@ def land_display_title(char const *title):
 
 int def land_display_flags():
     LandDisplay *self = _land_active_display
-    return self->flags
+    return self.flags
 
 LandImage *def land_display_new_image():
     LandImage *image = platform_new_image()

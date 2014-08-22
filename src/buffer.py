@@ -51,14 +51,14 @@ LandBuffer *def land_buffer_read_from_file_memlog(char const *filename, char con
 LandArray *def land_buffer_split_memlog(LandBuffer const *self, char delim, char const *f, int line):
     LandArray *a = land_array_new_memlog(f, line)
     int start = 0
-    for int i = 0 while i < self->n with i++:
-        if self->buffer[i] == delim:
+    for int i = 0 while i < self.n with i++:
+        if self.buffer[i] == delim:
             LandBuffer *l = land_buffer_new_memlog(f, line)
-            land_buffer_add(l, self->buffer + start, i - start)
+            land_buffer_add(l, self.buffer + start, i - start)
             land_array_add_memlog(a, l, f, line)
             start = i + 1
     LandBuffer *l = land_buffer_new_memlog(f, line)
-    land_buffer_add(l, self->buffer + start, self->n - start)
+    land_buffer_add(l, self.buffer + start, self->n - start)
     land_array_add_memlog(a, l, f, line)
     return a
 
@@ -77,21 +77,21 @@ LandBuffer *def land_buffer_copy(LandBuffer *other):
 
 macro land_buffer_del land_buffer_destroy
 def land_buffer_destroy(LandBuffer *self):
-    if self->buffer: land_free(self->buffer)
+    if self.buffer: land_free(self->buffer)
     land_free(self)
 
 def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
-    self->n += n
-    if self->n > self->size:
-        if not self->size: self->size = 1
-        while self->size < self->n:
-            self->size *= 2
-        self->buffer = land_realloc(self->buffer, self->size)
-    memmove(self->buffer + pos + n, self->buffer + pos, self->n - n - pos)
-    memcpy(self->buffer + pos, buffer, n)
+    self.n += n
+    if self.n > self->size:
+        if not self.size: self->size = 1
+        while self.size < self->n:
+            self.size *= 2
+        self.buffer = land_realloc(self->buffer, self->size)
+    memmove(self.buffer + pos + n, self->buffer + pos, self->n - n - pos)
+    memcpy(self.buffer + pos, buffer, n)
     
 def land_buffer_add(LandBuffer *self, char const *b, int n):
-    land_buffer_insert(self, self->n, b, n)
+    land_buffer_insert(self, self.n, b, n)
 
 def land_buffer_addv(LandBuffer *self, char const *format, va_list args):
     va_list args2
@@ -137,14 +137,14 @@ def land_buffer_clear(LandBuffer *self):
     """
     Clears the buffer (but keeps any memory allocation for speedy refilling).
     """
-    self->n = 0
+    self.n = 0
 
 def land_buffer_crop(LandBuffer *self):
     """
     Make the buffer use up only the minimum required amount of memory.
     """
-    self->buffer = land_realloc(self->buffer, self->n)
-    self->size = self->n
+    self.buffer = land_realloc(self->buffer, self->n)
+    self.size = self->n
 
 char *def land_buffer_finish(LandBuffer *self):
     """
@@ -156,8 +156,8 @@ char *def land_buffer_finish(LandBuffer *self):
     """
     char c[] = "";
     land_buffer_add(self, c, 1)
-    char *s = self->buffer
-    self->buffer = None
+    char *s = self.buffer
+    self.buffer = None
     land_buffer_destroy(self)
     return s
 
@@ -169,22 +169,22 @@ LandArray *def land_buffer_split(LandBuffer const *self, char delim):
     """
     LandArray *a = land_array_new()
     int start = 0
-    for int i = 0 while i < self->n with i++:
-        if self->buffer[i] == delim:
+    for int i = 0 while i < self.n with i++:
+        if self.buffer[i] == delim:
             LandBuffer *l = land_buffer_new()
-            land_buffer_add(l, self->buffer + start, i - start)
+            land_buffer_add(l, self.buffer + start, i - start)
             land_array_add(a, l)
             start = i + 1
     LandBuffer *l = land_buffer_new()
-    land_buffer_add(l, self->buffer + start, self->n - start)
+    land_buffer_add(l, self.buffer + start, self->n - start)
     land_array_add(a, l)
     return a
 
 def land_buffer_strip_right(LandBuffer *self, char const *what):
-    if self->n == 0: return
+    if self.n == 0: return
     int away = 0
-    char *p = self->buffer + self->n
-    while p > self->buffer:
+    char *p = self.buffer + self->n
+    while p > self.buffer:
         int c = land_utf8_char_back(&p);
         char const *q = what
         while 1:
@@ -195,12 +195,12 @@ def land_buffer_strip_right(LandBuffer *self, char const *what):
                 away++
                 break
     label done
-    self->n -= away
+    self.n -= away
 
 def land_buffer_strip_left(LandBuffer *self, char const *what):
-    if self->n == 0: return
+    if self.n == 0: return
     int away = 0
-    char *p = self->buffer
+    char *p = self.buffer
     while 1:
         label again
         int c = land_utf8_char(&p)
@@ -213,8 +213,8 @@ def land_buffer_strip_left(LandBuffer *self, char const *what):
                 away++
                 goto again
         break
-    self->n -= away
-    memmove(self->buffer, self->buffer + away, self->n)
+    self.n -= away
+    memmove(self.buffer, self->buffer + away, self->n)
 
 def land_buffer_strip(LandBuffer *self, char const *what):
     land_buffer_strip_right(self, what)
@@ -222,20 +222,20 @@ def land_buffer_strip(LandBuffer *self, char const *what):
 
 def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     FILE *f = fopen(filename, "w")
-    fwrite(self->buffer, 1, self->n, f)
+    fwrite(self.buffer, 1, self->n, f)
     fclose(f)
 
 int def land_buffer_rfind(LandBuffer *self, char c):
-    if self->n == 0: return -1
-    for int i = self->n - 1 while i >= 0 with i--:
-        if self->buffer[i] == c: return i
+    if self.n == 0: return -1
+    for int i = self.n - 1 while i >= 0 with i--:
+        if self.buffer[i] == c: return i
     return -1
 
 def land_buffer_set_length(LandBuffer *self, int n):
-    self->n = n
+    self.n = n
 
 def land_buffer_shorten(LandBuffer *self, int n):
-    self->n -= n
+    self.n -= n
 
 LandBuffer *def land_buffer_read_from_file(char const *filename):
     """
@@ -256,28 +256,28 @@ LandBuffer *def land_buffer_read_from_file(char const *filename):
 
 *** "ifndef" LAND_NO_COMPRESS
 def land_buffer_compress(LandBuffer *self):
-    uLongf destlen = self->n * 1.1 + 12
+    uLongf destlen = self.n * 1.1 + 12
     Bytef *dest = land_malloc(4 + destlen)
-    *((uint32_t *)dest) = self->n
+    *((uint32_t *)dest) = self.n
     compress(dest + 4, &destlen, (void *)self->buffer, self->n)
     dest = land_realloc(dest, 4 + destlen)
-    land_free(self->buffer)
-    self->buffer = (void *)dest
-    self->size = self->n = 4 + destlen
+    land_free(self.buffer)
+    self.buffer = (void *)dest
+    self.size = self->n = 4 + destlen
 
 def land_buffer_decompress(LandBuffer *self):
     uLongf destlen = *((uint32_t *)self->buffer)
     Bytef *dest = land_malloc(destlen)
-    uncompress(dest, &destlen, (void *)(4 + self->buffer), self->n)
-    land_free(self->buffer)
-    self->buffer = (void *)dest
-    self->size = self->n = destlen
+    uncompress(dest, &destlen, (void *)(4 + self.buffer), self->n)
+    land_free(self.buffer)
+    self.buffer = (void *)dest
+    self.size = self->n = destlen
 *** "endif"
 
 int def land_buffer_compare(LandBuffer *self, *other):
-    if self->n < other->n: return -1
-    if self->n > other->n: return 1
-    return memcmp(self->buffer, other->buffer, self->n)
+    if self.n < other->n: return -1
+    if self.n > other->n: return 1
+    return memcmp(self.buffer, other->buffer, self->n)
 
 
 char *def land_string_copy(char *target, char const *source, int size):
