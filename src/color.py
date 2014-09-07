@@ -11,6 +11,10 @@ LandColor def land_color_rgba(float r, g, b, a):
     LandColor c = {r, g, b, a}
     return c
 
+LandColor def land_color_premul(float r, g, b, a):
+    LandColor c = {r * a, g * a, b * a, a}
+    return c
+
 static int hexval(char c):
     c = tolower(c)
     if c >= '0' and c <= '9': return (c - '0')
