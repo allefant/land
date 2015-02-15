@@ -266,8 +266,8 @@ static LandArray *def clone_polygons(LandCSG *csg, LandArray *polygons):
     return clone
 
 static def clear_polygons(LandArray *polygons):
-    #for int i in range(polygons.count):
-    #    land_csg_polygon_destroy(polygons.data[i])
+    for int i in range(polygons.count):
+        land_csg_polygon_destroy(polygons.data[i])
     land_array_clear(polygons)
 
 static def csg_node_destroy(LandCSGNode *self):
