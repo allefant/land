@@ -36,7 +36,7 @@ macro GUL_RESIZE    (4 * 65536)
 # is affected though. (Use LEAVE_X to make the widget itself not be affected.)
 #
 # GUL_RESIZE:
-# The widget is being resizes - if not enough space, go ahead and modify its
+# The widget is being resized - if not enough space, go ahead and modify its
 # minimum dimensions to fit.
 
 class LandLayoutBox:
