@@ -1,4 +1,4 @@
-import global stdlib, string
+import global stdlib, string, stdbool
 
 macro land_alloc(self) self = land_calloc(sizeof *self)
 
@@ -10,11 +10,13 @@ static import log
 
 *** "ifndef" WINDOWS
 static import execinfo
+static import land.thread
 *** "endif"
 
 *** "ifdef" LAND_MEMLOG
 
 static char const *LOGFILE = "memlog.log"
+static LandLock *lock
 
 static macro MAX_BLOCKS 1024 * 1024
 enum: LAND_MEMBLOCK_INFO_MAX_STACK = 32
@@ -30,6 +32,7 @@ class LandMemBlockInfo:
     void *trace[LAND_MEMBLOCK_INFO_MAX_STACK]
 
 static int installed = 0
+static bool installing
 
 static struct LandMemBlockInfo not_freed[MAX_BLOCKS]
 
@@ -42,6 +45,9 @@ static def done():
     # This function is called from atexit, so don't rely on Land still being
     # installed, e.g. logging facility.
     int n
+    installing = True
+    land_thread_delete_lock(lock)
+
     FILE *lf = fopen(LOGFILE, "a")
     fprintf(lf, "Memory statistics:\n")
     fprintf(lf, "Maximum number of simultanously allocated blocks: %d\n",
@@ -72,15 +78,23 @@ static def done():
 static def install():
     installed++
     if installed == 1:
+        installing = True
+        lock = land_thread_new_lock()
+        installing = False
+
         atexit(done)
 
         FILE *lf = fopen(LOGFILE, "w")
         fprintf(lf, "Land MemLog\n")
         fclose(lf)
 
-# FIXME: not thread-safe
 def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
+    if installing: return
+    # FIXME: not thread-safe
     if not installed: install()
+
+    land_thread_lock(lock)
+    
     if not ptr:
         if size:
             FILE *lf = fopen(LOGFILE, "a")
@@ -88,9 +102,13 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
                 size, id)
             fclose(lf)
 
-        return
+        goto ret
 
-    if _num >= MAX_BLOCKS: return
+    if _num >= MAX_BLOCKS:
+        FILE *lf = fopen(LOGFILE, "a")
+        fprintf(lf, "memlog block number exceeded\n")
+        fclose(lf)
+        goto ret
 
     not_freed[_num].ptr = ptr
     not_freed[_num].file = f
@@ -110,12 +128,19 @@ def land_memory_add(void *ptr, char const *id, int size, const char *f, int l):
         f, l, size, id, ptr)
     fclose(lf)
     *** "endif"
-    pass
 
-# FIXME: not thread-safe
+    label ret
+    land_thread_unlock(lock)
+
 def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
+    if installing: return
+
     int n
+    # FIXME: not thread-safe
     if not installed: install()
+
+    land_thread_lock(lock)
+
     if not ptr:
         if re:
             *** "ifdef" LOGALL
@@ -123,14 +148,14 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
             fprintf(lf, "%s: %d: reallocated: %p [%s]\n", f, l, ptr, id)
             fclose(lf)
             *** "endif"
-            return
+            goto ret
         
         FILE *lf = fopen(LOGFILE, "a")
         fprintf(lf, "%s: %d: freed 0 pointer [%s]\n", f, l, id)
         fclose(lf)
         abort()
 
-        return
+        goto ret
 
     for n = 0 while n < _num with n++:
         if not_freed[n].ptr == ptr:
@@ -143,7 +168,7 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
             _size -= not_freed[n].size
             not_freed[n] = not_freed[_num - 1]
             _num--
-            return
+            goto ret
 
     
     FILE *lf = fopen(LOGFILE, "a")
@@ -152,6 +177,10 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     fclose(lf)
     
     abort()
+
+    label ret
+    land_thread_unlock(lock)
+    
 
 void *def land_malloc_memlog(int size, char const *f, int l):
     void *ptr = malloc(size)
