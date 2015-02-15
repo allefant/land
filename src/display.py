@@ -421,6 +421,9 @@ def land_line(float x, y, x_, y_):
 def land_ribbon(int n, float *xy):
     platform_ribbon(n, xy)
 
+def land_filled_ribbon(int n, float *xy):
+    platform_filled_ribbon(n, xy)
+
 def land_polygon(int n, float *xy):
     platform_polygon(n, xy)
 
@@ -433,9 +436,8 @@ def land_3d_triangles(int n, LandFloat *xyzrgb):
 def land_textured_polygon(LandImage *image, int n, float *xy, *uv):
     platform_textured_polygon(image, n, xy, uv):
 
-def land_filled_polygon_with_holes(int n, float *xy,
-    int holes_count, int *holes):
-    platform_filled_polygon_with_holes(n, xy, holes_count, holes)
+def land_filled_polygon_with_holes(int n, float *xy, int *holes):
+    platform_filled_polygon_with_holes(n, xy, holes)
 
 def land_filled_colored_polygon(int n, float *xy, *rgba):
     platform_filled_colored_polygon(n, xy, rgba):
