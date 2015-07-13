@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
+include(FindPkgConfig)
  
 cmake_policy(SET CMP0009 NEW) # don't follow symlinks
 include_directories(${CMAKE_BINARY_DIR}/c)
@@ -18,9 +19,12 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/widget)
 set(example_exes)
 file(GLOB examples RELATIVE ${CMAKE_SOURCE_DIR}/examples */src RELATIVE ${CMAKE_SOURCE_DIR}/examples */*/src)
 foreach(exsrc ${examples})
-    get_filename_component(ex ${exsrc} PATH)
+    get_filename_component(ex ${exsrc} DIRECTORY)
+
+    get_filename_component(ex_sub ${ex} DIRECTORY)
+    get_filename_component(ex_bin ${ex} NAME)
     
-    message(STATUS "Example found: ${ex}")
+    message(STATUS "Example found: ${ex_bin} in ${ex_sub}")
 
 #_______________________________________________________________________
 # Step 2: Rules to create .c and .h files.
@@ -62,7 +66,7 @@ foreach(exsrc ${examples})
     endif ()
     
     #string (REGEX REPLACE "widget/" "" exname ${ex})
-    set(exname ${ex})
+    set(exname ${ex_bin})
 
     if (STATIC)
         if (DEBUG OR PROFILE)
@@ -81,22 +85,13 @@ foreach(exsrc ${examples})
                 LFLAG("-p")
             endif()
             add_executable(${exe} ${example_cfiles})
+
+            pkg_check_modules(ALLEGRO allegro_monolith-debug-static-5)
             
             set(libraries
                 ${lib}
-                allegro_monolith-debug-static
-                png
-                jpeg
-                freetype
-                vorbis
-                ogg
-                vorbisfile
-                z
-                pthread
-                m
-                dumb
-                FLAC
-                openal)
+                ${ALLEGRO_STATIC_LDFLAGS}
+                )
             if (OSX)
                 list(APPEND libraries ${OPENGL_LIBRARIES})
 
@@ -109,17 +104,17 @@ foreach(exsrc ${examples})
                 LFLAG("-framework CoreServices")
                 LFLAG("-framework IOKit")
                 LFLAG("-framework AppKit")
-            else()
-                list(APPEND libraries GL)
-                list(APPEND libraries Xrandr X11 Xinerama Xcursor pulse asound
-                    pulse-simple)
             endif()
-
+            
             set_target_properties(${exe}
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${flags}"
                 LINK_FLAGS "${LFLAGS}"
                 )
+
+            if (NOT "${ex_sub}" STREQUAL "")
+                set_target_properties(${exe} PROPERTIES EXECUTABLE_OUTPUT_PATH ${ex_sub})
+            endif()
 
             target_link_libraries(${exe}
                 ${libraries}
