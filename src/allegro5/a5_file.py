@@ -27,7 +27,7 @@ bool def platform_feof(void *f):
 def platform_fseek(void *f, int n):
     al_fseek(f, n, ALLEGRO_SEEK_CUR)
 
-static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
+static def add_files(char const *rel, LandArray **array, ALLEGRO_FS_ENTRY *entry,
         int (*filter)(char const *, bool is_dir, void *data), int flags,
         void *data):
 
@@ -46,9 +46,17 @@ static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
             name = al_get_path_component(path, -1)
         if strcmp(name, ".") and strcmp(name, ".."):
             bool is_dir = al_get_fs_entry_mode(next) & ALLEGRO_FILEMODE_ISDIR
+
+            char rel2[strlen(rel) + strlen("/") + strlen(name) + 1]
+            strcpy(rel2, rel)
+            strcat(rel2, "/")
+            strcat(rel2, name)
+
             char const *fpath
             if flags & LAND_FULL_PATH:
                 fpath = al_path_cstr(path, '/')
+            elif flags & LAND_RELATIVE_PATH:
+                fpath = rel2
             else:
                 fpath = name
             int f = filter(fpath, is_dir, data)
@@ -56,7 +64,7 @@ static def add_files(LandArray **array, ALLEGRO_FS_ENTRY *entry,
                 if not *array: *array = land_array_new()
                 land_array_add(*array, land_strdup(fpath))
             if (f & 2) and is_dir:
-                add_files(array, next, filter, flags, data)
+                add_files(rel2, array, next, filter, flags, data)
         al_destroy_fs_entry(next)
         al_destroy_path(path)
     al_close_directory(entry)
@@ -67,7 +75,7 @@ LandArray *def platform_filelist(char const *dir,
     land_log_message("platform_filelist %s\n", dir)
     ALLEGRO_FS_ENTRY *entry = al_create_fs_entry(dir)
     LandArray *array = None
-    add_files(&array, entry, filter, flags, data)
+    add_files(dir, &array, entry, filter, flags, data)
     al_destroy_fs_entry(entry)
     return array
 
@@ -76,6 +84,9 @@ bool def platform_is_dir(char const *path):
     bool r = al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR
     al_destroy_fs_entry(fse)
     return r
+
+def platform_file_exists(char const *path) -> bool:
+    return al_filename_exists(path)
 
 char *def platform_get_save_file(char const *appname, char const *name):
     al_set_org_name("")
