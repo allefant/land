@@ -213,6 +213,11 @@ def platform_mainloop(LandParameters *parameters):
     al_register_event_source(queue, al_get_timer_event_source(timer))
     al_start_timer(timer);
 
+    # Make sure querying mouse coordinates already works before any event.
+    ALLEGRO_MOUSE_STATE s
+    al_get_mouse_state(&s)
+    land_mouse_move_event(s.x, s.y, s.z)
+
     land_skip_frames()
     bool redraw = False
     while not _land_quit:
