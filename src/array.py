@@ -252,6 +252,29 @@ def land_array_swap(LandArray *self, int a, b):
     self.data[a] = self->data[b]
     self.data[b] = temp
 
+def land_array_move_behind(LandArray *self, int a, b):
+    """
+    Move item at position a so it is behind b. If b is 0 then a is moved to
+    the beginning. If b is n then a is moved to the end.
+    """
+    void *temp = self.data[a]
+    if a < b:
+        # . . a _ _ _ b . .
+        # . . _ _ _ a b . .
+        #
+        # if b is n:
+        # . . a _ _ _ n
+        # . . _ _ _ a n
+        for int i = a while i < b - 1 with i++:
+            self.data[i] = self.data[i + 1]
+        self.data[b - 1] = temp
+    else:
+        # . . b _ _ _ a . .
+        # . . a b _ _ _ . .
+        for int i = a while i > b with i--:
+            self.data[i] = self.data[i - 1]
+        self.data[b] = temp
+
 def land_array_reverse(LandArray *self):
     # count == 0: do nothing
     # count == 1: do nothing
