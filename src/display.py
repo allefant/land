@@ -421,6 +421,9 @@ def land_line(float x, y, x_, y_):
 def land_ribbon(int n, float *xy):
     platform_ribbon(n, xy)
 
+def land_ribbon_loop(int n, float *xy):
+    platform_ribbon_loop(n, xy)
+
 def land_filled_ribbon(int n, float *xy):
     platform_filled_ribbon(n, xy)
 
