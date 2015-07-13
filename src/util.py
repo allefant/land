@@ -104,7 +104,7 @@ char *def land_utf8_realloc_insert(char *s, int pos, int c):
     (abc, 3, d) -> abcd
     """
     int len = strlen(s)
-    int clen = land_utf8_encode(c, NULL)
+    int clen = land_utf8_encode(c, None)
     s = land_realloc(s, len + clen + 1)
     char *p = s
     for int i = 0 while i < pos with i++: land_utf8_char(&p)
@@ -199,7 +199,8 @@ LandArray *def land_filelist(char const *dir,
     the filter function is called, with the name about to be added and an
     indication whether it is a filename or a directory.
     
-    If flags is LAND_FULL_PATH files are returned as a full path, otherwise as
+    If flags is LAND_FULL_PATH files are returned as a full path, if
+    LAND_RELATIVE_PATH relative to dir, otherwise as
     only the filename.
 
     The return value of the filter decides what is done with the name:
