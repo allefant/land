@@ -6,7 +6,7 @@ class LandAnimation:
 
 static import animation, mem
 
-LandAnimation *def land_animation_new(LandArray *frames):
+def land_animation_new(LandArray *frames) -> LandAnimation *:
     """
     Ownership of the frames array is transferred to the animation - destroying
     the animation later will destroy the array.
@@ -27,10 +27,10 @@ def land_animation_destroy(LandAnimation *self):
 
     land_free(self)
 
-LandImage *def land_animation_get_frame(LandAnimation *self, int i):
+def land_animation_get_frame(LandAnimation *self, int i) -> LandImage *:
     return land_array_get_nth(self.frames, i)
 
-int def land_animation_length(LandAnimation *self):
+def land_animation_length(LandAnimation *self) -> int:
     if self.frames:
         return land_array_count(self.frames)
     return 0
@@ -40,8 +40,8 @@ def land_animation_add_frame(LandAnimation *self, LandImage *frame):
         self.frames = land_array_new()
     land_array_add(self.frames, frame)
 
-LandAnimation *def land_animation_load_cb(char const *pattern,
-    void (*cb)(LandImage *image, void *data), void *data):
+def land_animation_load_cb(char const *pattern,
+    void (*cb)(LandImage *image, void *data), void *data) -> LandAnimation *:
     """
     Create a new animation from all files matching the pattern, sorted
     alphabetically. The callback function, if present, is called on each
