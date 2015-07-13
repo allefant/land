@@ -382,8 +382,8 @@ LandArray *def land_load_images_cb(char const *pattern,
     int j = 0
     for int i = 0 while pattern[i] with i++:
         if pattern[i] == '/' or pattern[i] == '\\':
-            land_buffer_add(dirbuf, pattern + j, i - j + 1)
-            j = i + 1
+            land_buffer_add(dirbuf, pattern + j, i - j)
+            j = i
         if pattern[i] == '?' or pattern[i] == '*': break
     char *dir = land_buffer_finish(dirbuf)
 
@@ -394,7 +394,7 @@ LandArray *def land_load_images_cb(char const *pattern,
             &filenames)
 
     if not count:
-        filenames = land_filelist(dir, filter, LAND_FULL_PATH, (void *)pattern)
+        filenames = land_filelist(dir, filter, LAND_RELATIVE_PATH, (void *)pattern)
         if filenames:
             count = filenames->count
         else:
