@@ -27,7 +27,7 @@ static double land_widget_cursor_blink_rate = 2
 
 static LandWidgetInterface *land_widget_edit_interface
 
-static int def get_x_offset(LandWidget *base):
+static def get_x_offset(LandWidget *base) -> int:
     int x = base->box.x + base->element->il
     LandWidgetEdit *self = LAND_WIDGET_EDIT(base)
     if self.align_right:
@@ -134,8 +134,8 @@ def land_widget_edit_initialize(LandWidget *base,
 
     self.modified = modified
 
-LandWidget *def land_widget_edit_new(LandWidget *parent, char const *text,
-    void (*modified)(LandWidget *self), int x, int y, int w, int h):
+def land_widget_edit_new(LandWidget *parent, char const *text,
+    void (*modified)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
     LandWidgetEdit *edit
     land_alloc(edit)
     LandWidget *self = (LandWidget *)edit
@@ -165,7 +165,7 @@ def land_widget_edit_align_right(LandWidget *base, bool yes):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     edit->align_right = yes
 
-char const *def land_widget_edit_get_text(LandWidget *base):
+def land_widget_edit_get_text(LandWidget *base) -> char const *:
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     return edit->text
 

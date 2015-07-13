@@ -56,8 +56,8 @@ class LandGridIsometric:
 global LandGridInterface *land_grid_vtable_isometric
 global LandGridInterface *land_grid_vtable_isometric_wrap
 
-static LandGrid *def new(float cell_w1, cell_h1, cell_w2, cell_h2,
-    int x_cells, y_cells):
+static def new(float cell_w1, cell_h1, cell_w2, cell_h2,
+    int x_cells, y_cells) -> LandGrid *:
     LandGridIsometric *self
     land_alloc(self)
     land_grid_initialize(&self.super, cell_w1 + cell_w2, cell_h1 + cell_h2,
@@ -68,23 +68,23 @@ static LandGrid *def new(float cell_w1, cell_h1, cell_w2, cell_h2,
     self.cell_h2 = cell_h2
     return &self.super
 
-LandGrid *def land_isometric_new(float cell_w1, cell_h1, cell_w2, cell_h2,
-    int x_cells, y_cells):
+def land_isometric_new(float cell_w1, cell_h1, cell_w2, cell_h2,
+    int x_cells, y_cells) -> LandGrid *:
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
     self.vt = land_grid_vtable_isometric
     return self
 
-LandGrid *def land_isometric_wrap_new(float cell_w1, cell_h1, cell_w2, cell_h2,
-    int x_cells, y_cells):
+def land_isometric_wrap_new(float cell_w1, cell_h1, cell_w2, cell_h2,
+    int x_cells, y_cells) -> LandGrid *:
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
     self.vt = land_grid_vtable_isometric_wrap
     self.wrap = true
     return self
 
-LandGrid *def land_isometric_custom_grid(
+def land_isometric_custom_grid(
     float cell_w1, cell_h1, cell_w2, cell_h2, int x_cells, y_cells, bool wrap,
     void (*draw_cell)(LandGrid *self, LandView *view, int cell_x, int cell_y,
-        float x, float y)):
+        float x, float y)) -> LandGrid *:
     LandGrid *self = new(cell_w1, cell_h1, cell_w2, cell_h2, x_cells, y_cells)
     land_alloc(self.vt)
     self.vt->draw = wrap ? land_grid_draw_isometric_wrap :\
@@ -215,8 +215,8 @@ static def cell_to_view(LandGrid *self, float cell_x, cell_y, *view_x, *view_y):
 #  ________\/_____|
 #        (1)
 #
-static int def find_offset(LandGrid *self, float view_x, float view_y,
-    int *cell_x, int *cell_y, float *pixel_x, float *pixel_y):
+static def find_offset(LandGrid *self, float view_x, float view_y,
+    int *cell_x, int *cell_y, float *pixel_x, float *pixel_y) -> int:
     LandGridIsometric *iso = (void *)self
     float h1 = iso->cell_h1
     float w2 = iso->cell_w2

@@ -20,7 +20,7 @@ def my_draw(LandWidget *self):
     land_color(0, 0, 0, 1)
     land_print("%d x %d", self->box.w, self->box.h)
 
-LandWidget * def land_widget_mybox_new(LandWidget *parent):
+def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
     static LandWidgetInterface *myvt = NULL
     if not myvt:
         land_widget_box_interface_initialize()

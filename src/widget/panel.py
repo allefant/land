@@ -23,7 +23,7 @@ def land_widget_panel_initialize(LandWidget *base,
     land_widget_layout_enable(base)
     land_widget_theme_initialize(base)
 
-LandWidget *def land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h):
+def land_widget_panel_new(LandWidget *parent, int x, int y, int w, int h) -> LandWidget *:
     LandWidgetPanel *self
     land_alloc(self)
     land_widget_panel_initialize((LandWidget *)self, parent, x, y, w, h)

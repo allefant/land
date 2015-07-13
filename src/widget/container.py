@@ -100,7 +100,7 @@ def land_widget_container_keyboard_leave(LandWidget *super):
 
 
 # Returns the item/iterator for the given child of the container.
-LandListItem *def land_widget_container_child_item(LandWidget *super, *child):
+def land_widget_container_child_item(LandWidget *super, *child) -> LandListItem *:
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
     if not self.children:
         return NULL
@@ -167,8 +167,8 @@ def land_widget_container_move(LandWidget *super, float dx, float dy):
 def land_widget_container_size(LandWidget *super, float dx, dy):
     if dx or dy: land_widget_layout(super)
 
-LandWidget *def land_widget_container_get_descendant_at_pos(LandWidget *super,
-    int x, y):
+def land_widget_container_get_descendant_at_pos(LandWidget *super,
+    int x, y) -> LandWidget *:
     """
     Returns a descendant under a specific (absolute) position, or else the
     widget itself.
@@ -181,8 +181,8 @@ LandWidget *def land_widget_container_get_descendant_at_pos(LandWidget *super,
 
     return super
 
-LandWidget *def land_widget_container_get_child_at_pos(LandWidget *super,
-    int x, y):
+def land_widget_container_get_child_at_pos(LandWidget *super,
+    int x, y) -> LandWidget *:
     """
     Returns the direct child under a specific (absolute) position.
     """
@@ -417,7 +417,7 @@ def land_widget_container_update(LandWidget *widget):
         land_call_method(child, update, (child))
         item = item->next
 
-LandWidget *def land_widget_container_child(LandWidget *super):
+def land_widget_container_child(LandWidget *super) -> LandWidget *:
     """
     Return the first child of the container or None.
     """
@@ -429,7 +429,7 @@ LandWidget *def land_widget_container_child(LandWidget *super):
             return first->data
     return None
 
-int def land_widget_container_is_empty(LandWidget *super):
+def land_widget_container_is_empty(LandWidget *super) -> int:
     LandWidgetContainer *self = (LandWidgetContainer *)super
     return not self.children or self->children->count == 0
 
@@ -446,7 +446,7 @@ def land_widget_container_initialize(LandWidget *super, *parent,
 
     land_widget_theme_initialize(super)
 
-LandWidget *def land_widget_container_new(LandWidget *parent, int x, y, w, h):
+def land_widget_container_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidgetContainer *self
     land_alloc(self)
     land_widget_container_initialize(&self.super, parent, x, y, w, h)

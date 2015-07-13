@@ -15,7 +15,7 @@ static def sphere_point(LandArray *vertices, Float i, j):
 
     land_array_add(vertices, land_csg_vertex_new(pos, normal))
 
-LandCSG *def csg_sphere(int slices, rings, void *shared):
+def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
     """
     Make a sphere with radius 1.0.
     It fits within a cube from -1/-1/-1 to 1/1/1.
@@ -44,10 +44,10 @@ LandCSG *def csg_sphere(int slices, rings, void *shared):
             
     return land_csg_new_from_polygons(polygons)
 
-LandCSG *def csg_cylinder(int slices, void *shared):
+def csg_cylinder(int slices, void *shared) -> LandCSG *:
     return csg_cylinder_open(slices, False, shared)
 
-LandCSG *def csg_cylinder_open(int slices, bool opened, void *shared):
+def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
     """
     Make a cylinder along the z-axis with radius 1.0 and height 2.0.
     It fits within a cube from -1/-1/-1 to 1/1/1.
@@ -102,7 +102,7 @@ LandCSG *def csg_cylinder_open(int slices, bool opened, void *shared):
 
     return land_csg_new_from_polygons(polygons)
 
-LandCSG *def csg_cone(int slices, void *shared):
+def csg_cone(int slices, void *shared) -> LandCSG *:
     """
     Make a cone along the z-axis with radius 1.0 and height 2.0.
     The top of the cone is at 0/0/1.
@@ -150,7 +150,7 @@ LandCSG *def csg_cone(int slices, void *shared):
 
     return land_csg_new_from_polygons(polygons)
 
-LandCSG *def csg_prism(int slices, void *shared):
+def csg_prism(int slices, void *shared) -> LandCSG *:
     return None
 
 static def add_quad(LandArray *polygons, LandVector a, b, c, d, void *shared):
@@ -174,7 +174,7 @@ static def add_tri(LandArray *polygons, LandVector a, b, c, void *shared):
     land_array_add(vertices, land_csg_vertex_new(c, normal))
     land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
-LandCSG *def csg_pyramid(void *shared):
+def csg_pyramid(void *shared) -> LandCSG *:
     """
     Make a 4-sided pyramid with a side-length of 1 and a height of 2.
     The top is at 0/0/1.
@@ -193,7 +193,7 @@ LandCSG *def csg_pyramid(void *shared):
     add_tri(polygons, d, a, e, shared)
     return land_csg_new_from_polygons(polygons)
 
-LandCSG *def csg_tetrahedron(void *shared):
+def csg_tetrahedron(void *shared) -> LandCSG *:
     """
     Make a tetrahedron.
     """
@@ -209,7 +209,7 @@ LandCSG *def csg_tetrahedron(void *shared):
     add_tri(polygons, c, a, b, shared)
     return land_csg_new_from_polygons(polygons)
 
-LandCSG *def csg_cube(void *shared):
+def csg_cube(void *shared) -> LandCSG *:
     """
     Make a cube from -1/-1/-1 to 1/1/1.
     """

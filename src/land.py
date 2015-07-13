@@ -197,7 +197,7 @@ static LandArray *exit_functions
 static int _exitcode
    
 macro land_use_main(m):
-    int def main(int argc, char **argv):
+    def main(int argc, char **argv) -> int:
         land_argc = argc
         land_argv = argv
         m()
@@ -206,7 +206,7 @@ macro land_use_main(m):
 
 macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
     leave, destroy):
-    int def main(int argc, char **argv):
+    def main(int argc, char **argv) -> int:
         land_argc = argc
         land_argv = argv
         land_init()
@@ -227,7 +227,7 @@ def land_without_main(void (*cb)(void)):
 def land_set_exitcode(int code):
     _exitcode = code
 
-int def land_get_exitcode():
+def land_get_exitcode() -> int:
     return _exitcode
 
 def land_exit_function(void (*function)(void)):
@@ -247,5 +247,5 @@ global int land_argc
 global char **land_argv
 global LandRunner *shortcut_runner
 
-bool def strequal(char const *a, char const *b):
+def strequal(char const *a, char const *b) -> bool:
     return strcmp(a, b) == 0

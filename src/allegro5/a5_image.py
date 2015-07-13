@@ -13,7 +13,7 @@ static ALLEGRO_BITMAP *previous
 static macro SELF \
     LandImagePlatform *self = (void *)super;
 
-LandImage *def platform_new_image():
+def platform_new_image() -> LandImage *:
     LandImagePlatform *self
     land_alloc(self)
     return (void *)self
@@ -36,7 +36,7 @@ def platform_image_empty(LandImage *super):
     al_unlock_bitmap(self->a5)
 
 
-LandImage *def platform_image_load(char const *filename, bool mem):
+def platform_image_load(char const *filename, bool mem) -> LandImage *:
     LandImage *super = land_display_new_image()
     super->filename = land_strdup(filename)
     super->name = land_strdup(filename)
@@ -59,7 +59,7 @@ LandImage *def platform_image_load(char const *filename, bool mem):
         al_restore_state(&state)
     return super
 
-LandImage *def platform_image_sub(LandImage *parent, float x, y, w, h):
+def platform_image_sub(LandImage *parent, float x, y, w, h) -> LandImage *:
     LandImage *super = land_display_new_image()
     super->flags |= LAND_SUBIMAGE
     super->filename = parent->filename
@@ -208,7 +208,7 @@ def platform_image_set_rgba_data(LandImage *super,
         p2 += lock->pitch
     al_unlock_bitmap(self->a5)
 
-int def platform_image_opengl_texture(LandImage *super):
+def platform_image_opengl_texture(LandImage *super) -> int:
     SELF
     return al_get_opengl_texture(self->a5)
 

@@ -1,13 +1,13 @@
 import global land/land
 
-int def string_cmp(void *s1, void *s2):
+def string_cmp(void *s1, void *s2) -> int:
     return strcmp(s1, s2)
 
-int def print_cb(void *item, void *data):
+def print_cb(void *item, void *data) -> int:
     printf(" * %s\n", (char *)item)
     return 0
 
-int def main():
+def main() -> int:
     land_init()
     LandQueue *queue = land_queue_new(string_cmp)
 

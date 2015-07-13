@@ -34,7 +34,7 @@ static LandWidgetInterface *land_widget_spinbutton_interface
 static LandImage *image_up
 static LandImage *image_down
 
-LandWidget *def land_widget_spin_get_edit(LandWidget *spin):
+def land_widget_spin_get_edit(LandWidget *spin) -> LandWidget *:
     LandListItem *item = LAND_WIDGET_CONTAINER(spin)->children->first
     LandWidget *edit = item->data
     return edit
@@ -45,8 +45,8 @@ static def updated(LandWidget *base):
     if edit->modified:
         edit->modified(LAND_WIDGET(edit))
 
-LandWidget *def land_widget_spinbutton_new(LandWidget *parent, LandImage *image,
-    void (*clicked)(LandWidget *self),  int x, int y, int w, int h):
+def land_widget_spinbutton_new(LandWidget *parent, LandImage *image,
+    void (*clicked)(LandWidget *self),  int x, int y, int w, int h) -> LandWidget *:
     LandWidgetSpinButton *spinbutton
     land_alloc(spinbutton)
     LandWidget *self = (LandWidget *)spinbutton
@@ -101,9 +101,9 @@ def land_widget_spin_initialize(LandWidget *base,
     land_widget_theme_initialize(base)
     if parent: land_widget_layout(parent)
 
-LandWidget *def land_widget_spin_new(LandWidget *parent,
+def land_widget_spin_new(LandWidget *parent,
     float val, float min, float max, float step,
-    void (*modified)(LandWidget *self), int x, int y, int w, int h):
+    void (*modified)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
     LandWidgetSpin *spin
     land_alloc(spin)
     LandWidget *self = (LandWidget *)spin
@@ -136,7 +136,7 @@ def land_widget_spin_set_minimum_text(LandWidget *base, char const *text):
     LandWidget *edit = LAND_WIDGET(item->data)
     land_widget_theme_set_minimum_size_for_text(edit, text)
 
-float def land_widget_spin_get_value(LandWidget *base):
+def land_widget_spin_get_value(LandWidget *base) -> float:
     LandWidgetSpin *spin = LAND_WIDGET_SPIN(base)
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first
     LandWidget *edit = LAND_WIDGET(item->data)

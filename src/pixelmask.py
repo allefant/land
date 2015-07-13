@@ -56,8 +56,8 @@ static def printout_mask(SinglePixelMask *mask):
 
 # Creates n prerotated bitmasks for the given bitmap. A single bit
 # represents one pixel.
-static LandPixelMask *def pixelmask_create_flip(LandImage *image,
-    int n, int threshold, bool flipped):
+static def pixelmask_create_flip(LandImage *image,
+    int n, int threshold, bool flipped) -> LandPixelMask *:
     LandPixelMask *mask
     int j
     int angle_count = n
@@ -146,8 +146,8 @@ static LandPixelMask *def pixelmask_create_flip(LandImage *image,
 
     return mask
 
-static LandPixelMask *def pixelmask_create(LandImage *image,
-    int n, int threshold):
+static def pixelmask_create(LandImage *image,
+    int n, int threshold) -> LandPixelMask *:
     bool flipped = n < 0
     if flipped: n = -n
     return pixelmask_create_flip(image, n, threshold, flipped)
@@ -159,8 +159,8 @@ static def pixelmask_destroy(LandPixelMask *mask):
 
     land_free(mask)
 
-static int def mask_get_rotation_frame(LandPixelMask *mask,
-    float angle, bool flipped):
+static def mask_get_rotation_frame(LandPixelMask *mask,
+    float angle, bool flipped) -> int:
     int n = mask->n
     if mask->flipped: n /= 2
     float r = n * angle / (2 * LAND_PI)
@@ -198,9 +198,9 @@ def land_image_debug_pixelmask(LandImage *self, float x, float y,
                     land_plot(x + ml + j * 32 + b, y + mt + i)
 
 # Compare two rectangles of two bit masks, using efficient bit checking. 
-static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
+static def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
                                     SinglePixelMask *mask_, int x_, int y_,
-                                    int w, int h):
+                                    int w, int h) -> int:
     int mask_w = mask->w
     int mask_w_ = mask_->w
     unsigned int *li = mask->data + mask_w * y
@@ -236,9 +236,9 @@ static int def pixelmask_part_collision(SinglePixelMask *mask, int x, int y,
 # Compare a bit mask on x/y and size w/h with another on x_/y_ and size w_/h_.
 # This is very efficient, only doing bit-checks if there is overlap at all.
 # 
-static int def pixelmask_collision(
+static def pixelmask_collision(
     SinglePixelMask *mask, int x, y, w, h,
-    SinglePixelMask *mask_, int x_, y_, w_, h_):
+    SinglePixelMask *mask_, int x_, y_, w_, h_) -> int:
     if x >= x_ + w_ or x_ >= x + w or y >= y_ + h_ or y_ >= y + h: return 0
 
     if x <= x_:
@@ -270,8 +270,8 @@ def land_image_destroy_pixelmasks(LandImage *self):
     if self.mask: pixelmask_destroy(self->mask)
 
 # Returns 1 if non-transparent pixels overlap, 0 otherwise. 
-int def land_image_overlaps(LandImage *self, float x, y, angle, flipped,
-    LandImage *other, float x_, y_, angle_, flipped_):
+def land_image_overlaps(LandImage *self, float x, y, angle, flipped,
+    LandImage *other, float x_, y_, angle_, flipped_) -> int:
     if not self.mask: return 0
     if not other->mask: return 0
 

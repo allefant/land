@@ -1,6 +1,6 @@
 import global land.land
 
-int def main():
+def main() -> int:
     land_init()
 
     LandProtobuf *p = land_protobuf_load("../../data/config.protobuf")

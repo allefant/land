@@ -303,7 +303,7 @@ static import layout, land/util
 global LandWidgetInterface *land_widget_base_interface
 static LandArray *land_widget_interfaces
 
-int def land_widget_is(LandWidget const *self, int id):
+def land_widget_is(LandWidget const *self, int id) -> int:
     """
     Return true if the widget has the given type (or one derived from it).
     """
@@ -314,8 +314,8 @@ int def land_widget_is(LandWidget const *self, int id):
         if (self.vt->id & (0xf << (i * 4))) != digit: return 0
     return 1
 
-void *def land_widget_check(void const *ptr, int id, char const *file,
-    int linenum):
+def land_widget_check(void const *ptr, int id, char const *file,
+    int linenum) -> void *:
     LandWidget const *widget = ptr
     if land_widget_is(widget, id):
         return (void *)ptr # should provide a const version of the whole
@@ -323,7 +323,7 @@ void *def land_widget_check(void const *ptr, int id, char const *file,
     land_exception("%s: %d: Widget cannot be converted.", file, linenum)
     return NULL
 
-char const *def land_widget_info_string(LandWidget *w):
+def land_widget_info_string(LandWidget *w) -> char const *:
     static char str[1024]
     if not w:
         strcpy(str, "none")
@@ -374,7 +374,7 @@ def land_widget_del_property(LandWidget *self, char const *property):
     LandWidgetProperty *prop = land_hash_remove(self.properties, property)
     if prop->destroy: prop->destroy(prop)
 
-void *def land_widget_get_property(LandWidget *self, char const *property):
+def land_widget_get_property(LandWidget *self, char const *property) -> void *:
     if not self.properties: return None
     LandWidgetProperty *prop = land_hash_get(self.properties, property)
     if prop: return prop->data
@@ -411,7 +411,7 @@ def land_widget_base_initialize(LandWidget *self, *parent, int x, y, w, h):
         self.element = land_widget_theme_find_element(
             land_widget_theme_default(), self)
 
-LandWidget *def land_widget_base_new(LandWidget *parent, int x, y, w, h):
+def land_widget_base_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidget *self
     land_alloc(self)
     land_widget_base_initialize(self, parent, x, y, w, h)
@@ -444,8 +444,8 @@ def land_widget_interface_register(LandWidgetInterface *vt):
 
     land_array_add_data(&land_widget_interfaces, vt)
 
-LandWidgetInterface *def land_widget_copy_interface(LandWidgetInterface *basevt,
-    char const *name):
+def land_widget_copy_interface(LandWidgetInterface *basevt,
+    char const *name) -> LandWidgetInterface *:
     LandWidgetInterface *vt
     land_alloc(vt)
     memcpy(vt, basevt, sizeof *vt)

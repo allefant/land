@@ -15,7 +15,7 @@ class LandIniFile:
     char *filename
     LandIniSection *sections
 
-static void *def _get(LandIniSection *s, char const *key):
+static def _get(LandIniSection *s, char const *key) -> void *:
     for int i = 0 while i < s->n with i++:
         if not strcmp(s->entries[i].key, key) and s->entries[i].val:
             return s->entries[i].val
@@ -57,22 +57,22 @@ def land_ini_set_int(LandIniFile *ini,
     snprintf(temp, sizeof temp, "%d", val)
     land_ini_set_string(ini, section, key, temp)
 
-char const *def land_ini_get_string(LandIniFile *ini,
-    char const *section, char const *key, char const *de):
+def land_ini_get_string(LandIniFile *ini,
+    char const *section, char const *key, char const *de) -> char const *:
     LandIniSection *s = _get(ini->sections, section)
     if not s: return de
     char *v = _get(s, key)
     if v: return v
     return de
 
-int def land_ini_get_int(LandIniFile *ini,
-    char const *section, char const *key, int de):
+def land_ini_get_int(LandIniFile *ini,
+    char const *section, char const *key, int de) -> int:
     char const *s = land_ini_get_string(ini, section, key, None)
     if s == None: return de
     return strtol(s, None, 0)
 
-int def land_ini_get_number_of_entries(LandIniFile *ini,
-    char const *section):
+def land_ini_get_number_of_entries(LandIniFile *ini,
+    char const *section) -> int:
     LandIniSection *s = ini->sections
     if not s: return 0
     if section:
@@ -80,14 +80,14 @@ int def land_ini_get_number_of_entries(LandIniFile *ini,
         if not s: return 0
     return s->n
 
-char const *def land_init_get_nth_entry(LandIniFile *ini,
-    char const *section, int i):
+def land_init_get_nth_entry(LandIniFile *ini,
+    char const *section, int i) -> char const *:
     LandIniSection *s = ini->sections
     if section:
         s = _get(s, section)
     return s->entries[i].key
 
-static bool def is_whitespace(char c):
+static def is_whitespace(char c) -> bool:
     if c == ' ' or c == '\t' or c == '\n': return true
     return false
 
@@ -104,7 +104,7 @@ static enum State:
     VALUE
     COMMENT
 
-LandIniFile *def land_ini_read(char const *filename):
+def land_ini_read(char const *filename) -> LandIniFile *:
     char section_name[1024] = "", key_name[1024] = "", value[1024] = ""
     int slen = 0, klen = 0, vlen = 0
     State state = OUTSIDE
@@ -172,7 +172,7 @@ LandIniFile *def land_ini_read(char const *filename):
     land_file_destroy(f)
     return ini
 
-LandIniFile *def land_ini_new(char const *filename):
+def land_ini_new(char const *filename) -> LandIniFile *:
     LandIniFile *ini = land_calloc(sizeof *ini)
     ini->filename = land_strdup(filename)
     ini->sections = land_calloc(sizeof *ini->sections)
@@ -202,7 +202,7 @@ def land_ini_writeback(LandIniFile *ini):
                     (char *)s->entries[j].val)
     fclose(f)
 
-LandIniFile *def land_ini_app_settings(char const *appname):
+def land_ini_app_settings(char const *appname) -> LandIniFile *:
     char *name = platform_get_app_settings_file(appname)
     LandIniFile *ini = land_ini_read(name)
     land_free(name)

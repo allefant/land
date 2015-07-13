@@ -7,7 +7,7 @@ static import allegro5/a5_file
 
 macro LAND_PI 3.1415926535897931
 
-char *def land_read_text(char const *filename):
+def land_read_text(char const *filename) -> char *:
     FILE *pf = fopen(filename, "rb")
     if not pf: return None
     int s = 1
@@ -27,7 +27,7 @@ char *def land_read_text(char const *filename):
     buf = land_realloc(buf, n)
     return buf
 
-int def land_utf8_char(char **pos):
+def land_utf8_char(char **pos) -> int:
     """
     Return the unicode value at the given pointer position, and advance the
     pointer to the start of the next code point.
@@ -55,7 +55,7 @@ int def land_utf8_char(char **pos):
     *pos = (char *)upos
     return c
 
-int def land_utf8_char_back(char **pos):
+def land_utf8_char_back(char **pos) -> int:
     """
     Adjust the pointer back to the previous code point and return its value.
     """
@@ -65,11 +65,11 @@ int def land_utf8_char_back(char **pos):
     int c = land_utf8_char((char **)&upos);
     return c
 
-int def land_utf8_char_const(char const **pos):
+def land_utf8_char_const(char const **pos) -> int:
     char **p = (char **)pos
     return land_utf8_char(p)
 
-int def land_utf8_encode(int c, char *s):
+def land_utf8_encode(int c, char *s) -> int:
     uint32_t uc = c
 
     if uc <= 0x7f:
@@ -99,7 +99,7 @@ int def land_utf8_encode(int c, char *s):
 
     return 0
 
-char *def land_utf8_realloc_insert(char *s, int pos, int c):
+def land_utf8_realloc_insert(char *s, int pos, int c) -> char *:
     """
     (abc, 3, d) -> abcd
     """
@@ -112,7 +112,7 @@ char *def land_utf8_realloc_insert(char *s, int pos, int c):
     land_utf8_encode(c, p)
     return s
 
-char *def land_utf8_realloc_remove(char *s, int pos):
+def land_utf8_realloc_remove(char *s, int pos) -> char *:
     """
     (abc, 1) -> ac
     """
@@ -131,7 +131,7 @@ char *def land_utf8_realloc_remove(char *s, int pos):
     s = land_realloc(s, len - (p2 - p) + 1)
     return s
 
-int def land_utf8_count(char const *s):
+def land_utf8_count(char const *s) -> int:
     int n = 0
     while land_utf8_char_const(&s): n++
     return n
@@ -150,7 +150,7 @@ def land_utf8_copy(char *target, int size, char const *source):
         prev = ptr
     target[i] = 0
 
-bool def land_fnmatch(char const *pattern, char const *name):
+def land_fnmatch(char const *pattern, char const *name) -> bool:
     int i = 0, j = 0
     while True:
         switch pattern[i]:
@@ -177,23 +177,23 @@ bool def land_fnmatch(char const *pattern, char const *name):
         i++
         j++
 
-bool def land_equals(char const *s, *s2):
+def land_equals(char const *s, *s2) -> bool:
     return strcmp(s, s2) == 0
 
-bool def land_ends_with(char const *s, *end):
+def land_ends_with(char const *s, *end) -> bool:
     size_t n = strlen(end)
     if strlen(end) > n:
         return False
     return strncmp(s + strlen(s) - n, end, n) == 0
 
-bool def land_starts_with(char const *s, *start):
+def land_starts_with(char const *s, *start) -> bool:
     size_t n = strlen(start)
     if strlen(start) > n:
         return False
     return strncmp(s, start, n) == 0
 
-LandArray *def land_filelist(char const *dir,
-    int (*filter)(char const *, bool is_dir, void *data), int flags, void *data):
+def land_filelist(char const *dir,
+    int (*filter)(char const *, bool is_dir, void *data), int flags, void *data) -> LandArray *:
     """
     Returns an array of files in the given directory. Before a file is added,
     the filter function is called, with the name about to be added and an

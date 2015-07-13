@@ -2,26 +2,26 @@ static import global allegro5/allegro5
 import land/array, land/mem, land/log, land/file
 import global stdbool
 
-void *def platform_fopen(char const *filename, char const *mode):
+def platform_fopen(char const *filename, char const *mode) -> void *:
     ALLEGRO_FILE *f = al_fopen(filename, mode)
     return f
 
 def platform_fclose(void *f):
     al_fclose(f)
 
-int def platform_fread(void *f, char *buffer, int bytes):
+def platform_fread(void *f, char *buffer, int bytes) -> int:
     return al_fread(f, buffer, bytes)
 
-int def platform_fwrite(void *f, char const *buffer, int bytes):
+def platform_fwrite(void *f, char const *buffer, int bytes) -> int:
     return al_fwrite(f, buffer, bytes)
 
 def platform_ungetc(void *f, int c):
     al_fungetc(f, c)
 
-int def platform_fgetc(void *f):
+def platform_fgetc(void *f) -> int:
     return al_fgetc(f)
 
-bool def platform_feof(void *f):
+def platform_feof(void *f) -> bool:
     return al_feof(f)
 
 def platform_fseek(void *f, int n):
@@ -69,9 +69,9 @@ static def add_files(char const *rel, LandArray **array, ALLEGRO_FS_ENTRY *entry
         al_destroy_path(path)
     al_close_directory(entry)
 
-LandArray *def platform_filelist(char const *dir,
+def platform_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data),
-    int flags, void *data):
+    int flags, void *data) -> LandArray *:
     land_log_message("platform_filelist %s\n", dir)
     ALLEGRO_FS_ENTRY *entry = al_create_fs_entry(dir)
     LandArray *array = None
@@ -79,7 +79,7 @@ LandArray *def platform_filelist(char const *dir,
     al_destroy_fs_entry(entry)
     return array
 
-bool def platform_is_dir(char const *path):
+def platform_is_dir(char const *path) -> bool:
     ALLEGRO_FS_ENTRY *fse = al_create_fs_entry(path)
     bool r = al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR
     al_destroy_fs_entry(fse)
@@ -88,7 +88,7 @@ bool def platform_is_dir(char const *path):
 def platform_file_exists(char const *path) -> bool:
     return al_filename_exists(path)
 
-char *def platform_get_save_file(char const *appname, char const *name):
+def platform_get_save_file(char const *appname, char const *name) -> char *:
     al_set_org_name("")
     al_set_app_name(appname)
     ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH)
@@ -103,7 +103,7 @@ char *def platform_get_save_file(char const *appname, char const *name):
     al_destroy_path(path)
     return dup
 
-char *def platform_get_current_directory():
+def platform_get_current_directory() -> char *:
     char *d = al_get_current_directory()
     # need do dup it as it's different memory managers
     # TODO: why do we not hook into Allegro's memory allocation functions?

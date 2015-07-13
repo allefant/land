@@ -4,7 +4,7 @@ static import csg
 class LandCSGAABB:
     double x1, y1, z1, x2, y2, z2
 
-LandCSGAABB def land_csg_aabb_infinite():
+def land_csg_aabb_infinite() -> LandCSGAABB:
     LandCSGAABB a
     a.x1 = -INFINITY
     a.x2 = +INFINITY
@@ -14,7 +14,7 @@ LandCSGAABB def land_csg_aabb_infinite():
     a.z2 = +INFINITY
     return a
 
-LandCSGAABB def land_csg_aabb_empty():
+def land_csg_aabb_empty() -> LandCSGAABB:
     LandCSGAABB a
     a.x1 = +INFINITY
     a.x2 = -INFINITY
@@ -37,7 +37,7 @@ def land_csg_aabb_update(LandCSGAABB *self, LandArray *polygons):
             if v->pos.z < self.z1: self->z1 = v->pos.z
             if v->pos.z > self.z2: self->z2 = v->pos.z
 
-LandCSGAABB def land_csg_aabb_intersect(LandCSGAABB a, b):
+def land_csg_aabb_intersect(LandCSGAABB a, b) -> LandCSGAABB:
     LandCSGAABB c = a
     if b.x1 > c.x1: c.x1 = b.x1
     if b.x2 < c.x2: c.x2 = b.x2

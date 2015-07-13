@@ -25,8 +25,8 @@ macro LAND_WIDGET_HANDLE(widget) ((LandWidgetHandle *) land_widget_check(widget,
 static LandWidgetInterface *land_widget_slider_interface
 static LandWidgetInterface *land_widget_handle_horizontal_interface
 
-LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
-    bool vertical, void (*update)(LandWidget *), int x, y, w, h):
+def land_widget_handle_new(LandWidget *parent, float minval, maxval,
+    bool vertical, void (*update)(LandWidget *), int x, y, w, h) -> LandWidget *:
     LandWidgetHandle *self
     land_alloc(self)
     LandWidget *super = (void *)self
@@ -47,8 +47,8 @@ LandWidget *def land_widget_handle_new(LandWidget *parent, float minval, maxval,
 
     return super
 
-LandWidget *def land_widget_slider_new(LandWidget *parent, float minval, maxval,
-        bool vertical, void (*update)(LandWidget *), int x, y, w, h):
+def land_widget_slider_new(LandWidget *parent, float minval, maxval,
+        bool vertical, void (*update)(LandWidget *), int x, y, w, h) -> LandWidget *:
     """
     vertical - whether the slider is vertical
     """
@@ -141,7 +141,7 @@ def land_widget_slider_set_value(LandWidget *super, float value):
     handle->value = value
     land_widget_handle_update(LAND_WIDGET(handle), 0)
 
-float def land_widget_slider_get_value(LandWidget *super):
+def land_widget_slider_get_value(LandWidget *super) -> float:
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(super)
     LandListItem *item = container->children->first
     LandWidgetHandle *handle = LAND_WIDGET_HANDLE(item->data)

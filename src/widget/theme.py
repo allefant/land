@@ -42,7 +42,7 @@ class LandWidgetTheme:
 
 static LandWidgetTheme *default_theme
 
-LandWidgetTheme *def land_widget_theme_default():
+def land_widget_theme_default() -> LandWidgetTheme *:
     return default_theme
 
 def land_widget_theme_set_default(LandWidgetTheme *self):
@@ -51,7 +51,7 @@ def land_widget_theme_set_default(LandWidgetTheme *self):
 # Given two sizes, return an offset <= 0, so when texturing the area of size1
 # with a texture of size size2, the center will be aligned.
 # 
-static inline int def centered_offset (int size1, int size2):
+static inline def centered_offset (int size1, int size2) -> int:
     int center1, center2, o
 
     if not size1 or not size2:
@@ -63,13 +63,13 @@ static inline int def centered_offset (int size1, int size2):
         o -= size2
     return o
 
-static inline void def _masked_non_stretched_blit(LandImage *s,
-    int sx, sy, w, h, dx, dy, _, __):
+static inline def _masked_non_stretched_blit(LandImage *s,
+    int sx, sy, w, h, dx, dy, _, __) -> void:
     land_image_clip(s, sx, sy, sx + w, sy + h)
     land_image_draw(s, dx - sx, dy - sy)
 
-static inline void def _masked_stretched_blit(LandImage *s,
-    int sx, sy, w, h, dx, dy, dw, dh):
+static inline def _masked_stretched_blit(LandImage *s,
+    int sx, sy, w, h, dx, dy, dw, dh) -> void:
     land_image_clip(s, sx, sy, sx + w, sy + h)
     land_image_draw_scaled(s, dx - sx, dy - sy, (float)dw / w,
         (float)dh / h)
@@ -83,8 +83,8 @@ static enum COLUMN_TYPE:
 
 # Draw a column of pattern pat (at bx, width bw) into the given rectangle.
 # 
-static inline void def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
-    int x, int y, int w, int h, int skip_middle):
+static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
+    int x, int y, int w, int h, int skip_middle) -> void:
     int oy
     int j
     int bh = land_image_height(pat->bmp)
@@ -255,8 +255,8 @@ static def read_int_arg(int argc, LandArray *argv, int *a, int *val):
         *val = strtoul(arg, NULL, 0)
         land_free(arg)
 
-LandWidgetThemeElement *def land_widget_theme_element_new(
-    struct LandWidgetTheme *theme, char const *name, *argline):
+def land_widget_theme_element_new(
+    struct LandWidgetTheme *theme, char const *name, *argline) -> LandWidgetThemeElement *:
     LandWidgetThemeElement *self
     land_alloc(self)
 
@@ -363,7 +363,7 @@ LandWidgetThemeElement *def land_widget_theme_element_new(
 
     return self
 
-LandWidgetTheme *def land_widget_theme_new(char const *filename):
+def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
     LandWidgetTheme *self
     land_alloc(self)
 
@@ -411,7 +411,7 @@ def land_widget_theme_destroy(LandWidgetTheme *self):
     land_free(self.suffix)
     land_free(self)
 
-static LandWidgetThemeElement *def find_element(LandList *list, char const *name):
+static def find_element(LandList *list, char const *name) -> LandWidgetThemeElement *:
     if not list:
         return None
     LandListItem *item = list->first
@@ -423,8 +423,8 @@ static LandWidgetThemeElement *def find_element(LandList *list, char const *name
 
     return None
 
-LandWidgetThemeElement *def land_widget_theme_find_element(
-    LandWidgetTheme *theme, LandWidget *widget):
+def land_widget_theme_find_element(
+    LandWidgetTheme *theme, LandWidget *widget) -> LandWidgetThemeElement *:
     if not theme:
         return None
     LandWidgetThemeElement *element
@@ -463,7 +463,7 @@ LandWidgetThemeElement *def land_widget_theme_find_element(
 
     return element
 
-LandWidgetThemeElement *def land_widget_theme_element(LandWidget *self):
+def land_widget_theme_element(LandWidget *self) -> LandWidgetThemeElement *:
     if self.selected: return self->element->selected
     if self.disabled: return self->element->disabled
     return self.element

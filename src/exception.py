@@ -5,7 +5,7 @@ static char exception_string[1024]
 global int (*land_exception_handler)(char const *str)
 static int init = 1
 
-int def land_default_exception_handler(char const *str):
+def land_default_exception_handler(char const *str) -> int:
     fprintf(stderr, "%s\n", str)
     return 1
 

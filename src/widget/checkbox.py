@@ -62,11 +62,11 @@ def land_widget_checkbox_initialize(LandWidget *base,
 
     land_widget_button_replace_text(checkbox, checkbox_unselected)
 
-LandWidget *def land_widget_checkbox_new(LandWidget *parent,
+def land_widget_checkbox_new(LandWidget *parent,
     char const *checkbox_selected,
     char const *checkbox_unselected,
     char const *text,
-    int x, int y, int w, int h):
+    int x, int y, int w, int h) -> LandWidget *:
     
     LandWidgetCheckBox *self; land_alloc(self)
 
@@ -75,7 +75,7 @@ LandWidget *def land_widget_checkbox_new(LandWidget *parent,
 
     return (LandWidget *)self
 
-bool def land_widget_checkbox_is_checked(LandWidget *self):
+def land_widget_checkbox_is_checked(LandWidget *self) -> bool:
     return land_widget_container_child(self)->selected
 
 def land_widget_checkbox_interface_initialize():

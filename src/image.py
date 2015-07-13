@@ -51,7 +51,7 @@ static int bitmap_count, bitmap_memory
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
-static LandImage *def _load(char const *filename, bool mem):
+static def _load(char const *filename, bool mem) -> LandImage *:
     char *path = land_path_with_prefix(filename)
     land_log_message("land_image_load %s..", path)
 
@@ -85,13 +85,13 @@ static LandImage *def _load(char const *filename, bool mem):
     if _cb: _cb(filename, self)
     return self
 
-LandImage *def land_image_load(char const *filename):
+def land_image_load(char const *filename) -> LandImage *:
     return _load(filename, False)
 
-LandImage *def land_image_load_memory(char const *filename):
+def land_image_load_memory(char const *filename) -> LandImage *:
     return _load(filename, True)
 
-LandImage *def land_image_memory_new(int w, int h):
+def land_image_memory_new(int w, int h) -> LandImage *:
     """
     Creates a new image. If w or h are 0, the image will have no contents at
     all (this can be useful if the contents are to be added later).
@@ -101,7 +101,7 @@ LandImage *def land_image_memory_new(int w, int h):
     assert(0)
     return None
 
-LandImage *def land_image_new(int w, int h):
+def land_image_new(int w, int h) -> LandImage *:
     """
     Creates a new image. If w and h are 0, the image will have no contents at
     all (this can be useful if the contents are to be added later).
@@ -115,7 +115,7 @@ LandImage *def land_image_new(int w, int h):
     bitmap_memory += w * h * 4
     return self
 
-LandImage *def land_image_create(int w, int h):
+def land_image_create(int w, int h) -> LandImage *:
     """
     Like land_image_new, but clears the image to all 0 initially.
     """
@@ -182,7 +182,7 @@ def land_image_auto_crop(LandImage *self):
     self.r = w - 1 - maxi
     self.b = h - 1 - maxj
 
-LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
+def land_image_new_from(LandImage *copy, int x, int y, int w, int h) -> LandImage *:
     """
     Create a new image, copying pixel data from a rectangle in an existing
     image.
@@ -211,8 +211,8 @@ LandImage *def land_image_new_from(LandImage *copy, int x, int y, int w, int h):
     
     return self
 
-int def land_image_color_stats(LandImage *self,
-    float *red, *green, *blue, *alpha):
+def land_image_color_stats(LandImage *self,
+    float *red, *green, *blue, *alpha) -> int:
     """
     Returns the number of pixels in the image, and the average red, green, blue
     and alpha component. 
@@ -329,8 +329,8 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
     land_image_set_rgba_data(self, rgba)
     land_image_prepare(self)
 
-LandImage *def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
-    int *rgb):
+def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
+    int *rgb) -> LandImage *:
     """
     Takes the same parameters as land_image_colorize_replace - but instead of
     recoloring the image itself, creates a separate image of the same size,
@@ -352,17 +352,17 @@ def land_image_prepare(LandImage *self):
     """
     platform_image_prepare(self)
 
-static int def callback(const char *filename, int attrib, void *param):
+static def callback(const char *filename, int attrib, void *param) -> int:
     LandArray **filenames = param
     land_array_add_data(filenames, land_strdup(filename))
     return 0
 
-static int def compar(void const *a, void const *b):
+static def compar(void const *a, void const *b) -> int:
     char *an = *(char **)a
     char *bn = *(char **)b
     return strcmp(an, bn)
 
-static int def filter(char const *name, bool is_dir, void *data):
+static def filter(char const *name, bool is_dir, void *data) -> int:
     char const *pattern = data
     if is_dir:
         return 2
@@ -370,8 +370,8 @@ static int def filter(char const *name, bool is_dir, void *data):
         return 1
     return 0
 
-LandArray *def land_load_images_cb(char const *pattern,
-    void (*cb)(LandImage *image, void *data), void *data):
+def land_load_images_cb(char const *pattern,
+    void (*cb)(LandImage *image, void *data), void *data) -> LandArray *:
     """
     Load all images matching the file name pattern, and create an array
     referencing them all, in alphabetic filename order. The callback function
@@ -424,7 +424,7 @@ static def defcb(LandImage *image, void *p):
     if data[0]: land_image_center(image)
     if data[1]: land_image_auto_crop(image)
 
-LandArray *def land_load_images(char const *pattern, int center, int auto_crop):
+def land_load_images(char const *pattern, int center, int auto_crop) -> LandArray *:
     """
     Load all images matching the file name pattern, and create an array
     referencing them all.
@@ -432,14 +432,14 @@ LandArray *def land_load_images(char const *pattern, int center, int auto_crop):
     int data[2] = {center, auto_crop}
     return land_load_images_cb(pattern, defcb, data)
 
-LandImage *def land_image_sub(LandImage *parent, float x, float y, float w, float h):
+def land_image_sub(LandImage *parent, float x, float y, float w, float h) -> LandImage *:
     LandImage *self = platform_image_sub(parent, x, y, w, h)
     return self
 
 # Loads an image, and returns a list of sub-images out of it. 
-LandArray *def land_image_load_sheet(char const *filename, int offset_x, int offset_y,
+def land_image_load_sheet(char const *filename, int offset_x, int offset_y,
     int grid_w, int grid_h, int x_gap, int y_gap, int x_count, int y_count,
-    int auto_crop):
+    int auto_crop) -> LandArray *:
     # FIXME: how can the sheet be destroyed again?
     LandArray *array = NULL
     LandImage *sheet = land_image_load(filename)
@@ -458,9 +458,9 @@ LandArray *def land_image_load_sheet(char const *filename, int offset_x, int off
     return array
 
 # Loads multiple images out of a single file. 
-LandArray *def land_image_load_split_sheet(char const *filename, int offset_x,
+def land_image_load_split_sheet(char const *filename, int offset_x,
     int offset_y, int grid_w, int grid_h, int x_gap, int y_gap, int x_count,
-    int y_count, int auto_crop):
+    int y_count, int auto_crop) -> LandArray *:
     LandArray *array = NULL
     LandImage *sheet = land_image_load_memory(filename)
     if not sheet: return NULL
@@ -570,10 +570,10 @@ def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
     self.r = r
     self.b = b
 
-int def land_image_height(LandImage *self):
+def land_image_height(LandImage *self) -> int:
     return self.height
 
-int def land_image_width(LandImage *self):
+def land_image_width(LandImage *self) -> int:
     return self.width
 
 def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
@@ -589,7 +589,7 @@ def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
 def land_image_save(LandImage *self, char const *filename):
     platform_image_save(self, filename)
 
-int def land_image_opengl_texture(LandImage *self):
+def land_image_opengl_texture(LandImage *self) -> int:
     return platform_image_opengl_texture(self)
 
 # FIXME: for odd width
@@ -608,7 +608,7 @@ def land_image_flip(LandImage *self):
     land_image_set_rgba_data(self, rgba)
     land_free(rgba)
    
-LandImage *def land_image_clone(LandImage *self):
+def land_image_clone(LandImage *self) -> LandImage *:
     int w = land_image_width(self)
     int h = land_image_height(self)
     LandImage *clone = land_image_new(w, h)

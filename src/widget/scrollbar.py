@@ -83,7 +83,7 @@ static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
             *range = 0
             *pos = 0
 
-static int def get_size(LandWidget *super):
+static def get_size(LandWidget *super) -> int:
     LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super)
     if self.vertical:
         return super->box.h
@@ -205,8 +205,8 @@ def land_widget_scrollbar_mouse_tick(LandWidget *super):
             if self.vertical and dy > 0: self->drag_y += new_size - old_size
             if not self.vertical and dx > 0: self->drag_x += new_size - old_size
 
-LandWidget *def land_widget_scrollbar_new(LandWidget *parent, *target,
-    int vertical, int x, y, w, h):
+def land_widget_scrollbar_new(LandWidget *parent, *target,
+    int vertical, int x, y, w, h) -> LandWidget *:
     LandWidgetScrollbar *self
 
     land_widget_scrollbar_interface_initialize()

@@ -15,7 +15,7 @@ class LandQueue:
 
 static import mem
 
-LandQueue *def land_queue_new(int (*cmp_cb)(void *data1, void *data2)):
+def land_queue_new(int (*cmp_cb)(void *data1, void *data2)) -> LandQueue *:
     """
     Create a new queue, with the given comparison function for its elements.
     """
@@ -54,7 +54,7 @@ def land_queue_add(LandQueue *q, void *data):
         q->array.data[i] = temp
         i = parent
 
-void *def land_queue_pop(LandQueue *q):
+def land_queue_pop(LandQueue *q) -> void *:
     """
     Return and remove the smallest element in the queue.
     """
@@ -92,7 +92,7 @@ void *def land_queue_pop(LandQueue *q):
             
     return data
 
-LandArray *def land_queue_sort(LandQueue *q):
+def land_queue_sort(LandQueue *q) -> LandArray *:
     """
     Return an array referencing the same data as the queue. The array will be
     sorted from smallest to largest element. The queue will be destroyed in
@@ -107,8 +107,8 @@ LandArray *def land_queue_sort(LandQueue *q):
     land_queue_del(q)
     return a
 
-int def land_queue_for_each(LandQueue *self, int (*cb)(void *item, void *data),
-    void *data):
+def land_queue_for_each(LandQueue *self, int (*cb)(void *item, void *data),
+    void *data) -> int:
     """
     Like land_array_for_each. The callback will not be called in any particular
     order, especially it will *not* be sorted. (The first call will be the
@@ -116,7 +116,7 @@ int def land_queue_for_each(LandQueue *self, int (*cb)(void *item, void *data),
     """
     return land_array_for_each(&self.array, cb, data)
 
-int def land_queue_count(LandQueue *self):
+def land_queue_count(LandQueue *self) -> int:
     return self.array.count
 
 def land_queue_clear(LandQueue *self):

@@ -14,7 +14,7 @@ static import global string
 
 global LandDataFile *_land_datafile
 
-static int def read32(FILE *f):
+static def read32(FILE *f) -> int:
     unsigned int u = fgetc(f)
     u += fgetc(f) << 8
     u += fgetc(f) << 16
@@ -22,7 +22,7 @@ static int def read32(FILE *f):
     return u
 
 # Open a datafile for reading. 
-LandDataFile *def land_read_datafile(FILE *file):
+def land_read_datafile(FILE *file) -> LandDataFile *:
     LandDataFile *self
     land_alloc(self)
     self.file = file
@@ -47,13 +47,13 @@ LandDataFile *def land_read_datafile(FILE *file):
 
     return self
 
-LandDataFile *def land_open_datafile(char const *filename):
+def land_open_datafile(char const *filename) -> LandDataFile *:
     FILE *file = fopen(filename, "rb")
     if not file: return NULL
     return land_read_datafile(file)
 
-LandDataFile *def land_open_appended_datafile(char const *filename,
-    char const *marker):
+def land_open_appended_datafile(char const *filename,
+    char const *marker) -> LandDataFile *:
     FILE *file = fopen(filename, "rb")
     if not file: return NULL
     fseek(file, -4, SEEK_END)
@@ -77,8 +77,8 @@ LandDataFile *def land_open_appended_datafile(char const *filename,
 
     return data
 
-void *def land_datafile_read_entry(LandDataFile *self, char const *filename,
-    int *size):
+def land_datafile_read_entry(LandDataFile *self, char const *filename,
+    int *size) -> void *:
     int i
     for i = 0 while i < self.entries->count with i++:
         LandDataEntry *entry = land_array_get_nth(self.entries, i)
@@ -93,7 +93,7 @@ void *def land_datafile_read_entry(LandDataFile *self, char const *filename,
 
     return NULL
 
-static int def star_match(char const *pattern, char const *name):
+static def star_match(char const *pattern, char const *name) -> int:
     int i = 0
     int j = 0
     while 1:
@@ -121,8 +121,8 @@ static int def star_match(char const *pattern, char const *name):
         j++
 
 
-int def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
-    int (*callback)(const char *filename, int attrib, void *param), void *param):
+def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
+    int (*callback)(const char *filename, int attrib, void *param), void *param) -> int:
     int i
     int n = 0
     for i = 0 while i < self.entries->count with i++:
@@ -137,5 +137,5 @@ int def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
 def land_set_datafile(LandDataFile *datafile):
     _land_datafile = datafile
 
-LandDataFile *def land_get_datafile():
+def land_get_datafile() -> LandDataFile *:
     return _land_datafile

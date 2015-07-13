@@ -44,7 +44,7 @@ static const int FRONT = 1
 static const int BACK = 2
 static const int SPANNING = 3
 
-LandCSGVertex *def land_csg_vertex_new(LandVector pos, normal):
+def land_csg_vertex_new(LandVector pos, normal) -> LandCSGVertex *:
     LandCSGVertex *self; land_alloc(self)
     self.pos = pos
     self.normal = normal
@@ -53,12 +53,12 @@ LandCSGVertex *def land_csg_vertex_new(LandVector pos, normal):
 def land_csg_vertex_destroy(LandCSGVertex *self):
     land_free(self)
 
-LandCSGVertex *def land_csg_vertex_new_pool(LandMemoryPool *pool):
+def land_csg_vertex_new_pool(LandMemoryPool *pool) -> LandCSGVertex *:
     LandCSGVertex *self = land_pool_alloc(pool, sizeof *self)
     return self
 
-LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self,
-        bool pool):
+def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self,
+        bool pool) -> LandCSGVertex *:
     if pool:
         LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
         v.pos = self.pos
@@ -66,7 +66,7 @@ LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self,
         return v
     return land_csg_vertex_new(self.pos, self.normal)
 
-static int def collision_code(LandVector *v, LandCSGAABB *b):
+static def collision_code(LandVector *v, LandCSGAABB *b) -> int:
     int c = 0
     if v.x < b.x1: c |= 1
     if v.x > b.x2: c |= 2
@@ -76,8 +76,8 @@ static int def collision_code(LandVector *v, LandCSGAABB *b):
     if v.z > b.z2: c |= 32
     return c
 
-static bool def polygon_intersects_aabb(LandCSGPolygon *polygon,
-        LandCSGAABB *box):
+static def polygon_intersects_aabb(LandCSGPolygon *polygon,
+        LandCSGAABB *box) -> bool:
     # FIXME: right now, this only checks if the whole polygon is on one side
     # of the bounding box. It will return true also for many polygons which
     # do not actually intersect.
@@ -107,7 +107,7 @@ static bool def polygon_intersects_aabb(LandCSGPolygon *polygon,
 
     return True
 
-static LandArray *def clone_vertices(LandCSG *csg, LandArray *vertices):
+static def clone_vertices(LandCSG *csg, LandArray *vertices) -> LandArray *:
     LandArray *clone = land_array_copy(vertices)
     int n = land_array_count(clone)
     for int i in range(n):
@@ -123,14 +123,14 @@ static def remove_vertices(LandArray *vertices, bool is_pooled):
 static def csg_vertex_flip(LandCSGVertex *self):
     self.normal = land_vector_mul(self.normal, -1)
 
-static LandCSGVertex *def csg_vertex_interpolate(LandCSG *csg,
-        LandCSGVertex *self, *other, LandFloat t):
+static def csg_vertex_interpolate(LandCSG *csg,
+        LandCSGVertex *self, *other, LandFloat t) -> LandCSGVertex *:
     LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
     v.pos = land_vector_lerp(self.pos, other.pos, t)
     v.normal = land_vector_lerp(self.normal, other.normal, t)
     return v
 
-static LandCSGPlane def csg_plane(LandVector normal, LandFloat w):
+static def csg_plane(LandVector normal, LandFloat w) -> LandCSGPlane:
     LandCSGPlane self
     self.normal = normal
     self.w = w
@@ -138,7 +138,7 @@ static LandCSGPlane def csg_plane(LandVector normal, LandFloat w):
 
 static const LandFloat LandCSGPlaneEPSILON = 0.00001
 
-static LandCSGPlane def csg_plane_from_points(LandVector a, b, c):
+static def csg_plane_from_points(LandVector a, b, c) -> LandCSGPlane:
     LandVector ac = land_vector_sub(c, a)
     LandVector ab = land_vector_sub(b, a)
     LandVector n = land_vector_cross(ab, ac)
@@ -155,14 +155,14 @@ def land_csg_polygon_init(LandCSGPolygon *self, LandArray *vertices,
     LandCSGVertex *v2 = land_array_get_nth(vertices, 2)
     self.plane = csg_plane_from_points(v0.pos, v1.pos, v2.pos)
 
-LandCSGPolygon *def land_csg_polygon_new(LandArray *vertices,
-        void *shared):
+def land_csg_polygon_new(LandArray *vertices,
+        void *shared) -> LandCSGPolygon *:
     LandCSGPolygon *self; land_alloc(self)
     land_csg_polygon_init(self, vertices, shared)
     return self
 
-static LandCSGPolygon *def land_csg_polygon_new_pool(LandMemoryPool *pool,
-        LandArray *vertices, void *shared):
+static def land_csg_polygon_new_pool(LandMemoryPool *pool,
+        LandArray *vertices, void *shared) -> LandCSGPolygon *:
     LandCSGPolygon *p = land_pool_alloc(pool, sizeof *p)
     p.is_pooled = True
     land_csg_polygon_init(p, vertices, shared)
@@ -254,8 +254,8 @@ def land_csg_polygon_destroy(LandCSGPolygon *self):
 
 # Return a clone of the polygon. The *new* polygon will create *clones*
 # of all vertices in the original polygon.
-LandCSGPolygon *def land_csg_polygon_clone(LandCSG *csg,
-        LandCSGPolygon const *self):
+def land_csg_polygon_clone(LandCSG *csg,
+        LandCSGPolygon const *self) -> LandCSGPolygon *:
 
     LandCSGPolygon *clone = land_csg_polygon_new_pool(csg.pool,
         clone_vertices(csg, self.vertices), self.shared)
@@ -271,7 +271,7 @@ static def csg_polygon_flip(LandCSGPolygon *self):
 # Given a list of polygons, return a *new* list containing *clones* of the
 # polygon in the new list. Nothing will be shared (except the polygon's
 # "shared" pointers).
-static LandArray *def clone_polygons(LandCSG *csg, LandArray *polygons):
+static def clone_polygons(LandCSG *csg, LandArray *polygons) -> LandArray *:
     LandArray *clone = land_array_copy(polygons)
     int n = land_array_count(clone)
     for int i in range(n):
@@ -350,7 +350,7 @@ static def csg_node_clip_to(LandCSG *csg, LandCSGNode *self, LandCSGNode *bsp):
 # Return a new list containing all the polygons in this BSP.
 # The returned list (as well as all polygons in that list) are owned
 # by the caller.
-static LandArray *def csg_node_all_polygons(LandCSG *csg, LandCSGNode *self):
+static def csg_node_all_polygons(LandCSG *csg, LandCSGNode *self) -> LandArray *:
     LandArray *polygons = clone_polygons(csg, self.polygons)
 
     if self.front:
@@ -418,7 +418,7 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
 
 # Ownership of the polygons array is transferred to the CSG Node. If the caller
 # still needs any polygons make a copy first.
-static LandCSGNode *def csg_node_new(LandCSG *csg, LandArray *polygons):
+static def csg_node_new(LandCSG *csg, LandArray *polygons) -> LandCSGNode *:
     LandCSGNode *self; land_alloc(self)
     self.polygons = land_array_new()
     if polygons:
@@ -482,18 +482,18 @@ def land_csg_triangles(LandCSG *self):
     if triangles:
         land_array_merge(self.polygons, triangles)
 
-LandCSG *def land_csg_new():
+def land_csg_new() -> LandCSG *:
     LandCSG *self; land_alloc(self)
     self.pool = land_pool_new()
     return self
 
 # The array is owned by the LandCSG now.
-LandCSG *def land_csg_new_from_polygons(LandArray *polygons):
+def land_csg_new_from_polygons(LandArray *polygons) -> LandCSG *:
     LandCSG *self = land_csg_new()
     self.polygons = polygons
     return self
 
-LandCSG *def land_csg_clone(LandCSG *self):
+def land_csg_clone(LandCSG *self) -> LandCSG *:
     LandCSG *csg = land_csg_new()
     csg.polygons = clone_polygons(csg, self.polygons)
     return csg
@@ -517,7 +517,7 @@ static def csg_split_on_bounding_box(LandCSG const *self, LandCSGAABB *box,
         else:
             land_array_add(*outside, p)
 
-LandCSG *def land_csg_union(LandCSG *csg_a, *csg_b):
+def land_csg_union(LandCSG *csg_a, *csg_b) -> LandCSG *:
     LandCSG *c = land_csg_new()
 
     land_csg_aabb_update(&csg_a.bbox, csg_a.polygons)
@@ -576,7 +576,7 @@ LandCSG *def land_csg_union(LandCSG *csg_a, *csg_b):
 
     return c
     
-LandCSG *def land_csg_subtract(LandCSG *self, *csg):
+def land_csg_subtract(LandCSG *self, *csg) -> LandCSG *:
     # TODO: Do the AABB trick here as well?
     LandCSG *c = land_csg_new()
     LandCSGNode *a = csg_node_new(c, clone_polygons(c, self.polygons))
@@ -602,7 +602,7 @@ LandCSG *def land_csg_subtract(LandCSG *self, *csg):
 
     return c
 
-LandCSG *def land_csg_intersect(LandCSG *self, *csg):
+def land_csg_intersect(LandCSG *self, *csg) -> LandCSG *:
     LandCSG *c = land_csg_new()
     LandCSGNode *a = csg_node_new(c, clone_polygons(c, self.polygons))
     LandCSGNode *b = csg_node_new(c, clone_polygons(c, csg.polygons))
@@ -622,7 +622,7 @@ LandCSG *def land_csg_intersect(LandCSG *self, *csg):
 
     return c
 
-LandCSG *def land_csg_inverse(LandCSG *self):
+def land_csg_inverse(LandCSG *self) -> LandCSG *:
     LandCSG *csg = land_csg_clone(self)
     for LandCSGPolygon *p in LandArray *csg.polygons:
         csg_polygon_flip(p)

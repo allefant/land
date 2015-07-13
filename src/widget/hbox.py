@@ -97,7 +97,7 @@ def land_widget_hbox_initialize(LandWidget *base, LandWidget *parent,
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.
 # 
-LandWidget *def land_widget_hbox_new(LandWidget *parent, int x, int y, int w, int h):
+def land_widget_hbox_new(LandWidget *parent, int x, int y, int w, int h) -> LandWidget *:
     LandWidgetHBox *self
     land_alloc(self)
     LandWidget *widget = (LandWidget *)self

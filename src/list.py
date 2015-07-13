@@ -19,7 +19,7 @@ static import mem
 *** "undef" land_list_destroy
 *** "undef" land_add_list_data
 
-LandList *def land_list_new_memlog(char const *f, int l):
+def land_list_new_memlog(char const *f, int l) -> LandList *:
     LandList *list = land_list_new()
     land_memory_add(list, "list", 1, f, l)
     return list
@@ -40,20 +40,20 @@ def land_add_list_data_memlog(LandList **list, void *data, char const *f, int l)
 
 *** "endif"
 
-LandListIterator def LandListIterator_first(LandList *a):
+def LandListIterator_first(LandList *a) -> LandListIterator:
     LandListIterator i = {a->first}
     return i
 
-void *def LandListIterator_item(LandList *a, LandListIterator *i):
+def LandListIterator_item(LandList *a, LandListIterator *i) -> void *:
     return i->i ? i->i->data : None
 
-bool def LandListIterator_next(LandList *a, LandListIterator *i):
+def LandListIterator_next(LandList *a, LandListIterator *i) -> bool:
     if i->i:
         i->i = i->i->next
         return True
     return False
 
-LandList *def land_list_new():
+def land_list_new() -> LandList *:
     LandList *self
     land_alloc(self)
     return self
@@ -75,7 +75,7 @@ def land_list_destroy(LandList *list):
     land_list_clear(list)
     land_free(list)
 
-LandListItem *def land_listitem_new(void *data):
+def land_listitem_new(void *data) -> LandListItem *:
     LandListItem *self
     land_alloc(self)
     self.data = data

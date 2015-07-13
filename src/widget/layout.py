@@ -1,13 +1,13 @@
 import land/land, base
 
 # Returns 1 if layout is now inhibited, 0 if it already was.
-int def land_widget_layout_freeze(LandWidget *self):
+def land_widget_layout_freeze(LandWidget *self) -> int:
     int nl = self.no_layout
     self.no_layout = 1
     return not nl
 
 # Returns 1 if layout is now enabled, 0 if it already was.
-int def land_widget_layout_unfreeze(LandWidget *self):
+def land_widget_layout_unfreeze(LandWidget *self) -> int:
     int nl = self.no_layout
     self.no_layout = 0
     return nl

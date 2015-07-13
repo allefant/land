@@ -113,8 +113,8 @@ def land_widget_vbox_initialize(LandWidget *base, LandWidget *parent,
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.
 # 
-LandWidget *def land_widget_vbox_new(LandWidget *parent, int x, int y, int w,
-    int h):
+def land_widget_vbox_new(LandWidget *parent, int x, int y, int w,
+    int h) -> LandWidget *:
     """Create a new vbox widget."""
     LandWidgetVBox *self
     land_alloc(self)

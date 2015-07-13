@@ -3,7 +3,7 @@ import global land/land
 LandImage *image
 LandImage *image_parts[4]
 
-static LandImage * def create_test_image():
+static def create_test_image() -> LandImage *:
     int w = 100
     int h = 100
     image = land_image_new(w, h)

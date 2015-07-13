@@ -67,9 +67,9 @@ static def shader_cleanup(LandGLSLShader *self):
         glDeleteShader(self.vertex_shader)
         glDeleteShader(self.fragment_shader)
 
-LandGLSLShader *def land_glsl_shader_new(char const *name,
+def land_glsl_shader_new(char const *name,
         char const *vertex_glsl,
-        char const *fragment_glsl):
+        char const *fragment_glsl) -> LandGLSLShader *:
     LandGLSLShader *self; land_alloc(self)
     shader_setup(self, name, vertex_glsl, fragment_glsl)
     return self

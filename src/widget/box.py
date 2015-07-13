@@ -6,7 +6,7 @@ global LandWidgetInterface *land_widget_box_interface
 def land_widget_box_draw(LandWidget *self):
     land_widget_theme_draw(self)
 
-LandWidget *def land_widget_box_new(LandWidget *parent, int x, y, w, h):
+def land_widget_box_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidget *self = land_widget_base_new(parent, x, y, w, h)
 
     land_widget_box_interface_initialize()

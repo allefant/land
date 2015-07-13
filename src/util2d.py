@@ -1,9 +1,9 @@
 import land
 
-float def land_norm2d(float x, y):
+def land_norm2d(float x, y) -> float:
     return sqrt(x * x + y * y)
 
-float def land_dot2d(float ax, ay, bx, by):
+def land_dot2d(float ax, ay, bx, by) -> float:
     """
     Given two vectors ax/ay and bx/by, returns the dot product.
 
@@ -25,7 +25,7 @@ float def land_dot2d(float ax, ay, bx, by):
     """
     return ax * bx + ay * by
 
-float def land_cross2d(float ax, ay, bx, by):
+def land_cross2d(float ax, ay, bx, by) -> float:
     """
     Given two vectors ax/ay and bx/by, returns the cross product.
 
@@ -52,8 +52,8 @@ def land_ortho2d(float ax, ay, *bx, *by):
     *bx = -ay;
     *by = ax;
 
-bool def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
-    l2x1, l2y1, l2x2, l2y2):
+def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
+    l2x1, l2y1, l2x2, l2y2) -> bool:
     """
     Checks if two line segments collide.
     """

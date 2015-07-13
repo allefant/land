@@ -1,6 +1,6 @@
 import global land.land
 
-int def main():
+def main() -> int:
     land_init()
     char *s = land_strdup("♥")
     char *pos = s

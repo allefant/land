@@ -17,19 +17,19 @@ static import allegro5/a5_sound
 
 static int active
 
-LandSound *def land_sound_load(char const *filename):
+def land_sound_load(char const *filename) -> LandSound *:
     LandSound *sound = platform_sound_load(filename)
     return sound
 
-LandSound *def land_sound_new(int samples, float frequency, int bits,
-    channels):
+def land_sound_new(int samples, float frequency, int bits,
+    channels) -> LandSound *:
     LandSound *sound = platform_sound_new(samples, frequency, bits, channels)
     return sound
 
-void *def land_sound_sample_pointer(LandSound *self):
+def land_sound_sample_pointer(LandSound *self) -> void *:
     return platform_sound_sample_pointer(self)
 
-int def land_sound_length(LandSound *self):
+def land_sound_length(LandSound *self) -> int:
     return platform_sound_length(self)
 
 def land_sound_seconds(LandSound *self) -> double:
@@ -59,14 +59,14 @@ def land_sound_exit():
     platform_sound_exit()
     active = 0
 
-LandStream *def land_stream_new(int samples, fragments, float frequency,
-    int bits, channels):
+def land_stream_new(int samples, fragments, float frequency,
+    int bits, channels) -> LandStream *:
     return platform_stream_new(samples, fragments, frequency, bits, channels)
 
 def land_stream_destroy(LandStream *self):
     platform_stream_destroy(self)
 
-void *def land_stream_buffer(LandStream *self):
+def land_stream_buffer(LandStream *self) -> void *:
     return platform_stream_buffer(self)
 
 def land_stream_fill(LandStream *self):
@@ -78,7 +78,7 @@ def land_stream_music(LandStream *self, char const *filename):
 def land_stream_volume(LandStream *self, float volume):
     platform_stream_volume(self, volume)
 
-bool def land_stream_is_playing(LandStream *self):
+def land_stream_is_playing(LandStream *self) -> bool:
     return platform_stream_is_playing(self)
 
 def land_stream_set_playing(LandStream *self, bool onoff):

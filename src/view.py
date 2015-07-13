@@ -10,7 +10,7 @@ class LandView:
 
 static import mem, display
 
-LandView *def land_view_new(int x, int y, int w, int h):
+def land_view_new(int x, int y, int w, int h) -> LandView *:
     """
     Specify the view rectangle on the screen.
     """

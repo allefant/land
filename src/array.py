@@ -19,7 +19,7 @@ static import mem
 *** "undef" land_array_concat
 *** "undef" land_array_copy
 
-LandArray *def land_array_new_memlog(char const *f, int l):
+def land_array_new_memlog(char const *f, int l) -> LandArray *:
     LandArray *array = land_array_new()
     land_memory_add(array, "array", 1, f, l)
     return array
@@ -33,7 +33,7 @@ def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
     land_memory_remove(self, "array", 1, f, l)
     land_memory_add(self, "array", self.size, f, l)
 
-LandArray *def land_array_copy_memlog(LandArray const *self, char const *f, int l):
+def land_array_copy_memlog(LandArray const *self, char const *f, int l) -> LandArray *:
     LandArray *copy = land_array_copy(self)
     land_memory_add(copy, "array", copy->size, f, l)
     return copy
@@ -57,18 +57,18 @@ def land_array_clear_memlog(LandArray *self, char const *f, int l):
 
 *** "endif"
 
-LandArrayIterator def LandArrayIterator_first(LandArray *a):
+def LandArrayIterator_first(LandArray *a) -> LandArrayIterator:
     LandArrayIterator i = {0}
     return i
 
-void *def LandArrayIterator_item(LandArray *a, LandArrayIterator *i):
+def LandArrayIterator_item(LandArray *a, LandArrayIterator *i) -> void *:
     return i->i < a->count ? a->data[i->i] : None
 
-bool def LandArrayIterator_next(LandArray *a, LandArrayIterator *i):
+def LandArrayIterator_next(LandArray *a, LandArrayIterator *i) -> bool:
     i->i++
     return i->i <= a->count
 
-LandArray *def land_array_new():
+def land_array_new() -> LandArray *:
     """
     Create a new empty array.
     """
@@ -100,7 +100,7 @@ def land_array_add(LandArray *self, void *data):
         self.data = land_realloc(self->data, self->size *sizeof *self->data)
     self.data[i] = data
 
-void *def land_array_pop(LandArray *self):
+def land_array_pop(LandArray *self) -> void *:
     """
     Remove the last element in the array and return it. Only the last element
     in an array can be removed. To remove another element, you could replace
@@ -148,7 +148,7 @@ def land_array_add_data(LandArray **array, void *data):
 
     land_array_add(self, data)
 
-int def land_array_find(LandArray *self, void *data):
+def land_array_find(LandArray *self, void *data) -> int:
     """
     Searches the array for the given data. If they are contained, return the
     first index i so that land_array_get_nth(array, i) == data. If the data
@@ -158,11 +158,11 @@ int def land_array_find(LandArray *self, void *data):
         if self.data[i] == data: return i
     return -1
 
-void *def land_array_get_nth(LandArray const *array, int i):
+def land_array_get_nth(LandArray const *array, int i) -> void *:
     if i < 0: i += array->count
     return array->data[i]
 
-void *def land_array_replace_nth(LandArray *array, int i, void *data):
+def land_array_replace_nth(LandArray *array, int i, void *data) -> void *:
     """
     Replace the array entry at the given index, and return the previous
     contents.
@@ -193,7 +193,7 @@ def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
     """
     qsort(self.data, self->count, sizeof(void *), cmpfnc)
 
-static int def alphacomp(void const *a, void const *b):
+static def alphacomp(void const *a, void const *b) -> int:
     char const * const *as = a
     char const * const *bs = b
     int r = strcmp(*as, *bs)
@@ -205,12 +205,12 @@ def land_array_sort_alphabetical(LandArray *self):
     """
     land_array_sort(self, alphacomp)
 
-int def land_array_count(LandArray const *self):
+def land_array_count(LandArray const *self) -> int:
     if not self: return 0
     return self.count
 
-int def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
-    void *data):
+def land_array_for_each(LandArray *self, int (*cb)(void *item, void *data),
+    void *data) -> int:
     """
     Call the given callback for each array element. If the callback returns
     anything but 0, the iteration is stopped. The return value is the number
@@ -242,7 +242,7 @@ def land_array_merge(LandArray *self, *other):
     land_array_concat(self, other)
     land_array_destroy(other)
 
-LandArray *def land_array_copy(LandArray const *self):
+def land_array_copy(LandArray const *self) -> LandArray *:
     LandArray *copy = land_array_new()
     land_array_concat(copy, self)
     return copy

@@ -4,7 +4,7 @@ static def game_tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
 
-static float def hueclip(float hue, float pos):
+static def hueclip(float hue, float pos) -> float:
     float a = LAND_PI / 3.0
     float wrap = (pos * a - hue + LAND_PI) / (2 * LAND_PI)
     wrap = (wrap - floor(wrap)) * 2 * LAND_PI - LAND_PI

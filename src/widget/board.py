@@ -22,7 +22,7 @@ def land_widget_board_initialize(LandWidget *base,
     base->vt = land_widget_board_interface
     land_widget_theme_initialize(base)
 
-LandWidget *def land_widget_board_new(LandWidget *parent, int x, y, w, h):
+def land_widget_board_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidgetBoard *self
     land_alloc(self)
     land_widget_board_initialize((LandWidget *)self, parent, x, y, w, h)

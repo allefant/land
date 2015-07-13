@@ -23,7 +23,7 @@ def draw(LandRunner *self):
     land_clip(0, 0, 50, 50)
     land_image_draw(image, 0, 0)
 
-int def main():
+def main() -> int:
     land_init()
     LandRunner *runner = land_runner_new("Village", init, NULL, tick, draw, NULL, NULL)
     land_runner_register(runner)

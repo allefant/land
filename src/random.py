@@ -100,7 +100,7 @@ static def init_by_array(unsigned long init_key[], int key_length):
 *** "endif"
 
 # generates a random number on [0,0xffffffff]-interval 
-static unsigned long def genrand_int32(LandRandom *r):
+static def genrand_int32(LandRandom *r) -> unsigned long:
     unsigned long y
     static const unsigned long mag01[2]={0x0UL, MATRIX_A}
     # mag01[x] = x * MATRIX_A  for x=0,1 
@@ -137,26 +137,26 @@ static unsigned long def genrand_int32(LandRandom *r):
 *** "if" 0
 
 # generates a random number on [0,0x7fffffff]-interval 
-static long def genrand_int31():
+static def genrand_int31() -> long:
     return (long)(genrand_int32()>>1)
 
 # generates a random number on [0,1]-real-interval 
-static double def genrand_real1():
+static def genrand_real1() -> double:
     return genrand_int32()*(1.0/4294967295.0)
     # divided by 2^32-1 
 
 # generates a random number on [0,1)-real-interval 
-static double def genrand_real2():
+static def genrand_real2() -> double:
     return genrand_int32()*(1.0/4294967296.0)
     # divided by 2^32 
 
 # generates a random number on (0,1)-real-interval 
-static double def genrand_real3():
+static def genrand_real3() -> double:
     return (((double)genrand_int32()) + 0.5)*(1.0/4294967296.0)
     # divided by 2^32 
 
 # generates a random number on [0,1) with 53-bit resolution
-static double def genrand_res53():
+static def genrand_res53() -> double:
     unsigned long a=genrand_int32()>>5, b=genrand_int32()>>6
     return(a*67108864.0+b)*(1.0/9007199254740992.0)
 
@@ -169,7 +169,7 @@ static macro MAX_NUMBER 4294967295U
 def land_seed(int seed):
     init_genrand(&default_state, seed)
 
-double def land_rnd(double min, double max):
+def land_rnd(double min, double max) -> double:
     """
     Random value in the half-open interval [min, max[, that is min is inclusive
     but max is exclusive.
@@ -178,11 +178,11 @@ double def land_rnd(double min, double max):
     return min + (
         (double)genrand_int32(&default_state) / MAX_NUMBER) * (max - min)
 
-int def land_rand(int min, int max):
+def land_rand(int min, int max) -> int:
     if min >= max: return min
     return min + genrand_int32(&default_state) % (max - min + 1)
 
-LandRandom *def land_random_new(int seed):
+def land_random_new(int seed) -> LandRandom *:
     LandRandom *self
     land_alloc(self)
     init_genrand(self, seed)
@@ -191,6 +191,6 @@ LandRandom *def land_random_new(int seed):
 def land_random_del(LandRandom *self):
     land_free(self)
 
-int def land_random(LandRandom *r, int min, int max):
+def land_random(LandRandom *r, int min, int max) -> int:
     if min >= max: return min
     return min + genrand_int32(r) % (max - min + 1)

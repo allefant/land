@@ -34,22 +34,22 @@ static LandWidgetInterface *land_widget_scrolling_contents_container_interface
 static LandWidgetInterface *land_widget_scrolling_vertical_container_interface
 static LandWidgetInterface *land_widget_scrolling_horizontal_container_interface
 
-LandWidget *def land_widget_scrolling_get_container(LandWidget *base):
+def land_widget_scrolling_get_container(LandWidget *base) -> LandWidget *:
     LandList *children = LAND_WIDGET_CONTAINER(base)->children
     LandWidget *w = children->first->data;
     return w
 
-LandWidget *def land_widget_scrolling_get_vertical(LandWidget *base):
+def land_widget_scrolling_get_vertical(LandWidget *base) -> LandWidget *:
     LandList *children = LAND_WIDGET_CONTAINER(base)->children
     LandWidget *w = children->first->next->data;
     return w
 
-LandWidget *def land_widget_scrolling_get_horizontal(LandWidget *base):
+def land_widget_scrolling_get_horizontal(LandWidget *base) -> LandWidget *:
     LandList *children = LAND_WIDGET_CONTAINER(base)->children
     LandWidget *w = children->first->next->next->data;
     return w
 
-LandWidget *def land_widget_scrolling_get_empty(LandWidget *base):
+def land_widget_scrolling_get_empty(LandWidget *base) -> LandWidget *:
     LandList *children = LAND_WIDGET_CONTAINER(base)->children
     LandWidget *w = children->first->next->next->next->data;
     return w
@@ -68,7 +68,7 @@ def land_widget_scrolling_autohide(LandWidget *widget, int hori, vert, empty):
 
     land_widget_scrolling_update(widget)
 
-int def land_widget_scrolling_autobars(LandWidget *widget):
+def land_widget_scrolling_autobars(LandWidget *widget) -> int:
     """
     Returns 0 if nothing changed or 1 if something changed.
     """
@@ -204,7 +204,7 @@ int def land_widget_scrolling_autobars(LandWidget *widget):
     if after == before: return 0
     return 1
 
-static int def scrolling_update_layout(LandWidget *widget):
+static def scrolling_update_layout(LandWidget *widget) -> int:
     """
     Update the scrolling window after it was resized or scrolled. Returns 1
     if any bars were hidden or unhidden.
@@ -349,7 +349,7 @@ def land_widget_scrolling_add(LandWidget *widget, LandWidget *add):
     # There is no point in updating here, as the widget to be added likely is
     # not fully created yet.
 
-LandWidget *def land_widget_scrolling_get_child(LandWidget *base):
+def land_widget_scrolling_get_child(LandWidget *base) -> LandWidget *:
     """
     Return the child window of the scrolling window. Usually, a scrolling
     window has exactly one child window, which is controlled by the scrollbars.
@@ -445,7 +445,7 @@ def land_widget_scrolling_wheel(LandWidget *widget, int wheel):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
     self.scrollwheel = wheel
 
-LandWidget *def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h):
+def land_widget_scrolling_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     """
     Creates a new Scrolling widget. You can add a child widget to it, and it
     will automatically display scrollbars and translate mouse coordinates.

@@ -29,8 +29,8 @@ macro LAND_WIDGET_MENU(widget) ((LandWidgetMenu *) land_widget_check(widget, LAN
 macro LAND_WIDGET_MENUBUTTON(widget) ((LandWidgetMenuButton *) land_widget_check(widget, LAND_WIDGET_ID_MENUBUTTON, __FILE__, __LINE__))
 macro LAND_WIDGET_MENUITEM(widget) ((LandWidgetMenuItem *) land_widget_check(widget, LAND_WIDGET_ID_MENUITEM, __FILE__, __LINE__))
 
-LandWidget *def land_widget_menubar_new(LandWidget *parent, float x, float y,
-    float w, float h):
+def land_widget_menubar_new(LandWidget *parent, float x, float y,
+    float w, float h) -> LandWidget *:
     """
     Create a new menubar. That is, a menu which is layout horizontally instead
     of vertically. By default, a menubar will expand horizontally, and shrink
@@ -42,8 +42,8 @@ LandWidget *def land_widget_menubar_new(LandWidget *parent, float x, float y,
     land_widget_layout_set_shrinking(base, 1, 1)
     return base
 
-LandWidget *def land_widget_menu_new(LandWidget *parent, float x, float y,
-    float w, float h):
+def land_widget_menu_new(LandWidget *parent, float x, float y,
+    float w, float h) -> LandWidget *:
     """
     Create a new menu, with menu items layout out vertically.
     """
@@ -129,8 +129,8 @@ static def menuitem_clicked(LandWidget *base):
 
     if self.callback: self->callback(LAND_WIDGET(self))
 
-LandWidget *def land_widget_menubutton_new(LandWidget *parent, char const *name,
-    LandWidget *submenu, float x, float y, float w, float h):
+def land_widget_menubutton_new(LandWidget *parent, char const *name,
+    LandWidget *submenu, float x, float y, float w, float h) -> LandWidget *:
     """
     Create a submenu, i.e. a button in a menu to open another menu when clicked.
     """
@@ -188,8 +188,8 @@ def land_widget_menubar_add(LandWidget *base, LandWidget *item):
     # is not ready yet, e.g. min-size is not calculated yet
     # land_widget_layout_adjust(base, 1, 1, 1)
 
-LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
-    void (*callback)(LandWidget *widget)):
+def land_widget_menuitem_new(LandWidget *parent, char const *name,
+    void (*callback)(LandWidget *widget)) -> LandWidget *:
     """
     Create a new menu item, i.e. en entry which can be clicked to execute the
     given callback.
@@ -220,8 +220,8 @@ LandWidget *def land_widget_menuitem_new(LandWidget *parent, char const *name,
 
     return self
 
-LandWidget *def land_widget_submenuitem_new(LandWidget *parent,
-    char const *name, LandWidget *submenu):
+def land_widget_submenuitem_new(LandWidget *parent,
+    char const *name, LandWidget *submenu) -> LandWidget *:
     int tw = land_text_get_width(name)
     int th = land_font_height(land_font_current())
     LandWidget *button = land_widget_menubutton_new(parent, name, submenu,
@@ -237,7 +237,7 @@ LandWidget *def land_widget_submenuitem_new(LandWidget *parent,
     land_widget_layout(parent)
     return button
 
-LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
+def land_widget_menu_spacer_new(LandWidget *parent) -> LandWidget *:
     LandWidget *button = land_widget_box_new(parent, 0, 0, 0, 0)
     land_widget_theme_initialize(button)
 
@@ -246,8 +246,8 @@ LandWidget *def land_widget_menu_spacer_new(LandWidget *parent):
     land_widget_layout(parent)
     return button
 
-LandWidget *def land_widget_menu_find(LandWidget *super, int n,
-    char const *names[]):
+def land_widget_menu_find(LandWidget *super, int n,
+    char const *names[]) -> LandWidget *:
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(super)
     LandList *l = container->children
     if l:
@@ -267,7 +267,7 @@ LandWidget *def land_widget_menu_find(LandWidget *super, int n,
 def land_widget_menu_mouse_enter(LandWidget *self):
     pass
 
-static int def is_in_menu(LandWidget *self, LandWidget *other):
+static def is_in_menu(LandWidget *self, LandWidget *other) -> int:
     """
     Check if the given menu has other as an ancestor.
     """
@@ -280,7 +280,7 @@ static int def is_in_menu(LandWidget *self, LandWidget *other):
         self = button->menu
     return 0
 
-static int def is_related(LandWidget *self, LandWidget *other):
+static def is_related(LandWidget *self, LandWidget *other) -> int:
     """
     Check if other is a menu item or menu button related to this menu.
     """

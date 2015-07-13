@@ -23,49 +23,49 @@ class LandYAML:
     LandArray *parents
     bool expect_key
 
-LandHash *def land_yaml_get_mapping(LandYAMLEntry *self):
+def land_yaml_get_mapping(LandYAMLEntry *self) -> LandHash *:
     assert(self.type == Mapping)
     return self.mapping
 
-LandArray *def land_yaml_get_sequence(LandYAMLEntry *self):
+def land_yaml_get_sequence(LandYAMLEntry *self) -> LandArray *:
     assert(self.type == Sequence)
     return self.sequence
 
-char const *def land_yaml_get_scalar(LandYAMLEntry *self):
+def land_yaml_get_scalar(LandYAMLEntry *self) -> char const *:
     assert(self.type == Scalar)
     return self.scalar
 
-int def land_yaml_get_scalar_int(LandYAMLEntry *self):
+def land_yaml_get_scalar_int(LandYAMLEntry *self) -> int:
     return strtol(self.scalar, None, 0)
 
-double def land_yaml_get_scalar_double(LandYAMLEntry *self):
+def land_yaml_get_scalar_double(LandYAMLEntry *self) -> double:
     return strtod(self.scalar, None)
 
-char const *def land_yaml_get_scalar_nth(LandArray *s, int i):
+def land_yaml_get_scalar_nth(LandArray *s, int i) -> char const *:
     return land_yaml_get_scalar(land_array_get_nth(s, i))
 
-double def land_yaml_get_scalar_nth_double(LandArray *s, int i):
+def land_yaml_get_scalar_nth_double(LandArray *s, int i) -> double:
     return land_yaml_get_scalar_double(land_array_get_nth(s, i))
 
-LandYAMLEntry *def land_yaml_get_entry(LandYAMLEntry *self, char const *name):
+def land_yaml_get_entry(LandYAMLEntry *self, char const *name) -> LandYAMLEntry *:
     return land_hash_get(self.mapping, name)
 
-int def land_yaml_get_entry_int(LandYAMLEntry *self,
-        char const *name):
+def land_yaml_get_entry_int(LandYAMLEntry *self,
+        char const *name) -> int:
     return land_yaml_get_scalar_int(land_yaml_get_entry(self, name))
 
-LandYAMLEntry *def land_yaml_get_nth(LandYAMLEntry *self, int i):
+def land_yaml_get_nth(LandYAMLEntry *self, int i) -> LandYAMLEntry *:
     return land_array_get_nth(land_yaml_get_sequence(self), i)
 
-int def land_yaml_get_nth_int(LandYAMLEntry *self, int i):
+def land_yaml_get_nth_int(LandYAMLEntry *self, int i) -> int:
     return land_yaml_get_scalar_int(
         land_array_get_nth(land_yaml_get_sequence(self), i))
 
-double def land_yaml_get_nth_double(LandYAMLEntry *self, int i):
+def land_yaml_get_nth_double(LandYAMLEntry *self, int i) -> double:
     return land_yaml_get_scalar_double(
         land_array_get_nth(land_yaml_get_sequence(self), i))
 
-LandYAML *def land_yaml_new(char const *filename):
+def land_yaml_new(char const *filename) -> LandYAML *:
     LandYAML *yaml
     land_alloc(yaml)
     yaml.filename = land_strdup(filename)
@@ -149,7 +149,7 @@ def land_yaml_add_scalar_f(LandYAML *yaml, char const *v, ...):
     land_yaml_add_scalar_v(yaml, v, args)
     va_end(args)
 
-LandYAML *def land_yaml_load(char const *filename):
+def land_yaml_load(char const *filename) -> LandYAML *:
     yaml_parser_t parser
     FILE *f = fopen(filename, "rb")
 
@@ -188,7 +188,7 @@ LandYAML *def land_yaml_load(char const *filename):
 
 static bool def _save_entry(LandYAMLEntry *e, yaml_emitter_t *emitter)
 
-static bool def _save_mapping(LandYAMLEntry *e, yaml_emitter_t *emitter):
+static def _save_mapping(LandYAMLEntry *e, yaml_emitter_t *emitter) -> bool:
     yaml_event_t event
 
     memset(&event, 0, sizeof event)
@@ -211,7 +211,7 @@ static bool def _save_mapping(LandYAMLEntry *e, yaml_emitter_t *emitter):
 
     return true
 
-static bool def _save_sequence(LandYAMLEntry *e, yaml_emitter_t *emitter):
+static def _save_sequence(LandYAMLEntry *e, yaml_emitter_t *emitter) -> bool:
     yaml_event_t event
 
     memset(&event, 0, sizeof event)
@@ -228,7 +228,7 @@ static bool def _save_sequence(LandYAMLEntry *e, yaml_emitter_t *emitter):
 
     return true
 
-static bool def _save_scalar(LandYAMLEntry *e, yaml_emitter_t *emitter):
+static def _save_scalar(LandYAMLEntry *e, yaml_emitter_t *emitter) -> bool:
     yaml_event_t event
 
     memset(&event, 0, sizeof event)
@@ -237,7 +237,7 @@ static bool def _save_scalar(LandYAMLEntry *e, yaml_emitter_t *emitter):
     if not yaml_emitter_emit(emitter, &event): return false
     return true
 
-static bool def _save_entry(LandYAMLEntry *e, yaml_emitter_t *emitter):
+static def _save_entry(LandYAMLEntry *e, yaml_emitter_t *emitter) -> bool:
     if e->type == Mapping:
         return _save_mapping(e, emitter)
     elif e->type == Sequence:

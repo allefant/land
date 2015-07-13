@@ -4,14 +4,14 @@ class LandColor:
 static import land/allegro5/a5_misc
 static import global ctype
 
-LandColor def land_color_hsv(float hue, sat, val):
+def land_color_hsv(float hue, sat, val) -> LandColor:
     return platform_color_hsv(hue, sat, val)
 
-LandColor def land_color_rgba(float r, g, b, a):
+def land_color_rgba(float r, g, b, a) -> LandColor:
     LandColor c = {r, g, b, a}
     return c
 
-LandColor def land_color_premul(float r, g, b, a):
+def land_color_premul(float r, g, b, a) -> LandColor:
     LandColor c = {r * a, g * a, b * a, a}
     return c
 
@@ -21,7 +21,7 @@ static int hexval(char c):
     if c >= 'a' and c <= 'f': return 10 + (c - 'a')
     return 0
 
-LandColor def land_color_name(char const *name):
+def land_color_name(char const *name) -> LandColor:
     if name and name[0] == '#':
         LandColor c
         c.r = (hexval(name[1]) * 16 + hexval(name[2])) / 255.0

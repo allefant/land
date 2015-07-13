@@ -56,8 +56,8 @@ def land_widget_sizer_mouse_tick(LandWidget *super):
         #    land_widget_layout(self.target->parent)
         self.target->box.flags &= ~GUL_RESIZE
 
-LandWidget *def land_widget_sizer_new(LandWidget *parent, int position,
-    x, y, w, h):
+def land_widget_sizer_new(LandWidget *parent, int position,
+    x, y, w, h) -> LandWidget *:
     """
     Create a new sizer widget. By default it will use its parent as target,
     and shrink depending on the position parameter.

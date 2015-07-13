@@ -52,7 +52,7 @@ def draw(LandRunner *self):
 def done(LandRunner *self):
     land_image_destroy(image)
 
-int def main():
+def main() -> int:
     land_init()
     LandRunner *runner = land_runner_new("Draw Target", init, NULL, tick, draw, NULL, done)
     land_runner_register(runner)

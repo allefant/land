@@ -32,9 +32,9 @@ def land_runner_initialize(LandRunner *self, char const *name, void (*init)(Land
     self.leave = leave
     self.destroy = destroy
 
-LandRunner *def land_runner_new(char const *name, void (*init)(LandRunner *self),
+def land_runner_new(char const *name, void (*init)(LandRunner *self),
     void (*enter)(LandRunner *self), void (*tick)(LandRunner *self),
-    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)):
+    void (*draw)(LandRunner *self), void (*leave)(LandRunner *self), void (*destroy)(LandRunner *self)) -> LandRunner *:
     LandRunner *self
     land_alloc(self)
     self.allocated = 1

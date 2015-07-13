@@ -33,8 +33,8 @@ def land_widget_scrolling_text_initialize(LandWidget *base,
     land_widget_inner(container, &cx, &cy, &cw, &ch)
     land_widget_text_new(base, text, wordwrap, cx, cy, cw, ch)
 
-LandWidget *def land_widget_scrolling_text_new(LandWidget *parent,
-    char const *text, int wordwrap, int x, int y, int w, int h):
+def land_widget_scrolling_text_new(LandWidget *parent,
+    char const *text, int wordwrap, int x, int y, int w, int h) -> LandWidget *:
     LandWidgetScrollingText *self
     land_alloc(self)
     LandWidget *widget = (LandWidget *)self

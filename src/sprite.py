@@ -88,7 +88,7 @@ class LandSpritesGrid:
 
 static LandGridInterface *land_grid_vtable_sprites
 
-LandGrid *def land_sprites_grid_new(int cell_w, cell_h, x_cells, y_cells):
+def land_sprites_grid_new(int cell_w, cell_h, x_cells, y_cells) -> LandGrid *:
 
     LandSpritesGrid *self
     land_alloc(self)
@@ -186,7 +186,7 @@ def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
         self.type->initialize(self)
 
 
-LandSprite *def land_sprite_new(LandSpriteType *type):
+def land_sprite_new(LandSpriteType *type) -> LandSprite *:
 
     if not strcmp(type->name, "animation"):
         return land_sprite_animated_new(type)
@@ -196,8 +196,8 @@ LandSprite *def land_sprite_new(LandSpriteType *type):
     land_sprite_initialize(self, type)
     return self
 
-LandSprite *def land_sprite_with_image_new(LandSpriteType *type, LandImage
-        *image):
+def land_sprite_with_image_new(LandSpriteType *type, LandImage
+        *image) -> LandSprite *:
 
     LandSpriteWithImage *self
     land_alloc(self)
@@ -222,7 +222,7 @@ def land_sprite_animated_initialize(LandSprite *super):
     self.b = 1
     self.a = 1
 
-LandSprite *def land_sprite_animated_new(LandSpriteType *type):
+def land_sprite_animated_new(LandSpriteType *type) -> LandSprite *:
     LandSpriteAnimated *self
     land_alloc(self)
     land_sprite_initialize(LAND_SPRITE(self), type)
@@ -253,7 +253,7 @@ def land_sprite_hide(LandSprite *self, LandGrid *grid):
     if not self.shown: return
     land_sprite_remove_from_grid(self, grid)
 
-int def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other):
+def land_sprite_overlap_pixelperfect(LandSprite *self, LandSprite *other) -> int:
     """
     Given two sprites who have a type LandSpriteTypeImage, do a pixel overlap
     test, and return 0 if they don't overlap.
@@ -283,7 +283,7 @@ static def get_grid_extents(LandSprite *self, LandGrid *grid,
     if *tr >= grid->x_cells: *tr = grid->x_cells - 1
     if *tb >= grid->y_cells: *tb = grid->y_cells - 1
 
-LandArray *def land_sprites_grid_get_all(LandGrid *sprites_grid):
+def land_sprites_grid_get_all(LandGrid *sprites_grid) -> LandArray *:
     LandArray *a = land_array_new()
     LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
     grid->tag++
@@ -300,8 +300,8 @@ LandArray *def land_sprites_grid_get_all(LandGrid *sprites_grid):
                     item = item->next
     return a
 
-LandList *def land_sprites_grid_overlap(LandSprite *self,
-    LandGrid *sprites_grid):
+def land_sprites_grid_overlap(LandSprite *self,
+    LandGrid *sprites_grid) -> LandList *:
     """
     Return a list of all sprites overlapping the sprite in the given grid.
     The sprite itself is not returned.
@@ -333,8 +333,8 @@ LandList *def land_sprites_grid_overlap(LandSprite *self,
 
     return retlist
 
-LandList *def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
-    float radius):
+def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
+    float radius) -> LandList *:
     """
     Return a list of all sprites in the grid, whose position is inside the given
     circle (in pixels). The size of the sprite is currently ignored, only its
@@ -380,8 +380,8 @@ LandList *def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
 
     return retlist
 
-LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
-    float l, t, r, b):
+def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
+    float l, t, r, b) -> LandList *:
     """
     Return a list of all sprites in the given rectangle. All the sprites who
     are in one of the grid cells overlapped by the rectangle are returned.
@@ -416,8 +416,8 @@ LandList *def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
 
     return retlist
 
-LandList *def  land_sprites_grid_get_in_cell(LandGrid *grid,
-    int cx, cy):
+def  land_sprites_grid_get_in_cell(LandGrid *grid,
+    int cx, cy) -> LandList *:
     LandList *retlist = None
     LandSpritesGrid *sgrid = LAND_SPRITES_GRID(grid)
     if cx < 0 or cy < 0 or cx >= grid->x_cells or cy >= grid->y_cells: return None
@@ -433,17 +433,17 @@ LandList *def  land_sprites_grid_get_in_cell(LandGrid *grid,
             item = item->next
     return retlist
 
-static int def is_left(float ax, ay, bx, by):
+static def is_left(float ax, ay, bx, by) -> int:
     return ax * by - ay * bx < 0
 
-static int def is_in_triangle(float x, y, p1x, p1y, p2x, p2y, p3x, p3y):
+static def is_in_triangle(float x, y, p1x, p1y, p2x, p2y, p3x, p3y) -> int:
     if is_left(x - p1x, y - p1y, p2x - p1x, p2y - p1y) and\
         is_left(x - p2x, y - p2y, p3x - p2x, p3y - p2y) and\
         is_left(x - p3x, y - p3y, p1x - p3x, p1y - p3y): return True
     return False
 
-LandList *def land_sprites_get_triangle(LandGrid *sprites_grid,
-    float p1x, p1y, p2x, p2y, p3x, p3y):
+def land_sprites_get_triangle(LandGrid *sprites_grid,
+    float p1x, p1y, p2x, p2y, p3x, p3y) -> LandList *:
     """
     Return a list of all sprites in the given triangle. This only considers
     center positions, the size/shape of sprites is completely ignored.
@@ -493,8 +493,8 @@ LandList *def land_sprites_get_triangle(LandGrid *sprites_grid,
 
 # Return a list of all sprites in the given view and overlap. The overlap
 # increases when negative for t and l and positive for r and l.
-LandList *def land_sprites_grid_get_in_view(LandGrid *sprites_grid,
-    LandView *view, float l, t, r, b):
+def land_sprites_grid_get_in_view(LandGrid *sprites_grid,
+    LandView *view, float l, t, r, b) -> LandList *:
 
     l += view->scroll_x + view->x
     t += view->scroll_y + view->y
@@ -642,7 +642,7 @@ def land_sprites_exit():
     land_free(land_grid_vtable_sprites)
 
 
-LandSpriteType *def land_spritetype_new():
+def land_spritetype_new() -> LandSpriteType *:
 
     LandSpriteType *self
     land_alloc(self)
@@ -657,7 +657,7 @@ def land_spritetype_destroy(LandSpriteType *self):
     land_free(self)
 
 
-LandSpriteTypeWithImage *def land_spritetype_with_image_new():
+def land_spritetype_with_image_new() -> LandSpriteTypeWithImage *:
 
     #FIXME TODO XXX
     return NULL
@@ -688,8 +688,8 @@ def land_spritetype_image_initialize(LandSpriteType *super,
 
 # Create a new image sprite type with the given image. The source clipping of
 # the image is honored.
-LandSpriteType *def land_spritetype_image_new(LandImage *image, bool mask,
-    int n):
+def land_spritetype_image_new(LandImage *image, bool mask,
+    int n) -> LandSpriteType *:
 
     LandSpriteTypeImage *self
     land_alloc(self)
@@ -714,8 +714,8 @@ def land_spritetype_animation_initialize(LandSpriteType *super,
     land_free(super->name)
     super->name = land_strdup("animation")
 
-LandSpriteType *def land_spritetype_animation_new(
-    LandAnimation *animation, LandImage *image, bool mask, int n):
+def land_spritetype_animation_new(
+    LandAnimation *animation, LandImage *image, bool mask, int n) -> LandSpriteType *:
     """
     Create a new animation sprite type with the given animation. The
     image is used for collision detection. If no image is given, the

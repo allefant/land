@@ -14,7 +14,7 @@ def platform_font_init():
 def platform_font_exit():
     pass
 
-LandFont *def platform_font_load(char const *filename, float size):
+def platform_font_load(char const *filename, float size) -> LandFont *:
     land_log_message("Loading font %s..", filename)
     LandFontPlatform *self
     land_alloc(self)
@@ -27,8 +27,8 @@ LandFont *def platform_font_load(char const *filename, float size):
         super->size = al_get_font_line_height(self.a5)
     return super
 
-LandFont *def platform_font_from_image(LandImage *image, int n_ranges,
-    int *ranges):
+def platform_font_from_image(LandImage *image, int n_ranges,
+    int *ranges) -> LandFont *:
     LandFontPlatform *self
     LandImagePlatform *i = (void *)image
     land_alloc(self)
@@ -75,7 +75,7 @@ def platform_font_print(LandFontState *lfs,
     
     al_restore_state(&state)
 
-LandFont *def platform_font_new():
+def platform_font_new() -> LandFont *:
     return None
 
 def platform_font_destroy(LandFont *super):

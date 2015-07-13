@@ -42,7 +42,7 @@ def land_widget_list_initialize(LandWidget *base, LandWidget *parent,
 # rows and columns. Each time you add a widget to it, it will be placed in the
 # next column/row.
 # 
-LandWidget *def land_widget_list_new(LandWidget *parent, int x, y, w, h):
+def land_widget_list_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidgetList *self
     land_alloc(self)
     LandWidget *widget = (LandWidget *)self
@@ -50,9 +50,9 @@ LandWidget *def land_widget_list_new(LandWidget *parent, int x, y, w, h):
 
     return widget
 
-LandWidget *def land_widget_listitem_new(LandWidget *parent,
+def land_widget_listitem_new(LandWidget *parent,
     char const *text, void (*clicked)(LandWidget *self),
-    int x, int y, int w, int h):
+    int x, int y, int w, int h) -> LandWidget *:
     LandWidget *self = land_widget_button_new(parent, text, clicked,
         x, y, w, h)
     land_widget_listitem_interface_initialize()
@@ -82,7 +82,7 @@ def land_widget_listitem_interface_initialize():
 # takes ownership of the array and is responsible for destroying it with
 # land_array_destroy after use.
 # 
-LandArray *def land_widget_list_get_selected_items(LandWidget *self):
+def land_widget_list_get_selected_items(LandWidget *self) -> LandArray *:
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
     LandArray *array = land_array_new()
     LandListItem *item

@@ -5,7 +5,7 @@ class LandProtobuf:
     uint64_t pos
     uint64_t end
 
-LandProtobuf *def land_protobuf_load(char const *filename):
+def land_protobuf_load(char const *filename) -> LandProtobuf *:
     LandBuffer *b = land_buffer_read_from_file(filename)
     if not b:
         return None
@@ -29,7 +29,7 @@ static uint64_t varint(LandProtobuf *self):
             continue
         return x
 
-int def land_protobuf_next(LandProtobuf *self, uint64_t *size):
+def land_protobuf_next(LandProtobuf *self, uint64_t *size) -> int:
     if self.pos >= self->end:
         return 0
 
@@ -54,27 +54,27 @@ static macro R(T):
     self->pos += sizeof(T)
     return x
 
-double def land_protobuf_double(LandProtobuf *self):
+def land_protobuf_double(LandProtobuf *self) -> double:
     double x
     void *p = &x
     memcpy(p, self.data->buffer + self->pos, 8)
     self.pos += 8
     return x
 
-float def land_protobuf_float(LandProtobuf *self):
+def land_protobuf_float(LandProtobuf *self) -> float:
     float x
     void *p = &x
     memcpy(p, self.data->buffer + self->pos, 4)
     self.pos += 4
     return x
 
-uint32_t def land_protobuf_fixed32(LandProtobuf *self):
+def land_protobuf_fixed32(LandProtobuf *self) -> uint32_t:
     R(uint32_t)
 
-int32_t def land_protobuf_sfixed32(LandProtobuf *self):
+def land_protobuf_sfixed32(LandProtobuf *self) -> int32_t:
     R(int32_t)
 
-char *def land_protobuf_string(LandProtobuf *self, int size):
+def land_protobuf_string(LandProtobuf *self, int size) -> char *:
     self.pos += size
     return self.data->buffer + self->pos - size
 

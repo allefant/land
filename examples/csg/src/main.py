@@ -68,7 +68,7 @@ static def init_coordinates:
 
     memmove(dodecahedron_coords, c2, sizeof(c2))
 
-LandCSG *def bubbles(void *material1, *material2):
+def bubbles(void *material1, *material2) -> LandCSG *:
     init_coordinates()
     LandCSG *result = None
     for int i in range(12):

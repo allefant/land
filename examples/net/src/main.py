@@ -309,7 +309,7 @@ def my_draw(LandWidget *self):
 
 LandWidgetInterface *vt
 
-LandWidget *def my_widget_new(LandWidget *parent, int state, id):
+def my_widget_new(LandWidget *parent, int state, id) -> LandWidget *:
     if not vt:
         land_widget_button_interface_initialize()
         vt = land_widget_copy_interface(land_widget_base_interface, "button")

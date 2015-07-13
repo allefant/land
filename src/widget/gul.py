@@ -141,8 +141,8 @@ static def update_lookup_grid(LandWidget *self):
 
 
 # Same as find_box_in_grid, but O(c) instead of O(n). 
-static LandWidget *def lookup_box_in_grid(LandWidget *self,
-    int col, row):
+static def lookup_box_in_grid(LandWidget *self,
+    int col, row) -> LandWidget *:
     if not self.box.lookup_grid: update_lookup_grid(self)
     if not self.box.lookup_grid: return None
     assert(col < self.box.cols and row < self->box.rows)
@@ -150,7 +150,7 @@ static LandWidget *def lookup_box_in_grid(LandWidget *self,
     return self.box.lookup_grid[row * self->box.cols + col]
 
 # Get minimum height of the specified row. 
-static int def row_min_height(LandWidget *self, int row):
+static def row_min_height(LandWidget *self, int row) -> int:
     int i
     int v = 0
 
@@ -163,7 +163,7 @@ static int def row_min_height(LandWidget *self, int row):
     return v
 
 # Get minimum width of the specified column. 
-static int def column_min_width(LandWidget *self, int col):
+static def column_min_width(LandWidget *self, int col) -> int:
     int i
     int v = 0
 
@@ -176,7 +176,7 @@ static int def column_min_width(LandWidget *self, int col):
     return v
 
 # Check if a column is expanding (at least one cell). 
-static int def is_column_expanding(LandWidget *self, int col):
+static def is_column_expanding(LandWidget *self, int col) -> int:
     int i
 
     for i = 0 while i < self.box.rows with i++:
@@ -188,7 +188,7 @@ static int def is_column_expanding(LandWidget *self, int col):
     return 0
 
 # Check if a row is expanding (at least one cell). 
-static int def is_row_expanding(LandWidget *self, int row):
+static def is_row_expanding(LandWidget *self, int row) -> int:
     int i
 
     for i = 0 while i < self.box.cols with i++:
@@ -200,7 +200,7 @@ static int def is_row_expanding(LandWidget *self, int row):
     return 0
 
 # Count number of expanding columns. 
-static int def expanding_columns(LandWidget * self):
+static def expanding_columns(LandWidget * self) -> int:
     int i
     int v = 0
 
@@ -211,7 +211,7 @@ static int def expanding_columns(LandWidget * self):
     return v
 
 # Count number of expanding rows. 
-static int def expanding_rows(LandWidget * self):
+static def expanding_rows(LandWidget * self) -> int:
     int i
     int v = 0
 
@@ -222,7 +222,7 @@ static int def expanding_rows(LandWidget * self):
     return v
 
 # Get minimum (outer) height so all children can possibly fit. 
-static int def min_height(LandWidget *self):
+static def min_height(LandWidget *self) -> int:
     int i
     int v = 0
 
@@ -235,7 +235,7 @@ static int def min_height(LandWidget *self):
     return v
 
 # Get minimum (outer) width so all children can possibly fit. 
-static int def min_width(LandWidget *self):
+static def min_width(LandWidget *self) -> int:
     int i
     int v = 0
 
@@ -247,7 +247,7 @@ static int def min_width(LandWidget *self):
 
     return v
 
-static int def adjust_resize_width(LandWidget *self, int dx):
+static def adjust_resize_width(LandWidget *self, int dx) -> int:
     int i
     for i = 0 while i < self.box.cols with i++:
         int j
@@ -258,7 +258,7 @@ static int def adjust_resize_width(LandWidget *self, int dx):
                 return 1
     return 0
 
-static int def adjust_resize_height(LandWidget *self, int dx):
+static def adjust_resize_height(LandWidget *self, int dx) -> int:
     int j
     for j = 0 while j < self.box.rows with j++:
         int i

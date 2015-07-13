@@ -11,7 +11,7 @@ static import global allegro5.allegro_android
 
 static void (*global_cb)(void)
 
-static int def replacement_main(int argc, char **argv):
+static def replacement_main(int argc, char **argv) -> int:
     global_cb()
     return 0
 
@@ -19,7 +19,7 @@ def platform_without_main(void (*cb)(void)):
     global_cb = cb
     al_run_main(0, None, replacement_main);
 
-double def platform_get_time():
+def platform_get_time() -> double:
     return al_current_time()
 
 def platform_init():
@@ -174,7 +174,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyNumLock,
     LandKeyCapsLock}
 
-char const *def platform_key_name(int lk):
+def platform_key_name(int lk) -> char const *:
     int ak = 0
     for int i = 0 while i < ALLEGRO_KEY_MAX with i++:
         if keyboard_conversion_table[i] == lk:
@@ -183,7 +183,7 @@ char const *def platform_key_name(int lk):
     char const *s = al_keycode_to_name(ak)
     return s
 
-static int def platform_keycode(int ak):
+static def platform_keycode(int ak) -> int:
     return keyboard_conversion_table[ak]
 
 def platform_hide_mouse_cursor():
@@ -281,7 +281,7 @@ def platform_mainloop(LandParameters *parameters):
                 al_acknowledge_drawing_resume(d->a5)
                 break
 
-char *def platform_get_app_settings_file(char const *appname):
+def platform_get_app_settings_file(char const *appname) -> char *:
     al_set_org_name("")
     al_set_app_name(appname)
     ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH)

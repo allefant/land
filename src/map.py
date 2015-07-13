@@ -29,18 +29,18 @@ def land_map_add_layer(LandMap *map, LandLayer *layer):
     else:
         map->first_layer = layer
 
-LandLayer *def land_map_base_layer(LandMap *map):
+def land_map_base_layer(LandMap *map) -> LandLayer *:
     """
     Returns the base layer of the map.
     """
     return map->first_layer
 
-LandLayer *def land_map_find_layer(LandMap *map, char const *name):
+def land_map_find_layer(LandMap *map, char const *name) -> LandLayer *:
     for LandLayer *l = map->first_layer while l with l = l->next_in_map:
         if not strcmp(name, l->name): return l
     return None
 
-LandMap *def land_map_new():
+def land_map_new() -> LandMap *:
     """
     Create a new map. This is not called directly normally, as you likely want
     to use one of the convenience function to already create layers of the

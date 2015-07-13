@@ -5,7 +5,7 @@ LandView *view
 
 macro LAND_MAP_ISOMETRIC 1
 
-static LandMap * def land_create_map(int cw, int ch, int w, int h, int layers, int flags):
+static def land_create_map(int cw, int ch, int w, int h, int layers, int flags) -> LandMap *:
     LandMap *self = land_map_new()
     int l
     for l = 0 while l < layers with l++:
@@ -61,7 +61,7 @@ static def game_draw(LandRunner *self):
 static def game_exit(LandRunner *self):
     pass
 
-int def main():
+def main() -> int:
     land_init()
     land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
     LandRunner *game_runner = land_runner_new("game",

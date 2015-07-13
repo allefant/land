@@ -22,7 +22,7 @@ import array
 
 static import hash, mem
 
-static bool def get_data(LandHash *self, LandHashIterator *i, void **data):
+static def get_data(LandHash *self, LandHashIterator *i, void **data) -> bool:
     if not self.entries: return False
     while i->i < self.size:
         if self.entries[i->i]:
@@ -33,16 +33,16 @@ static bool def get_data(LandHash *self, LandHashIterator *i, void **data):
         i->i++
     return False
 
-LandHashIterator def LandHashIterator_first(LandHash *self):
+def LandHashIterator_first(LandHash *self) -> LandHashIterator:
     LandHashIterator i = {0, 0}
     return i
 
-void *def LandHashIterator_item(LandHash *self, LandHashIterator *i):
+def LandHashIterator_item(LandHash *self, LandHashIterator *i) -> void *:
     void *data = None
     get_data(self, i, &data)
     return data
 
-bool def LandHashIterator_next(LandHash *self, LandHashIterator *i):
+def LandHashIterator_next(LandHash *self, LandHashIterator *i) -> bool:
     if get_data(self, i, None):
         i->j++
         return True
@@ -53,7 +53,7 @@ bool def LandHashIterator_next(LandHash *self, LandHashIterator *i):
 *** "undef" land_hash_new
 *** "undef" land_hash_destroy
 
-LandHash *def land_hash_new_memlog(char const *f, int l):
+def land_hash_new_memlog(char const *f, int l) -> LandHash *:
     LandHash *hash = land_hash_new()
     land_memory_add(hash, "hash", 1, f, l)
     return hash
@@ -68,7 +68,7 @@ def land_hash_destroy_memlog(LandHash *self, char const *f, int l):
 #
 # FIXME: This is the worst possible hash function.
 # 
-static unsigned int def hash_function(LandHash *self, char const *thekey):
+static def hash_function(LandHash *self, char const *thekey) -> unsigned int:
     int i
     unsigned int hash = 5381
     for i = 0 while thekey[i] with i++:
@@ -77,7 +77,7 @@ static unsigned int def hash_function(LandHash *self, char const *thekey):
 
     return hash & (self.size - 1)
 
-LandHash *def land_hash_new():
+def land_hash_new() -> LandHash *:
     """Create a new LandHash."""
     LandHash *self
     land_alloc(self)
@@ -110,7 +110,7 @@ def land_hash_destroy(LandHash *self):
     land_hash_clear(self)
     land_free(self)
 
-void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
+def land_hash_insert(LandHash *self, char const *thekey, void *data) -> void *:
     """Insert data into a LandHash.
     
     A LandHash simply is a mapping of keys to data pointers - it will never
@@ -158,7 +158,7 @@ void *def land_hash_insert(LandHash *self, char const *thekey, void *data):
     self.count++
     return data
 
-void *def land_hash_remove(LandHash *self, char const *thekey):
+def land_hash_remove(LandHash *self, char const *thekey) -> void *:
     """Remove the first entry found with the key, and return the associated
     data.
     
@@ -187,8 +187,8 @@ void *def land_hash_remove(LandHash *self, char const *thekey):
 
     return None
 
-static LandHashEntry *def land_hash_get_entry(LandHash *self,
-    char const *thekey):
+static def land_hash_get_entry(LandHash *self,
+    char const *thekey) -> LandHashEntry *:
     if not self.size: return None
     int i = self.hash_function(self, thekey)
     if not self.entries[i]: return None
@@ -199,7 +199,7 @@ static LandHashEntry *def land_hash_get_entry(LandHash *self,
 
     return None
 
-void *def land_hash_replace(LandHash *self, char const *thekey, void *data):
+def land_hash_replace(LandHash *self, char const *thekey, void *data) -> void *:
     """
     If an association to the given key exists, replace it with the given data,
     and return the old data.
@@ -213,7 +213,7 @@ void *def land_hash_replace(LandHash *self, char const *thekey, void *data):
     land_hash_insert(self, thekey, data)
     return None
 
-void *def land_hash_get(LandHash *self, char const *thekey):
+def land_hash_get(LandHash *self, char const *thekey) -> void *:
     """Return the data associated with a hash key. If the key exists multiple
     times, it can be not relied on a certain one being returned. It might always
     be the same, but it might not be - this is especially true if other entries
@@ -225,12 +225,12 @@ void *def land_hash_get(LandHash *self, char const *thekey):
     if entry: return entry->data
     return None
 
-int def land_hash_has(LandHash *self, char const *thekey):
+def land_hash_has(LandHash *self, char const *thekey) -> int:
     LandHashEntry *entry = land_hash_get_entry(self, thekey)
     if entry: return True
     return False
 
-LandArray *def land_hash_keys(LandHash *hash):
+def land_hash_keys(LandHash *hash) -> LandArray *:
     """Return an array containing all the keys in the hash. The strings are
     direct pointers into the hash - so you must not modify or free them, and
     they will get invalid if the hash is destroyed. You are responsible for
@@ -247,7 +247,7 @@ LandArray *def land_hash_keys(LandHash *hash):
 
     return array   
 
-LandArray *def land_hash_data(LandHash *hash):
+def land_hash_data(LandHash *hash) -> LandArray *:
     """Return an array with all the data pointers in the hash. If you want to
     destroy a hash including all its data, this may be a convenient way to
     do it:

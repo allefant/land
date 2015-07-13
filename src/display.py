@@ -169,7 +169,7 @@ static int was_resized
 static LandList *_previous
 global LandDisplay *_land_active_display
 
-LandDisplay *def land_display_new(int w, int h, int flags):
+def land_display_new(int w, int h, int flags) -> LandDisplay *:
     LandDisplay *self = platform_display_new()
     
     self.w = w
@@ -232,7 +232,7 @@ def land_display_set():
     platform_display_color()
     platform_display_clip()
 
-LandDisplay *def land_display_get():
+def land_display_get() -> LandDisplay *:
     """
     Retrieve a handle to the currently active display of the calling thread.
     """
@@ -254,7 +254,7 @@ def land_display_exit():
     land_list_destroy(_previous)
     platform_display_exit()
 
-double def land_display_time_flip_speed(double howlong):
+def land_display_time_flip_speed(double howlong) -> double:
     """
     This function is dangerous! It will completely halt Land for the passed
     time in seconds.
@@ -324,7 +324,7 @@ def land_get_color(float *r, float *g, float *b, float *a):
     *b = d->color_b
     *a = d->color_a
 
-int def land_blend(int state):
+def land_blend(int state) -> int:
     LandDisplay *d = _land_active_display
     int prev = d->blend
     d->blend = state
@@ -389,7 +389,7 @@ def land_unclip():
     d->clip_y2 = land_display_height()
     platform_display_clip()
 
-int def land_get_clip(float *cx1, float *cy1, float *cx2, float *cy2):
+def land_get_clip(float *cx1, float *cy1, float *cx2, float *cy2) -> int:
     LandDisplay *d = _land_active_display
     *cx1 = d->clip_x1
     *cy1 = d->clip_y1
@@ -451,11 +451,11 @@ def land_plot(float x, y):
 def land_pick_color(float x, y):
     platform_pick_color(x, y)
 
-int def land_display_width():
+def land_display_width() -> int:
     LandDisplay *self = _land_active_display
     return self.w
 
-int def land_display_height():
+def land_display_height() -> int:
     LandDisplay *self = _land_active_display
     return self.h
 
@@ -477,11 +477,11 @@ def land_display_desktop_size(int *w, *h):
 def land_display_title(char const *title):
     platform_display_title(title)
 
-int def land_display_flags():
+def land_display_flags() -> int:
     LandDisplay *self = _land_active_display
     return self.flags
 
-LandImage *def land_display_new_image():
+def land_display_new_image() -> LandImage *:
     LandImage *image = platform_new_image()
     return image
 
@@ -531,7 +531,7 @@ def land_resize_event(int w, h):
     _land_active_display->clip_x2 = w
     _land_active_display->clip_y2 = h
 
-int def land_was_resized():
+def land_was_resized() -> int:
     return was_resized
 
 def land_display_tick():

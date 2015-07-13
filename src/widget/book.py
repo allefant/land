@@ -184,7 +184,7 @@ def land_widget_book_pagename(LandWidget *widget, char const *name):
     LandWidget *button = hbox->children->last->data
     land_widget_button_set_text(button, name)
 
-LandWidget *def land_widget_book_new(LandWidget *parent, int x, y, w, h):
+def land_widget_book_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidgetBook *self
     land_alloc(self)
     land_widget_book_initialize((LandWidget *)self, parent, x, y, w, h)
@@ -232,7 +232,7 @@ def land_widget_book_interface_initialize():
         land_widget_bookpage_interface, "bookpage.tabless")
 
 # Return the current active page or None
-LandWidget *def land_widget_book_get_current_page(LandWidget *self):
+def land_widget_book_get_current_page(LandWidget *self) -> LandWidget *:
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)
@@ -250,7 +250,7 @@ LandWidget *def land_widget_book_get_current_page(LandWidget *self):
     return None
 
 # Return the current active page position or -1 if it's not contained
-int def land_widget_book_get_page_n(LandWidget *self, LandWidget *page):
+def land_widget_book_get_page_n(LandWidget *self, LandWidget *page) -> int:
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)
@@ -269,7 +269,7 @@ int def land_widget_book_get_page_n(LandWidget *self, LandWidget *page):
     return -1
 
 # Return the last active page or None.
-LandWidget *def land_widget_book_get_last_page(LandWidget *self):
+def land_widget_book_get_last_page(LandWidget *self) -> LandWidget *:
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)
@@ -281,7 +281,7 @@ LandWidget *def land_widget_book_get_last_page(LandWidget *self):
 
 # Return the given page, starting with 0 for the first page. If there is no
 # such page, None is returned.
-LandWidget *def land_widget_book_get_nth_page(LandWidget *self, int n):
+def land_widget_book_get_nth_page(LandWidget *self, int n) -> LandWidget *:
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)

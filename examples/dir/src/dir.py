@@ -1,9 +1,9 @@
 import global land/land
 
-static int def filter(char const *name, bool is_dir, void *data):
+static def filter(char const *name, bool is_dir, void *data) -> int:
     return 1    
 
-int def main():
+def main() -> int:
     land_init()
 
     LandArray *files = land_filelist(".", filter, 0, None)

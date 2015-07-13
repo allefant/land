@@ -30,7 +30,7 @@ char const *data[] = {
 
 LandWidget *desktop
 
-static LandWidget *def construct_menu():
+static def construct_menu() -> LandWidget *:
     int index[26]
     int i, j
     for i = 0 while i < 26 with i++:

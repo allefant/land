@@ -18,7 +18,7 @@ def platform_display_init():
 def platform_display_exit():
     pass
 
-LandDisplay *def platform_display_new():
+def platform_display_new() -> LandDisplay *:
     LandDisplayPlatform *self
     land_alloc(self)
 

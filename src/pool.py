@@ -6,14 +6,14 @@ class LandMemoryPool:
     int used
     void *memory
 
-LandMemoryPool *def land_pool_new_initial(int initial):
+def land_pool_new_initial(int initial) -> LandMemoryPool *:
     LandMemoryPool *self; land_alloc(self)
     self.allocated = initial
     self.memory = land_calloc(self->allocated)
     self.prev = self
     return self
 
-LandMemoryPool *def land_pool_new():
+def land_pool_new() -> LandMemoryPool *:
     return land_pool_new_initial(1024)
 
 def land_pool_destroy(LandMemoryPool *self):
@@ -26,7 +26,7 @@ def land_pool_destroy(LandMemoryPool *self):
             break
         last = prev
 
-void *def land_pool_alloc(LandMemoryPool *self, int size):
+def land_pool_alloc(LandMemoryPool *self, int size) -> void *:
     LandMemoryPool *last = self.prev
 
     while last->used + size > last->allocated:

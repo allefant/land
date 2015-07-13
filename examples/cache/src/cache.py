@@ -23,7 +23,7 @@ def tick(LandRunner *self):
         angle++
         cached = 0
 
-double def periodic(double x, w):
+def periodic(double x, w) -> double:
     x /= w
     x -= floor(x)
     x *= w

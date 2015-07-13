@@ -35,7 +35,7 @@ def my_mouse_tick(LandWidget *self):
         land_array_replace_nth(history, land_array_count(history) - 1,
             land_strdup(str))
 
-LandWidget *def land_widget_mybox_new(LandWidget *parent):
+def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
     static LandWidgetInterface *myvt = NULL
     if not myvt:
         land_widget_box_interface_initialize()

@@ -14,7 +14,7 @@ static class LandStreamPlatform:
     ALLEGRO_AUDIO_STREAM *a5
     void *fragment
 
-static bool def get_params(int channels, bits, *chan_conf, *depth):
+static def get_params(int channels, bits, *chan_conf, *depth) -> bool:
     if channels == 1: *chan_conf = ALLEGRO_CHANNEL_CONF_1
     elif channels == 2: *chan_conf = ALLEGRO_CHANNEL_CONF_2
     else: return False
@@ -25,15 +25,15 @@ static bool def get_params(int channels, bits, *chan_conf, *depth):
 
     return True
 
-LandSound *def platform_sound_load(char const *filename):
+def platform_sound_load(char const *filename) -> LandSound *:
     LandSoundPlatform *self
     land_alloc(self)
     self.a5 = al_load_sample(filename)
     self.super.filename = land_strdup(filename)
     return (void *)self
 
-LandSound *def platform_sound_new(int samples, float frequency, int bits,
-    channels):
+def platform_sound_new(int samples, float frequency, int bits,
+    channels) -> LandSound *:
     LandSoundPlatform *self
     land_alloc(self)
     int chan_conf = 0, depth = 0
@@ -47,11 +47,11 @@ LandSound *def platform_sound_new(int samples, float frequency, int bits,
         depth, chan_conf, False)
     return (void *)self
 
-void *def platform_sound_sample_pointer(LandSound *super):
+def platform_sound_sample_pointer(LandSound *super) -> void *:
     LandSoundPlatform *self = (void *)super
     return al_get_sample_data(self.a5)
 
-int def platform_sound_length(LandSound *super):
+def platform_sound_length(LandSound *super) -> int:
     LandSoundPlatform *self = (void *)super
     return al_get_sample_length(self.a5)
 
@@ -87,8 +87,8 @@ def platform_sound_init():
 def platform_sound_exit():
     pass
 
-LandStream *def platform_stream_new(int samples, fragments,
-    float frequency, int bits, channels):
+def platform_stream_new(int samples, fragments,
+    float frequency, int bits, channels) -> LandStream *:
     LandStreamPlatform *self
     land_alloc(self)
     LandStream *super = (void *)self
@@ -111,7 +111,7 @@ def platform_stream_destroy(LandStream *super):
     al_destroy_audio_stream(self.a5)
     land_free(super)
 
-void *def platform_stream_buffer(LandStream *super):
+def platform_stream_buffer(LandStream *super) -> void *:
     LandStreamPlatform *self = (void *)super
     if al_get_available_audio_stream_fragments(self.a5) == 0: return None
     self.fragment = al_get_audio_stream_fragment(self->a5):
@@ -133,7 +133,7 @@ def platform_stream_volume(LandStream *super, float volume):
     LandStreamPlatform *self = (void *)super
     al_set_audio_stream_gain(self.a5, volume)
 
-bool def platform_stream_is_playing(LandStream *super):
+def platform_stream_is_playing(LandStream *super) -> bool:
     LandStreamPlatform *self = (void *)super
     return al_get_audio_stream_playing(self.a5)
 

@@ -97,7 +97,7 @@ static macro closesocket close
 static macro sockerror perror
 *** "endif"
 
-static int def nonblocking(LandNet *self):
+static def nonblocking(LandNet *self) -> int:
     int r
     # Make non-blocking.
     *** "if" defined(WINDOWS)
@@ -137,7 +137,7 @@ static def _get_address(struct sockaddr_in sock_addr, char *address):
 
     sprintf(address + strlen(address), ":%d", ntohs(sock_addr.sin_port))
 
-char *def land_net_get_address(LandNet *self, int remote):
+def land_net_get_address(LandNet *self, int remote) -> char *:
     """
     Return either the local or remote address of the connection.
     """
@@ -154,7 +154,7 @@ char *def land_net_get_address(LandNet *self, int remote):
         sprintf(address, "?:?")
     return address
 
-LandNet *def land_net_new():
+def land_net_new() -> LandNet *:
     LandNet *self
     land_alloc(self)
     static int once = 1
@@ -276,7 +276,7 @@ static def land_net_poll_accept(LandNet *self):
     D(land_log_message_nostamp(" %s).\n",
         land_net_get_address(self.accepted, 1)))
 
-LandNet *def land_net_accept(LandNet *self):
+def land_net_accept(LandNet *self) -> LandNet *:
     if self.state == LAND_NET_LISTENING and self->accepted:
         LandNet *accepted = self.accepted
         self.accepted = NULL
@@ -400,7 +400,7 @@ static class LagSimulator:
     double delay
     double jitter
     
-static LagSimulator *def lag_simulator_new(double delay, double jitter):
+static def lag_simulator_new(double delay, double jitter) -> LagSimulator *:
     LagSimulator *self
     land_alloc(self)
     self.delay = delay
@@ -436,7 +436,7 @@ def land_net_lag_simulator(LandNet *self, double delay, double jitter):
 def land_net_limit_receive_rate(LandNet *self, int rate):
     self.max_rate = rate
 
-static int def _create_datagram_socket(LandNet *self):
+static def _create_datagram_socket(LandNet *self) -> int:
     # Create socket
     if not self.sockd:
         int r
@@ -468,7 +468,7 @@ static int def _create_datagram_socket(LandNet *self):
     return 0
 
 
-static int def _send_datagram(LandNet *self, char const *address, *packet, int size):
+static def _send_datagram(LandNet *self, char const *address, *packet, int size) -> int:
 
     # Resolve hostname.
     char *host
@@ -493,8 +493,8 @@ static int def _send_datagram(LandNet *self, char const *address, *packet, int s
     land_free(host)
     return r
 
-int def land_net_send_datagram(LandNet *self, char const *address, *packet,
-    int size):
+def land_net_send_datagram(LandNet *self, char const *address, *packet,
+    int size) -> int:
     """
     [experimental]
     This is to directly send a datagram to some address. This is an experimental
@@ -504,8 +504,8 @@ int def land_net_send_datagram(LandNet *self, char const *address, *packet,
 
     return _send_datagram(self, address, packet, size)
 
-int def land_net_recv_datagram(LandNet *self, int port,
-    char **address, *packet, int size):
+def land_net_recv_datagram(LandNet *self, int port,
+    char **address, *packet, int size) -> int:
     """
     [experimental]
     Receives a datagram. Returns the number of received bytes (less than or

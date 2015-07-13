@@ -182,23 +182,23 @@ def land_memory_remove(void *ptr, char const *id, int re, const char *f, int l):
     land_thread_unlock(lock)
     
 
-void *def land_malloc_memlog(int size, char const *f, int l):
+def land_malloc_memlog(int size, char const *f, int l) -> void *:
     void *ptr = malloc(size)
     land_memory_add(ptr, "", size, f, l)
     return ptr
 
-void *def land_calloc_memlog(int size, char const *f, int l):
+def land_calloc_memlog(int size, char const *f, int l) -> void *:
     void *ptr = calloc(1, size)
     land_memory_add(ptr, "", size, f, l)
     return ptr
 
-void *def land_realloc_memlog(void *ptr, int size, char const *f, int l):
+def land_realloc_memlog(void *ptr, int size, char const *f, int l) -> void *:
     void *p = realloc(ptr, size)
     land_memory_remove(ptr, "", 1, f, l)
     land_memory_add(p, "", size, f, l)
     return p
 
-char *def land_strdup_memlog(char const *str, char const *f, int l):
+def land_strdup_memlog(char const *str, char const *f, int l) -> char *:
     void *p = strdup(str)
     land_memory_add(p, "", strlen(p), f, l)
     return p
@@ -209,16 +209,16 @@ def land_free_memlog(void *ptr, char const *f, int l):
 
 *** "else" # LAND_MEMLOG
 
-void *def land_malloc(int size):
+def land_malloc(int size) -> void *:
     return malloc(size)
 
-void *def land_calloc(int size):
+def land_calloc(int size) -> void *:
     return calloc(1, size)
 
-void *def land_realloc(void *ptr, int size):
+def land_realloc(void *ptr, int size) -> void *:
     return realloc(ptr, size)
 
-char *def land_strdup(char const *str):
+def land_strdup(char const *str) -> char *:
     return strdup(str)
 
 def land_free(void *ptr):

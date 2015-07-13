@@ -24,7 +24,7 @@ def land_widget_mover_mouse_tick(LandWidget *super):
         land_widget_move(self.target, land_mouse_delta_x(), land_mouse_delta_y())
 
 
-LandWidget *def land_widget_mover_new(LandWidget *parent, char const *text, int x, int y, int w, int h):
+def land_widget_mover_new(LandWidget *parent, char const *text, int x, int y, int w, int h) -> LandWidget *:
     """Create a new mover widget.
     
     By default, the widget will stretch in the horizontal and shrink in the

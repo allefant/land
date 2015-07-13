@@ -122,7 +122,7 @@ def land_layer_del(LandLayer *self):
     if self.name: land_free(self->name)
     land_free(self)
 
-LandLayer *def land_layer_new_with_grid(LandGrid *grid):
+def land_layer_new_with_grid(LandGrid *grid) -> LandLayer *:
     LandLayer *self
     land_alloc(self)
     self.scrolling_x = 1
@@ -136,7 +136,7 @@ LandLayer *def land_layer_new_with_grid(LandGrid *grid):
     self.a = 1
     return self
 
-LandLayer *def land_layer_new():
+def land_layer_new() -> LandLayer *:
     return land_layer_new_with_grid(None)
 
 def land_layer_set_scroll_speed(LandLayer *self, float x, float y):

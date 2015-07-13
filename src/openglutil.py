@@ -1,6 +1,6 @@
 import allegro5.a5_opengl
 
-char const *def land_opengl_error():
+def land_opengl_error() -> char const *:
     GLenum e = glGetError()
 ***scramble
 for e in ["GL_NO_ERROR",

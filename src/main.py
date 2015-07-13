@@ -77,7 +77,7 @@ def land_quit():
 def land_closebutton_event():
     x_clicked = True
 
-int def land_closebutton():
+def land_closebutton() -> int:
     """Check if the closebutton has been clicked.
     * Returns: True if yes, else False.
     """
@@ -106,19 +106,19 @@ def land_set_initial_runner(LandRunner *runner):
     """Set the initial runner."""
     parameters->start = runner
 
-double def land_get_fps():
+def land_get_fps() -> double:
     """Return the current frequency."""
     return parameters->fps
 
-int def land_get_ticks():
+def land_get_ticks() -> int:
     """Return the number of ticks Land has executed."""
     return _land_frames
 
-double def land_get_time():
+def land_get_time() -> double:
     """Get the time in seconds since Land has started."""
     return platform_get_time()
 
-int def land_get_flags():
+def land_get_flags() -> int:
     return parameters->flags
 
 def land_set_synchronized(bool onoff):

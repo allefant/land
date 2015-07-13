@@ -144,11 +144,11 @@ static macro SQRT sqrt
 static macro COS cos
 static macro SIN sin
 
-LandVector def land_vector(LandFloat x, y, z):
+def land_vector(LandFloat x, y, z) -> LandVector:
     LandVector v = {x, y, z}
     return v
 
-LandVector def land_vector_from_array(LandFloat *a):
+def land_vector_from_array(LandFloat *a) -> LandVector:
     LandVector v = {a[0], a[1], a[2]}
     return v
 
@@ -172,30 +172,30 @@ def land_vector_idiv(LandVector *v, LandFloat s):
     v->y /= s
     v->z /= s
 
-LandVector def land_vector_neg(LandVector v):
+def land_vector_neg(LandVector v) -> LandVector:
     LandVector r = {-v.x, -v.y, -v.z}
     return r
 
-LandVector def land_vector_mul(LandVector v, LandFloat s):
+def land_vector_mul(LandVector v, LandFloat s) -> LandVector:
     LandVector r = {v.x * s, v.y * s, v.z * s}
     return r
 
-LandVector def land_vector_div(LandVector v, LandFloat s):
+def land_vector_div(LandVector v, LandFloat s) -> LandVector:
     LandVector r  = {v.x / s, v.y / s, v.z / s}
     return r
 
-LandVector def land_vector_add(LandVector v, w):
+def land_vector_add(LandVector v, w) -> LandVector:
     LandVector r = {v.x + w.x, v.y + w.y, v.z + w.z}
     return r
 
-LandVector def land_vector_sub(LandVector v, w):
+def land_vector_sub(LandVector v, w) -> LandVector:
     LandVector r = {v.x - w.x, v.y - w.y, v.z - w.z}
     return r
 
-LandVector def land_vector_lerp(LandVector v, w, LandFloat t):
+def land_vector_lerp(LandVector v, w, LandFloat t) -> LandVector:
     return land_vector_add(v, land_vector_mul(land_vector_sub(w, v), t))
 
-LandFloat def land_vector_dot(LandVector v, w):
+def land_vector_dot(LandVector v, w) -> LandFloat:
     """
     The dot product is a number. The number corresponds to the cosine
     between the two vectors times their lengths. So the angle between the
@@ -205,7 +205,7 @@ LandFloat def land_vector_dot(LandVector v, w):
     """
     return v.x * w.x + v.y * w.y + v.z * w.z
 
-LandVector def land_vector_cross(LandVector v, w):
+def land_vector_cross(LandVector v, w) -> LandVector:
     """
     The cross product results in a vector orthogonal to both v and w. The
     length of the resulting vector corresponds to the sine of the angle
@@ -219,19 +219,19 @@ LandVector def land_vector_cross(LandVector v, w):
         v.x * w.y - w.x * v.y}
     return r
 
-LandFloat def land_vector_norm(LandVector v):
+def land_vector_norm(LandVector v) -> LandFloat:
     """
     Return the norm of the vector.
     """
     return SQRT(land_vector_dot(v, v))
 
-LandVector def land_vector_normalize(LandVector v):
+def land_vector_normalize(LandVector v) -> LandVector:
     """
     Return a normalized version of the vector.
     """
     return land_vector_div(v, land_vector_norm(v))
 
-LandQuaternion def land_vector_quatmul(LandVector v, LandQuaternion q):
+def land_vector_quatmul(LandVector v, LandQuaternion q) -> LandQuaternion:
     """
     Multiply the vector with a quaternion. The result is a quaternion. For
     example if your vector is a rotation, the resulting quaternion will be a
@@ -244,7 +244,7 @@ LandQuaternion def land_vector_quatmul(LandVector v, LandQuaternion q):
           v.z * q.w + v.x * q.y - v.y * q.x}
     return r
 
-LandVector def land_vector_transform(LandVector v, p, r, u, b):
+def land_vector_transform(LandVector v, p, r, u, b) -> LandVector:
     """
     Return a new vector obtained by transforming this vector by a coordinate
     system with the given origin and given right/up/back vectors. This is
@@ -259,13 +259,13 @@ LandVector def land_vector_transform(LandVector v, p, r, u, b):
         land_vector_dot(w, b)}
     return a
 
-LandVector def land_vector_matmul(LandVector v, Land4x4Matrix *m):
+def land_vector_matmul(LandVector v, Land4x4Matrix *m) -> LandVector:
     LandFloat x = m->v[0] * v.x + m->v[1] * v.y + m->v[2] * v.z + m->v[3]
     LandFloat y = m->v[4] * v.x + m->v[5] * v.y + m->v[6] * v.z + m->v[7]
     LandFloat z = m->v[8] * v.x + m->v[9] * v.y + m->v[10] * v.z + m->v[11]
     return land_vector(x, y, z)
 
-LandVector def land_vector_backtransform(LandVector v, p, r, u, b):
+def land_vector_backtransform(LandVector v, p, r, u, b) -> LandVector:
     """
     Do the inverse of transform, i.e. you can use it to transform from
     camera back to world coordinates.
@@ -279,7 +279,7 @@ LandVector def land_vector_backtransform(LandVector v, p, r, u, b):
     land_vector_iadd(&a, z)
     return a
 
-LandVector def land_vector_rotate(LandVector v, a, double angle):
+def land_vector_rotate(LandVector v, a, double angle) -> LandVector:
     """
     Rotate the vector around axis a by angle in counter clockwise direction.
     If this vector is a point in world space, then the axis of rotation is
@@ -312,7 +312,7 @@ LandVector def land_vector_rotate(LandVector v, a, double angle):
 
     return ret
 
-LandVector def land_vector_reflect(LandVector v, n):
+def land_vector_reflect(LandVector v, n) -> LandVector:
     """
     Given the normal of a plane, reflect the vector off the plane. If the
     vector is a point in 3D space, and the plane goes through the origin,
@@ -324,11 +324,11 @@ LandVector def land_vector_reflect(LandVector v, n):
     land_vector_iadd(&r, v)
     return r
 
-LandQuaternion def land_quaternion(LandFloat w, x, y, z):
+def land_quaternion(LandFloat w, x, y, z) -> LandQuaternion:
     LandQuaternion q = {w, x, y, z}
     return q
 
-LandQuaternion def land_quaternion_from_array(LandFloat *f):
+def land_quaternion_from_array(LandFloat *f) -> LandQuaternion:
     LandQuaternion q = {f[0], f[1], f[2], f[3]}
     return q
 
@@ -350,7 +350,7 @@ def land_quaternion_imul(LandQuaternion *q, LandFloat s):
     q->y *= s
     q->z *= s
 
-LandQuaternion def land_quaternion_combine(LandQuaternion qa, LandQuaternion qb):
+def land_quaternion_combine(LandQuaternion qa, LandQuaternion qb) -> LandQuaternion:
 
     # FIXME: what is this?
 
@@ -397,7 +397,7 @@ def land_quaternion_vectors(LandQuaternion q, LandVector *r, *u, *b):
     u->z = yz + wx
     b->z = ww - xx - yy + zz
 
-Land4x4Matrix def land_quaternion_4x4_matrix(LandQuaternion q):
+def land_quaternion_4x4_matrix(LandQuaternion q) -> Land4x4Matrix:
     LandVector r, u, b
     land_quaternion_vectors(q, &r, &u, &b)
     Land4x4Matrix m
@@ -419,7 +419,7 @@ Land4x4Matrix def land_quaternion_4x4_matrix(LandQuaternion q):
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b):
+def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b) -> Land4x4Matrix:
     """
     This multiplies two matrices:
 
@@ -440,7 +440,7 @@ Land4x4Matrix def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b):
             m.v[i * 4 + j] = x
     return m
 
-Land4x4Matrix def land_4x4_matrix_scale(LandFloat x, y, z):
+def land_4x4_matrix_scale(LandFloat x, y, z) -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = x
     m.v[1] = 0
@@ -460,7 +460,7 @@ Land4x4Matrix def land_4x4_matrix_scale(LandFloat x, y, z):
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_rotate(LandFloat x, y, z, angle):
+def land_4x4_matrix_rotate(LandFloat x, y, z, angle) -> Land4x4Matrix:
     Land4x4Matrix m
 
     double s = sin(angle);
@@ -486,7 +486,7 @@ Land4x4Matrix def land_4x4_matrix_rotate(LandFloat x, y, z, angle):
 
     return m
 
-Land4x4Matrix def land_4x4_matrix_perspective(LandFloat z):
+def land_4x4_matrix_perspective(LandFloat z) -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = 1
     m.v[1] = 0
@@ -506,7 +506,7 @@ Land4x4Matrix def land_4x4_matrix_perspective(LandFloat z):
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_identity():
+def land_4x4_matrix_identity() -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = 1
     m.v[1] = 0
@@ -526,7 +526,7 @@ Land4x4Matrix def land_4x4_matrix_identity():
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_translate(LandFloat x, y, z):
+def land_4x4_matrix_translate(LandFloat x, y, z) -> Land4x4Matrix:
     """
     T = 1 0 0 xt
         0 1 0 yt
@@ -553,8 +553,8 @@ Land4x4Matrix def land_4x4_matrix_translate(LandFloat x, y, z):
     return m
 
 # note: "near" and "far" are keywords in certain windows compilers
-Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
-        right, bottom, farz):
+def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
+        right, bottom, farz) -> Land4x4Matrix:
     """
     Orthographic means no projection so this would be just an identity matrix.
     But as convenience this scales and translates to fit into the
@@ -612,7 +612,7 @@ Land4x4Matrix def land_4x4_matrix_orthographic(LandFloat left, top, nearz,
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_from_vectors(LandVector *p, *r, *u, *b):
+def land_4x4_matrix_from_vectors(LandVector *p, *r, *u, *b) -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = r->x
     m.v[1] = u->x
@@ -632,7 +632,7 @@ Land4x4Matrix def land_4x4_matrix_from_vectors(LandVector *p, *r, *u, *b):
     m.v[15] = 1
     return m
 
-Land4x4Matrix def land_4x4_matrix_inverse_from_vectors(LandVector *p, *r, *u, *b):
+def land_4x4_matrix_inverse_from_vectors(LandVector *p, *r, *u, *b) -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = r->x
     m.v[1] = r->y
@@ -664,7 +664,7 @@ def land_quaternion_normalize(LandQuaternion *q):
     q->y /= n
     q->z /= n
 
-LandQuaternion def land_quaternion_slerp(LandQuaternion qa, qb, double t):
+def land_quaternion_slerp(LandQuaternion qa, qb, double t) -> LandQuaternion:
     """
     Given two quaternions, interpolate a quaternion in between. If t is 0
     this will return qa, if t is 1 it will return qb.
@@ -696,7 +696,7 @@ LandQuaternion def land_quaternion_slerp(LandQuaternion qa, qb, double t):
 
     return q
 
-LandBuffer *def land_4x4_matrix_to_string(Land4x4Matrix *m):
+def land_4x4_matrix_to_string(Land4x4Matrix *m) -> LandBuffer *:
     LandBuffer *b = land_buffer_new()
     for int i in range(16):
         land_buffer_addf(b, "%-5.2f%s", m.v[i],

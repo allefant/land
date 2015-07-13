@@ -170,8 +170,8 @@ def land_widget_button_initialize(LandWidget *base,
     
     if parent: land_widget_layout(parent)
 
-LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
-    void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+def land_widget_button_new(LandWidget *parent, char const *text,
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
 
     LandWidgetButton *button
     land_alloc(button)
@@ -182,9 +182,9 @@ LandWidget *def land_widget_button_new(LandWidget *parent, char const *text,
 
     return self
 
-LandWidget *def land_widget_button_new_with_image(LandWidget *parent,
+def land_widget_button_new_with_image(LandWidget *parent,
     char const *text, LandImage *image,
-    void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
@@ -194,9 +194,9 @@ LandWidget *def land_widget_button_new_with_image(LandWidget *parent,
 
     return self
 
-LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
+def land_widget_button_new_with_animation(LandWidget *parent,
     char const *text, LandAnimation *animation,
-    void (*clicked)(LandWidget *self), int x, int y, int w, int h):
+    void (*clicked)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
@@ -207,8 +207,8 @@ LandWidget *def land_widget_button_new_with_animation(LandWidget *parent,
 
     return self
 
-LandWidget *def land_widget_text_initialize(LandWidget *self,
-    LandWidget *parent, char const *text, int multiline, x, y, w, h):
+def land_widget_text_initialize(LandWidget *self,
+    LandWidget *parent, char const *text, int multiline, x, y, w, h) -> LandWidget *:
 
     land_widget_button_initialize(self,
         parent, multiline ? None : text, NULL, NULL, x, y, w, h)
@@ -224,8 +224,8 @@ LandWidget *def land_widget_text_initialize(LandWidget *self,
 
     return self
 
-LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
-    int multiline, x, y, w, h):
+def land_widget_text_new(LandWidget *parent, char const *text,
+    int multiline, x, y, w, h) -> LandWidget *:
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
@@ -234,7 +234,7 @@ LandWidget *def land_widget_text_new(LandWidget *parent, char const *text,
 
     return self
 
-static int def _linedelcb(void *item, void *data):
+static def _linedelcb(void *item, void *data) -> int:
     land_free(item)
     return 0
 

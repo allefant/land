@@ -9,7 +9,7 @@ static class PlatformThread:
 static class PlatformLock:
     ALLEGRO_MUTEX *a5
 
-static void *def proc(void *data):
+static def proc(void *data) -> void *:
     LandThread *t = data
     t->cb(t->data)
     land_free(t)
@@ -21,12 +21,12 @@ def platform_thread_run(void (*cb)(void *), void *data):
     t->data = data
     al_run_detached_thread(proc, t)
 
-static void *def aproc(ALLEGRO_THREAD *thread, void *arg):
+static def aproc(ALLEGRO_THREAD *thread, void *arg) -> void *:
     LandThread *t = arg
     t->cb(t->data)
     return NULL
 
-LandThread *def platform_thread_new(void (*cb)(void *data), void *data):
+def platform_thread_new(void (*cb)(void *data), void *data) -> LandThread *:
     PlatformThread *t; land_alloc(t)
     t->super.cb = cb
     t->super.data = data
@@ -39,7 +39,7 @@ def platform_thread_destroy(LandThread *self):
     al_destroy_thread(t->a5)
     land_free(self)
 
-LandLock *def platform_thread_new_lock():
+def platform_thread_new_lock() -> LandLock *:
     PlatformLock *l; land_alloc(l)
     l.a5 = al_create_mutex()
     return (void *)l

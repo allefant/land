@@ -65,10 +65,10 @@ def land_key_release_event(int k):
 def land_keyboard_init():
     pass
 
-int def land_key(int k):
+def land_key(int k) -> int:
     return key_state[k]
 
-int def land_key_pressed(int k):
+def land_key_pressed(int k) -> int:
     return key_pressed[k]
 
 def land_keyboard_tick():
@@ -84,7 +84,7 @@ def land_keyboard_add_char(int keycode, int unicode):
     keybuffer_unicode[keybuffer_last] = unicode
     keybuffer_last++
 
-bool def land_keybuffer_empty():
+def land_keybuffer_empty() -> bool:
     return keybuffer_last == keybuffer_first
 
 def land_keybuffer_next(int *k, int *u):
@@ -93,5 +93,5 @@ def land_keybuffer_next(int *k, int *u):
         *u = keybuffer_unicode[keybuffer_first]
         keybuffer_first++
 
-char const *def land_key_name(int k):
+def land_key_name(int k) -> char const *:
     return platform_key_name(k)

@@ -10,7 +10,7 @@ macro LAND_TILE_GRID(_) ((LandTileGrid *)(_))
 
 static LandGridInterface *land_grid_vtable_tilegrid
 
-LandGrid *def land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells):
+def land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells) -> LandGrid *:
     LandTileGrid *self
     land_alloc(self)
     land_grid_initialize(&self.super, cell_w, cell_h, x_cells, y_cells)

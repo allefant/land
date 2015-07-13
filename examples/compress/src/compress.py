@@ -1,5 +1,5 @@
 import global land/land
-int def main():
+def main() -> int:
     land_init()
 
     printf("Buffer 1\n")

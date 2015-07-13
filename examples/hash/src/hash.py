@@ -5,7 +5,7 @@ macro S 16
 
 char words[N][S]
 
-int def main(int argc, char **argv):
+def main(int argc, char **argv) -> int:
     land_init()
 
     printf("Generating %d random strings.\n", N)

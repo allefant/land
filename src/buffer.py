@@ -25,7 +25,7 @@ class LandBufferAsFile:
 *** "undef" land_buffer_read_from_file
 *** "undef" land_buffer_split
 
-LandBuffer *def land_buffer_new_memlog(char const *f, int l):
+def land_buffer_new_memlog(char const *f, int l) -> LandBuffer *:
     LandBuffer *self = land_buffer_new()
     land_memory_add(self, "buffer", 1, f, l)
     return self
@@ -34,7 +34,7 @@ def land_buffer_destroy_memlog(LandBuffer *self, char const *f, int l):
     land_memory_remove(self, "buffer", 1, f, l)
     land_buffer_destroy(self)
 
-char *def land_buffer_finish_memlog(LandBuffer *self, char const *f, int l):
+def land_buffer_finish_memlog(LandBuffer *self, char const *f, int l) -> char *:
     land_memory_remove(self, "buffer", 1, f, l)
     char *s = land_buffer_finish(self)
     
@@ -43,12 +43,12 @@ char *def land_buffer_finish_memlog(LandBuffer *self, char const *f, int l):
     land_memory_add(s, "", strlen(s), f, l)
     return s
 
-LandBuffer *def land_buffer_read_from_file_memlog(char const *filename, char const *f, int l):
+def land_buffer_read_from_file_memlog(char const *filename, char const *f, int l) -> LandBuffer *:
     LandBuffer *self = land_buffer_read_from_file(filename)
     land_memory_add(self, "buffer", 1, f, l)
     return self
 
-LandArray *def land_buffer_split_memlog(LandBuffer const *self, char delim, char const *f, int line):
+def land_buffer_split_memlog(LandBuffer const *self, char delim, char const *f, int line) -> LandArray *:
     LandArray *a = land_array_new_memlog(f, line)
     int start = 0
     for int i = 0 while i < self.n with i++:
@@ -64,12 +64,12 @@ LandArray *def land_buffer_split_memlog(LandBuffer const *self, char delim, char
 
 *** "endif"
 
-LandBuffer *def land_buffer_new():
+def land_buffer_new() -> LandBuffer *:
     LandBuffer *self
     land_alloc(self)
     return self
 
-LandBuffer *def land_buffer_copy(LandBuffer *other):
+def land_buffer_copy(LandBuffer *other) -> LandBuffer *:
     LandBuffer *self
     land_alloc(self)
     land_buffer_add(self, other->buffer, other->n)
@@ -115,7 +115,7 @@ def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, (i >> 16) & 255)
     land_buffer_add_char(self, (i >> 24) & 255)
 
-uint32_t def land_buffer_get_uint32_t(LandBuffer *self, int pos):
+def land_buffer_get_uint32_t(LandBuffer *self, int pos) -> uint32_t:
     unsigned char *uc = (unsigned char *)self->buffer + pos
     uint32_t u = *(uc++)
     u += *(uc++) << 8
@@ -146,7 +146,7 @@ def land_buffer_crop(LandBuffer *self):
     self.buffer = land_realloc(self->buffer, self->n)
     self.size = self->n
 
-char *def land_buffer_finish(LandBuffer *self):
+def land_buffer_finish(LandBuffer *self) -> char *:
     """
     Destroys the buffer, but returns a C-string constructed from it by appending
     a 0 character. You may not access the pointer you pass to this function
@@ -161,7 +161,7 @@ char *def land_buffer_finish(LandBuffer *self):
     land_buffer_destroy(self)
     return s
 
-LandArray *def land_buffer_split(LandBuffer const *self, char delim):
+def land_buffer_split(LandBuffer const *self, char delim) -> LandArray *:
     """
     Creates an array of buffers. If there are n occurences of character delim
     in the buffer, the array contains n + 1 entries. No buffer in the array
@@ -225,7 +225,7 @@ def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     fwrite(self.buffer, 1, self->n, f)
     fclose(f)
 
-int def land_buffer_rfind(LandBuffer *self, char c):
+def land_buffer_rfind(LandBuffer *self, char c) -> int:
     if self.n == 0: return -1
     for int i = self.n - 1 while i >= 0 with i--:
         if self.buffer[i] == c: return i
@@ -237,7 +237,7 @@ def land_buffer_set_length(LandBuffer *self, int n):
 def land_buffer_shorten(LandBuffer *self, int n):
     self.n -= n
 
-LandBuffer *def land_buffer_read_from_file(char const *filename):
+def land_buffer_read_from_file(char const *filename) -> LandBuffer *:
     """
     Read a buffer from the given file. If the file cannot be read, return None.
     """
@@ -274,13 +274,13 @@ def land_buffer_decompress(LandBuffer *self):
     self.size = self->n = destlen
 *** "endif"
 
-int def land_buffer_compare(LandBuffer *self, *other):
+def land_buffer_compare(LandBuffer *self, *other) -> int:
     if self.n < other->n: return -1
     if self.n > other->n: return 1
     return memcmp(self.buffer, other->buffer, self->n)
 
 
-char *def land_string_copy(char *target, char const *source, int size):
+def land_string_copy(char *target, char const *source, int size) -> char *:
     """
     size is the size of target in bytes (including the terminating 0)
 

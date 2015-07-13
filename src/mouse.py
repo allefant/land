@@ -37,42 +37,42 @@ def land_mouse_button_up_event(int b):
     mb &= ~(1 << b)
     buttons[b] &= ~1
 
-int def land_mouse_x():
+def land_mouse_x() -> int:
     """Return the mouse X coordinate for the current tick."""
     return mx
 
-int def land_mouse_y():
+def land_mouse_y() -> int:
     """Return the mouse Y coordinate for the current tick."""
     return my
 
-int def land_mouse_z():
+def land_mouse_z() -> int:
     """Return the mouse wheel coordinate for the current tick."""
     return mz
 
-int def land_mouse_b():
+def land_mouse_b() -> int:
     """Short for land_mouse_button."""
     return mb
 
-int def land_mouse_button(int i):
+def land_mouse_button(int i) -> int:
     """Return the mouse button state for the current tick."""
     return buttons[i] & 1
 
-int def land_mouse_delta_x():
+def land_mouse_delta_x() -> int:
     return mx - omx
 
-int def land_mouse_delta_y():
+def land_mouse_delta_y() -> int:
     return my - omy
 
-int def land_mouse_delta_z():
+def land_mouse_delta_z() -> int:
     return mz - omz
 
-int def land_mouse_delta_b():
+def land_mouse_delta_b() -> int:
     return mb ^ omb
 
-int def land_mouse_delta_button(int i):
+def land_mouse_delta_button(int i) -> int:
     return (buttons[i] & 1) ^ (obuttons[i] & 1)
 
-int def land_mouse_button_clicked(int i):
+def land_mouse_button_clicked(int i) -> int:
     return clicks[i]
 
 def land_mouse_set_pos(int x, int y):
@@ -80,10 +80,10 @@ def land_mouse_set_pos(int x, int y):
     mx = x
     my = y
 
-bool def land_hide_mouse_cursor():
+def land_hide_mouse_cursor() -> bool:
     platform_hide_mouse_cursor()
     return true
 
-bool def land_show_mouse_cursor():
+def land_show_mouse_cursor() -> bool:
     platform_show_mouse_cursor()
     return true
