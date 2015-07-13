@@ -280,51 +280,100 @@ def platform_ribbon(int n, float *xy):
 
     uncheck_blending()
 
-def platform_filled_ribbon(int n, float *xy):
+def platform_ribbon_loop(int n, float *xy):
     SELF
     check_blending_and_transform()
-
-    int q = 8
-
-    # For n points we get to draw (n - 1) spline segments. For example if we
-    # have 2 points there is 1 spline segment.
-    # For each spline segment we add (q - 1) polygon points. For example if
-    # q is 2 then we add 1 point for each segment. And we also keep the
-    # initial point.
-    # So in total: (n - 1) * (q - 1) + 1
-
-    int points = (n - 1) * (q - 1) + 1
-    float v[points * 2]
     
-    for int i = 0 while i < n - 1 with i++:
+    for int i = 0 while i < n with i++:
         float xy8[8]
         xy8[2] = xy[i * 2 + 0]
         xy8[3] = xy[i * 2 + 1]
 
+        int i_n = (i + 1) % n
+
         xy8[0] = xy[i * 2 + 0]
         xy8[1] = xy[i * 2 + 1]
-        xy8[6] = xy[i * 2 + 2]
-        xy8[7] = xy[i * 2 + 3]
+        xy8[6] = xy[i_n * 2 + 0]
+        xy8[7] = xy[i_n * 2 + 1]
 
-        xy8[4] = xy[i * 2 + 2]
-        xy8[5] = xy[i * 2 + 3]
+        xy8[4] = xy[i_n * 2 + 0]
+        xy8[5] = xy[i_n * 2 + 1]
         
         float ex = xy8[0] - xy8[6]
         float ey = xy8[1] - xy8[7]
         float e = sqrt(ex * ex + ey * ey)
         
         e *= 0.33
-        
-        if i > 0:
-            float dx = xy[i * 2 + 2] - xy[(i - 1) * 2 + 0]
-            float dy = xy[i * 2 + 3] - xy[(i - 1) * 2 + 1]
+
+        if true:
+            int i_p = (i + n - 1) % n
+            float dx = xy[i_n * 2 + 0] - xy[i_p * 2 + 0]
+            float dy = xy[i_n * 2 + 1] - xy[i_p * 2 + 1]
             float d = sqrt(dx * dx + dy * dy)
             xy8[2] += e * dx / d
             xy8[3] += e * dy / d
+
+        if true:
+            int i_nn = (i_n + 1) % n
+            float dx = xy[i * 2 + 0] - xy[i_nn * 2 + 0]
+            float dy = xy[i * 2 + 1] - xy[i_nn * 2 + 1]
+            float d = sqrt(dx * dx + dy * dy)
+            xy8[4] += e * dx / d
+            xy8[5] += e * dy / d
+
+        al_draw_spline(xy8, self->c, self->super.thickness)
+
+    uncheck_blending()
+
+
+def platform_filled_ribbon(int n, float *xy):
+    SELF
+    check_blending_and_transform()
+
+    int q = 8
+
+    # For n points we get to draw n spline segments. For example if we
+    # have 3 points there is 3 spline segments.
+    # For each spline segment we add (q - 1) polygon points. For example if
+    # q is 2 then we add 1 point for each segment. 
+    # So in total: n * (q - 1)
+
+    int points = n * (q - 1)
+    float v[points * 2]
+
+    for int i = 0 while i < n with i++:
+        float xy8[8]
+        xy8[2] = xy[i * 2 + 0]
+        xy8[3] = xy[i * 2 + 1]
+
+        int i_n = (i + 1) % n
+
+        xy8[0] = xy[i * 2 + 0]
+        xy8[1] = xy[i * 2 + 1]
+        xy8[6] = xy[i_n * 2 + 0]
+        xy8[7] = xy[i_n * 2 + 1]
+
+        xy8[4] = xy[i_n * 2 + 0]
+        xy8[5] = xy[i_n * 2 + 1]
         
-        if i < n - 2:
-            float dx = xy[i * 2 + 0] - xy[i * 2 + 4]
-            float dy = xy[i * 2 + 1] - xy[i * 2 + 5]
+        float ex = xy8[0] - xy8[6]
+        float ey = xy8[1] - xy8[7]
+        float e = sqrt(ex * ex + ey * ey)
+        
+        e *= 0.33
+
+        if true:
+            int i_p = (i + n - 1) % n
+            float dx = xy[i_n * 2 + 0] - xy[i_p * 2 + 0]
+            float dy = xy[i_n * 2 + 1] - xy[i_p * 2 + 1]
+            float d = sqrt(dx * dx + dy * dy)
+            xy8[2] += e * dx / d
+            xy8[3] += e * dy / d
+
+        if true:
+            int i_nn = (i_n + 1) % n
+            float dx = xy[i * 2 + 0] - xy[i_nn * 2 + 0]
+            float dy = xy[i * 2 + 1] - xy[i_nn * 2 + 1]
             float d = sqrt(dx * dx + dy * dy)
             xy8[4] += e * dx / d
             xy8[5] += e * dy / d
