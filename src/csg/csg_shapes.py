@@ -45,6 +45,9 @@ LandCSG *def csg_sphere(int slices, rings, void *shared):
     return land_csg_new_from_polygons(polygons)
 
 LandCSG *def csg_cylinder(int slices, void *shared):
+    return csg_cylinder_open(slices, False, shared)
+
+LandCSG *def csg_cylinder_open(int slices, bool opened, void *shared):
     """
     Make a cylinder along the z-axis with radius 1.0 and height 2.0.
     It fits within a cube from -1/-1/-1 to 1/1/1.
@@ -76,11 +79,12 @@ LandCSG *def csg_cylinder(int slices, void *shared):
 
         LandArray *vertices
 
-        vertices = land_array_new()
-        land_array_add(vertices, start)
-        land_array_add(vertices, land_csg_vertex_new(v0d, down))
-        land_array_add(vertices, land_csg_vertex_new(v1d, down))
-        land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+        if not opened:
+            vertices = land_array_new()
+            land_array_add(vertices, start)
+            land_array_add(vertices, land_csg_vertex_new(v0d, down))
+            land_array_add(vertices, land_csg_vertex_new(v1d, down))
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
         vertices = land_array_new()
         land_array_add(vertices, land_csg_vertex_new(v1d, side1))
@@ -89,11 +93,12 @@ LandCSG *def csg_cylinder(int slices, void *shared):
         land_array_add(vertices, land_csg_vertex_new(v1u, side1))
         land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
-        vertices = land_array_new()
-        land_array_add(vertices, end)
-        land_array_add(vertices, land_csg_vertex_new(v1u, up))
-        land_array_add(vertices, land_csg_vertex_new(v0u, up))
-        land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+        if not opened:
+            vertices = land_array_new()
+            land_array_add(vertices, end)
+            land_array_add(vertices, land_csg_vertex_new(v1u, up))
+            land_array_add(vertices, land_csg_vertex_new(v0u, up))
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
     return land_csg_new_from_polygons(polygons)
 

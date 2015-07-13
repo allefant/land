@@ -28,6 +28,7 @@ class LandCSGPolygon:
     LandArray *vertices # LandCSGVertex
     void *shared
     LandCSGPlane plane
+    bool is_pooled
 
 class LandCSGNode:
     """
@@ -52,12 +53,18 @@ LandCSGVertex *def land_csg_vertex_new(LandVector pos, normal):
 def land_csg_vertex_destroy(LandCSGVertex *self):
     land_free(self)
 
-LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self):
-    #return land_csg_vertex_new(self.pos, self.normal)
-    LandCSGVertex *v = land_pool_alloc(csg.pool, sizeof *v)
-    v.pos = self.pos
-    v.normal = self.normal
-    return v
+LandCSGVertex *def land_csg_vertex_new_pool(LandMemoryPool *pool):
+    LandCSGVertex *self = land_pool_alloc(pool, sizeof *self)
+    return self
+
+LandCSGVertex *def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self,
+        bool pool):
+    if pool:
+        LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
+        v.pos = self.pos
+        v.normal = self.normal
+        return v
+    return land_csg_vertex_new(self.pos, self.normal)
 
 static int def collision_code(LandVector *v, LandCSGAABB *b):
     int c = 0
@@ -104,21 +111,21 @@ static LandArray *def clone_vertices(LandCSG *csg, LandArray *vertices):
     LandArray *clone = land_array_copy(vertices)
     int n = land_array_count(clone)
     for int i in range(n):
-        clone.data[i] = csg_vertex_clone(csg, clone.data[i])
+        clone.data[i] = csg_vertex_clone(csg, clone.data[i], True)
     return clone
 
-static def clear_vertices(LandArray *vertices):
-    #for int i in range(vertices.count):
-    #    land_csg_vertex_destroy(vertices.data[i])
-    land_array_clear(vertices)
+static def remove_vertices(LandArray *vertices, bool is_pooled):
+    if not is_pooled:
+        for int i in range(vertices.count):
+            land_csg_vertex_destroy(vertices.data[i])
+    land_array_destroy(vertices)
 
 static def csg_vertex_flip(LandCSGVertex *self):
     self.normal = land_vector_mul(self.normal, -1)
 
 static LandCSGVertex *def csg_vertex_interpolate(LandCSG *csg,
         LandCSGVertex *self, *other, LandFloat t):
-    #return land_csg_vertex_new(
-    LandCSGVertex *v = land_pool_alloc(csg.pool, sizeof *v)
+    LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
     v.pos = land_vector_lerp(self.pos, other.pos, t)
     v.normal = land_vector_lerp(self.normal, other.normal, t)
     return v
@@ -138,14 +145,37 @@ static LandCSGPlane def csg_plane_from_points(LandVector a, b, c):
     n = land_vector_normalize(n)
     return csg_plane(n, land_vector_dot(n, a))
 
+# The array is owned by the polygon now.
+def land_csg_polygon_init(LandCSGPolygon *self, LandArray *vertices,
+        void *shared):
+    self.vertices = vertices
+    self.shared = shared
+    LandCSGVertex *v0 = land_array_get_nth(vertices, 0)
+    LandCSGVertex *v1 = land_array_get_nth(vertices, 1)
+    LandCSGVertex *v2 = land_array_get_nth(vertices, 2)
+    self.plane = csg_plane_from_points(v0.pos, v1.pos, v2.pos)
+
+LandCSGPolygon *def land_csg_polygon_new(LandArray *vertices,
+        void *shared):
+    LandCSGPolygon *self; land_alloc(self)
+    land_csg_polygon_init(self, vertices, shared)
+    return self
+
+static LandCSGPolygon *def land_csg_polygon_new_pool(LandMemoryPool *pool,
+        LandArray *vertices, void *shared):
+    LandCSGPolygon *p = land_pool_alloc(pool, sizeof *p)
+    p.is_pooled = True
+    land_csg_polygon_init(p, vertices, shared)
+    return p
+
 def csg_plane_flip(LandCSGPlane *self):
     self.normal = land_vector_mul(self.normal, -1)
     self.w *= -1
 
-# Split the polygon along this plane. Then put a copy of the polygon (or
+# Split the polygon along this plane. Then put the polygon (or
 # new polygon fragments) into the 4 lists.
-# Ownership of the polygon remains at the caller.
-# A polygon is put in at most one list.
+# Ownership of the polygon is transferred to the function.
+# The polygon is put in at most one list and destroyed otherwise.
 static def csg_plane_split_polygon(LandCSG *csg,
         LandCSGPlane *self,
         #LandCSGPolygon const *polygon,
@@ -165,18 +195,14 @@ static def csg_plane_split_polygon(LandCSG *csg,
     assert(i == n)
 
     if polygon_type == COPLANAR:
-        LandArray *a
         if land_vector_dot(self.normal, polygon.plane.normal) > 0:
-            a = coplanar_front
+            land_array_add(coplanar_front, polygon)
         else:
-            a = coplanar_back;
-        #land_array_add(a, land_csg_polygon_clone(csg, polygon))
-        land_array_add(a, polygon)
+            land_array_add(coplanar_back, polygon)
+        
     elif polygon_type == FRONT:
-        #land_array_add(front, land_csg_polygon_clone(csg, polygon))
         land_array_add(front, polygon)
     elif polygon_type == BACK:
-        #land_array_add(back, land_csg_polygon_clone(csg, polygon))
         land_array_add(back, polygon)
     elif polygon_type == SPANNING:
         LandArray *f = land_array_new()
@@ -189,65 +215,49 @@ static def csg_plane_split_polygon(LandCSG *csg,
             LandCSGVertex *vj = land_array_get_nth(polygon.vertices, j)
 
             if ti == FRONT:
-                land_array_add(f, csg_vertex_clone(csg, vi))
+                land_array_add(f, csg_vertex_clone(csg, vi, True))
             elif ti == BACK:
-                land_array_add(b, csg_vertex_clone(csg, vi))
+                land_array_add(b, csg_vertex_clone(csg, vi, True))
             elif ti == COPLANAR:
-                land_array_add(f, csg_vertex_clone(csg, vi))
-                land_array_add(b, csg_vertex_clone(csg, vi))
+                land_array_add(f, csg_vertex_clone(csg, vi, True))
+                land_array_add(b, csg_vertex_clone(csg, vi, True))
 
             if (ti | tj) == SPANNING:
                 LandFloat t = self.w - land_vector_dot(self.normal, vi.pos)
                 t /= land_vector_dot(self.normal, land_vector_sub(vj.pos, vi.pos))
                 LandCSGVertex *v = csg_vertex_interpolate(csg, vi, vj, t)
                 land_array_add(f, v)
-                land_array_add(b, csg_vertex_clone(csg, v))
+                land_array_add(b, csg_vertex_clone(csg, v, True))
 
         if land_array_count(f) >= 3:
-            LandCSGPolygon *add = land_pool_alloc(csg.pool, sizeof *add)
-            # land_csg_polygon_new
-            land_csg_polygon_init(add, f, polygon.shared)
+            LandCSGPolygon *add = land_csg_polygon_new_pool(csg.pool, f,
+                polygon.shared)
             land_array_add(front, add)
         else:
-            clear_vertices(f)
-            land_array_destroy(f)
+            remove_vertices(f, true)
 
         if land_array_count(b) >= 3:
-            LandCSGPolygon *add = land_pool_alloc(csg.pool, sizeof *add)
-            # land_csg_polygon_new
-            land_csg_polygon_init(add, b, polygon.shared)
+            LandCSGPolygon *add = land_csg_polygon_new_pool(csg.pool, b,
+                polygon.shared)
             land_array_add(back, add)
         else:
-            clear_vertices(b)
-            land_array_destroy(b)
+            remove_vertices(b, true)
 
-# The array is owned by the polygon now.
-def land_csg_polygon_init(LandCSGPolygon *self, LandArray *vertices,
-        void *shared):
-    self.vertices = vertices
-    self.shared = shared
-    LandCSGVertex *v0 = land_array_get_nth(vertices, 0)
-    LandCSGVertex *v1 = land_array_get_nth(vertices, 1)
-    LandCSGVertex *v2 = land_array_get_nth(vertices, 2)
-    self.plane = csg_plane_from_points(v0.pos, v1.pos, v2.pos)
-
-LandCSGPolygon *def land_csg_polygon_new(LandArray *vertices,
-        void *shared):
-    LandCSGPolygon *self; land_alloc(self)
-    land_csg_polygon_init(self, vertices, shared)
-    return self
+        land_csg_polygon_destroy(polygon)
 
 def land_csg_polygon_destroy(LandCSGPolygon *self):
-    clear_vertices(self.vertices)
-    land_array_destroy(self.vertices)
-    land_free(self)
+    if self.is_pooled:
+        land_array_destroy(self.vertices)
+    else:
+        remove_vertices(self.vertices, false)
+        land_free(self)
 
+# Return a clone of the polygon. The *new* polygon will create *clones*
+# of all vertices in the original polygon.
 LandCSGPolygon *def land_csg_polygon_clone(LandCSG *csg,
         LandCSGPolygon const *self):
-    
-    #LandCSGPolygon *clone = land_csg_polygon_new(
-    LandCSGPolygon *clone = land_pool_alloc(csg.pool, sizeof *clone)
-    land_csg_polygon_init(clone,
+
+    LandCSGPolygon *clone = land_csg_polygon_new_pool(csg.pool,
         clone_vertices(csg, self.vertices), self.shared)
     return clone
 
@@ -258,6 +268,9 @@ static def csg_polygon_flip(LandCSGPolygon *self):
 
     csg_plane_flip(&self.plane)
 
+# Given a list of polygons, return a *new* list containing *clones* of the
+# polygon in the new list. Nothing will be shared (except the polygon's
+# "shared" pointers).
 static LandArray *def clone_polygons(LandCSG *csg, LandArray *polygons):
     LandArray *clone = land_array_copy(polygons)
     int n = land_array_count(clone)
@@ -295,6 +308,8 @@ static def csg_node_invert(LandCSGNode *self):
     self.back = temp
 
 # Remove all polygons from the passed array which are inside our BSP.
+# Ownership of the polygons array (with remaining polygons) remains at the
+# caller.
 static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
         LandArray *polygons):
     if not self.plane.normal.z and not self.plane.normal.y and\
@@ -306,10 +321,7 @@ static def csg_node_clip_polygons(LandCSG *csg, LandCSGNode *self,
 
     for LandCSGPolygon *p in LandArray *polygons:
         csg_plane_split_polygon(csg, &self.plane, p, front, back, front, back)
-
-    # front/back now contain cloned and/or new polygons, so we can destroy
-    # the original ones.
-    clear_polygons(polygons)
+    land_array_clear(polygons)
 
     if self.front:
         csg_node_clip_polygons(csg, self.front, front)
@@ -375,6 +387,7 @@ static LandCSGNode *def csg_node_new(LandCSG *csg, LandArray *polygons)
 # the array anymore.
 static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
     if not land_array_count(polygons):
+        land_array_destroy(polygons)
         return
     if not self.plane.normal.z and\
             not self.plane.normal.y and not self.plane.normal.x:
@@ -384,9 +397,10 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
     LandArray *front = land_array_new()
     LandArray *back = land_array_new()
 
-    for LandCSGPolygon *p in LandArray *(LandArray *)polygons:
+    for LandCSGPolygon *p in LandArray *polygons:
         csg_plane_split_polygon(csg, &self.plane, p, self.polygons,
             self.polygons, front, back)
+    land_array_destroy(polygons)
 
     if land_array_count(front):
         if not self.front:
@@ -401,9 +415,6 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
         csg_node_build(csg, self.back, back)
     else:
         land_array_destroy(back)
-
-    clear_polygons(polygons)
-    land_array_destroy(polygons)
 
 # Ownership of the polygons array is transferred to the CSG Node. If the caller
 # still needs any polygons make a copy first.
@@ -433,25 +444,38 @@ def land_csg_destroy(LandCSG *self):
     land_pool_destroy(self.pool)
     land_free(self)
 
+# Modify all polygons in the CSG to be triangles
 def land_csg_triangles(LandCSG *self):
     LandArray *triangles = None
     for LandCSGPolygon *p in LandArray *self.polygons:
         int n = land_array_count(p->vertices)
-        if n == 3: continue
+        if n == 3:
+            continue
 
         if not triangles:
             triangles = land_array_new()
 
         # 0 1 2 remain in the existing polygon
+        #
+        # a  .1.  
+        # 0..   .. 
+        # .       2 b
+        # .       .
+        # 4.......3 c
+        #         
         LandCSGVertex *a = land_array_get_nth(p->vertices, 0)
         LandCSGVertex *b = land_array_get_nth(p->vertices, 2)
         for int i in range(3, n):
             LandCSGVertex *c = land_array_get_nth(p->vertices, i)
             LandArray *v = land_array_new()
-            land_array_add(v, csg_vertex_clone(self, a))
-            land_array_add(v, csg_vertex_clone(self, b))
+            land_array_add(v, csg_vertex_clone(self, a, p.is_pooled))
+            land_array_add(v, csg_vertex_clone(self, b, p.is_pooled))
             land_array_add(v, c)
-            LandCSGPolygon *triangle = land_csg_polygon_new(v, p->shared)
+            LandCSGPolygon *triangle
+            if p.is_pooled:
+                triangle = land_csg_polygon_new_pool(self.pool, v, p.shared)
+            else:
+                triangle = land_csg_polygon_new(v, p.shared)
             land_array_add(triangles, triangle)
             b = c
         p->vertices->count = 3
@@ -471,7 +495,7 @@ LandCSG *def land_csg_new_from_polygons(LandArray *polygons):
 
 LandCSG *def land_csg_clone(LandCSG *self):
     LandCSG *csg = land_csg_new()
-    csg.polygons = clone_polygons(self, self.polygons)
+    csg.polygons = clone_polygons(csg, self.polygons)
     return csg
 
 static def csg_split_on_bounding_box(LandCSG const *self, LandCSGAABB *box,
