@@ -175,6 +175,8 @@ def land_image_auto_crop(LandImage *self):
                 if j < minj: minj = j
                 if j > maxj: maxj = j
     land_free(rgba)
+    if maxi == -1:
+        mini = maxi = minj = maxj = 0
     self.l = mini
     self.t = minj
     self.r = w - 1 - maxi
