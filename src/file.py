@@ -4,6 +4,7 @@ import allegro5/a5_file
 
 enum:
     LAND_FULL_PATH = 1
+    LAND_RELATIVE_PATH = 2
 
 class LandFile:
     char *path
@@ -80,6 +81,9 @@ uint16_t def land_file_get16be(LandFile *self):
 
 bool def land_file_is_dir(char const *name):
     return platform_is_dir(name)
+
+bool def land_file_exists(char const *name):
+    return platform_file_exists(name)
 
 char *def land_get_save_file(char const *appname, char const *name):
     """
