@@ -154,26 +154,6 @@ def platform_display_set():
     if f & ALLEGRO_PROGRAMMABLE_PIPELINE:
         land_display_set_default_shaders()
 
-def platform_display_scale_to_fit(float w, h, int how):
-    SELF
-    float dw = al_get_display_width(self->a5)
-    float dh = al_get_display_height(self->a5)
-    float sx, sy
-    if how == 0:
-        sx = sy = 1
-        assert(0) # FIXME
-    elif how == 1:
-        sx = sy = dw / w
-        if h * sy < dh:
-            sx = sy = dh / h
-    elif how == 2: sx = sy = dw / w
-    elif how == 3: sx = sy = dh / h
-    else: sx = dw / w; sy = dh / h
-    ALLEGRO_TRANSFORM t
-    al_identity_transform(&t)
-    al_scale_transform(&t, sx, sy)
-    al_use_transform(&t)
-
 def platform_display_color():
     SELF
     self->c = al_map_rgba_f(

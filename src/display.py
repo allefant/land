@@ -204,9 +204,40 @@ def land_display_del(LandDisplay *self):
 # how = 1: zoom to fill the whole window
 # how = 2: fit width
 # how = 3: fit height
+# how = 4: like 0 but keep 0/0 in top left corner
+# how = 6: like 2 but keep 0/0 in top left corner
+# how = 7: like 3 but keep 0/0 in top left corner
 # how = -1: stretch (non-square pixels, not recommended)
 def land_scale_to_fit(float w, h, int how):
-    platform_display_scale_to_fit(w, h, how)
+    float dw = land_display_width()
+    float dh = land_display_height()
+    float sx, sy
+    float ox = 0, oy = 0
+    if how == 0:
+        how = 2
+        if w * dh / dw < h:
+            how = 3
+
+    if how == 1:
+        how = 2
+        if w * h / dw < dh:
+            how = 3
+
+    if how == 4:
+        how = 6
+        if w * dh / dw < h:
+            how = 7
+    
+    if how == 2 or how == 6:
+        sx = sy = dw / w
+        if how == 2: oy = (dh - h * sy) / 2
+    elif how == 3 or how == 7:
+        sx = sy = dh / h
+        if how == 3: ox = (dw - w * sx) / 2
+    else: sx = dw / w; sy = dh / h
+    land_reset_transform()
+    land_translate(ox, oy)
+    land_scale(sx, sy)
 
 def land_set_image_display(LandImage *image):
     """
