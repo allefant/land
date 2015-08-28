@@ -1,10 +1,11 @@
 cmake_minimum_required (VERSION 2.6)
+INCLUDE (CheckIncludeFiles)
+
 project(land) 
 
 # This is so generated .h files will be found.
 include_directories(${CMAKE_BINARY_DIR}/c)
 
-# Settings.
 set(SHARED 1 CACHE BOOL "Whether to build the shared library.")
 set(STATIC 0 CACHE BOOL "Whether to build the static library.")
 set(RELEASE 1 CACHE BOOL "Whether to build the release library.")
@@ -14,13 +15,13 @@ set(PROFILE 0 CACHE BOOL "Whether to build the profile library.")
 set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
 
 #_______________________________________________________________________
-# Step 1: Find all .py source files.
+# Step: Find all .py source files.
 #
 
 file(GLOB_RECURSE pyfiles RELATIVE ${CMAKE_SOURCE_DIR}/src src/*.py)
 
 #_______________________________________________________________________
-# Step 2: Rules to create .c and .h files.
+# Step: Rules to create .c and .h files.
 #
 
 set(cfiles)
@@ -35,10 +36,12 @@ foreach(py ${pyfiles})
     add_custom_command(
         OUTPUT "c/${out}.c" "c/${out}.h"
         COMMAND ${CMAKE_COMMAND} -E make_directory "c/land/${path}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "d/land/${path}"
         COMMAND scramble
             -i "${CMAKE_SOURCE_DIR}/src/${py}"
             -c "c/${out}.c"
             -h "c/${out}.h"
+            -d "d/${out}.md"
             -n "${out}"
             -p _LAND
         DEPENDS src/${py})
@@ -46,7 +49,18 @@ foreach(py ${pyfiles})
 endforeach(py)
 
 #_______________________________________________________________________
-# Step 3: Build from .c files.
+# Step: Configure.
+
+execute_process(COMMAND ${CMAKE_C_COMPILER} --version OUTPUT_VARIABLE EMSCRIPTEN)
+string(REGEX MATCH emcc EMSCRIPTEN "${EMSCRIPTEN}")
+string(COMPARE NOTEQUAL "" "${EMSCRIPTEN}" EMSCRIPTEN)
+
+CHECK_INCLUDE_FILES(YAML.h LAND_HAVE_YAML_H)
+CHECK_INCLUDE_FILES(execinfo.h LAND_HAVE_EXECINFO_H)
+CONFIGURE_FILE(config.cmake c/land/config.h)
+
+#_______________________________________________________________________
+# Step: Build from .c files.
 #
 
 set(WFLAGS "-W -Wall")
@@ -60,6 +74,10 @@ if (MEMLOG)
 set(DFLAGS "-g3 -O0")
 endif()
 
+if (NOT YAML)
+set(CFLAGS "${CFLAGS} -DLAND_NO_YAML")
+endif()
+
 if (MEMLOG)
     set(CFLAGS "${CFLAGS} -DLAND_MEMLOG") #-fmudflap
     #set(LFLAGS "${LFLAGS} -fmudflap")
@@ -67,6 +85,9 @@ endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Darwin OSX)
+
+string(REGEX MATCH ".*emcc" EMSCRIPTEN ${CMAKE_C_COMPILER})
+string(COMPARE NOTEQUAL "${EMSCRIPTEN}" "" EMSCRIPTEN)
 
 if (WINDOWS)
     message("Windows version")
@@ -83,6 +104,10 @@ if (MEMLOG)
     set(libname "land-memlog")
 else ()
     set(libname "land")
+endif ()
+
+if (EMSCRIPTEN)
+    include_directories("../../allegro/install_emscripten/include")
 endif ()
 
 if (STATIC)
