@@ -153,7 +153,9 @@ are many other cases. Also, you never have to use the reference counting. You
 just need to understand that Land provides no way to directly and forcefully
 delete one of its widgets, and why it is like that.
 """
-import land/hash, gul
+import land.common
+import land.hash
+import gul
 
 # A widget ID must contain the bits of the parent.
 macro LAND_WIDGET_ID_BASE           0x00000001 # no visual, no layout
