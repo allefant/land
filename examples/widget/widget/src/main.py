@@ -22,18 +22,18 @@ static def my_draw(LandWidget *self):
     y = self->box.y
     land_rectangle(x + 0.5, y + 0.5, x + self->box.w - 0.5, y + self->box.h - 0.5)
 
-static def clicked2(LandWidget *self):
-    # Remove the box when it is clicked. The reference counting will ensure that
-    # it is automatically deleted.
-    land_widget_remove(self)
+#static def clicked2(LandWidget *self):
+#    # Remove the box when it is clicked. The reference counting will ensure that
+#    # it is automatically deleted.
+#    land_widget_remove(self)
 
-static def clicked(LandWidget *self):
-    static int c = 0
-    char str[256]
-    snprintf(str, sizeof str, "Remove me %d", c++)
-    LandWidget *entry = land_widget_button_new(vbox, str, clicked2,
-        0, 0, 1, 1)
-    land_widget_layout_set_expanding(entry, 1, 1)
+#static def clicked(LandWidget *self):
+#    static int c = 0
+#    char str[256]
+#    snprintf(str, sizeof str, "Remove me %d", c++)
+#    LandWidget *entry = land_widget_button_new(vbox, str, clicked2,
+#        0, 0, 1, 1)
+#    land_widget_layout_set_expanding(entry, 1, 1)
 
 static def init(LandRunner *self):
     my_font = land_font_load("../../data/galaxy.ttf", 10)

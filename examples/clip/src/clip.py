@@ -10,7 +10,7 @@ static def game_init(LandRunner *self):
     land_line(0, 0, 16, 16)
     land_unset_image_display()
     
-    glEnable(GL_POLYGON_SMOOTH)
+    #glEnable(GL_POLYGON_SMOOTH)
 
 static def game_tick(LandRunner *self):
     if land_key(LandKeyEscape) or land_closebutton():

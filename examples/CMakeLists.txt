@@ -69,74 +69,76 @@ foreach(exsrc ${examples})
     set(exname ${ex_bin})
 
     if (STATIC)
-        if (DEBUG OR PROFILE)
-            set(LFLAGS "")
-            macro(LFLAG f)
-                set(LFLAGS "${LFLAGS} ${f}")
-            endmacro()
-            if (DEBUG)
-                set(exe ${exname}-static-debug)
-                set(lib ${libname}-static-debug)
-                set(flags ${DFLAGS})
-            else()
-                set(exe ${exname}-static-profile)
-                set(lib ${libname}-static-profile)
-                set(flags ${PFLAGS})
-                LFLAG("-p")
-            endif()
-            add_executable(${exe} ${example_cfiles})
+        set(LFLAGS "")
+        macro(LFLAG f)
+            set(LFLAGS "${LFLAGS} ${f}")
+        endmacro()
+        if (DEBUG)
+            set(exe ${exname}-static-debug)
+            set(lib ${libname}-static-debug)
+            set(flags ${DFLAGS})
+        elseif (PROFILE)
+            set(exe ${exname}-static-profile)
+            set(lib ${libname}-static-profile)
+            set(flags ${PFLAGS})
+            LFLAG("-p")
+        else()
+            set(exe ${exname}-static)
+            set(lib ${libname}-static)
+            set(flags ${RFLAGS})
+        endif()
+        if (EMSCRIPTEN)
+            set(exe "${exe}.bc")
+        endif()
 
-            pkg_check_modules(ALLEGRO allegro_monolith-debug-static-5)
+        add_executable(${exe} ${example_cfiles})
+
+        if (EMSCRIPTEN)
+            set(libraries ${lib})
+        else()
+
+            pkg_check_modules(ALLEGRO allegro_monolith-debug-static-5)  
             
             set(libraries
                 ${lib}
                 ${ALLEGRO_STATIC_LDFLAGS}
                 )
-            if (OSX)
-                list(APPEND libraries ${OPENGL_LIBRARIES})
+        endif()
 
-                LFLAG("-framework CoreGraphics")
-                LFLAG("-framework QuartzCore")
-                LFLAG("-framework AudioToolbox")
-                LFLAG("-framework OpenAL")
-                LFLAG("-framework Foundation")
-                LFLAG("-framework CoreFoundation")
-                LFLAG("-framework CoreServices")
-                LFLAG("-framework IOKit")
-                LFLAG("-framework AppKit")
-            endif()
-            
-            set_target_properties(${exe}
-                PROPERTIES
-                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${flags}"
-                LINK_FLAGS "${LFLAGS}"
-                )
+        if (OSX)
+            list(APPEND libraries ${OPENGL_LIBRARIES})
 
-            if (NOT "${ex_sub}" STREQUAL "")
-                set_target_properties(${exe} PROPERTIES EXECUTABLE_OUTPUT_PATH ${ex_sub})
-            endif()
+            LFLAG("-framework CoreGraphics")
+            LFLAG("-framework QuartzCore")
+            LFLAG("-framework AudioToolbox")
+            LFLAG("-framework OpenAL")
+            LFLAG("-framework Foundation")
+            LFLAG("-framework CoreFoundation")
+            LFLAG("-framework CoreServices")
+            LFLAG("-framework IOKit")
+            LFLAG("-framework AppKit")
+        endif()
+        
+        set_target_properties(${exe}
+            PROPERTIES
+            COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${flags}"
+            LINK_FLAGS "${LFLAGS}"
+            )
 
-            target_link_libraries(${exe}
-                ${libraries}
-                )
-        endif (DEBUG OR PROFILE)
-        if (RELEASE)
-            add_executable(${exname}-static ${example_cfiles})
-            set_target_properties(${exname}-static
-                PROPERTIES
-                COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
-                )
-            target_link_libraries(${exname}-static
-                ${libname}-static)
-        endif (RELEASE)
+        if (NOT "${ex_sub}" STREQUAL "")
+            set_target_properties(${exe} PROPERTIES EXECUTABLE_OUTPUT_PATH ${ex_sub})
+        endif()
+
+        target_link_libraries(${exe}
+            ${libraries}
+            )
+    
     endif (STATIC)
 
     if (SHARED)
         set(AD -debug)
         if (DEBUG)
             add_executable(${exname}-debug ${example_cfiles})
-            
-            list(APPEND example_exes ${exname}-debug)
             
             set_target_properties(${exname}-debug
                 PROPERTIES
@@ -151,7 +153,6 @@ foreach(exsrc ${examples})
         endif (DEBUG)
         if (RELEASE)
             add_executable(${exname} ${example_cfiles})
-            list(APPEND example_exes ${exname})
             set_target_properties(${exname}
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
@@ -162,6 +163,17 @@ foreach(exsrc ${examples})
                 )
         endif (RELEASE)
     endif (SHARED)
+    list(APPEND example_exes ${exe})
+
+    if (EMSCRIPTEN)
+        set(EMF -s USE_SDL=2 -s FULL_ES2=1 -s USE_ZLIB=1 -s USE_LIBPNG=1)
+        set(EMF ${EMF} -s TOTAL_MEMORY=1000000000)
+        set(EMF ${EMF} --preload-file ../../data)
+        set(EMF ${EMF} ../lib/liballegro_monolith-static.a ../lib/libfreetype.a)
+        add_custom_command(TARGET ${exe}
+                   POST_BUILD
+                   COMMAND emcc -O3 ${exe} ${EMF} -o ${exname}.html)
+    endif()
 
 endforeach(exsrc)
 
