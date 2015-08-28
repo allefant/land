@@ -1,4 +1,4 @@
-import land/display
+import land.display
 import a5_image
 static import global allegro5.allegro5
 static import global allegro5.allegro_primitives
@@ -467,12 +467,13 @@ def platform_plot(float x, y):
     
 def platform_pick_color(float x, y):
     SELF
+    float32_t r, g, b, a
     self->c = al_get_pixel(al_get_target_bitmap(), x, y)
-    al_unmap_rgba_f(self->c,
-        &super->color_r,
-        &super->color_g,
-        &super->color_b,
-        &super->color_a)
+    al_unmap_rgba_f(self->c, &r, &g, &b, &a)
+    super->color_r = r
+    super->color_g = g
+    super->color_b = b
+    super->color_a = a
 
 static int a5state[] = {
     ALLEGRO_ALPHA_TEST,

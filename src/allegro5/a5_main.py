@@ -9,6 +9,10 @@ static import land.allegro5.a5_display
 static import global allegro5.allegro_android
 *** "endif"
 
+*** "ifdef" __EMSCRIPTEN__
+static import global emscripten
+*** "endif"
+
 static void (*global_cb)(void)
 
 static def replacement_main(int argc, char **argv) -> int:
@@ -198,9 +202,12 @@ def platform_mouse_set_pos(float x, y):
     LandDisplayPlatform *d = (void *)_land_active_display
     al_set_mouse_xy(d->a5, x, y)
 
+static bool redraw
+static LandDisplayPlatform *d
+static ALLEGRO_EVENT_QUEUE *queue
 def platform_mainloop(LandParameters *parameters):
-    LandDisplayPlatform *d = (void *)_land_active_display
-    ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue()
+    d = (void *)_land_active_display
+    queue = al_create_event_queue()
     ALLEGRO_TIMER *timer = al_create_timer(1.0 / parameters->fps)
     al_register_event_source(queue, al_get_keyboard_event_source())
     al_register_event_source(queue, al_get_mouse_event_source())
@@ -219,67 +226,87 @@ def platform_mainloop(LandParameters *parameters):
     land_mouse_move_event(s.x, s.y, s.z)
 
     land_skip_frames()
-    bool redraw = False
+    redraw = False
+
+    *** "ifdef" __EMSCRIPTEN__
+    _land_synchronized = True
+    emscripten_set_main_loop(platform_frame, 0, true);
+    *** "else"
     while not _land_quit:
+        platform_frame()
+    *** "endif"
+
+def platform_frame:
+    if not _land_quit:
         if redraw and (_land_synchronized or
             al_event_queue_is_empty(queue)):
             land_draw()
             redraw = False
 
-        ALLEGRO_EVENT event
-        al_wait_for_event(queue, &event)
+        while True:
+            ALLEGRO_EVENT event
+            *** "ifdef" __EMSCRIPTEN__
+            if not al_get_next_event(queue, &event):
+                break
+            *** "else"
+            al_wait_for_event(queue, &event)
+            *** "endif"
 
-        switch event.type:
-            case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                land_closebutton_event()
-                break
-            case ALLEGRO_EVENT_TIMER:
-                land_tick()
-                _land_frames++
-                redraw = True
-                break
-            case ALLEGRO_EVENT_KEY_DOWN:
-                int lk = platform_keycode(event.keyboard.keycode)
-                land_key_press_event(lk)
-                break
-            case ALLEGRO_EVENT_KEY_CHAR:
-                int lk = platform_keycode(event.keyboard.keycode)
-                land_keyboard_add_char(lk, event.keyboard.unichar)
-                break;
-            case ALLEGRO_EVENT_KEY_UP:
-                int lk = platform_keycode(event.keyboard.keycode)
-                land_key_release_event(lk)
-                break
-            case ALLEGRO_EVENT_MOUSE_AXES:
-                land_mouse_move_event(
-                    event.mouse.x, event.mouse.y, event.mouse.z)
-                break
-            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-                land_mouse_button_down_event(event.mouse.button - 1)
-                break
-            case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-                land_mouse_button_up_event(event.mouse.button - 1)
-                break
-            case ALLEGRO_EVENT_TOUCH_BEGIN:
-                land_mouse_button_down_event(0)
-                break
-            case ALLEGRO_EVENT_TOUCH_END:
-                land_mouse_button_up_event(0)
-                break
-            case ALLEGRO_EVENT_TOUCH_MOVE:
-                land_mouse_move_event(
-                    event.touch.x, event.touch.y, 0)
-                break
-            case ALLEGRO_EVENT_DISPLAY_RESIZE:
-                al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
-                land_resize_event(event.display.width, event.display.height)
-                break
-            case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
-                al_acknowledge_drawing_halt(d->a5)
-                break
-            case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
-                al_acknowledge_drawing_resume(d->a5)
-                break
+            switch event.type:
+                case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                    land_closebutton_event()
+                    break
+                case ALLEGRO_EVENT_TIMER:
+                    land_tick()
+                    _land_frames++
+                    redraw = True
+                    break
+                case ALLEGRO_EVENT_KEY_DOWN:
+                    int lk = platform_keycode(event.keyboard.keycode)
+                    land_key_press_event(lk)
+                    break
+                case ALLEGRO_EVENT_KEY_CHAR:
+                    int lk = platform_keycode(event.keyboard.keycode)
+                    land_keyboard_add_char(lk, event.keyboard.unichar)
+                    break;
+                case ALLEGRO_EVENT_KEY_UP:
+                    int lk = platform_keycode(event.keyboard.keycode)
+                    land_key_release_event(lk)
+                    break
+                case ALLEGRO_EVENT_MOUSE_AXES:
+                    land_mouse_move_event(
+                        event.mouse.x, event.mouse.y, event.mouse.z)
+                    break
+                case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+                    land_mouse_button_down_event(event.mouse.button - 1)
+                    break
+                case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+                    land_mouse_button_up_event(event.mouse.button - 1)
+                    break
+                case ALLEGRO_EVENT_TOUCH_BEGIN:
+                    land_mouse_button_down_event(0)
+                    break
+                case ALLEGRO_EVENT_TOUCH_END:
+                    land_mouse_button_up_event(0)
+                    break
+                case ALLEGRO_EVENT_TOUCH_MOVE:
+                    land_mouse_move_event(
+                        event.touch.x, event.touch.y, 0)
+                    break
+                case ALLEGRO_EVENT_DISPLAY_RESIZE:
+                    al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
+                    land_resize_event(event.display.width, event.display.height)
+                    break
+                case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+                    al_acknowledge_drawing_halt(d->a5)
+                    break
+                case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+                    al_acknowledge_drawing_resume(d->a5)
+                    break
+            *** "ifdef" __EMSCRIPTEN__
+            continue
+            *** "endif"
+            break
 
 def platform_get_app_settings_file(char const *appname) -> char *:
     al_set_org_name("")
