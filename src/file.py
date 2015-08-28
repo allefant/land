@@ -128,3 +128,15 @@ def land_find_data_prefix(char const *path):
             return
         strcat(s, "../")
     land_set_prefix(path)
+
+def land_replace_filename(char const *path, char const *name) -> char *:
+    char *slash = strrchr(path, '/')
+    int n = 0
+    if slash:
+        n = slash - path
+    char *result = land_malloc(n + strlen("/") + strlen(name) + 1)
+    strncpy(result, path, n)
+    result[n] = 0
+    strcat(result, "/")
+    strcat(result, name)
+    return result
