@@ -104,6 +104,9 @@ def land_font_height(LandFont *self) -> int:
 def land_font_current() -> LandFont *:
     return land_font_state->font
 
+def land_line_height -> int:
+    return land_font_height(land_font_current())
+
 def land_text_off():
     land_font_state->off = 1
 
