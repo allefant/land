@@ -72,6 +72,7 @@ collision detection now.
 
 """
 
+import common
 import global stdbool
 import view
 

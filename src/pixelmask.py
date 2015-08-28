@@ -172,7 +172,7 @@ static def mask_get_rotation_frame(LandPixelMask *mask,
     return i
 
 def land_image_debug_pixelmask(LandImage *self, float x, float y,
-    float angle, bool flipped):
+        float angle, bool flipped):
     int i
     int k = mask_get_rotation_frame(self.mask, angle, flipped)
     int mask_w = self.mask->rotation[k]->w
@@ -271,7 +271,7 @@ def land_image_destroy_pixelmasks(LandImage *self):
 
 # Returns 1 if non-transparent pixels overlap, 0 otherwise. 
 def land_image_overlaps(LandImage *self, float x, y, angle, flipped,
-    LandImage *other, float x_, y_, angle_, flipped_) -> int:
+        LandImage *other, float x_, y_, angle_, flipped_) -> int:
     if not self.mask: return 0
     if not other->mask: return 0
 

@@ -179,13 +179,16 @@ So far, the state maintained by a LandDisplay thus is:
 # Import everything so the complete Land API is available.
 # Also the platform independent macros to launch the Land main loop are here.
 
-import global stdio, stdlib, string, stdarg, stdbool
+import common
+import global stdio, stdlib, string, stdarg
+import global stdbool
 global *** "define" y1 libc_y1
 global *** "define" yn libc_yn
 import global math
 global *** "undef" y1
 global *** "undef" yn
 
+import config
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini

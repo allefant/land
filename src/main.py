@@ -1,9 +1,8 @@
+import land.common
 import runner
 
 static import global sys/time
 static import land
-
-typedef double LandFloat
 
 class LandParameters:
     int w, h
@@ -16,6 +15,7 @@ static import allegro5/a5_main
 static bool land_active
 global bool _land_quit
 static LandParameters *parameters
+
 static bool x_clicked
 static int ticks
 global int _land_frames

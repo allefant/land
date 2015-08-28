@@ -8,7 +8,7 @@ static import global stdio
 
 static import log
 
-*** "ifndef" WINDOWS
+*** "ifdef" LAND_HAVE_EXECINFO_h
 static import execinfo
 static import land.thread
 *** "endif"

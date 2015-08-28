@@ -6,7 +6,7 @@ import widget/layout
 import widget/box
 import widget/container
 import widget/scrolling
-import widget/list
+import widget/widget_list
 import widget/mover
 import widget/sizer
 import widget/button

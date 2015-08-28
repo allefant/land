@@ -1,3 +1,4 @@
+import common
 import array, log, pixelmask, file, util, buffer
 static import global assert
 

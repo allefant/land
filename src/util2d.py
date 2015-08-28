@@ -29,15 +29,16 @@ def land_cross2d(float ax, ay, bx, by) -> float:
     """
     Given two vectors ax/ay and bx/by, returns the cross product.
 
-    If the result is 0, the two vectors are parallel. If the result is > 0, b
-    points more right than a. If the result is < 0, b points more left than a.
+    If the result is 0, the two vectors are parallel. If the result
+    is > 0, b points more to the left than a (if y goes up). If the
+    result is < 0, b points more to the right than a (if y goes up).
 
     Geometrically, this is "how far away does one vector go from the other".
 
     For example, if we have two vectors a = (4, -3) and b = (4, 0). Then:
     |a| = 5
     |b| = 4
-    axb = 12
+    axb = 4 * 0 - -3 * 4 = 12
     sin = axb / |a| / |b| = 0.6 (36.87°)
     distance of a from b: axb / |b| = 3
     distance of b from a: axb / |a| = 2.4

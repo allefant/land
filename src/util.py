@@ -192,6 +192,18 @@ def land_starts_with(char const *s, *start) -> bool:
         return False
     return strncmp(s, start, n) == 0
 
+def land_substring(char const *s, int a, b) -> char *:
+    #    a=2  b=6
+    # AB[CDEF]G
+    # CDEFEFG memmove(s, s + 2, 4)
+    # CDEF s[4] = 0
+    if a < 0: a += strlen(s)
+    if b < 0: b += strlen(s)
+    char *r = land_malloc(b - a + 1)
+    memmove(r, s + a, b - a)
+    r[b - a] = 0
+    return r
+
 def land_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data), int flags, void *data) -> LandArray *:
     """
