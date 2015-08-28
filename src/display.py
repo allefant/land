@@ -154,8 +154,8 @@ class LandDisplay:
     int clip_stack_depth
     int clip_stack[LAND_MAX_CLIP_DEPTH * 5]
     
-    float matrix[16]
-    float matrix_stack[16][16]
+    LandFloat matrix[16]
+    LandFloat matrix_stack[16][16]
     int matrix_stack_depth
     bool matrix_modified
 
@@ -337,6 +337,9 @@ def land_color(float r, float g, float b, float a):
     d->color_b = b
     d->color_a = a
     platform_display_color()
+
+def land_premul(float r, g, b, a):
+    land_color_set(land_color_premul(r, g, b, a))
 
 def land_color_set(LandColor c):
     land_color(c.r, c.g, c.b, c.a)
@@ -569,14 +572,14 @@ def land_display_tick():
     was_resized = resize_event_counter
     resize_event_counter = 0
 
-def land_rotate(float angle):
+def land_rotate(LandFloat angle):
     """
     Pre-rotate the current transformation.
     """
-    float *m = _land_active_display->matrix
-    float c = cosf(angle)
-    float s = sinf(angle)
-    float x, y
+    LandFloat *m = _land_active_display->matrix
+    LandFloat c = cosf(angle)
+    LandFloat s = sinf(angle)
+    LandFloat x, y
         
     x = m[0]
     y = m[1]
@@ -590,11 +593,11 @@ def land_rotate(float angle):
     
     _land_active_display->matrix_modified = True
 
-def land_scale(float x, y):
+def land_scale(LandFloat x, y):
     """
     Pre-scale the current transformation.
     """
-    float *m = _land_active_display->matrix
+    LandFloat *m = _land_active_display->matrix
     m[0] *= x
     m[1] *= y
     m[4] *= x
@@ -602,14 +605,14 @@ def land_scale(float x, y):
 
     _land_active_display->matrix_modified = True
 
-def land_translate(float x, y):
+def land_translate(LandFloat x, y):
     """
     Pre-translate the current transformation. That is, any transformations in
     effect prior to this call will be applied afterwards. And transformations
     after this call until before the next drawing command will be applied
     before.
     """
-    float *m = _land_active_display->matrix
+    LandFloat *m = _land_active_display->matrix
     m[3] += x * m[0] + y * m[1]
     m[7] += x * m[4] + y * m[5]
     _land_active_display->matrix_modified = True
@@ -629,9 +632,9 @@ def land_pop_transform():
         _land_active_display->matrix_modified = True
 
 def land_reset_transform():
-    float *m = _land_active_display->matrix
+    LandFloat *m = _land_active_display->matrix
     
-    float i[16] = {
+    LandFloat i[16] = {
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
@@ -641,8 +644,16 @@ def land_reset_transform():
 
     _land_active_display->matrix_modified = True
 
+def land_transform(LandFloat *x, *y, *z):
+    Land4x4Matrix m
+    memcpy(m.v, _land_active_display->matrix, sizeof m.v)
+    LandVector v = land_vector_matmul(land_vector(*x, *y, *z), &m)
+    *x = v.x
+    *y = v.y
+    *z = v.z
+
 def land_display_transform_4x4(Land4x4Matrix *matrix):
-    float *m = _land_active_display->matrix
+    LandFloat *m = _land_active_display->matrix
     for int i in range(16):
         m[i] = matrix->v[i]
     _land_active_display->matrix_modified = True
