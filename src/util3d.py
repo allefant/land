@@ -1,113 +1,116 @@
 """
 translation matrix to translate by xt/yt/zt
-T = 1 0 0 xt
-    0 1 0 yt
-    0 0 1 zt
-    0 0 0 1
+
+    T = 1 0 0 xt
+        0 1 0 yt
+        0 0 1 zt
+        0 0 0 1
 
 rotation matrix into coordinate system given by 3 vectors
                     x=xx/yx/zx, y=xy/yy/zy, z=xz/yz/zz
-R = xx xy xz 0
-    yx yy yz 0
-    zx zy zz 0
-    0  0  0  1
+
+    R = xx xy xz 0
+        yx yy yz 0
+        zx zy zz 0
+        0  0  0  1
 
 scaling matrix to scale by xs/ys/zs
-S = xs 0  0  0
-    0  ys 0  0
-    0  0  zs 0
-    0  0  0  1
 
-inv(T) = 1 0 0 -xt
-         0 1 0 -yt
-         0 0 1 -zt
-         0 0 0 1
+    S = xs 0  0  0
+        0  ys 0  0
+        0  0  zs 0
+        0  0  0  1
 
-inv(R) = xx yx zx 0
-         xy yy zy 0
-         xz yz zz 0
-         0  0  0  1
+    inv(T) = 1 0 0 -xt
+             0 1 0 -yt
+             0 0 1 -zt
+             0 0 0 1
 
-T x = x + xt
-  y = y + yt
-  z = z + zt
-  1 = 1
+    inv(R) = xx yx zx 0
+             xy yy zy 0
+             xz yz zz 0
+             0  0  0  1
 
-R x = xx x + xy y + xz z
-  y = yx x + yy y + yz z
-  z = zx x + zy y + zz z
-  1 = 1
+    T x = x + xt
+      y = y + yt
+      z = z + zt
+      1 = 1
+
+    R x = xx x + xy y + xz z
+      y = yx x + yy y + yz z
+      z = zx x + zy y + zz z
+      1 = 1
 
 rotate first then translate
 
-T R = xx xy xz xt
-      yx yy yz yt
-      zx zy zz zt
-      0  0  0  1
+    T R = xx xy xz xt
+          yx yy yz yt
+          zx zy zz zt
+          0  0  0  1
 
-T R x = xx x + xy y + xz z + xt
-    y   yx x + yy y + yz z + yt
-    z   zx x + zy y + zz z + zt
-    1   1
+    T R x = xx x + xy y + xz z + xt
+        y   yx x + yy y + yz z + yt
+        z   zx x + zy y + zz z + zt
+        1   1
 
 translate first then rotate
 
-R T = xx xy xz xx xt + xy yt + xz zt
-      yx yy yz yx xt + yy yt + yz zt
-      zx zy zz zx xt + zy yt + zz zt
-      0  0  0  1
+    R T = xx xy xz xx xt + xy yt + xz zt
+          yx yy yz yx xt + yy yt + yz zt
+          zx zy zz zx xt + zy yt + zz zt
+          0  0  0  1
 
 scale first then translate
 
-T S = 1 0 0 xt   xs 0  0  0   xs 0  0  xt
-      0 1 0 yt * 0  ys 0  0 = 0  ys 0  yt
-      0 0 1 zt   0  0  zs 0   0  0  zs zt
-      0 0 0 1    0  0  0  1   0  0  0  1
+    T S = 1 0 0 xt   xs 0  0  0   xs 0  0  xt
+          0 1 0 yt * 0  ys 0  0 = 0  ys 0  yt
+          0 0 1 zt   0  0  zs 0   0  0  zs zt
+          0 0 0 1    0  0  0  1   0  0  0  1
 
-T S x = xs * x + xt
-    y   ys * y + yt
-    z   zs * z + zt
-    1   1
+    T S x = xs * x + xt
+        y   ys * y + yt
+        z   zs * z + zt
+        1   1
 
 translate first then scale
 
-S T = xs 0  0  0   1 0 0 xt   xs 0  0  xs*xt
-      0  ys 0  0 * 0 1 0 yt = 0  ys 0  ys*yt
-      0  0  zs 0   0 0 1 zt   0  0  zs zs*zt
-      0  0  0  1   0 0 0 1    0  0  0  1
+    S T = xs 0  0  0   1 0 0 xt   xs 0  0  xs*xt
+          0  ys 0  0 * 0 1 0 yt = 0  ys 0  ys*yt
+          0  0  zs 0   0 0 1 zt   0  0  zs zs*zt
+          0  0  0  1   0 0 0 1    0  0  0  1
 
-S T x = xs * x + xs * xt
-    y   ys * y + ys * yt
-    z   zs * z + zs * zt
-    1   1
+    S T x = xs * x + xs * xt
+        y   ys * y + ys * yt
+        z   zs * z + zs * zt
+        1   1
 
 translate first then arbitrary affine matrix
 
-A T = A0 A1 A2 A3   1 0 0 xt    A0 A1 A2 A0*xt+A1*yt+A2*zt+A3
-      A4 A5 A6 A7 * 0 1 0 yt =  A4 A5 A6 A4*xt+A5*yt+A7*zt+A7
-      A8 A9 Aa Ab   0 0 1 zt    A8 A9 Aa A8*xt+A9*yt+Aa*zt+Ab
-      0  0  0  1    0 0 0 1     0  0  0  1
+    A T = A0 A1 A2 A3   1 0 0 xt    A0 A1 A2 A0*xt+A1*yt+A2*zt+A3
+          A4 A5 A6 A7 * 0 1 0 yt =  A4 A5 A6 A4*xt+A5*yt+A7*zt+A7
+          A8 A9 Aa Ab   0 0 1 zt    A8 A9 Aa A8*xt+A9*yt+Aa*zt+Ab
+          0  0  0  1    0 0 0 1     0  0  0  1
 
 scale first then arbitrary affine matrix
 
-A S = A0 A1 A2 A3   xs 0  0  0   A0*xs A1*ys A2*zs A3
-      A4 A5 A6 A7 * 0  ys 0  0 = A4*xs A5*ys A6*zs A7
-      A8 A9 Aa Ab   0  0  zs 0   A8*xs A9*ys Aa*zs Ab
-      0  0  0  1    0  0  0  1   0     0     0     1 
+    A S = A0 A1 A2 A3   xs 0  0  0   A0*xs A1*ys A2*zs A3
+          A4 A5 A6 A7 * 0  ys 0  0 = A4*xs A5*ys A6*zs A7
+          A8 A9 Aa Ab   0  0  zs 0   A8*xs A9*ys Aa*zs Ab
+          0  0  0  1    0  0  0  1   0     0     0     1 
 
 rotate by an angle around vector 0/0/1
 
-Ra = +cos -sin 0 0
-     +sin +cos 0 0
-     0    0    1 0
-     0    0    0 1
+    Ra = +cos -sin 0 0
+         +sin +cos 0 0
+         0    0    1 0
+         0    0    0 1
 
 same but arbitrary affine matrix afterwards
 
-A Ra = A0*c+A1*s -A0*s+A1*c A2 A3
-       A4*c+A5*s -A4*s+A5*c A6 A7
-       A8*c+A9*s -A8*s+A9*c Aa Ab
-       0         0          0  1
+    A Ra = A0*c+A1*s -A0*s+A1*c A2 A3
+           A4*c+A5*s -A4*s+A5*c A6 A7
+           A8*c+A9*s -A8*s+A9*c Aa Ab
+           0         0          0  1
 
 """
 import math
@@ -486,26 +489,6 @@ def land_4x4_matrix_rotate(LandFloat x, y, z, angle) -> Land4x4Matrix:
 
     return m
 
-def land_4x4_matrix_perspective(LandFloat z) -> Land4x4Matrix:
-    Land4x4Matrix m
-    m.v[0] = 1
-    m.v[1] = 0
-    m.v[2] = 0
-    m.v[3] = 0
-    m.v[4] = 0
-    m.v[5] = 1
-    m.v[6] = 0
-    m.v[7] = 0
-    m.v[8] = 0
-    m.v[9] = 0
-    m.v[10] = 1
-    m.v[11] = 0
-    m.v[12] = 0
-    m.v[13] = 0
-    m.v[14] = 1 / z
-    m.v[15] = 1
-    return m
-
 def land_4x4_matrix_identity() -> Land4x4Matrix:
     Land4x4Matrix m
     m.v[0] = 1
@@ -550,6 +533,34 @@ def land_4x4_matrix_translate(LandFloat x, y, z) -> Land4x4Matrix:
     m.v[13] = 0
     m.v[14] = 0
     m.v[15] = 1
+    return m
+
+def land_4x4_matrix_perspective(LandFloat left, bottom, nearz,
+        right, top, farz) -> Land4x4Matrix:
+    Land4x4Matrix m
+    LandFloat w = right - left
+    LandFloat h = top - bottom
+    LandFloat depth = farz - nearz
+    LandFloat cx = (right + left) / 2
+    LandFloat cy = (bottom + top) / 2
+    LandFloat cz = (farz + nearz) / 2
+
+    m.v[0] = 2 * nearz / w
+    m.v[1] = 0
+    m.v[2] = 2 * cx / w
+    m.v[3] = 0
+    m.v[4] = 0
+    m.v[5] = 2 * nearz / h
+    m.v[6] = 0
+    m.v[7] = 2 * cy / h
+    m.v[8] = 0
+    m.v[9] = 0
+    m.v[10] = -2 * cz / depth
+    m.v[11] = farz * nearz * -2 / depth
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = -1
+    m.v[15] = 0
     return m
 
 # note: "near" and "far" are keywords in certain windows compilers
