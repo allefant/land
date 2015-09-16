@@ -192,6 +192,13 @@ def land_starts_with(char const *s, *start) -> bool:
         return False
     return strncmp(s, start, n) == 0
 
+def land_concatenate(char **s, char const *cat):
+    int n = strlen(*s) + strlen(cat) + 1
+    char *re = land_realloc(*s, n)
+    strcat(re, cat)
+    re[n - 1] = 0
+    *s = re
+
 def land_substring(char const *s, int a, b) -> char *:
     #    a=2  b=6
     # AB[CDEF]G
