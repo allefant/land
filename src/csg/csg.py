@@ -6,6 +6,7 @@ import land.array
 import land.util3d
 static import land.mem
 import land.pool
+import land.color
 import csg_aabb
 
 class LandCSG:
@@ -19,6 +20,7 @@ class LandCSG:
 class LandCSGVertex:
     LandVector pos
     LandVector normal
+    LandColor rgba
 
 class LandCSGPlane:
     LandVector normal
@@ -59,12 +61,15 @@ def land_csg_vertex_new_pool(LandMemoryPool *pool) -> LandCSGVertex *:
 
 def csg_vertex_clone(LandCSG *csg, LandCSGVertex *self,
         bool pool) -> LandCSGVertex *:
+    LandCSGVertex *v
     if pool:
-        LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
-        v.pos = self.pos
-        v.normal = self.normal
-        return v
-    return land_csg_vertex_new(self.pos, self.normal)
+        v = land_csg_vertex_new_pool(csg.pool)
+    else:
+        land_alloc(v)
+    v.pos = self.pos
+    v.normal = self.normal
+    v.rgba = self.rgba
+    return v
 
 static def collision_code(LandVector *v, LandCSGAABB *b) -> int:
     int c = 0
@@ -128,6 +133,7 @@ static def csg_vertex_interpolate(LandCSG *csg,
     LandCSGVertex *v = land_csg_vertex_new_pool(csg.pool)
     v.pos = land_vector_lerp(self.pos, other.pos, t)
     v.normal = land_vector_lerp(self.normal, other.normal, t)
+    v.rgba = land_color_lerp(self.rgba, other.rgba, t)
     return v
 
 static def csg_plane(LandVector normal, LandFloat w) -> LandCSGPlane:
@@ -225,6 +231,7 @@ static def csg_plane_split_polygon(LandCSG *csg,
             if (ti | tj) == SPANNING:
                 LandFloat t = self.w - land_vector_dot(self.normal, vi.pos)
                 t /= land_vector_dot(self.normal, land_vector_sub(vj.pos, vi.pos))
+                printf("%f\n", t)
                 LandCSGVertex *v = csg_vertex_interpolate(csg, vi, vj, t)
                 land_array_add(f, v)
                 land_array_add(b, csg_vertex_clone(csg, v, True))
