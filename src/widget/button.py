@@ -240,7 +240,7 @@ static def _linedelcb(void *item, void *data) -> int:
 
 def land_widget_button_replace_text(LandWidget *base, char const *text):
     """
-    Same as text but does not trigger any layout updates.
+    Same as set_text but does not trigger any layout updates.
     """
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->text: land_free(button->text)
@@ -250,6 +250,9 @@ def land_widget_button_replace_text(LandWidget *base, char const *text):
 
 def land_widget_button_set_text(LandWidget *base, char const *text):
     land_widget_button_replace_text(base, text)
+    land_widget_button_layout_text(base)
+
+def land_widget_button_layout_text(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->text:
         if button->multiline:
@@ -257,6 +260,17 @@ def land_widget_button_set_text(LandWidget *base, char const *text):
         else:
             land_widget_theme_set_minimum_size_for_text(base, button->text)
     if base->parent: land_widget_layout(base->parent)
+
+def land_widget_button_append_row(LandWidget *base, char const *text):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    char *newt = button.text
+    if not newt:
+        newt = land_strdup("")
+    if newt[0] != 0:
+        land_concatenate(&newt, "\n")
+    land_concatenate(&newt, text)
+    button.text = newt
+    land_widget_button_layout_text(base)
 
 def land_widget_button_multiline(LandWidget *self, int style):
     """
