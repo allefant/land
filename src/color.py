@@ -30,3 +30,10 @@ def land_color_name(char const *name) -> LandColor:
         c.a = 1
         return c
     return platform_color_name(name)
+
+def land_color_lerp(LandColor a, b, float t) -> LandColor:
+    return land_color_rgba(
+        a.r + t * (b.r - a.r),
+        a.g + t * (b.g - a.g),
+        a.b + t * (b.b - a.b),
+        a.a + t * (b.a - a.a))
