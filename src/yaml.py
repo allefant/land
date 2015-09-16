@@ -1,5 +1,6 @@
 import land.array, land.hash, land.mem
-*** "ifndef" LAND_NO_YAML
+static import land.config
+*** "ifdef" LAND_HAVE_YAML_H
 static import global yaml
 
 static enum LandYAMLEntryType:
@@ -94,10 +95,12 @@ static def _add_entry(LandYAML *yaml, LandYAMLEntry *entry):
         yaml.parent = entry
         yaml.expect_key = True
 
-# After calling this, use land_yaml_add_scalar to add a key, and then
-# land_yaml_add_* to add a value. Repeat to add the 2nd and more map entries.
-# Use land_yaml_done when done.
 def land_yaml_add_mapping(LandYAML *yaml):
+    """
+After calling this, use land_yaml_add_scalar to add a key, and then
+land_yaml_add_* to add a value. Repeat to add the 2nd and more map entries.
+Use land_yaml_done when done.
+    """
     LandYAMLEntry *entry
     land_alloc(entry)
     entry.type = Mapping
@@ -105,24 +108,30 @@ def land_yaml_add_mapping(LandYAML *yaml):
     entry.sequence = land_array_new()
     _add_entry(yaml, entry)
 
-# Call this when done with a mapping or sequence.
 def land_yaml_done(LandYAML *yaml):
+    """
+Call this when done with a mapping or sequence.
+"""
     yaml.expect_key = False
     yaml.parent = land_array_pop(yaml.parents)
     if yaml.parent and yaml.parent->type == Mapping: yaml.expect_key = True
 
-# After calling this, use land_yaml_add_* to add sequence items,
-# then land_yaml_done when the sequence is done.
 def land_yaml_add_sequence(LandYAML *yaml):
+    """
+After calling this, use land_yaml_add_* to add sequence items,
+then land_yaml_done when the sequence is done.
+"""
     LandYAMLEntry *entry
     land_alloc(entry)
     entry.type = Sequence
     entry.sequence = land_array_new()
     _add_entry(yaml, entry)
 
-# Call this to add an item to a sequence, a key to a mapping, or a value to
-# a mapping.
 def land_yaml_add_scalar(LandYAML *yaml, char const *v):
+    """
+Call this to add an item to a sequence, a key to a mapping, or a value to
+a mapping.
+"""
     if yaml.expect_key:
         yaml.expect_key = False
         yaml.key = strdup(v)

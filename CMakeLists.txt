@@ -14,6 +14,8 @@ set(PROFILE 0 CACHE BOOL "Whether to build the profile library.")
 
 set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
 
+set(EXAMPLES_ON 1 CACHE BOOL "Build the examples.")
+
 #_______________________________________________________________________
 # Step: Find all .py source files.
 #
@@ -55,7 +57,7 @@ execute_process(COMMAND ${CMAKE_C_COMPILER} --version OUTPUT_VARIABLE EMSCRIPTEN
 string(REGEX MATCH emcc EMSCRIPTEN "${EMSCRIPTEN}")
 string(COMPARE NOTEQUAL "" "${EMSCRIPTEN}" EMSCRIPTEN)
 
-CHECK_INCLUDE_FILES(YAML.h LAND_HAVE_YAML_H)
+CHECK_INCLUDE_FILES(yaml.h LAND_HAVE_YAML_H)
 CHECK_INCLUDE_FILES(execinfo.h LAND_HAVE_EXECINFO_H)
 CONFIGURE_FILE(config.cmake c/land/config.h)
 
@@ -72,10 +74,6 @@ set(PFLAGS "-g3 -p -O2")
 set(LFLAGS "")
 if (MEMLOG)
 set(DFLAGS "-g3 -O0")
-endif()
-
-if (NOT YAML)
-set(CFLAGS "${CFLAGS} -DLAND_NO_YAML")
 endif()
 
 if (MEMLOG)
@@ -194,4 +192,6 @@ if (SHARED)
     endif (RELEASE)
 endif (SHARED)
 
-add_subdirectory(examples) # EXCLUDE_FROM_ALL)
+if (EXAMPLES_ON)
+    add_subdirectory(examples EXCLUDE_FROM_ALL)
+endif()
