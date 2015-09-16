@@ -1,7 +1,7 @@
 """
-= Land =
+![Land!](logo.png)
 
-== the name ==
+## the name
 
 It has no special meaning, it's just that in computer games, you make
 virtual worlds or lands - and that inspired it as use as name for this.
@@ -9,7 +9,7 @@ The only limits of this land should be your imagination, not programming
 language obstacles. But if you insist, it could also be a recursive
 acronym for "Land All New Design".
 
-== history ==
+## history
 
 Well, I really started working on this version only some days ago. But I
 made a library called "land", with the very same goals, about 10-20 years
@@ -18,7 +18,7 @@ called TASM to work. I actually found a copy of that, and tried to
 compile it in dosbox, but still, it wouldn't work. Not that the result
 would have been interesting for anyone but me :)
 
-== what is it ==
+## what it is
 
 Land is, currently, just a simple framework to assist in creating games,
 which will work under Windows, Linux and OSX. As well as some others,
@@ -28,8 +28,7 @@ Some may not want this, since it takes control away. But for beginners,
 it may make things somewhat simpler. And especially, and that's the only
 thing I care about, for me.
 
-== features/limitations ==
-
+## features/limitations
 - Written in C, preprocessed by a Python-like syntax.
 
 - Automated build process using scons.
@@ -49,7 +48,7 @@ thing I care about, for me.
 - Parallax scrolling with arbitrary amount of layers. Define some of the
   tilemap layers to be parallax layers - scrolling is handled by Land.
 
-== source code ==
+## source code
 
 Normally, the split into .c/.cpp and .h files is not a problem, either you
 work out the API first in he .h and then implement, or write first the
@@ -64,8 +63,7 @@ managable. Looking at the changes of the build process would show how hard it
 was to end up at the current system (but a lot of that happened before the code
 was stable enough to move to SVN).
 
-== inheritance and polymorphism ==
-
+## inheritance and polymorphism
 What does the technical inplementation of Land look like, given it is
 implemented in C? Well, polymorphism is done by using VTables, similar to e.g.
 the Allegro drivers. Inheritance is done by manual aggregation (along with
@@ -81,7 +79,7 @@ TODO: Maybe a macro, something like:
 LandGridInterface *my_grid_vtable =
     land_override(land_grid_vtable_normal, cell_draw, my_cell_draw);
 
-== user data ==
+## user data
 
 Instead of inheriting your own types, it is much easier to simply attach data to
 land types. For example:
@@ -100,7 +98,7 @@ In the first case, also with:
 
 mydata = land_retrieve_named_data(sprite, "mydata")
 
-== containers ==
+## containers
 
   LandList - a doubly linked list of items. Fast insertion and deletion of
   items.
@@ -116,7 +114,7 @@ mydata = land_retrieve_named_data(sprite, "mydata")
   LandHash - a mapping of strings to the data. Useful if there are many strings
   to look up, in which case this is faster than looping through a list/array.
 
-== maps, layers, tiles, sprites.. ==
+## maps, layers, tiles, sprites..
 
   One question still is.. what to do about maximum sprite size? Two brute force
   approaches:
@@ -131,7 +129,7 @@ mydata = land_retrieve_named_data(sprite, "mydata")
   cell size. This also would deal with collision detection - a sprite simply can
   never be outside of its cell and the adjacent ones.
 
-== graphics primitives ==
+## graphics primitives
 
 You can directly use all of Allegro's API, as well as OpenGL. Additionally, with
 the time, Land got it's own graphics primitives:
@@ -162,7 +160,7 @@ So far, the state maintained by a LandDisplay thus is:
 - target
 - clip_x, clip_y, clip_w, clip_h
 
-== The land song ==
+## The land song
 
 + lalalala-land
 + Land is "Land All New Design"

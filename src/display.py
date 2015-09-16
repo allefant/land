@@ -1,7 +1,7 @@
 """
 Drawing Primitives in Land
 
-= Positions =
+# Positions
 
 The most basic information drawing primitives need is, where on the target
 should they be drawn. There are several ways:
@@ -66,26 +66,26 @@ mode just maps the coordinates like described above, so you still can use
 non-integer positions (but there really is no reason to not use one of the other
 two positioning modes then) and enable e.g. anti-aliasing.
 
-= Primitives =
+# Primitives
 
-== line ==
+## line
 
 This draws a line from the first point to the second point.
 
-== rectangle ==
+## rectangle
 
 This draws a rectangle from the first point to the second point.
 
-== filled_rectangle ==
+## filled_rectangle
 
 Like rectangle, but filled.
 
-== circle/ellipse/oval ==
+## circle/ellipse/oval
 
 This draws a circle, inscribed into the given rectangle. The alternate names
 "ellipse" and "oval" for this function actually fit better.
 
-== filled_circle ==
+## filled_circle
 
 Like circle, but filled.
 """
