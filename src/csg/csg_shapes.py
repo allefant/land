@@ -229,3 +229,39 @@ def csg_cube(void *shared) -> LandCSG *:
     add_quad(polygons, f, e, a, b, shared) # back
     add_quad(polygons, e, h, d, a, shared) # left
     return land_csg_new_from_polygons(polygons)
+
+def csg_block(int x, y, z, bool outside, void *shared) -> LandCSG *:
+    bool all = not outside
+    LandArray *polygons = land_array_new()
+    LandFloat xs = 1.0 / x
+    LandFloat ys = 1.0 / y
+    LandFloat zs = 1.0 / z
+    for int i in range(x):
+        for int j in range(y):
+            for int k in range(z):
+                LandFloat xp = -1 + xs + i * xs * 2
+                LandFloat yp = -1 + ys + j * ys * 2
+                LandFloat zp = -1 + zs + k * zs * 2
+
+                LandVector a = land_vector(xp + xs * -1, yp + ys * -1, zp + zs * -1)
+                LandVector b = land_vector(xp + xs *  1, yp + ys * -1, zp + zs * -1)
+                LandVector c = land_vector(xp + xs *  1, yp + ys *  1, zp + zs * -1)
+                LandVector d = land_vector(xp + xs * -1, yp + ys *  1, zp + zs * -1)
+                LandVector e = land_vector(xp + xs * -1, yp + ys * -1, zp + zs *  1)
+                LandVector f = land_vector(xp + xs *  1, yp + ys * -1, zp + zs *  1)
+                LandVector g = land_vector(xp + xs *  1, yp + ys *  1, zp + zs *  1)
+                LandVector h = land_vector(xp + xs * -1, yp + ys *  1, zp + zs *  1)
+
+                if all or k == 0:
+                    add_quad(polygons, a, d, c, b, shared) # bottom
+                if all or k == z - 1:
+                    add_quad(polygons, e, f, g, h, shared) # top
+                if all or j == y - 1:
+                    add_quad(polygons, h, g, c, d, shared) # front
+                if all or i == x - 1:
+                    add_quad(polygons, g, f, b, c, shared) # right
+                if all or j == 0:
+                    add_quad(polygons, f, e, a, b, shared) # back
+                if all or i == 0;
+                    add_quad(polygons, e, h, d, a, shared) # left
+    return land_csg_new_from_polygons(polygons)
