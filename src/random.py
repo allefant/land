@@ -169,18 +169,21 @@ static macro MAX_NUMBER 4294967295U
 def land_seed(int seed):
     init_genrand(&default_state, seed)
 
-def land_rnd(double min, double max) -> double:
+def land_rnd(double rmin, double rmax) -> double:
     """
     Random value in the half-open interval [min, max[, that is min is inclusive
     but max is exclusive.
     """
-    if min >= max: return min
-    return min + (
-        (double)genrand_int32(&default_state) / MAX_NUMBER) * (max - min)
+    if rmin >= rmax: return rmin
+    return rmin + (
+        (double)genrand_int32(&default_state) / MAX_NUMBER) * (rmax - rmin)
 
-def land_rand(int min, int max) -> int:
-    if min >= max: return min
-    return min + genrand_int32(&default_state) % (max - min + 1)
+def land_rand(int rmin, int rmax) -> int:
+    if rmin >= rmax: return rmin
+    int64_t d = rmax
+    d++
+    d -= rmin
+    return rmin + genrand_int32(&default_state) % d
 
 def land_random_new(int seed) -> LandRandom *:
     LandRandom *self
@@ -191,6 +194,9 @@ def land_random_new(int seed) -> LandRandom *:
 def land_random_del(LandRandom *self):
     land_free(self)
 
-def land_random(LandRandom *r, int min, int max) -> int:
-    if min >= max: return min
-    return min + genrand_int32(r) % (max - min + 1)
+def land_random(LandRandom *r, int rmin, int rmax) -> int:
+    if rmin >= rmax: return rmin
+    int64_t d = rmax
+    d++
+    d -= rmin
+    return rmin + genrand_int32(r) % d
