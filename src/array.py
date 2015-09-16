@@ -100,6 +100,15 @@ def land_array_add(LandArray *self, void *data):
         self.data = land_realloc(self->data, self->size *sizeof *self->data)
     self.data[i] = data
 
+def land_array_reserve(LandArray *self, int n):
+    """
+    Allocate n empty (None) entries for the array. Removes any contents
+    of the array if it already has any data added to it.
+    """
+    self.count = self.size = n
+    self.data = land_realloc(self.data, self.size * sizeof *self.data)
+    memset(self.data, 0, self.count * sizeof *self.data)
+
 def land_array_pop(LandArray *self) -> void *:
     """
     Remove the last element in the array and return it. Only the last element
