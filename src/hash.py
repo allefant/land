@@ -230,11 +230,18 @@ def land_hash_has(LandHash *self, char const *thekey) -> int:
     if entry: return True
     return False
 
-def land_hash_keys(LandHash *hash) -> LandArray *:
-    """Return an array containing all the keys in the hash. The strings are
-    direct pointers into the hash - so you must not modify or free them, and
-    they will get invalid if the hash is destroyed. You are responsible for
-    destroying the array with land_array_destroy when you are done using it.
+def land_hash_keys(LandHash *hash, bool alloc) -> LandArray *:
+    """Return an array containing all the keys in the hash.
+
+    If alloc is true, each key is allocated and must be freed. A
+    convenient way is to use land_array_destroy_with_strings.
+
+    Otherwise the strings are direct pointers into the hash - so you
+    must not modify or free them, and they will get invalid if the hash
+    is modifed (even just by adding/removing an unrelated key).
+
+    You are responsible for destroying the array with land_array_destroy
+    when you are done using it.
     """
     LandArray *array = land_array_new()
     int i
@@ -243,7 +250,10 @@ def land_hash_keys(LandHash *hash) -> LandArray *:
             int n = hash->entries[i]->n
             int j
             for j = 0 while j < n with j++:
-                land_array_add_data(&array, hash->entries[i][j].thekey)
+                char *key = hash->entries[i][j].thekey
+                if alloc:
+                    key = land_strdup(key)
+                land_array_add_data(&array, key)
 
     return array   
 
