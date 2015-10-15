@@ -39,6 +39,15 @@ def land_file_read(LandFile *self, char *buffer, int bytes) -> int:
 def land_file_write(LandFile *self, char const *buffer, int bytes) -> int:
     return platform_fwrite(self.f, buffer, bytes)
 
+def land_file_print(LandFile *self, char const *f, ...):
+    char s[1024]
+    va_list args
+    va_start(args, f)
+    vsnprintf(s, sizeof s, f, args)
+    strcat(s, "\n")
+    va_end(args)
+    land_file_write(self, s, strlen(s))
+
 def land_file_fputs(LandFile *self, char const *string) -> int:
     int n = strlen(string)
     return land_file_write(self, string, n)
