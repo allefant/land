@@ -1,6 +1,17 @@
 import allegro5.a5_opengl
 import util3d
 
+def land_bind_vbo(GLuint *vbo, void *data, int n, int draw):
+    if *vbo:
+        glBindBuffer(GL_ARRAY_BUFFER, *vbo)
+        if glGetError() == GL_INVALID_OPERATION:
+            *vbo = 0
+
+    if not *vbo:
+        glGenBuffers(1, vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, *vbo)
+        glBufferData(GL_ARRAY_BUFFER, n, data, draw)
+
 def land_opengl_error() -> char const *:
     GLenum e = glGetError()
 ***scramble
