@@ -231,7 +231,6 @@ static def csg_plane_split_polygon(LandCSG *csg,
             if (ti | tj) == SPANNING:
                 LandFloat t = self.w - land_vector_dot(self.normal, vi.pos)
                 t /= land_vector_dot(self.normal, land_vector_sub(vj.pos, vi.pos))
-                printf("%f\n", t)
                 LandCSGVertex *v = csg_vertex_interpolate(csg, vi, vj, t)
                 land_array_add(f, v)
                 land_array_add(b, csg_vertex_clone(csg, v, True))

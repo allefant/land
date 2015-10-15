@@ -1,12 +1,11 @@
 import land.csg.csg
 static import land.util
 
-static macro Float LandFloat
 static macro pi LAND_PI
 
-static def sphere_point(LandArray *vertices, Float i, j):
-    Float theta = 2 * pi * i
-    Float phi = pi * j
+static def sphere_point(LandArray *vertices, LandFloat i, j):
+    LandFloat theta = 2 * pi * i
+    LandFloat phi = pi * j
     LandVector normal = land_vector(
       cos(theta) * sin(phi),
       cos(phi),
@@ -19,26 +18,40 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
     """
     Make a sphere with radius 1.0.
     It fits within a cube from -1/-1/-1 to 1/1/1.
+
+    rings determines how many parts the latitude is divided into, a
+    value of 3 means just south pole, equator and north pole.
+
+    slices determins how many parts the longitude is divided into,
+    a value of 3 means 0-meridian, +120° and -120°.
     """
     if slices < 3:
         return None
     if rings < 3:
         return None
-    rings--
     LandArray *polygons = land_array_new()
-    for int i in range(slices):
-        for int j in range(rings):
-            
+    for int i in range(slices): # longitude
+        for int j in range(rings - 1): # latitude
+            # for example if slices and rings are both 3
+            # j = 0:
+            # A=i/j B=-
+            # D=i/j+1 C=i+1/j+1
+            #
+            # j = 1:
+            # A[D]=i/j B[C]=i+1/j
+            # D=i/j+1 C=-
+            #
             LandArray *vertices = land_array_new()
-            sphere_point(vertices, 1.0 * i / slices, 1.0 * j / rings)
-            if j > 0:
+            sphere_point(vertices, 1.0 * i / slices, 1.0 * j /
+                (rings - 1))
+            if j > 0: # not southpole
                 sphere_point(vertices, 1.0 * (i + 1) / slices,
-                    1.0 * j / rings)
-            if j < rings - 1:
+                    1.0 * j / (rings - 1))
+            if j < rings - 2:
                 sphere_point(vertices, 1.0 * (i + 1) / slices,
-                    1.0 * (j + 1) / rings)
+                    1.0 * (j + 1) / (rings - 1))
             sphere_point(vertices, 1.0 * i / slices,
-                    1.0 * (j + 1) / rings)
+                    1.0 * (j + 1) / (rings - 1))
 
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
             
@@ -65,10 +78,10 @@ def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
         LandCSGVertex *start = land_csg_vertex_new(down, down)
         LandCSGVertex *end = land_csg_vertex_new(up, up)
 
-        Float angle0 = i * 2 * pi / slices
-        Float angle1 = (i + 1) * 2 * pi / slices
-        Float c0 = cos(angle0), s0 = sin(angle0)
-        Float c1 = cos(angle1), s1 = sin(angle1)
+        LandFloat angle0 = i * 2 * pi / slices
+        LandFloat angle1 = (i + 1) * 2 * pi / slices
+        LandFloat c0 = cos(angle0), s0 = sin(angle0)
+        LandFloat c1 = cos(angle1), s1 = sin(angle1)
 
         LandVector side0 = land_vector(c0, -s0, 0)
         LandVector side1 = land_vector(c1, -s1, 0)
@@ -120,11 +133,11 @@ def csg_cone(int slices, void *shared) -> LandCSG *:
         
         LandCSGVertex *start = land_csg_vertex_new(down, down)
 
-        Float angle0 = i * 2 * pi / slices
-        Float angle1 = (i + 1) * 2 * pi / slices
+        LandFloat angle0 = i * 2 * pi / slices
+        LandFloat angle1 = (i + 1) * 2 * pi / slices
         #Float anglem = (i + 0.5) * 2 * pi / slices
-        Float c0 = cos(angle0), s0 = sin(angle0)
-        Float c1 = cos(angle1), s1 = sin(angle1)
+        LandFloat c0 = cos(angle0), s0 = sin(angle0)
+        LandFloat c1 = cos(angle1), s1 = sin(angle1)
         #Float cm = cos(anglem), sm = sin(anglem)
 
         #LandVector sidem = land_vector_normalize(land_vector(cm, sm, 0.5))
@@ -198,7 +211,7 @@ def csg_tetrahedron(void *shared) -> LandCSG *:
     Make a tetrahedron.
     """
     LandArray *polygons = land_array_new()
-    Float s = 1 / sqrt(2)
+    LandFloat s = 1 / sqrt(2)
     LandVector a = land_vector(-1, 0, -s)
     LandVector b = land_vector( 1, 0, -s)
     LandVector c = land_vector( 0, -1, s)
@@ -264,4 +277,45 @@ def csg_block(int x, y, z, bool outside, void *shared) -> LandCSG *:
                     add_quad(polygons, f, e, a, b, shared) # back
                 if all or i == 0;
                     add_quad(polygons, e, h, d, a, shared) # left
+    return land_csg_new_from_polygons(polygons)
+
+static def torus_point(LandArray *vertices, LandFloat i, j, r):
+    LandFloat theta = 2 * pi * i
+    LandFloat phi = 2 * pi * j
+    LandFloat cx = cos(theta)
+    LandFloat cy = sin(theta)
+    LandVector pos = land_vector(cx + cx * r * cos(phi),
+        cy + cy * cos(phi) * r, sin(phi) * r)
+    LandVector normal = land_vector(cx * cos(phi), cy * cos(phi),
+        sin(phi))
+    land_array_add(vertices, land_csg_vertex_new(pos, normal))
+
+def csg_torus(int slices, segments, LandFloat diameter,
+        void *shared) -> LandCSG *:
+    """
+    slices is the longitude subdivisions, or how many "disks" the torus
+    is cut into along its outer circle
+
+    segments is the "latitude" subdivisions, i.e. how many segments each
+    individual disk has
+
+    diameter is the size of the tube and must be greater than 0 (thin)
+    and less than 1 (thick).
+
+    The torus has radius of 1 around the origin and lies in the
+    X/Y plane. The outer radius therefore is 1 + diameter / 2.
+    """
+    LandArray *polygons = land_array_new()
+    for int i in range(slices): # latitude
+        for int j in range(segments): # "longitude"
+            LandArray *vertices = land_array_new()
+            torus_point(vertices, 1.0 * i / slices, 1.0 * j / segments,
+                diameter / 2)
+            torus_point(vertices, 1.0 * (i + 1) / slices,
+                1.0 * j / segments, diameter / 2)
+            torus_point(vertices, 1.0 * (i + 1) / slices,
+                1.0 * (j + 1) / segments, diameter / 2)
+            torus_point(vertices, 1.0 * i / slices,
+                1.0 * (j + 1) / segments, diameter / 2)
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
     return land_csg_new_from_polygons(polygons)
