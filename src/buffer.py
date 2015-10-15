@@ -75,6 +75,17 @@ def land_buffer_copy(LandBuffer *other) -> LandBuffer *:
     land_buffer_add(self, other->buffer, other->n)
     return self
 
+def land_buffer_extract(LandBuffer *other, int x, n) -> LandBuffer *:
+    LandBuffer *self = land_buffer_new()
+    if n > 0:
+        land_buffer_add(self, other.buffer + x, n)
+    return self
+
+def land_buffer_copy_from(LandBuffer *other, int x) -> LandBuffer *:
+    LandBuffer *self = land_buffer_new()
+    land_buffer_add(self, other.buffer + x, other.n - x)
+    return self
+
 macro land_buffer_del land_buffer_destroy
 def land_buffer_destroy(LandBuffer *self):
     if self.buffer: land_free(self->buffer)
@@ -89,7 +100,14 @@ def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
         self.buffer = land_realloc(self->buffer, self->size)
     memmove(self.buffer + pos + n, self->buffer + pos, self->n - n - pos)
     memcpy(self.buffer + pos, buffer, n)
-    
+
+def land_buffer_cut(LandBuffer *self, int pos, int n):
+    memmove(self.buffer + pos, self.buffer + pos + n, self.n - pos - n)
+    self.n -= n
+
+def land_buffer_shorten_left(LandBuffer *self, int n):
+    land_buffer_cut(self, 0, n)
+
 def land_buffer_add(LandBuffer *self, char const *b, int n):
     land_buffer_insert(self, self.n, b, n)
 
@@ -108,6 +126,13 @@ def land_buffer_addf(LandBuffer *self, char const *format, ...):
     va_start(args, format)
     land_buffer_addv(self, format, args)
     va_end(args)
+
+def land_buffer_addl(LandBuffer *self, char const *format, ...):
+    va_list args
+    va_start(args, format)
+    land_buffer_addv(self, format, args)
+    va_end(args)
+    land_buffer_add_char(self, '\n')
 
 def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, i & 255)
@@ -160,6 +185,9 @@ def land_buffer_finish(LandBuffer *self) -> char *:
     self.buffer = None
     land_buffer_destroy(self)
     return s
+
+def land_buffer_println(LandBuffer *self):
+    printf("%.*s\n", self.n, self.buffer)
 
 def land_buffer_split(LandBuffer const *self, char delim) -> LandArray *:
     """
@@ -220,6 +248,21 @@ def land_buffer_strip(LandBuffer *self, char const *what):
     land_buffer_strip_right(self, what)
     land_buffer_strip_left(self, what)
 
+def land_buffer_is(LandBuffer *self, char const *what) -> bool:
+    int n = strlen(what)
+    if n != self.n:
+        return False
+    return memcmp(self.buffer, what, self.n) == 0
+
+def land_buffer_remove_if_start(LandBuffer *self, char const *what):
+    if memcmp(self.buffer, what, strlen(what)) == 0:
+        land_buffer_shorten_left(self, strlen(what))
+
+def land_buffer_remove_if_end(LandBuffer *self, char const *what):
+    if memcmp(self.buffer + self.n - strlen(what), what,
+            strlen(what)) == 0:
+        land_buffer_shorten(self, strlen(what))
+
 def land_buffer_write_to_file(LandBuffer *self, char const *filename):
     FILE *f = fopen(filename, "w")
     fwrite(self.buffer, 1, self->n, f)
@@ -230,6 +273,37 @@ def land_buffer_rfind(LandBuffer *self, char c) -> int:
     for int i = self.n - 1 while i >= 0 with i--:
         if self.buffer[i] == c: return i
     return -1
+
+def land_buffer_find(LandBuffer const *self, int offset,
+        char const *what) -> int:
+    int n = strlen(what)
+    for int i in range(offset, self.n):
+        for int j in range(n):
+            if self.buffer[i + j] != what[j]:
+                goto mismatch
+        return i
+        label mismatch
+    return -1
+
+def land_buffer_replace(LandBuffer *self, int offset,
+        char const *wat, *wit) -> int:
+    int x = land_buffer_find(self, offset, wat)
+    if x < 0:
+        return x
+    land_buffer_cut(self, x, strlen(wat))
+    land_buffer_insert(self, x, wit, strlen(wit))
+    return x + strlen(wit)
+
+def land_buffer_replace_all(LandBuffer *self,
+        char const *wat, *wit) -> int:
+    int x = 0
+    int count = 0
+    while True:
+        x = land_buffer_replace(self,x, wat, wit)
+        if x < 0:
+            break
+        count++
+    return count
 
 def land_buffer_set_length(LandBuffer *self, int n):
     self.n = n
@@ -278,17 +352,6 @@ def land_buffer_compare(LandBuffer *self, *other) -> int:
     if self.n < other->n: return -1
     if self.n > other->n: return 1
     return memcmp(self.buffer, other->buffer, self->n)
-
-
-def land_string_copy(char *target, char const *source, int size) -> char *:
-    """
-    size is the size of target in bytes (including the terminating 0)
-
-    Returns target.
-    """
-    strncpy(target, source, size - 1)
-    target[size - 1] = 0
-    return target
 
 global *** "ifdef" LAND_MEMLOG
 
