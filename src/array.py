@@ -190,6 +190,18 @@ def land_array_destroy(LandArray *self):
     if self.data: land_free(self->data)
     land_free(self)
 
+static def cb_free(void *data, void *_) -> int:
+    land_free(data)
+    return 0
+
+def land_array_destroy_with_strings(LandArray *self):
+    """
+    Like [land_array_destroy] but also calls land_free on every
+    element.
+    """
+    land_array_for_each(self, cb_free, None)
+    land_array_destroy(self)
+
 def land_array_sort(LandArray *self, int (*cmpfnc)(void const *a,
     void const *b)):
     """
