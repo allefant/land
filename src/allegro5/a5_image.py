@@ -215,6 +215,8 @@ def platform_image_opengl_texture(LandImage *super) -> int:
 def platform_image_crop(LandImage *super, int x, y, w, h):
     SELF
     ALLEGRO_STATE state
+    if x == 0 and y == 0 and w == super.width and h == super.height:
+        return
     al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
     ALLEGRO_BITMAP *cropped = al_create_bitmap(w, h)
     al_set_target_bitmap(cropped)
