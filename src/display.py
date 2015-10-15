@@ -617,6 +617,13 @@ def land_translate(LandFloat x, y):
     m[7] += x * m[4] + y * m[5]
     _land_active_display->matrix_modified = True
 
+def land_z(LandFloat z):
+    LandFloat *m = _land_active_display->matrix
+    m[3] += z * m[2]
+    m[7] += z * m[6]
+    m[11] += z * m[10]
+    _land_active_display->matrix_modified = True
+
 def land_push_transform():
     if _land_active_display->matrix_stack_depth < 16:
         int i = _land_active_display->matrix_stack_depth++
