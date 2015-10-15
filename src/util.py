@@ -177,6 +177,16 @@ def land_fnmatch(char const *pattern, char const *name) -> bool:
         i++
         j++
 
+def land_string_copy(char *target, char const *source, int size) -> char *:
+    """
+    size is the size of target in bytes (including the terminating 0)
+
+    Returns target.
+    """
+    strncpy(target, source, size - 1)
+    target[size - 1] = 0
+    return target
+
 def land_equals(char const *s, *s2) -> bool:
     return strcmp(s, s2) == 0
 
@@ -195,9 +205,43 @@ def land_starts_with(char const *s, *start) -> bool:
 def land_concatenate(char **s, char const *cat):
     int n = strlen(*s) + strlen(cat) + 1
     char *re = land_realloc(*s, n)
-    strcat(re, cat)
+    memmove(re + strlen(*s), cat, strlen(cat))
     re[n - 1] = 0
     *s = re
+
+def land_prepend(char **s, char const *pre):
+    int n = strlen(*s) + strlen(pre) + 1
+    char *re = land_realloc(*s, n)
+    memmove(re + strlen(pre), re, strlen(*s))
+    memmove(re, pre, strlen(pre))
+    re[n - 1] = 0
+    *s = re
+
+def land_replace(char **s, int off, char const *wat, *wit) -> int:
+    char *r = strstr(*s + off, wat)
+    if not r:
+        return strlen(*s)
+    int pn = r - *s
+    int sn = strlen(*s)
+    int n = sn + strlen(wit) - strlen(wat) + 1
+    char *re = land_malloc(n)
+    memmove(re, *s, r - *s)
+    memmove(re + pn, wit, strlen(wit))
+    memmove(re + pn + strlen(wit), r + strlen(wat),
+        sn - pn - strlen(wat))
+    re[n - 1] = 0
+    land_free(*s)
+    *s = re
+    return pn + strlen(wit) 
+
+def land_replace_all(char **s, char const *wat, char const *wit) -> int:
+    int off = 0
+    int c = 0
+    while True:
+        off = land_replace(s, off, wat, wit)
+        if not (*s)[off]:
+            return c
+        c++
 
 def land_substring(char const *s, int a, b) -> char *:
     #    a=2  b=6
