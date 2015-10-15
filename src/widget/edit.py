@@ -114,6 +114,8 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                 edit->cursor = 0
             elif k == LandKeyEnd:
                 edit->cursor = l
+            elif k == LandKeyEnter:
+                land_widget_container_keyboard_leave(base.parent)
 
 def land_widget_edit_destroy(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
@@ -166,6 +168,10 @@ def land_widget_edit_align_right(LandWidget *base, bool yes):
     edit->align_right = yes
 
 def land_widget_edit_get_text(LandWidget *base) -> char const *:
+    """
+    Note: Points directly to the widget's text, only valid as long
+    as the widget is alive.
+    """
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     return edit->text
 

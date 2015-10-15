@@ -190,9 +190,15 @@ def land_widget_book_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     land_widget_book_initialize((LandWidget *)self, parent, x, y, w, h)
     return LAND_WIDGET(self)
 
-def land_widget_book_hide_tabbar(LandWidget *widget):
+def land_widget_book_get_tabbar(LandWidget *widget) -> LandWidget *:
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandWidget *tabbar = container->children->first->next->data
+    return tabbar
+
+def land_widget_book_hide_tabbar(LandWidget *widget):
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
+    LandWidget *tabbar = land_widget_book_get_tabbar(widget)
+    
     LandWidget *panel = LAND_WIDGET(container->children->first->data)
 
     land_widget_hide(tabbar)

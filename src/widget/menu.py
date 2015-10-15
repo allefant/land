@@ -153,6 +153,8 @@ def land_widget_menubutton_new(LandWidget *parent, char const *name,
 def land_widget_menubutton_destroy(LandWidget *self):
     LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self)
     if menubutton->submenu:
+        LandWidgetMenu *menu = LAND_WIDGET_MENU(menubutton.submenu)
+        menu.menubutton = None
         land_widget_unreference(menubutton->submenu)
     land_widget_button_destroy(self)
 
