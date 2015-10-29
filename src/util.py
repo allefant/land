@@ -273,3 +273,40 @@ def land_filelist(char const *dir,
     3 - Like 1 and 2 combined.
     """
     return platform_filelist(dir, filter, flags, data)
+
+def land_split_path_name_ext(char const *filename) -> LandArray*:
+    """
+Returns a LandArray with three elements, for example:
+
+    data/blah/tree.png -> ["data/blah", "tree", "png"]
+    test.txt -> [None, "test", "txt"]
+    /etc/passwd -> ["/etc", "passwd", None]
+
+The return value can most conveniently be freed like this:
+
+    a = land_split_path_name_ext(filename)
+    ...
+    land_array_destroy_with_strings(a)
+    """
+    LandArray *a = land_array_new()
+    char *path = land_strdup(filename)
+    char *name
+    char *ext
+    char *slash = strrchr(path, '/')
+    if slash:
+        *slash = 0
+        name = land_strdup(slash + 1)
+    else:
+        name = path
+        path = None
+    char *dot = strrchr(name, '.')
+    if dot:
+        *dot = 0
+        ext = land_strdup(dot + 1)
+    else:
+        ext = None
+        
+    land_array_add(a, path)
+    land_array_add(a, name)
+    land_array_add(a, ext)
+    return a
