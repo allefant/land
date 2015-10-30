@@ -6,11 +6,11 @@ static import land.land
 static import land.allegro5.a5_display
 
 *** "ifdef" ANDROID
-static import global allegro5.allegro_android
+*** "include" <allegro5/allegro_android.h>
 *** "endif"
 
 *** "ifdef" __EMSCRIPTEN__
-static import global emscripten
+*** "include" <emscripten.h>
 *** "endif"
 
 static void (*global_cb)(void)

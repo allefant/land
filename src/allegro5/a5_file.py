@@ -59,7 +59,9 @@ static def add_files(char const *rel, LandArray **array, ALLEGRO_FS_ENTRY *entry
                 fpath = rel2
             else:
                 fpath = name
-            int f = filter(fpath, is_dir, data)
+            int f = 3
+            if filter:
+                f = filter(fpath, is_dir, data)
             if f & 1:
                 if not *array: *array = land_array_new()
                 land_array_add(*array, land_strdup(fpath))

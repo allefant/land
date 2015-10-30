@@ -39,25 +39,36 @@ def platform_image_empty(LandImage *super):
 def platform_image_load(char const *filename, bool mem) -> LandImage *:
     LandImage *super = land_display_new_image()
     super->filename = land_strdup(filename)
-    super->name = land_strdup(filename)
-    ALLEGRO_STATE state
     if mem:
+        super.flags |= LAND_IMAGE_MEMORY
+    _load(super)
+    return super
+
+static def _load(LandImage *super):
+    super->name = land_strdup(super.filename)
+    ALLEGRO_STATE state
+    if super.flags & LAND_IMAGE_MEMORY:
         al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS)
         al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP)
     ALLEGRO_BITMAP *bmp
-    if strchr(filename, '.'):
-        bmp = al_load_bitmap(filename)
+    if strchr(super.filename, '.'):
+        bmp = al_load_bitmap(super.filename)
     else:
-        bmp = al_load_bitmap(filename)
+        bmp = al_load_bitmap(super.filename)
     if bmp:
         LandImagePlatform *self = (void *)super
         self->a5 = bmp
         super->width = al_get_bitmap_width(bmp)
         super->height = al_get_bitmap_height(bmp)
         super->flags |= LAND_LOADED
-    if mem:
+    if super.flags & LAND_IMAGE_MEMORY:
         al_restore_state(&state)
-    return super
+
+def platform_image_load_on_demand(LandImage *super):
+    LandImagePlatform *self = (void *)super
+    if self.a5:
+        return
+    _load(super)
 
 def platform_image_sub(LandImage *parent, float x, y, w, h) -> LandImage *:
     LandImage *super = land_display_new_image()
@@ -217,11 +228,15 @@ def platform_image_crop(LandImage *super, int x, y, w, h):
     ALLEGRO_STATE state
     if x == 0 and y == 0 and w == super.width and h == super.height:
         return
-    al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP)
+    al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP |
+        ALLEGRO_STATE_BLENDER)
     ALLEGRO_BITMAP *cropped = al_create_bitmap(w, h)
     al_set_target_bitmap(cropped)
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
     if self->a5:
         al_draw_bitmap(self->a5, -x, -y, 0)
         al_destroy_bitmap(self->a5)
     self->a5 = cropped
     al_restore_state(&state)
+    super.width = w
+    super.height = h
