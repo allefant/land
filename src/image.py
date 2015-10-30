@@ -5,6 +5,8 @@ static import global assert
 macro LAND_SUBIMAGE 1
 macro LAND_LOADED 2
 macro LAND_IMAGE_WAS_CENTERED 4 # Used in the level editor only.
+macro LAND_IMAGE_MEMORY 8
+macro LAND_AUTOCROP 16
 
 static macro LOG_COLOR_STATS 0
 
@@ -53,19 +55,30 @@ def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
 static def _load(char const *filename, bool mem) -> LandImage *:
+
+    LandImage *self 
     char *path = land_path_with_prefix(filename)
     land_log_message("land_image_load %s..", path)
-
-    LandImage *self = platform_image_load(path, mem)
-
+    self = platform_image_load(path, mem)
     land_free(path)
+
+    bitmap_count++
+
+    _load2(self)
+
+    return self
+
+static def _load2(LandImage *self):
 
     if self.flags & LAND_LOADED:
         int w = land_image_width(self)
         int h = land_image_height(self)
         land_log_message_nostamp("success (%d x %d)\n", w, h)
 
-        if not mem:
+        if self.flags & LAND_AUTOCROP:
+            land_image_auto_crop(self)
+
+        if not (self.flags & LAND_IMAGE_MEMORY):
             land_image_prepare(self)
             
         land_log_message("prepared\n")
@@ -77,20 +90,30 @@ static def _load(char const *filename, bool mem) -> LandImage *:
         land_log_message(" (%.2f|%.2f|%.2f|%.2f).\n", red / n, green / n, blue / n, alpha / n)
         *** "endif"
 
-        bitmap_count++
         bitmap_memory += w * h * 4
         land_log_message(" %d bitmaps (%.1fMB).\n", bitmap_count, bitmap_memory / 1024.0 / 1024.0)
     else:
         land_log_message_nostamp("failure\n")
 
-    if _cb: _cb(filename, self)
-    return self
+    if _cb: _cb(self.filename, self)
 
 def land_image_load(char const *filename) -> LandImage *:
     return _load(filename, False)
 
 def land_image_load_memory(char const *filename) -> LandImage *:
     return _load(filename, True)
+
+def land_image_new_deferred(char const *filename) -> LandImage *:
+    LandImage *self = land_image_new(0, 0)
+    self.filename = land_path_with_prefix(filename)
+    return self
+
+def land_image_load_on_demand(LandImage *self):
+    if self.flags & LAND_LOADED:
+        return
+    land_log_message("land_image_load_on_demand %s..", self.filename)
+    platform_image_load_on_demand(self)
+    _load2(self)
 
 def land_image_memory_new(int w, int h) -> LandImage *:
     """
