@@ -152,35 +152,50 @@ def land_text_get_char_index(char const *str, int x) -> int:
     return l
 
 macro VPRINT:
-    char str[1024]
     va_list args
     va_start(args, text)
-    vsnprintf(str, sizeof str, text, args)
+    int n = vsnprintf(None, 0, text, args)
+    va_end(args)
+    if n < 0: n = 1023
+    char s[n + 1]
+    va_start(args, text)
+    vsnprintf(s, n + 1, text, args)
     va_end(args)
 
 def land_print(char const *text, ...):
     VPRINT
-    land_print_string(str, 1, 0)
+    land_print_string(s, 1, 0)
 
 def land_print_right(char const *text, ...):
     VPRINT
-    land_print_string(str, 1, 1)
+    land_print_string(s, 1, 1)
 
 def land_print_center(char const *text, ...):
     VPRINT
-    land_print_string(str, 1, 2)
+    land_print_string(s, 1, 2)
 
 def land_write(char const *text, ...):
     VPRINT
-    land_print_string(str, 0, 0)
+    land_print_string(s, 0, 0)
 
 def land_write_right(char const *text, ...):
     VPRINT
-    land_print_string(str, 0, 1)
+    land_print_string(s, 0, 1)
 
 def land_write_center(char const *text, ...):
     VPRINT
-    land_print_string(str, 0, 2)
+    land_print_string(s, 0, 2)
+
+def land_printv(char const *text, va_list args):
+    va_list args2
+    va_copy(args2, args)
+    int n = vsnprintf(None, 0, text, args2)
+    va_end(args2)
+    if n < 0: n = 1023
+    char s[n + 1]
+    vsnprintf(s, n + 1, text, args)
+
+    land_print_string(s, 1, 0)
 
 static def _wordwrap_helper(char const *text, int w, h,
     void (*cb)(int a, int b, void *data), void *data) -> int:
@@ -268,15 +283,15 @@ def land_print_string_wordwrap(char const *text, int w, h, alignment) -> int:
 
 def land_print_wordwrap(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(str, w, h, 0)
+    return land_print_string_wordwrap(s, w, h, 0)
 
 def land_print_wordwrap_right(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(str, w, h, 1)
+    return land_print_string_wordwrap(s, w, h, 1)
 
 def land_print_wordwrap_center(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(str, w, h, 2)
+    return land_print_string_wordwrap(s, w, h, 2)
 
 static def land_wordwrap_text_cb(int a, b, void *data):
     void **p = data
