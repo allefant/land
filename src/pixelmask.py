@@ -39,7 +39,7 @@ static def get_bounding_box(float l, float t, float r, float b, float angle,
         BB(l, b, l, t, r, t, r, b)
 
 *** "ifdef" DEBUG_MASK
-static def printout_mask(SinglePixelMask *mask):
+static not def printout_mask(SinglePixelMask *mask):
     int i
     int mask_w = mask->w
     for i = 0 while i < mask->h with i++:

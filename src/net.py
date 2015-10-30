@@ -2,8 +2,8 @@
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
 *** "ifdef" WINDOWS
-static import global winsock2
-static import global ws2tcpip
+*** "include" <winsock2.h>
+*** "include" <ws2tcpip>
 static macro SHUT_RDWR SD_BOTH
 *** "else"
 static import global stdlib, string, signal
@@ -74,10 +74,10 @@ static macro D(_) _
 # macro DEBUG_BYTES
 
 *** "ifdef" WINDOWS
-static def cleanup():
+static not def cleanup():
     WSACleanup()
 
-static def sockerror(char const *name):
+static not def sockerror(char const *name):
     int err = WSAGetLastError()
     char const *what = "unknown"
     switch err:
@@ -380,7 +380,7 @@ static def land_net_poll_connect(LandNet *self):
         return
 
 *** "ifdef" DEBUG_BYTES
-static def debug_packet(char const *buffer, int size):
+static not def debug_packet(char const *buffer, int size):
     land_log_message("Sent %d bytes: ", size)
     int i
     for i = 0 while i < size with i++:

@@ -41,7 +41,7 @@ static int _size = 0
 static int _maxnum = 0
 static int _maxsize = 0
 
-static def done():
+static not def done():
     # This function is called from atexit, so don't rely on Land still being
     # installed, e.g. logging facility.
     int n
@@ -75,7 +75,7 @@ static def done():
             fprintf(lf, "]\n")
     fclose(lf);
 
-static def install():
+static not def install():
     installed++
     if installed == 1:
         installing = True

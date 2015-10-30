@@ -73,7 +73,8 @@ static def init_genrand(LandRandom *r, unsigned long s):
         # for >32 bit machines 
 
 
-*** "if" 0
+***scramble
+"""
 # initialize by an array with array-length 
 # init_key is the array for initializing keys 
 # key_length is its length 
@@ -97,7 +98,8 @@ static def init_by_array(unsigned long init_key[], int key_length):
         if i>=N: mt[0] = mt[N-1]; i=1
 
     mt[0] = 0x80000000UL # MSB is 1; assuring non-zero initial array 
-*** "endif"
+"""
+***
 
 # generates a random number on [0,0xffffffff]-interval 
 static def genrand_int32(LandRandom *r) -> unsigned long:
@@ -134,7 +136,8 @@ static def genrand_int32(LandRandom *r) -> unsigned long:
 
     return y
 
-*** "if" 0
+***scramble
+"""
 
 # generates a random number on [0,0x7fffffff]-interval 
 static def genrand_int31() -> long:
@@ -162,7 +165,8 @@ static def genrand_res53() -> double:
 
 # These real versions are due to Isaku Wada, 2002/01/09 added 
 
-*** "endif"
+"""
+***
 
 static macro MAX_NUMBER 4294967295U
 

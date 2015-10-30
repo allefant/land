@@ -2,7 +2,7 @@ static import global stdio, stdarg, stdlib, string, time, sys/time
 static import mem
 
 *** "ifdef" ANDROID
-static import global android.log
+*** "include" <android/log.h>
 *** "endif"
 
 static char *logname = NULL
