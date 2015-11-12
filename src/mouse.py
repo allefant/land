@@ -5,6 +5,7 @@ static import global assert
 static int mx, my, mz, mb
 static int omx, omy, omz, omb
 static int buttons[5], obuttons[5], clicks[5]
+static float tx[11], ty[11], tb[11], otb[11]
 
 def land_mouse_init():
     land_show_mouse_cursor()
@@ -20,10 +21,43 @@ def land_mouse_tick():
         if buttons[i] == 2: buttons[i] = 0
         clicks[i] = 0
 
+    for int i in range(11):
+        otb[i] = tb[i]
+
 def land_mouse_move_event(int x, int y, int z):
     mx = x
     my = y
     mz = z
+
+def land_touch_event(float x, y, int n, d):
+    if n > 10:
+        return
+    tx[n] = x
+    ty[n] = y
+    if d == 1:
+        tb[n] = True
+    if d == -1:
+        tb[n] = False
+
+def land_touch_x(int n) -> float:
+    if n > 10:
+        return 0
+    return tx[n]
+
+def land_touch_y(int n) -> float:
+    if n > 10:
+        return 0
+    return ty[n]
+
+def land_touch_down(int n) -> bool:
+    if n > 10:
+        return False
+    return tb[n]
+
+def land_touch_delta(int n) -> bool:
+    if n > 10:
+        return False
+    return otb[n] != tb[n]
 
 def land_mouse_button_down_event(int b):
     # FIXME: can lose fast clicks this way, should simply treat the

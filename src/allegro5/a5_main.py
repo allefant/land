@@ -4,9 +4,10 @@ static import global allegro5.allegro_image
 static import global allegro5.allegro_primitives
 static import land.land
 static import land.allegro5.a5_display
+static import land.allegro5.a5_sound
 
 *** "ifdef" ANDROID
-*** "include" <allegro5/allegro_android.h>
+*** "include" "allegro5/allegro_android.h"
 *** "endif"
 
 *** "ifdef" __EMSCRIPTEN__
@@ -25,6 +26,12 @@ def platform_without_main(void (*cb)(void)):
 
 def platform_get_time() -> double:
     return al_current_time()
+
+def platform_halt:
+    platform_sound_halt()
+
+def platform_resume:
+    platform_sound_resume()
 
 def platform_init():
     land_log_message("Compiled against Allegro %s.\n",
@@ -239,8 +246,9 @@ def platform_mainloop(LandParameters *parameters):
 def platform_frame:
     if not _land_quit:
         if redraw and (_land_synchronized or
-            al_event_queue_is_empty(queue)):
-            land_draw()
+                al_event_queue_is_empty(queue)):
+            if not _land_halted:
+                land_draw()
             redraw = False
 
         while True:
@@ -259,7 +267,8 @@ def platform_frame:
                 case ALLEGRO_EVENT_TIMER:
                     land_tick()
                     _land_frames++
-                    redraw = True
+                    if not _land_halted:
+                        redraw = True
                     break
                 case ALLEGRO_EVENT_KEY_DOWN:
                     int lk = platform_keycode(event.keyboard.keycode)
@@ -276,31 +285,42 @@ def platform_frame:
                 case ALLEGRO_EVENT_MOUSE_AXES:
                     land_mouse_move_event(
                         event.mouse.x, event.mouse.y, event.mouse.z)
+                    if land_mouse_b() & 1:
+                        land_touch_event(event.mouse.x, event.mouse.y,
+                            10, 0)
                     break
                 case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                     land_mouse_button_down_event(event.mouse.button - 1)
+                    land_touch_event(land_mouse_x(), land_mouse_y(),
+                        10, 1)
                     break
                 case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                     land_mouse_button_up_event(event.mouse.button - 1)
+                    land_touch_event(land_mouse_x(), land_mouse_y(),
+                        10, -1)
                     break
                 case ALLEGRO_EVENT_TOUCH_BEGIN:
-                    land_mouse_button_down_event(0)
+                    land_touch_event(event.touch.x, event.touch.y,
+                        event.touch.id, 1)
                     break
                 case ALLEGRO_EVENT_TOUCH_END:
-                    land_mouse_button_up_event(0)
+                    land_touch_event(event.touch.x, event.touch.y,
+                        event.touch.id, -1)
                     break
                 case ALLEGRO_EVENT_TOUCH_MOVE:
-                    land_mouse_move_event(
-                        event.touch.x, event.touch.y, 0)
+                    land_touch_event(event.touch.x, event.touch.y,
+                        event.touch.id, 0)
                     break
                 case ALLEGRO_EVENT_DISPLAY_RESIZE:
                     al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
                     land_resize_event(event.display.width, event.display.height)
                     break
                 case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+                    land_halt()
                     al_acknowledge_drawing_halt(d->a5)
                     break
                 case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+                    land_resume()
                     al_acknowledge_drawing_resume(d->a5)
                     break
             *** "ifdef" __EMSCRIPTEN__

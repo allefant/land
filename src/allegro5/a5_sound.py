@@ -2,6 +2,7 @@ import global allegro5.allegro, allegro5.allegro_acodec
 
 import land/sound, land/mem
 static import global allegro5.allegro_audio
+static import land.array
 
 static class LandSoundPlatform:
     LandSound super
@@ -13,6 +14,8 @@ static class LandStreamPlatform:
     LandStream super
     ALLEGRO_AUDIO_STREAM *a5
     void *fragment
+
+static LandArray *streaming
 
 static def get_params(int channels, bits, *chan_conf, *depth) -> bool:
     if channels == 1: *chan_conf = ALLEGRO_CHANNEL_CONF_1
@@ -87,6 +90,23 @@ def platform_sound_init():
 def platform_sound_exit():
     pass
 
+def platform_sound_resume():
+    ALLEGRO_MIXER *mix = al_get_default_mixer()
+    if mix:
+        al_set_mixer_playing(mix, 1)
+    #al_install_audio()
+    #al_reserve_samples(8)
+
+    #if streaming:
+    #    for LandStream *s in LandArray *streaming:
+    #        platform_stream_music(s, s.filename)
+
+def platform_sound_halt():
+    ALLEGRO_MIXER *mix = al_get_default_mixer()
+    if mix:
+        al_set_mixer_playing(al_get_default_mixer(), 0)
+    #al_uninstall_audio()
+
 def platform_stream_new(int samples, fragments,
     float frequency, int bits, channels) -> LandStream *:
     LandStreamPlatform *self
@@ -104,9 +124,18 @@ def platform_stream_new(int samples, fragments,
 
     al_attach_audio_stream_to_mixer(self.a5, al_get_default_mixer())
 
+    if not streaming:
+        streaming = land_array_new()
+    land_array_add(streaming, self)
+
     return super
 
 def platform_stream_destroy(LandStream *super):
+    int i = land_array_find(streaming, super)
+    if i >= 0:
+        land_array_swap(streaming, i, -1)
+        land_array_pop(streaming)
+
     LandStreamPlatform *self = (void *)super
     al_destroy_audio_stream(self.a5)
     land_free(super)

@@ -269,6 +269,8 @@ def land_array_copy(LandArray const *self) -> LandArray *:
     return copy
 
 def land_array_swap(LandArray *self, int a, b):
+    if a < 0: a += self.count
+    if b < 0: b += self.count
     void *temp = self.data[a]
     self.data[a] = self->data[b]
     self.data[b] = temp

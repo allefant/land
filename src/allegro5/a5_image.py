@@ -41,10 +41,10 @@ def platform_image_load(char const *filename, bool mem) -> LandImage *:
     super->filename = land_strdup(filename)
     if mem:
         super.flags |= LAND_IMAGE_MEMORY
-    _load(super)
+    _platform_load(super)
     return super
 
-static def _load(LandImage *super):
+static def _platform_load(LandImage *super):
     super->name = land_strdup(super.filename)
     ALLEGRO_STATE state
     if super.flags & LAND_IMAGE_MEMORY:
@@ -68,7 +68,7 @@ def platform_image_load_on_demand(LandImage *super):
     LandImagePlatform *self = (void *)super
     if self.a5:
         return
-    _load(super)
+    _platform_load(super)
 
 def platform_image_sub(LandImage *parent, float x, y, w, h) -> LandImage *:
     LandImage *super = land_display_new_image()

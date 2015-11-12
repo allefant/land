@@ -137,8 +137,10 @@ def platform_display_set():
         super->clip_y2 = super->h
 
     *** "ifdef" ANDROID
-    f |= ALLEGRO_OPENGL | ALLEGRO_USE_PROGRAMMABLE_PIPELINE
+    #f |= ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE
     *** "endif"
+
+    #f |= ALLEGRO_OPENGL_ES_PROFILE;
     
     if f:
         al_set_new_display_flags(f)
@@ -150,6 +152,14 @@ def platform_display_set():
         land_log_message("    Success!\n")
     else:
         land_log_message("    Failed activating Allegro display.\n")
+
+    if super->flags & LAND_FULLSCREEN:
+        super->w = al_get_display_width(self->a5)
+        super->h = al_get_display_height(self->a5)
+        super->clip_x2 = super->w
+        super->clip_y2 = super->h
+        land_log_message("Using actual size of %dx%d.\n",
+            super->w, super->h)
 
     if f & ALLEGRO_PROGRAMMABLE_PIPELINE:
         land_display_set_default_shaders()

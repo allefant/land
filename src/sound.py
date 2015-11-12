@@ -13,6 +13,8 @@ class LandStream:
     int fragments
     float frequency
 
+    char const *filename
+
 static import allegro5/a5_sound
 
 static int active
@@ -73,6 +75,7 @@ def land_stream_fill(LandStream *self):
     platform_stream_fill(self)
 
 def land_stream_music(LandStream *self, char const *filename):
+    self.filename = land_strdup(filename)
     platform_stream_music(self, filename)
 
 def land_stream_volume(LandStream *self, float volume):

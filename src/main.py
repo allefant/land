@@ -15,6 +15,8 @@ static import allegro5/a5_main
 static bool land_active
 global bool _land_quit
 static LandParameters *parameters
+global bool _land_halted
+global bool _land_was_halted
 
 static bool x_clicked
 static int ticks
@@ -27,6 +29,17 @@ static def land_exit():
     land_active = False
     land_free(parameters)
     land_log_message("land_exit\n")
+
+def land_halt:
+    platform_halt()
+    _land_halted = True
+
+def land_resume:
+    platform_resume()
+    _land_halted = False
+
+def land_was_halted -> bool:
+    return _land_halted
 
 def land_init():
     """Initialize Land. This must be called before anything else."""
@@ -56,12 +69,15 @@ def land_init():
     platform_init()
 
 def land_tick():
+    if _land_was_halted and _land_halted:
+        return
     land_display_tick()
     land_runner_tick_active()
     land_mouse_tick()
     land_keyboard_tick()
     ticks++
     x_clicked = False
+    _land_was_halted = _land_halted
 
 def land_draw():
     land_runner_draw_active()

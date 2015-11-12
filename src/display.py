@@ -149,6 +149,8 @@ class LandDisplay:
     int blend
     float thickness
 
+    float cursor_x, cursor_y
+
     int clip_off
     float clip_x1, clip_y1, clip_x2, clip_y2
     int clip_stack_depth
@@ -451,6 +453,17 @@ def land_arc(float x, y, x_, y_, a, a_):
 
 def land_line(float x, y, x_, y_):
     platform_line(x, y, x_, y_)
+
+def land_move_to(float x, y):
+    LandDisplay *d = _land_active_display
+    d.cursor_x = x
+    d.cursor_y = y
+
+def land_line_to(float x, y):
+    LandDisplay *d = _land_active_display
+    land_line(d.cursor_x, d.cursor_y, x, y)
+    d.cursor_x = x
+    d.cursor_y = y
 
 def land_ribbon(int n, float *xy):
     platform_ribbon(n, xy)
