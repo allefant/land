@@ -112,3 +112,12 @@ def platform_get_current_directory() -> char *:
     char *dup = land_strdup(d)
     al_free(d)
     return dup
+
+def platform_get_data_path -> char *:
+    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_RESOURCES_PATH)
+    char *dup = land_strdup(al_path_cstr(path, '/'))
+    al_destroy_path(path)
+    return dup
+
+def platform_remove_file(char const *path) -> bool:
+    return al_remove_filename(path)

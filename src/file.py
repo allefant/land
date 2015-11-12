@@ -104,6 +104,9 @@ def land_get_save_file(char const *appname, char const *name) -> char *:
 def land_get_current_directory() -> char *:
     return platform_get_current_directory()
 
+def land_get_data_path() -> char *:
+    return platform_get_data_path()
+
 def land_path_with_prefix(char const *name) -> char *:
     int n = strlen(name)
     if prefix:
@@ -149,3 +152,6 @@ def land_replace_filename(char const *path, char const *name) -> char *:
     strcat(result, "/")
     strcat(result, name)
     return result
+
+def land_file_remove(char const *path) -> bool:
+    return platform_remove_file(path)
