@@ -91,6 +91,7 @@ def platform_sound_exit():
     pass
 
 def platform_sound_resume():
+    al_restore_default_mixer()
     ALLEGRO_MIXER *mix = al_get_default_mixer()
     if mix:
         al_set_mixer_playing(mix, 1)
@@ -105,6 +106,7 @@ def platform_sound_halt():
     ALLEGRO_MIXER *mix = al_get_default_mixer()
     if mix:
         al_set_mixer_playing(al_get_default_mixer(), 0)
+    al_set_default_voice(None)
     #al_uninstall_audio()
 
 def platform_stream_new(int samples, fragments,

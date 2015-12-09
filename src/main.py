@@ -19,7 +19,6 @@ global bool _land_halted
 global bool _land_was_halted
 
 static bool x_clicked
-static int ticks
 global int _land_frames
 global bool _land_synchronized
 static bool _maximize_fps
@@ -69,13 +68,10 @@ def land_init():
     platform_init()
 
 def land_tick():
-    if _land_was_halted and _land_halted:
-        return
     land_display_tick()
     land_runner_tick_active()
     land_mouse_tick()
     land_keyboard_tick()
-    ticks++
     x_clicked = False
     _land_was_halted = _land_halted
 
@@ -134,6 +130,16 @@ def land_get_time() -> double:
     """Get the time in seconds since Land has started."""
     return platform_get_time()
 
+def land_pause:
+    """Stop time. The tick function of the current runner will not be
+    called any longer and [land_get_ticks] will not advance until the
+    next call to [land_unpause].
+    """
+    platform_pause()
+
+def land_unpause:
+    platform_unpause()
+
 def land_get_flags() -> int:
     return parameters->flags
 
@@ -142,15 +148,6 @@ def land_set_synchronized(bool onoff):
 
 def land_maximize_fps(bool onoff):
     _maximize_fps = onoff
-
-def land_skip_frames():
-    """Skip any frames the logic may be behind. Usually, the tick function of
-    a runner is called for each tick of Land. If a runner does not return from
-    its tick method for some reason, then it can fall behind. For example if
-    there is a function to load a lot of data from disk. In this case, it may
-    be best to synchronize to the current ticks, and not catch up to the
-    current time - this is when you would call this function."""
-    _land_frames = ticks
 
 def land_mainloop():
     """Run Land. This function will use all the parameters set before to

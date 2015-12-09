@@ -3,6 +3,18 @@ import land/array, land/mem, land/log, land/file
 import global stdbool
 
 def platform_fopen(char const *filename, char const *mode) -> void *:
+    *** "ifdef" ANDROID
+    land_log_message("open %s", filename)
+    # FIXME: we somehow need to know if it's an APK path or not...
+    # right now we assume all not absolute paths are APK, but Allegro
+    # sometimes tries to convert everything to absolute paths so
+    # this is very fragile.
+    if land_starts_with(filename, "/"):
+        al_set_standard_file_interface()
+        ALLEGRO_FILE *f = al_fopen(filename, mode)
+        al_android_set_apk_file_interface()
+        return f
+    *** "endif"
     ALLEGRO_FILE *f = al_fopen(filename, mode)
     return f
 

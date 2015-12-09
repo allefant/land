@@ -1,4 +1,5 @@
 import global stdbool
+static import log
 
 import land/allegro5/a5_main
 
@@ -17,7 +18,9 @@ enum LandKeyboardKeys:
     LandKeyPadMinus = 11
     LandKeyPadPlus = 12
     LandKeyEnter = 13
-    LandKeyUnknown = 14 # 14=U+0, ..., 26=U+12
+    LandKeyUnknown = 14 # 14=U+0, ..., 24=U+10
+    LandKeyBack = 25
+    # U+12
     LandKeyEscape = 27
     LandKeyPadDelete = 28
     LandKeyPadEnter = 29

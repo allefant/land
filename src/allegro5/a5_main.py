@@ -14,6 +14,11 @@ static import land.allegro5.a5_sound
 *** "include" <emscripten.h>
 *** "endif"
 
+static bool redraw
+static LandDisplayPlatform *d
+static ALLEGRO_EVENT_QUEUE *queue
+static ALLEGRO_TIMER *timer
+
 static void (*global_cb)(void)
 
 static def replacement_main(int argc, char **argv) -> int:
@@ -43,6 +48,10 @@ def platform_init():
 
     *** "ifdef" ANDROID
     al_android_set_apk_file_interface()
+    # FIXME: for loading data it can be useful to traverse the APK
+    # filesystem, but for everything else (like configuration or
+    # savegames) we need the normal filesystem.
+    #al_android_set_apk_fs_interface()
     *** "endif"
 
     al_init_image_addon()
@@ -141,7 +150,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyUnknown + 8,
     LandKeyUnknown + 9,
     LandKeyUnknown + 10,
-    LandKeyUnknown + 11,
+    LandKeyBack,
     LandKeyUnknown + 12,
     LandKeyUnknown2 + 0,
     LandKeyUnknown2 + 1, # 110
@@ -180,7 +189,7 @@ static int keyboard_conversion_table[ALLEGRO_KEY_MAX] = {
     LandKeyRightAlt, # 120
     LandKeyLeftWin,
     LandKeyRightWin,
-    LandKeyMenu,
+    LandKeyMenu, # also on Android
     LandKeyScrollLock,
     LandKeyNumLock,
     LandKeyCapsLock}
@@ -209,13 +218,16 @@ def platform_mouse_set_pos(float x, y):
     LandDisplayPlatform *d = (void *)_land_active_display
     al_set_mouse_xy(d->a5, x, y)
 
-static bool redraw
-static LandDisplayPlatform *d
-static ALLEGRO_EVENT_QUEUE *queue
+def platform_pause:
+    al_stop_timer(timer)
+
+def platform_unpause:
+    al_resume_timer(timer)
+
 def platform_mainloop(LandParameters *parameters):
     d = (void *)_land_active_display
     queue = al_create_event_queue()
-    ALLEGRO_TIMER *timer = al_create_timer(1.0 / parameters->fps)
+    timer = al_create_timer(1.0 / parameters->fps)
     al_register_event_source(queue, al_get_keyboard_event_source())
     al_register_event_source(queue, al_get_mouse_event_source())
 
@@ -232,7 +244,6 @@ def platform_mainloop(LandParameters *parameters):
     al_get_mouse_state(&s)
     land_mouse_move_event(s.x, s.y, s.z)
 
-    land_skip_frames()
     redraw = False
 
     *** "ifdef" __EMSCRIPTEN__
@@ -265,9 +276,11 @@ def platform_frame:
                     land_closebutton_event()
                     break
                 case ALLEGRO_EVENT_TIMER:
-                    land_tick()
-                    _land_frames++
-                    if not _land_halted:
+                    if _land_was_halted and _land_halted:
+                        al_stop_timer(timer)
+                    else:
+                        land_tick()
+                        _land_frames++
                         redraw = True
                     break
                 case ALLEGRO_EVENT_KEY_DOWN:
@@ -322,6 +335,7 @@ def platform_frame:
                 case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
                     land_resume()
                     al_acknowledge_drawing_resume(d->a5)
+                    al_start_timer(timer)
                     break
             *** "ifdef" __EMSCRIPTEN__
             continue

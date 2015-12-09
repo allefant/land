@@ -50,6 +50,11 @@ static def _platform_load(LandImage *super):
     if super.flags & LAND_IMAGE_MEMORY:
         al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS)
         al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP)
+    *** "ifdef" ANDROID
+    # FIXME: need to determine if we want APK or normal paths,
+    # right now apk file interface is always active
+    land_log_message("open %s", super.filename)
+    *** "endif"
     ALLEGRO_BITMAP *bmp
     if strchr(super.filename, '.'):
         bmp = al_load_bitmap(super.filename)
