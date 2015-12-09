@@ -203,9 +203,10 @@ def land_starts_with(char const *s, *start) -> bool:
     return strncmp(s, start, n) == 0
 
 def land_concatenate(char **s, char const *cat):
-    int n = strlen(*s) + strlen(cat) + 1
+    int sn = strlen(*s)
+    int n = sn + strlen(cat) + 1
     char *re = land_realloc(*s, n)
-    memmove(re + strlen(*s), cat, strlen(cat))
+    memmove(re + sn, cat, strlen(cat))
     re[n - 1] = 0
     *s = re
 
