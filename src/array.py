@@ -171,6 +171,9 @@ def land_array_get_nth(LandArray const *array, int i) -> void *:
     if i < 0: i += array->count
     return array->data[i]
 
+def land_array_is_empty(LandArray const *array) -> bool:
+    return array->count == 0
+
 def land_array_replace_nth(LandArray *array, int i, void *data) -> void *:
     """
     Replace the array entry at the given index, and return the previous
