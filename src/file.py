@@ -20,6 +20,7 @@ def land_file_new(char const *path, char const *mode) -> LandFile *:
         path2 = land_strdup(path)
     void *f = platform_fopen(path2, mode)
     if not f:
+        land_log_message("Opening file %s (%s) failed.", path2, mode)
         land_free(path2)
         return None
     LandFile *self
@@ -45,6 +46,14 @@ def land_file_print(LandFile *self, char const *f, ...):
     va_start(args, f)
     vsnprintf(s, sizeof s, f, args)
     strcat(s, "\n")
+    va_end(args)
+    land_file_write(self, s, strlen(s))
+
+def land_file_printnn(LandFile *self, char const *f, ...):
+    char s[1024]
+    va_list args
+    va_start(args, f)
+    vsnprintf(s, sizeof s, f, args)
     va_end(args)
     land_file_write(self, s, strlen(s))
 
