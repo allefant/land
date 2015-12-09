@@ -111,7 +111,10 @@ def platform_display_set():
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
     if super->flags & LAND_DEPTH:
         al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
-    
+    if super->flags & LAND_LANDSCAPE:
+        al_set_new_display_option(ALLEGRO_SUPPORTED_ORIENTATIONS,
+            ALLEGRO_DISPLAY_ORIENTATION_LANDSCAPE, ALLEGRO_SUGGEST)
+
     if super->flags & LAND_ANTIALIAS:
         al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
 
