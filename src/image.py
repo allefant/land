@@ -108,12 +108,13 @@ def land_image_new_deferred(char const *filename) -> LandImage *:
     self.filename = land_path_with_prefix(filename)
     return self
 
-def land_image_load_on_demand(LandImage *self):
+def land_image_load_on_demand(LandImage *self) -> bool:
     if self.flags & LAND_LOADED:
-        return
+        return False
     land_log_message("land_image_load_on_demand %s..", self.filename)
     platform_image_load_on_demand(self)
     _load2(self)
+    return True
 
 def land_image_memory_new(int w, int h) -> LandImage *:
     """
