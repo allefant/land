@@ -386,8 +386,6 @@ static def csg_add_polygons(LandCSG *csg, LandArray *polygons):
 #    clear_polygons(temp)
 #    land_array_destroy(temp)
 
-static LandCSGNode *def csg_node_new(LandCSG *csg, LandArray *polygons)
-
 # Build a BSP tree from (or merge with) a list of polygons.
 # Ownership of the polygons array is transferred. The caller must not access
 # the array anymore.
