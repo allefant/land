@@ -481,6 +481,10 @@ def land_polygon(int n, float *xy):
 def land_filled_polygon(int n, float *xy):
     platform_filled_polygon(n, xy)
 
+def land_filled_triangle(float x0, y0, x1, y1, x2, y2):
+    float xy[6] = {x0, y0, x1, y1, x2, y2}
+    platform_filled_polygon(3, xy)
+
 def land_3d_triangles(int n, LandFloat *xyzrgb):
     platform_3d_triangles(n, xyzrgb)
 
