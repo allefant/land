@@ -25,6 +25,8 @@ def platform_font_load(char const *filename, float size) -> LandFont *:
     LandFont *super = (void *)self
     if self.a5:
         super->size = al_get_font_line_height(self.a5)
+    super.xscaling = 1.0
+    super.yscaling = 1.0
     return super
 
 def platform_font_from_image(LandImage *image, int n_ranges,
@@ -37,6 +39,8 @@ def platform_font_from_image(LandImage *image, int n_ranges,
     LandFont *super = (void *)self
     if self.a5:
         super->size = al_get_font_line_height(self.a5)
+    super.xscaling = 1.0
+    super.yscaling = 1.0
     return super
 
 def platform_font_print(LandFontState *lfs,
@@ -46,12 +50,21 @@ def platform_font_print(LandFontState *lfs,
 
     if not self.a5: return
 
+    double xscaling = super.xscaling
+    double yscaling = super.yscaling
+
     float x = lfs->x = lfs->x_pos
     float y = lfs->y = lfs->y_pos
-    lfs->w = al_get_text_width(self.a5, str)
-    lfs->h = al_get_font_line_height(self.a5)
+    lfs->w = al_get_text_width(self.a5, str) * xscaling
+    lfs->h = al_get_font_line_height(self.a5) * yscaling
 
     if lfs->off: return
+
+    if xscaling != 1 or yscaling != 1:
+        land_push_transform()
+        land_translate(x, y)
+        land_scale(xscaling, yscaling)
+        land_translate(-x, -y)
 
     ALLEGRO_STATE state
     al_store_state(&state, ALLEGRO_STATE_BLENDER)
@@ -62,18 +75,23 @@ def platform_font_print(LandFontState *lfs,
     
     ALLEGRO_COLOR c = al_map_rgba_f(d->color_r, d->color_g, d->color_b, d->color_a)
 
+    int a = ALLEGRO_ALIGN_INTEGER 
+
     if alignment == LandAlignAdjust:
         al_draw_justified_text(self.a5, c, x, x + lfs->adjust_width, y,
             lfs->adjust_width * 0.5,
-            ALLEGRO_ALIGN_CENTRE, str)
+            a | ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == LandAlignCenter:
-        al_draw_text(self.a5, c, x, y, ALLEGRO_ALIGN_CENTRE, str)
+        al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == LandAlignRight:
-        al_draw_text(self.a5, c, x, y, ALLEGRO_ALIGN_RIGHT, str)
+        al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_RIGHT, str)
     else:
-        al_draw_text(self.a5, c, x, y, 0, str)
+        al_draw_text(self.a5, c, x, y, a, str)
     
     al_restore_state(&state)
+
+    if xscaling != 1 or yscaling != 1:
+        land_pop_transform()
 
 def platform_font_new() -> LandFont *:
     return None

@@ -3,6 +3,8 @@ import array, display
 
 class LandFont:
     int size
+    double xscaling
+    double yscaling
 
 class LandFontState:
     float x_pos, y_pos
@@ -61,6 +63,12 @@ def land_font_new() -> LandFont *:
     LandFont *f = platform_font_new()
     return f
 
+def land_font_scale(LandFont *f, double scaling):
+    f.xscaling = f.yscaling = scaling
+
+def land_font_yscale(LandFont *f, double scaling):
+    f.yscaling = scaling
+
 def land_font_set(LandFont *self):
     land_font_state->font = self
 
@@ -98,13 +106,13 @@ def land_text_height() -> float:
 def land_text_state() -> int:
     return land_font_state->off
 
-def land_font_height(LandFont *self) -> int:
-    return self.size
+def land_font_height(LandFont *self) -> float:
+    return self.size * land_font_current()->yscaling
 
 def land_font_current() -> LandFont *:
     return land_font_state->font
 
-def land_line_height -> int:
+def land_line_height -> float:
     return land_font_height(land_font_current())
 
 def land_text_off():
@@ -120,7 +128,7 @@ def land_print_string(char const *str, int newline, int alignment):
     else:
         land_font_state->x_pos = land_font_state->x + land_font_state->w
 
-def land_text_get_width(char const *str) -> int:
+def land_text_get_width(char const *str) -> float:
     int onoff = land_font_state->off
     land_font_state->off = 1
     platform_font_print(land_font_state, str, 0)
