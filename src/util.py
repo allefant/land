@@ -3,6 +3,7 @@ macro land_call_method(self, method, params) if (self->vt->method) self->vt->met
 
 import global stdbool
 import land/array
+import land/buffer
 static import allegro5/a5_file
 
 macro LAND_PI 3.1415926535897931
@@ -210,6 +211,13 @@ def land_concatenate(char **s, char const *cat):
     re[n - 1] = 0
     *s = re
 
+def land_concatenate_with_separator(char **s, char const *cat, *sep):
+    if not *s or land_equals(*s, ""):
+        land_concatenate(s, cat)
+    else:
+        land_concatenate(s, sep)
+        land_concatenate(s, cat)
+
 def land_prepend(char **s, char const *pre):
     int n = strlen(*s) + strlen(pre) + 1
     char *re = land_realloc(*s, n)
@@ -311,3 +319,23 @@ The return value can most conveniently be freed like this:
     land_array_add(a, name)
     land_array_add(a, ext)
     return a
+
+def land_split(char const *text, char c) -> LandArray *:
+    """
+    Returns an array of strings which you should destroy with
+
+    land_array_destroy_with_strings
+    """
+    LandArray *split = land_array_new()
+    LandBuffer *buf = land_buffer_new()
+    land_buffer_cat(buf, text)
+    LandArray *lines = land_buffer_split(buf, c)
+    for LandBuffer *line in LandArray *lines:
+        char *x = land_buffer_finish(line)
+        land_array_add(split, x)
+    land_array_destroy(lines)
+    land_buffer_destroy(buf)
+    return split
+
+def land_split_lines(char const *text) -> LandArray *:
+    return land_split(text, '\n')
