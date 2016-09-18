@@ -7,6 +7,7 @@ macro LAND_LOADED 2
 macro LAND_IMAGE_WAS_CENTERED 4 # Used in the level editor only.
 macro LAND_IMAGE_MEMORY 8
 macro LAND_AUTOCROP 16
+macro LAND_FAILED 32
 
 static macro LOG_COLOR_STATS 0
 
@@ -110,6 +111,8 @@ def land_image_new_deferred(char const *filename) -> LandImage *:
 
 def land_image_load_on_demand(LandImage *self) -> bool:
     if self.flags & LAND_LOADED:
+        return False
+    if self.flags & LAND_FAILED:
         return False
     land_log_message("land_image_load_on_demand %s..", self.filename)
     platform_image_load_on_demand(self)
@@ -632,7 +635,7 @@ def land_image_flip(LandImage *self):
 
     land_image_set_rgba_data(self, rgba)
     land_free(rgba)
-   
+ 
 def land_image_clone(LandImage *self) -> LandImage *:
     int w = land_image_width(self)
     int h = land_image_height(self)
@@ -673,3 +676,31 @@ def land_image_fade_to_color(LandImage *self):
     land_image_set_rgba_data(self, rgba)
     land_free(rgba)
     
+def land_image_from_xpm(char const **xpm) -> LandImage*:
+    int w, h, palette_size, pixel_size
+    sscanf(xpm[0], "%d %d %d %d", &w, &h, &palette_size, &pixel_size)
+    LandColor palette[65536]
+    for int i in range(palette_size):
+        char const *entry = xpm[1 + i]
+        int p = 0
+        for int j in range(pixel_size):
+            p *= 256
+            p += (unsigned char)entry[j]
+        palette[p] = land_color_name(entry + pixel_size + 3)
+    LandImage *self = land_image_new(w, h)
+    unsigned char *rgba = land_malloc(w * h * 4)
+    for int y in range(h):
+        for int x in range(w):
+            char const *pos = xpm[1 + palette_size + y] + x * pixel_size
+            int p = 0
+            for int j in range(pixel_size):
+                p *= 256
+                p += (unsigned char)pos[j]
+            LandColor c = palette[p] 
+            rgba[y * w * 4 + x * 4 + 0] = c.r * 255
+            rgba[y * w * 4 + x * 4 + 1] = c.g * 255
+            rgba[y * w * 4 + x * 4 + 2] = c.b * 255
+            rgba[y * w * 4 + x * 4 + 3] = c.a * 255
+    land_image_set_rgba_data(self, rgba)
+    land_free(rgba)
+    return self

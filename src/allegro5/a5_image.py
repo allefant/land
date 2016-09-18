@@ -66,8 +66,11 @@ static def _platform_load(LandImage *super):
         super->width = al_get_bitmap_width(bmp)
         super->height = al_get_bitmap_height(bmp)
         super->flags |= LAND_LOADED
+    else:
+        super->flags |= LAND_FAILED
     if super.flags & LAND_IMAGE_MEMORY:
         al_restore_state(&state)
+        super->flags |= LAND_FAILED
 
 def platform_image_load_on_demand(LandImage *super):
     LandImagePlatform *self = (void *)super
