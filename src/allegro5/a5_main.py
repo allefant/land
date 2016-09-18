@@ -219,10 +219,12 @@ def platform_mouse_set_pos(float x, y):
     al_set_mouse_xy(d->a5, x, y)
 
 def platform_pause:
-    al_stop_timer(timer)
+    if timer:
+        al_stop_timer(timer)
 
 def platform_unpause:
-    al_resume_timer(timer)
+    if timer:
+        al_resume_timer(timer)
 
 def platform_mainloop(LandParameters *parameters):
     d = (void *)_land_active_display
