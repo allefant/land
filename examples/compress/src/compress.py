@@ -1,46 +1,77 @@
 import global land/land
+
+def print(char const *str, ...):
+    va_list args
+    va_start(args, str)
+    vprintf(str, args)
+    va_end(args)
+    printf("\n")
+
 def main() -> int:
     land_init()
 
-    printf("Buffer 1\n")
+    print("Buffer 1")
     char const *str = "Land All New Design"
-    printf("Contents: «%s»\n", str)
+    print("Contents: «%s»", str)
     LandBuffer *b = land_buffer_new()
     land_buffer_cat(b, str)
-    printf("Uncompressed length: %d\n", b->n)
+    print("Uncompressed length: %d", b->n)
     land_buffer_compress(b)
-    printf("Compressed length: %d (%.1f%%)\n", b->n,
+    print("Compressed length: %d (%.1f%%)", b->n,
         100.0 * b->n / strlen(str))
-    printf("length (4 bytes): 0x%08x\n", *((uint32_t *)(b->buffer)))
-    printf("compression method (1 byte): %d\n", b->buffer[4] & 15)
-    printf("compression info: %d\n", (b->buffer[4] >> 4) & 15)
-    printf("check (1 byte): %d [%d]\n", b->buffer[5] & 31,
+    print("length (4 bytes): 0x%08x", *((uint32_t *)(b->buffer)))
+    print("compression method (1 byte): %d", b->buffer[4] & 15)
+    print("compression info: %d", (b->buffer[4] >> 4) & 15)
+    print("check (1 byte): %d [%d]", b->buffer[5] & 31,
         (unsigned char)b->buffer[4] * 256 + (unsigned char)b->buffer[5] )
-    printf("dictionary: %s\n", b->buffer[5] & 32 ? "yes" : "no")
-    printf("compression level: %d\n", (b->buffer[5] >> 6) & 3)
+    print("dictionary: %s", b->buffer[5] & 32 ? "yes" : "no")
+    print("compression level: %d", (b->buffer[5] >> 6) & 3)
     int start = 6
     if b->buffer[5] & 32:
         start += 4
         printf("dictionary identifier (4 bytes): %08x", *((uint32_t *)(b->buffer + 6)))
-    printf("Checksum (4 bytes): %08x\n", *((uint32_t *)(b->buffer + b->n - 4)))
-    printf("Bitstream (%d bytes):", b->n - 4 - start)
+    print("Checksum (4 bytes): %08x", *((uint32_t *)(b->buffer + b->n - 4)))
+    print("Bitstream (%d bytes):", b->n - 4 - start)
     for int i = start while i < b->n - 4 with i++:
         printf(" %02x", (unsigned char)b->buffer[i])
-    printf("\n")
     land_buffer_decompress(b)
-    printf("Uncompressed length: %d\n", b->n)
+    print("Uncompressed length: %d", b->n)
     char *de = land_buffer_finish(b)
-    printf("Uncompressed: «%s»\n", de)
+    print("Uncompressed: «%s»", de)
     land_free(de)
 
-    printf("\nBuffer 2\n")
+    print("")
+    print("Buffer 2")
     LandBuffer *orig = land_buffer_read_from_file("../../data/GPL-2")
     b = land_buffer_read_from_file("../../data/GPL-2")
-    printf("Uncompressed length: %d\n", b->n)
+    print("Uncompressed length: %d", b->n)
     land_buffer_compress(b)
-    printf("Compressed length: %d (%.1f%%)\n", b->n, 100.0 * b->n / orig->n)
+    print("Compressed length: %d (%.1f%%)", b->n, 100.0 * b->n / orig->n)
     land_buffer_decompress(b)
-    printf("Uncompressed length: %d\n", b->n)
-    printf("Difference: %d\n", land_buffer_compare(orig, b))
+    print("Uncompressed length: %d", b->n)
+    print("Difference: %d", land_buffer_compare(orig, b))
+
+    print("")
+    print("Buffer 3")
+    b = land_buffer_read_from_file("../../data/GPL-2.gz")
+    land_buffer_decompress(b)
+    print("Difference: %d", land_buffer_compare(orig, b))
+
+    print("")
+    print("Buffer 4")
+    land_buffer_clear(orig)
+    char word[1000]
+    for int i in range(1000):
+        word[i] = land_rand(0, 255)
+    for int i in range(10000):
+        land_buffer_add(orig, word, 1000)
+        land_buffer_add_char(orig, i)
+    b = land_buffer_copy(orig)
+    land_buffer_compress(b)
+    print("Original: %d", orig.n)
+    print("Compressed: %d", b.n)
+    land_buffer_decompress(b)
+    print("Decompressoed: %d", b.n)
+    print("Difference: %d", land_buffer_compare(orig, b))
 
     return 0

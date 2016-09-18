@@ -336,24 +336,53 @@ def land_buffer_read_from_file(char const *filename) -> LandBuffer *:
     land_file_destroy(pf)
     return self
 
+def land_buffer_write_to_file(LandBuffer *self, char const *filename) -> bool
+    LandFile *pf = land_file_new(filename, "w")
+    if not pf:
+        return False
+    int written = land_file_write(pf, self.buffer, self.n)
+    land_file_destroy(pf)
+    return written == self.n
+
 *** "ifndef" LAND_NO_COMPRESS
 def land_buffer_compress(LandBuffer *self):
     uLongf destlen = self.n * 1.1 + 12
-    Bytef *dest = land_malloc(4 + destlen)
-    *((uint32_t *)dest) = self.n
-    compress(dest + 4, &destlen, (void *)self->buffer, self->n)
-    dest = land_realloc(dest, 4 + destlen)
-    land_free(self.buffer)
-    self.buffer = (void *)dest
-    self.size = self->n = 4 + destlen
-
-def land_buffer_decompress(LandBuffer *self):
-    uLongf destlen = *((uint32_t *)self->buffer)
     Bytef *dest = land_malloc(destlen)
-    uncompress(dest, &destlen, (void *)(4 + self.buffer), self->n)
+    compress(dest, &destlen, (void *)self->buffer, self->n)
+    dest = land_realloc(dest, destlen)
     land_free(self.buffer)
     self.buffer = (void *)dest
     self.size = self->n = destlen
+
+def land_buffer_decompress(LandBuffer *self):
+    z_stream z
+    z.zalloc = Z_NULL
+    z.zfree = Z_NULL
+    z.opaque = Z_NULL
+    z.next_in = (void *)self.buffer
+    z.avail_in = self.n
+    int err = inflateInit2(&z, 15 | 32)
+    if err != Z_OK:
+        return
+    LandBuffer *temp = land_buffer_new()
+
+    char *out = malloc(8192)
+    while True:
+        z.avail_out = 8192
+        z.next_out = (void *)out
+        err = inflate(&z, Z_NO_FLUSH)
+        if err < 0:
+            goto break2
+        land_buffer_add(temp, out, 8192 - z.avail_out)
+        if z.avail_out > 0:
+            break
+    label break2
+    land_free(out)
+    land_free(self.buffer)
+    self.buffer = temp.buffer
+    self.n = temp.n
+    temp.buffer = None
+    land_buffer_destroy(temp)
 *** "endif"
 
 def land_buffer_compare(LandBuffer *self, *other) -> int:
