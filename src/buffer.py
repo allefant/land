@@ -141,12 +141,22 @@ def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, (i >> 24) & 255)
 
 def land_buffer_get_uint32_t(LandBuffer *self, int pos) -> uint32_t:
-    unsigned char *uc = (unsigned char *)self->buffer + pos
+    uint8_t *uc = (uint8_t *)self->buffer + pos
     uint32_t u = *(uc++)
     u += *(uc++) << 8
     u += *(uc++) << 16
     u += *(uc++) << 24
     return u
+
+def land_buffer_get_uint16_t(LandBuffer *self, int pos) -> uint16_t:
+    uint8_t *uc = (uint8_t *)self->buffer + pos
+    uint16_t u = *(uc++)
+    u += *(uc++) << 8
+    return u
+
+def land_buffer_get_byte(LandBuffer *self, int pos) -> uint8_t:
+    uint8_t *uc = (uint8_t *)self->buffer + pos
+    return *uc
 
 def land_buffer_add_float(LandBuffer *self, float f):
     uint32_t *i = (void *)&f
@@ -156,6 +166,9 @@ def land_buffer_add_char(LandBuffer *self, char c):
     land_buffer_add(self, &c, 1)
 
 def land_buffer_cat(LandBuffer *self, char const *string):
+    """
+    Appends a zero-terminated string (without the 0 byte) to the buffer.
+    """
     land_buffer_add(self, string, strlen(string))
 
 def land_buffer_clear(LandBuffer *self):
@@ -262,11 +275,6 @@ def land_buffer_remove_if_end(LandBuffer *self, char const *what):
     if memcmp(self.buffer + self.n - strlen(what), what,
             strlen(what)) == 0:
         land_buffer_shorten(self, strlen(what))
-
-def land_buffer_write_to_file(LandBuffer *self, char const *filename):
-    FILE *f = fopen(filename, "w")
-    fwrite(self.buffer, 1, self->n, f)
-    fclose(f)
 
 def land_buffer_rfind(LandBuffer *self, char c) -> int:
     if self.n == 0: return -1
