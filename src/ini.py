@@ -2,51 +2,61 @@ static import global string, stdlib, stdbool, stdio
 static import land/mem
 static import land/allegro5/a5_main
 static import land.file
+import land.hash
 
 class LandIniEntry:
     char *key
     void *val
 
 class LandIniSection:
-    int n
-    LandIniEntry *entries
+    LandArray *entries
+    LandHash *lookup
 
 class LandIniFile:
     char *filename
     LandIniSection *sections
 
 static def _get(LandIniSection *s, char const *key) -> void *:
-    for int i = 0 while i < s->n with i++:
-        if not strcmp(s->entries[i].key, key) and s->entries[i].val:
-            return s->entries[i].val
+    LandIniEntry *e = land_hash_get(s.lookup, key)
+    if e:
+        return e.val
     return None
 
 static def _add(LandIniSection *s, char const *key, void *val):
-    for int i = 0 while i < s->n with i++:
-        if not strcmp(s->entries[i].key, key):
-            land_free(s->entries[i].val)
-            s->entries[i].val = val
-            return
+    LandIniEntry *e = land_hash_get(s.lookup, key)
+    if e:
+        land_free(e.val)
+        e.val = val
+        return
 
-    int i = s->n
-    s->n++
-    s->entries = land_realloc(s->entries, s->n * sizeof(LandIniEntry))
-    s->entries[i].key = land_strdup(key)
-    s->entries[i].val = val
+    e = land_calloc(sizeof *e)
+    e.key = land_strdup(key)
+    e.val = val
+    land_array_add(s.entries, e)
+    land_hash_insert(s.lookup, key, e)
 
 static def _del(LandIniSection *s):
-    for int i = 0 while i < s->n with i++:
-        land_free(s->entries[i].key)
-        if s->entries[i].val: land_free(s->entries[i].val)
+    for LandIniEntry *e in LandArray *s.entries:
+        land_free(e.key)
+        if e.val:
+            land_free(e.val)
+        land_free(e)
 
-    land_free(s->entries)
+    land_array_destroy(s.entries)
+    land_hash_destroy(s.lookup)
     land_free(s)
+
+static def _new() -> LandIniSection *:
+    LandIniSection *s = land_calloc(sizeof *s)
+    s.lookup = land_hash_new()
+    s.entries = land_array_new()
+    return s
 
 def land_ini_set_string(LandIniFile *ini,
     char const *section, char const *key, char const *val):
     LandIniSection *s = _get(ini->sections, section)
     if not s:
-        s = land_calloc(sizeof *s)
+        s = _new()
         _add(ini->sections, section, s)
 
     _add(s, key, val ? land_strdup(val) : None)
@@ -78,14 +88,19 @@ def land_ini_get_number_of_entries(LandIniFile *ini,
     if section:
         s = _get(s, section)
         if not s: return 0
-    return s->n
+    return land_array_count(s.entries)
 
-def land_init_get_nth_entry(LandIniFile *ini,
-    char const *section, int i) -> char const *:
+def land_ini_get_nth_entry(LandIniFile *ini, char const *section,
+        int i) -> char const *:
+    """
+    Get the n-th entry of an ini section. If section is None get the
+    n-th section instead.
+    """
     LandIniSection *s = ini->sections
     if section:
         s = _get(s, section)
-    return s->entries[i].key
+    LandIniEntry *e = land_array_get_nth(s.entries, i)
+    return e.key
 
 static def is_whitespace(char c) -> bool:
     if c == ' ' or c == '\t' or c == '\n': return true
@@ -110,7 +125,7 @@ def land_ini_read(char const *filename) -> LandIniFile *:
     State state = OUTSIDE
     LandIniFile *ini = land_calloc(sizeof *ini)
     ini->filename = land_strdup(filename)
-    ini->sections = land_calloc(sizeof *ini->sections)
+    ini->sections = _new()
     LandFile *f = land_file_new(filename, "rb")
     if not f: return ini
     int done = 0
@@ -175,14 +190,14 @@ def land_ini_read(char const *filename) -> LandIniFile *:
 def land_ini_new(char const *filename) -> LandIniFile *:
     LandIniFile *ini = land_calloc(sizeof *ini)
     ini->filename = land_strdup(filename)
-    ini->sections = land_calloc(sizeof *ini->sections)
+    ini->sections = _new()
     return ini
 
 def land_ini_destroy(LandIniFile *ini):
-    for int i = 0 while i < ini->sections->n with i++:
-        LandIniSection *s = ini->sections->entries[i].val
+    for LandIniEntry *e in LandArray *ini.sections->entries:
+        LandIniSection *s = e.val
         _del(s)
-        ini->sections->entries[i].val = None
+        e.val = None
 
     _del(ini->sections)
     land_free(ini->filename)
@@ -191,15 +206,15 @@ def land_ini_destroy(LandIniFile *ini):
 def land_ini_writeback(LandIniFile *ini):
     FILE *f = fopen(ini->filename, "wb")
     if not f: return
-    for int i = 0 while i < ini->sections->n with i++:
-        char *name = ini->sections->entries[i].key
+    LandIniSection *ss = ini.sections
+    for LandIniEntry *es in LandArray *ss.entries:
+        LandIniSection *s = es.val
+        char *name = es.key
         if name and name[0]:
             fprintf(f, "[%s]\n", name)
-        LandIniSection *s = ini->sections->entries[i].val
-        for int j = 0 while j < s->n with j++:
-            if s->entries[j].val:
-                fprintf(f, "%s = %s\n", s->entries[j].key,
-                    (char *)s->entries[j].val)
+        for LandIniEntry *e in LandArray *s.entries:
+            if e.val:
+                fprintf(f, "%s = %s\n", e.key, (char *)e.val)
     fclose(f)
 
 def land_ini_app_settings(char const *appname) -> LandIniFile *:

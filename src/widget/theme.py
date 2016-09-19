@@ -385,7 +385,7 @@ def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
 
     int n = land_ini_get_number_of_entries(config, "agup.cfg/elements")
     for int i = 0 while i < n with i++:
-        char const *v = land_init_get_nth_entry(config,
+        char const *v = land_ini_get_nth_entry(config,
             "agup.cfg/elements", i)
         char const *k = land_ini_get_string(config, "agup.cfg/elements",
             v, "")

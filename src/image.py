@@ -8,6 +8,7 @@ macro LAND_IMAGE_WAS_CENTERED 4 # Used in the level editor only.
 macro LAND_IMAGE_MEMORY 8
 macro LAND_AUTOCROP 16
 macro LAND_FAILED 32
+macro LAND_IMAGE_CENTER 64 # center on load
 
 static macro LOG_COLOR_STATS 0
 
@@ -76,13 +77,17 @@ static def _load2(LandImage *self):
         int h = land_image_height(self)
         land_log_message_nostamp("success (%d x %d)\n", w, h)
 
+        if self.flags & LAND_IMAGE_CENTER:
+            land_image_center(self)
+
         if self.flags & LAND_AUTOCROP:
             land_image_auto_crop(self)
 
         if not (self.flags & LAND_IMAGE_MEMORY):
             land_image_prepare(self)
             
-        land_log_message("prepared\n")
+        land_log_message("prepared l=%.0f, t=%.0f, r=%.0f, b=%.0f\n",
+            self.l, self.t, self.r, self.b)
 
         *** "ifdef" LOG_COLOR_STATS
         float red = 0, green = 0, blue = 0, alpha = 0
