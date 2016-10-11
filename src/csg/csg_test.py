@@ -1,6 +1,6 @@
 import csg, csg_shapes
 
-def test(char const *name, int want, got):
+static def test(char const *name, int want, got):
     if want == got:
         printf("OK   %s\n", name)
     else:

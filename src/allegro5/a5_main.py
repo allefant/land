@@ -330,9 +330,13 @@ def platform_frame:
                     al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)
                     land_resize_event(event.display.width, event.display.height)
                     break
+                case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+                    break
                 case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
                     land_halt()
                     al_acknowledge_drawing_halt(d->a5)
+                    break
+                case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
                     break
                 case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
                     land_resume()
