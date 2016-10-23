@@ -53,7 +53,7 @@ def land_font_load(char const *filename, float size) -> LandFont *:
     char *path = land_path_with_prefix(filename)
     LandFont *self = platform_font_load(path, size)
     land_free(path)
-    land_font_state->font = self
+    land_font_state.font = self
     return self
 
 def land_font_destroy(LandFont *self):
@@ -70,70 +70,70 @@ def land_font_yscale(LandFont *f, double scaling):
     f.yscaling = scaling
 
 def land_font_set(LandFont *self):
-    land_font_state->font = self
+    land_font_state.font = self
 
 def land_text_pos(float x, float y):
-    land_font_state->x_pos = x
-    land_font_state->y_pos = y
+    land_font_state.x_pos = x
+    land_font_state.y_pos = y
 
 def land_text_set_width(float w):
-    land_font_state->adjust_width = w
+    land_font_state.adjust_width = w
 
 # Current cursor X coordinate.
 def land_text_x_pos() -> float:
-    return land_font_state->x_pos
+    return land_font_state.x_pos
 
 # Current cursor Y coordinate.
 def land_text_y_pos() -> float:
-    return land_font_state->y_pos
+    return land_font_state.y_pos
 
 # Left edge of last printed text.
 def land_text_x() -> float:
-    return land_font_state->x
+    return land_font_state.x
 
 # Top edge of last printed text.
 def land_text_y() -> float:
-    return land_font_state->y
+    return land_font_state.y
 
 # Width of last printed text.
 def land_text_width() -> float:
-    return land_font_state->w
+    return land_font_state.w
 
 # Height of last printed text.
 def land_text_height() -> float:
-    return land_font_state->h
+    return land_font_state.h
 
 def land_text_state() -> int:
-    return land_font_state->off
+    return land_font_state.off
 
 def land_font_height(LandFont *self) -> float:
     return self.size * land_font_current()->yscaling
 
 def land_font_current() -> LandFont *:
-    return land_font_state->font
+    return land_font_state.font
 
 def land_line_height -> float:
     return land_font_height(land_font_current())
 
 def land_text_off():
-    land_font_state->off = 1
+    land_font_state.off = 1
 
 def land_text_on():
-    land_font_state->off = 0
+    land_font_state.off = 0
 
 def land_print_string(char const *str, int newline, int alignment):
     platform_font_print(land_font_state, str, alignment)
     if newline:
-        land_font_state->y_pos = land_font_state->y + land_font_state->h
+        land_font_state.y_pos = land_font_state.y + land_font_state.h
     else:
-        land_font_state->x_pos = land_font_state->x + land_font_state->w
+        land_font_state.x_pos = land_font_state.x + land_font_state.w
 
 def land_text_get_width(char const *str) -> float:
-    int onoff = land_font_state->off
-    land_font_state->off = 1
+    int onoff = land_font_state.off
+    land_font_state.off = 1
     platform_font_print(land_font_state, str, 0)
-    land_font_state->off = onoff
-    return land_font_state->w
+    land_font_state.off = onoff
+    return land_font_state.w
 
 # Get the position at which the nth character is drawn. 
 def land_text_get_char_offset(char const *str, int nth) -> int:
@@ -208,10 +208,10 @@ def land_printv(char const *text, va_list args):
 static def _wordwrap_helper(char const *text, int w, h,
     void (*cb)(int a, int b, void *data), void *data) -> int:
     int y = land_text_y_pos()
-    float fh = land_font_state->font->size
+    float fh = land_font_state.font->size
 
     char const *line_start_p = text
-    land_font_state->adjust_width = w
+    land_font_state.adjust_width = w
     #printf("wordwrap %d %d\n", w, h)
 
     while 1:
@@ -256,9 +256,9 @@ static def _wordwrap_helper(char const *text, int w, h,
             prev_word_end_p = word_end_p
             if c == 0 or c == '\n':
                 break
-        if width_of_line > land_font_state->wordwrap_width:
-            land_font_state->wordwrap_width = width_of_line
-        land_font_state->wordwrap_height += fh
+        if width_of_line > land_font_state.wordwrap_width:
+            land_font_state.wordwrap_width = width_of_line
+        land_font_state.wordwrap_height += fh
         if word_end_p < line_start_p:
             cb(line_start_p - text, line_start_p - text, data)
         else
@@ -322,8 +322,8 @@ def land_wordwrap_text(int w, h, char const *str) -> LandArray *:
     dimensions of a box which will be able to hold all the text.
     """
     LandArray *lines = land_array_new()
-    land_font_state->wordwrap_width = 0
-    land_font_state->wordwrap_height = 0
+    land_font_state.wordwrap_width = 0
+    land_font_state.wordwrap_height = 0
     if str:
         void *data[] = {(void *)str, lines}
         _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
@@ -341,7 +341,7 @@ def land_text_splitlines(char const *str) -> LandArray *:
     """
     Splits the text into lines, and updates the wordwrap extents.
     """
-    land_font_state->wordwrap_width = 0
+    land_font_state.wordwrap_width = 0
 
     LandArray *lines = land_array_new()
     while 1:
@@ -353,19 +353,19 @@ def land_text_splitlines(char const *str) -> LandArray *:
         s[p - str] = 0
 
         int w = land_text_get_width(s)
-        if w > land_font_state->wordwrap_width:
-            land_font_state->wordwrap_width = w
+        if w > land_font_state.wordwrap_width:
+            land_font_state.wordwrap_width = w
         
         land_array_add(lines, s)
         if p[0] == 0: break
         str = p + 1
-    land_font_state->wordwrap_height = land_font_state->font->size *\
+    land_font_state.wordwrap_height = land_font_state.font->size *\
         land_array_count(lines)
     return lines
 
 def land_wordwrap_extents(float *w, float *h):
-    if w: *w = land_font_state->wordwrap_width
-    if h: *h = land_font_state->wordwrap_height
+    if w: *w = land_font_state.wordwrap_width
+    if h: *h = land_font_state.wordwrap_height
 
 def land_print_lines(LandArray *lines, int alignment):
     """
@@ -373,14 +373,14 @@ def land_print_lines(LandArray *lines, int alignment):
     """
     float cl, ct, cr, cb
     land_get_clip(&cl, &ct, &cr, &cb)
-    float fh = land_font_state->font->size
+    float fh = land_font_state.font->size
     float ty = land_text_y_pos()
     int first = (ct - ty) / fh
     int last = (cb - ty) / fh
     int n = land_array_count(lines)
     if first < 0: first = 0
     if last > n - 1: last = n - 1
-    land_font_state->y_pos += fh * first
+    land_font_state.y_pos += fh * first
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
         land_print_string(s, 1, alignment)
@@ -388,5 +388,5 @@ def land_print_lines(LandArray *lines, int alignment):
 def land_font_from_image(LandImage *image, int n_ranges,
         int *ranges) -> LandFont *:
     LandFont *self = platform_font_from_image(image, n_ranges, ranges)
-    land_font_state->font = self
+    land_font_state.font = self
     return self

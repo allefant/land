@@ -85,6 +85,7 @@ def platform_font_print(LandFontState *lfs,
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_CENTRE, str)
     elif alignment == LandAlignRight:
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_RIGHT, str)
+        lfs->x -= lfs->w
     else:
         al_draw_text(self.a5, c, x, y, a, str)
     
