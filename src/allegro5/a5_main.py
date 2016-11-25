@@ -331,6 +331,7 @@ def platform_frame:
                     land_resize_event(event.display.width, event.display.height)
                     break
                 case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+                    land_switch_out_event()
                     break
                 case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
                     land_halt()

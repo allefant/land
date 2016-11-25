@@ -168,6 +168,8 @@ static import main
 
 static int resize_event_counter
 static int was_resized
+static int switch_out_event_counter
+static int was_switched_out
 
 static LandList *_previous
 global LandDisplay *_land_active_display
@@ -594,12 +596,20 @@ def land_resize_event(int w, h):
     _land_active_display->clip_x2 = w
     _land_active_display->clip_y2 = h
 
+def land_switch_out_event:
+    switch_out_event_counter++
+
+def land_switched_out -> int:
+    return was_switched_out
+
 def land_was_resized() -> int:
     return was_resized
 
 def land_display_tick():
     was_resized = resize_event_counter
     resize_event_counter = 0
+    was_switched_out = switch_out_event_counter
+    switch_out_event_counter = 0
 
 def land_rotate(LandFloat angle):
     """
