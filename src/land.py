@@ -190,9 +190,14 @@ import config
 import main, array, display, runner, random, mouse, keyboard, image
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
-import file, yaml, thread, protobuf
+import file, thread, protobuf
 
 import land/allegro5/a5_opengl
+
+static char const *_version = "1.0.0"
+
+def land_version -> char const *:
+    return _version
 
 static LandArray *exit_functions
 static int _exitcode
