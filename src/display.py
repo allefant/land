@@ -214,7 +214,7 @@ def land_display_del(LandDisplay *self):
 # how = 7: like 3 but keep 0/0 in top left corner
 # how = 8: stretch (non-square pixels, not recommended)
 # how = how + 256: do the inverse instead
-def land_scale_to_fit(float w, h, int how):
+def land_scale_to_fit(float w, h, int how) -> double:
     float dw = land_display_width()
     float dh = land_display_height()
     float sx, sy
@@ -254,6 +254,15 @@ def land_scale_to_fit(float w, h, int how):
     else:
         land_translate(ox, oy)
         land_scale(sx, sy)
+    return sx
+
+def land_get_left -> LandFloat:
+    LandFloat *m = _land_active_display->matrix
+    return -m[3] / m[0]
+
+def land_get_x_scale -> LandFloat:
+    LandFloat *m = _land_active_display->matrix
+    return m[0]
 
 def land_set_image_display(LandImage *image):
     """
