@@ -372,7 +372,7 @@ def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
                         other->tag = grid->tag
                         float dx = other->x - x
                         float dy = other->y - y
-                        if dx + dx + dy * dy < radius * radius:
+                        if dx * dx + dy * dy < radius * radius:
 
                             land_add_list_data(&retlist, other)
 
@@ -643,9 +643,9 @@ def land_sprites_exit():
 
 
 def land_spritetype_new() -> LandSpriteType *:
-
     LandSpriteType *self
     land_alloc(self)
+    self.name = "dummy"
     self.draw = dummy
     return self
 
