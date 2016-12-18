@@ -131,7 +131,6 @@ def land_grid_initialize(LandGrid *self,
     self.cell_w = cell_w
     self.cell_h = cell_h
 
-
 def land_grid_init():
     land_log_message("land_grid_init\n")
     land_tilemap_init()

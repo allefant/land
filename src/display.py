@@ -264,6 +264,14 @@ def land_get_x_scale -> LandFloat:
     LandFloat *m = _land_active_display->matrix
     return m[0]
 
+def land_get_top -> LandFloat:
+    LandFloat *m = _land_active_display->matrix
+    return -m[7] / m[5]
+
+def land_get_y_scale -> LandFloat:
+    LandFloat *m = _land_active_display->matrix
+    return m[5]
+
 def land_set_image_display(LandImage *image):
     """
     Change the display of the current thread to an internal display which draws

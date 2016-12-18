@@ -416,7 +416,7 @@ def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
 
     return retlist
 
-def  land_sprites_grid_get_in_cell(LandGrid *grid,
+def land_sprites_grid_get_in_cell(LandGrid *grid,
     int cx, cy) -> LandList *:
     LandList *retlist = None
     LandSpritesGrid *sgrid = LAND_SPRITES_GRID(grid)

@@ -1,3 +1,9 @@
+"""
+0 is the left mouse button
+1 is the right mouse button
+2 is the middle mouse button
+3,4,... are extra mouse buttons
+"""
 import global stdbool
 static import exception, land/allegro5/a5_main
 static import global assert
