@@ -162,6 +162,10 @@ class LandDisplay:
     int matrix_stack_depth
     bool matrix_modified
 
+class LandTriangles:
+    int n, c
+    LandImage *image
+
 static import allegro5/a5_display
 static import allegro5/a5_image
 static import main
@@ -521,6 +525,9 @@ def land_3d_triangles(int n, LandFloat *xyzrgb):
 def land_textured_polygon(LandImage *image, int n, float *xy, *uv):
     platform_textured_polygon(image, n, xy, uv):
 
+def land_textured_colored_polygon(LandImage *image, int n, float *xy, *uv, *rgba):
+    platform_textured_colored_polygon(image, n, xy, uv, rgba):
+
 def land_filled_polygon_with_holes(int n, float *xy, int *holes):
     platform_filled_polygon_with_holes(n, xy, holes)
 
@@ -730,3 +737,23 @@ def land_display_set_default_shaders():
     builtin functions.
     """
     platform_set_default_shaders()
+
+def land_triangles_new -> LandTriangles*:
+    LandTriangles *self
+    land_alloc(self)
+    return self
+
+def land_triangles_clear(LandTriangles *self):
+    self.n = 0
+
+def land_triangles_texture(LandTriangles *self, LandImage *texture):
+    self.image = texture
+
+def land_add_vertex(LandTriangles *self, float x, y, z, u, v, r, g, b, a):
+    platform_add_vertex(self, x, y, z, u, v, r, g, b, a)
+
+def land_duplicate_vertex(LandTriangles *self, int i):
+    platform_duplicate_vertex(self, i)
+
+def land_triangles_draw(LandTriangles *self):
+    platform_triangles_draw(self)
