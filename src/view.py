@@ -121,3 +121,7 @@ def land_view_clip(LandView *self):
 def land_view_to_world(LandView *self, float vx, vy, *wx, *wy):
     *wx = self.scroll_x + (vx - self->x) / self->scale_x
     *wy = self.scroll_y + (vy - self->y) / self->scale_y
+
+def land_world_to_view(LandView *self, float wx, wy, *vx, *vy):
+    *vx = (wx - self.scroll_x) * self.scale_x + self->x
+    *vy = (wy - self.scroll_y) * self.scale_y + self->y
