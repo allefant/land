@@ -192,7 +192,6 @@ import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
 import file, thread, protobuf
 
-global macro ALLEGRO_UNSTABLE
 import land/allegro5/a5_opengl
 
 static char const *_version = "1.0.0"
