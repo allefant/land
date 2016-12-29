@@ -76,7 +76,11 @@ def land_stream_fill(LandStream *self):
 
 def land_stream_music(LandStream *self, char const *filename):
     self.filename = land_strdup(filename)
-    platform_stream_music(self, filename)
+    platform_stream_music(self, filename, true)
+
+def land_stream_music_once(LandStream *self, char const *filename):
+    self.filename = land_strdup(filename)
+    platform_stream_music(self, filename, false)
 
 def land_stream_volume(LandStream *self, float volume):
     platform_stream_volume(self, volume)

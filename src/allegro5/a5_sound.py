@@ -152,13 +152,15 @@ def platform_stream_fill(LandStream *super):
     LandStreamPlatform *self = (void *)super
     al_set_audio_stream_fragment(self.a5, self->fragment)
 
-def platform_stream_music(LandStream *super, char const *filename):
+def platform_stream_music(LandStream *super, char const *filename,
+        bool looping):
     LandStreamPlatform *self = (void *)super
     al_destroy_audio_stream(self.a5)
     self.a5 = al_load_audio_stream(filename,
         super->fragments, super->samples);
     al_attach_audio_stream_to_mixer(self.a5, al_get_default_mixer())
-    al_set_audio_stream_playmode(self.a5, ALLEGRO_PLAYMODE_LOOP)
+    if looping:
+        al_set_audio_stream_playmode(self.a5, ALLEGRO_PLAYMODE_LOOP)
 
 def platform_stream_volume(LandStream *super, float volume):
     LandStreamPlatform *self = (void *)super
