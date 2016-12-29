@@ -67,7 +67,7 @@ CONFIGURE_FILE(config.cmake c/land/config.h)
 
 set(WFLAGS "-W -Wall")
 set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
-set(CFLAGS "--std=gnu99")
+set(CFLAGS "--std=gnu99 -DALLEGRO_UNSTABLE")
 set(DFLAGS "-g3 -O0")
 set(RFLAGS "-O3")
 set(PFLAGS "-g3 -p -O2")
