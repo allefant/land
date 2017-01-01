@@ -13,7 +13,7 @@ class LandStream:
     int fragments
     float frequency
 
-    char const *filename
+    char *filename
 
 static import allegro5/a5_sound
 
@@ -66,6 +66,7 @@ def land_stream_new(int samples, fragments, float frequency,
     return platform_stream_new(samples, fragments, frequency, bits, channels)
 
 def land_stream_destroy(LandStream *self):
+    land_free(self.filename)
     platform_stream_destroy(self)
 
 def land_stream_buffer(LandStream *self) -> void *:

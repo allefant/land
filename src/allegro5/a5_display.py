@@ -473,6 +473,11 @@ def platform_duplicate_vertex(LandTriangles *t, int i):
     LandTrianglesPlatform *tp = (void *)t
     _add_vertex_data(t, &tp.v[t.n + i])
 
+def platform_triangles_new -> LandTriangles *:
+    LandTrianglesPlatform *self
+    land_alloc(self)
+    return &self.super
+
 def platform_triangles_draw(LandTriangles *t):
     LandTrianglesPlatform *tp = (void *)t
     LandImagePlatform *pim = (void *)t.image;

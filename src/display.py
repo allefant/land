@@ -739,9 +739,7 @@ def land_display_set_default_shaders():
     platform_set_default_shaders()
 
 def land_triangles_new -> LandTriangles*:
-    LandTriangles *self
-    land_alloc(self)
-    return self
+    return platform_triangles_new()
 
 def land_triangles_clear(LandTriangles *self):
     self.n = 0
