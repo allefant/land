@@ -104,6 +104,13 @@ def platform_display_set():
     int f = 0
     if self->a5:
         # FIXME: check for changed parameters
+        if super->flags & LAND_FULLSCREEN:
+            al_set_display_flag(self->a5, ALLEGRO_FULLSCREEN_WINDOW, True)
+        else:
+            al_set_display_flag(self->a5, ALLEGRO_FULLSCREEN_WINDOW, False)
+        super->w = al_get_display_width(self->a5)
+        super->h = al_get_display_height(self->a5)
+        land_resize_event(super->w, super->h)
         return
     if super->flags & LAND_FULLSCREEN:
         f |= ALLEGRO_FULLSCREEN_WINDOW
