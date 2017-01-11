@@ -577,3 +577,11 @@ def land_widget_theme_apply(LandWidget *self, LandWidgetTheme *theme):
     _theme_recurse(self, theme)
     _layout_recurse(self, theme)
     land_widget_layout(self)
+
+def land_widget_theme_change_font(LandWidgetTheme *theme):
+    for LandWidgetThemeElement *element in LandList *theme.elements:
+        element.font = land_font_current()
+        if element.selected:
+            element.selected.font = land_font_current()
+        if element.disabled:
+            element.disabled.font = land_font_current()
