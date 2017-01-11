@@ -9,8 +9,17 @@ static import land.array
 static import land.buffer
 static import land.mem
 static import land.hash
+static import global math
 
 static LandHash *cache
+
+static double const Xn = 0.95047
+static double const Yn = 1.00000
+static double const Zn = 1.08883
+static double const delta = 6.0 / 29
+static double const delta2 = 6.0 / 29 * 6.0 / 29
+static double const delta3 = 6.0 / 29 * 6.0 / 29 * 6.0 / 29
+static double const tf7 = 1.0 / 4 / 4 / 4 / 4 / 4 / 4 / 4
 
 def land_color_hsv(float hue, sat, val) -> LandColor:
     return platform_color_hsv(hue, sat, val)
@@ -18,6 +27,212 @@ def land_color_hsv(float hue, sat, val) -> LandColor:
 def land_color_rgba(float r, g, b, a) -> LandColor:
     LandColor c = {r, g, b, a}
     return c
+
+def srgba_gamma_to_linear(double x) -> double:
+    double const a = 0.055
+    if x < 0.04045: return x / 12.92
+    return pow((x + a) / (1 + a), 2.4)
+
+def srgba_linear_to_gamma(double x) -> double:
+    double const a = 0.055
+    if x < 0.0031308: return x * 12.92
+    return pow(x, 1 / 2.4) * (1 + a) - a
+
+def land_color_xyz(double x, y, z) -> LandColor:
+    LandColor c
+    double r =  3.2406 * x + -1.5372 * y + -0.4986 * z
+    double g = -0.9689 * x +  1.8758 * y +  0.0415 * z
+    double b =  0.0557 * x + -0.2040 * y +  1.0570 * z
+    c.r = srgba_linear_to_gamma(r)
+    c.g = srgba_linear_to_gamma(g)
+    c.b = srgba_linear_to_gamma(b)
+    c.a = 1
+    return c
+
+def land_color_to_xyz(LandColor c, double *x, *y, *z):
+    double r = srgba_gamma_to_linear(c.r)
+    double g = srgba_gamma_to_linear(c.g)
+    double b = srgba_gamma_to_linear(c.b)
+    *x = r * 0.4124 + g * 0.3576 + b * 0.1805
+    *y = r * 0.2126 + g * 0.7152 + b * 0.0722
+    *z = r * 0.0193 + g * 0.1192 + b * 0.9505
+
+static def cielab_f(double x) -> double:
+    if x > delta3:
+        return pow(x, 1.0 / 3)
+    return 4.0 / 29 + x / delta2 / 3
+
+static def cielab_f_inv(double x) -> double:
+    if x > delta:
+        return pow(x, 3)
+    return (x - 4.0 / 29) * 3 * delta2
+
+def land_color_to_cielab(LandColor c, double *L, *a, *b):
+    double x, y, z
+    land_color_to_xyz(c, &x, &y, &z)
+    x /= Xn
+    y /= Yn
+    z /= Zn
+    *L = 1.16 * cielab_f(y) - 0.16
+    *a = 5.00 * (cielab_f(x) - cielab_f(y))
+    *b = 2.00 * (cielab_f(y) - cielab_f(z))
+
+def land_color_cielab(double L, a, b) -> LandColor:
+    double x = Xn * cielab_f_inv((L + 0.16) / 1.16 + a / 5.00)
+    double y = Yn * cielab_f_inv((L + 0.16) / 1.16)
+    double z = Zn * cielab_f_inv((L + 0.16) / 1.16 - b / 2.00)
+    return land_color_xyz(x, y, z)
+
+def land_color_xyy(double x, y, Y) -> LandColor:
+    # x = X / (X + Y + Z)
+    # y = Y / (X + Y + Z)
+    #
+    # xX + xY + xZ = X
+    # yX + yY + yZ = Y
+    # 
+    # X + Z = X/x - Y
+    # X + Z = Y/y - Y
+    #
+    # X/x = Y/y
+    # X = x * Y/y
+    # Z = Y/y - Y - X
+
+    double X = x * Y / y
+    double Z = (1 - y - x) * Y / y
+
+    return land_color_xyz(X, Y, Z)
+
+def land_color_to_xyy(LandColor c, double *x, *y, *Y):
+    double X, Z
+    land_color_to_xyz(c, &X, Y, &Z)
+    *x = X / (X + *Y + Z)
+    *y = *Y / (X + *Y + Z)
+
+def land_color_distance_cie94(LandColor color, other) -> double:
+    double l1, a1, b1
+    double l2, a2, b2
+    land_color_to_cielab(color, &l1, &a1, &b1)
+    land_color_to_cielab(other, &l2, &a2, &b2)
+    return land_color_distance_cie94_lab(l1, a1, b1, l2, a2, b2)
+    
+def land_color_distance_cie94_lab(double l1, a1, b1, l2, a2, b2) -> double:
+    double dl = l1 - l2
+    double da = a1 - a2
+    double db = b1 - b2
+    double c1 = sqrt(a1 * a1 + b1 * b1)
+    double c2 = sqrt(a2 * a2 + b2 * b2)
+    double dc = c1 - c2
+    double dh = da * da + db * db - dc * dc
+    dh = dh < 0 ? 0 : sqrt(dh)
+    dc /= 1 + 0.045 * c1
+    dh /= 1 + 0.015 * c1
+    return sqrt(dl * dl + dc * dc + dh * dh)
+
+static def sindeg(double x) -> double: return sin(x * LAND_PI / 180)
+static def cosdeg(double x) -> double: return cos(x * LAND_PI / 180)
+
+def land_color_distance_ciede2000(LandColor color, other) -> double:
+    double l1, a1, b1
+    double l2, a2, b2
+    land_color_to_cielab(color, &l1, &a1, &b1)
+    land_color_to_cielab(other, &l2, &a2, &b2)
+    return land_color_distance_ciede2000_lab(l1, a1, b1, l2, a2, b2)
+
+def land_color_distance_ciede2000_lab(double l1, a1, b1, l2, a2, b2) -> double:
+    """
+    http://www.ece.rochester.edu/~gsharma/ciede2000/ciede2000noteCRNA.pdf
+    """
+    double dl = l1 - l2
+    double ml = (l1 + l2) / 2
+    double c1 = sqrt(a1 * a1 + b1 * b1)
+    double c2 = sqrt(a2 * a2 + b2 * b2)
+    double mc = (c1 + c2) / 2
+    double fac = sqrt(pow(mc, 7) / (pow(mc, 7) + tf7))
+    double g = 0.5 * (1 - fac)
+    a1 *= 1 + g
+    a2 *= 1 + g
+    c1 = sqrt(a1 * a1 + b1 * b1)
+    c2 = sqrt(a2 * a2 + b2 * b2)
+    double dc = c2 - c1
+    mc = (c1 + c2) / 2
+    fac = sqrt(pow(mc, 7) / (pow(mc, 7) + tf7))
+    double h1 = fmod(360.0 + atan2(b1, a1) * 180 / LAND_PI, 360)
+    double h2 = fmod(360.0 + atan2(b2, a2) * 180 / LAND_PI, 360)
+    double dh = 0
+    double mh = h1 + h2
+    if c1 * c2 != 0:
+        dh = h2 - h1
+        if dh > 180: dh -= 360
+        if dh < -180: dh += 360
+        if fabs(h1 - h2) <= 180: mh = (h1 + h2) / 2
+        elif h1 + h2 < 360: mh = (h1 + h2 + 360) / 2
+        else: mh = (h1 + h2 - 360) / 2
+    dh = 2 * sqrt(c1 * c2) * sindeg(dh / 2)
+    double t = 1 - 0.17 * cosdeg(mh - 30) + 0.24 * cosdeg(2 * mh) +\
+            0.32 * cosdeg(3 * mh + 6) - 0.2 * cosdeg(4 * mh - 63)
+    double mls = pow(ml - 0.5, 2)
+    double sl = 1 + 1.5 * mls / sqrt(0.002 + mls)
+    double sc = 1 + 4.5 * mc
+    double sh = 1 + 1.5 * mc * t
+    double rt = -2 * fac * sindeg(60 * exp(-pow((mh - 275) / 25, 2)))
+    #printf("a1=%.4f a2=%.4f c1=%.4f c2=%.4f dh=%.4f mh=%.4f t=%.4f rt=%.4f\n",
+    #    a1, a2, c1, c2, dh, mh, t, rt)
+    return sqrt(pow(dl / sl, 2) + pow(dc / sc, 2) + pow(dh / sh, 2) +
+            rt * dc / sc * dh / sh)
+
+static class TestData:
+    double l1, a1, b1, l2, a2, b2, e
+
+static TestData test_data[] = {
+    {50.0000, 2.6772, -79.7751, 50.0000, 0.0000, -82.7485, 2.0425},
+    {50.0000, 3.1571, -77.2803, 50.0000, 0.0000, -82.7485, 2.8615},
+    {50.0000, 2.8361, -74.0200, 50.0000, 0.0000, -82.7485, 3.4412},
+    {50.0000, -1.3802, -84.2814, 50.0000, 0.0000, -82.7485, 1.0000},
+    {50.0000, -1.1848, -84.8006, 50.0000, 0.0000, -82.7485, 1.0000},
+    {50.0000, -0.9009, -85.5211, 50.0000, 0.0000, -82.7485, 1.0000},
+    {50.0000, 0.0000, 0.0000, 50.0000, -1.0000, 2.0000, 2.3669},
+    {50.0000, -1.0000, 2.0000, 50.0000, 0.0000, 0.0000, 2.3669},
+    {50.0000, 2.4900, -0.0010, 50.0000, -2.4900, 0.0009, 7.1792},
+    {50.0000, 2.4900, -0.0010, 50.0000, -2.4900, 0.0010, 7.1792},
+    {50.0000, 2.4900, -0.0010, 50.0000, -2.4900, 0.0011, 7.2195},
+    {50.0000, 2.4900, -0.0010, 50.0000, -2.4900, 0.0012, 7.2195},
+    {50.0000, -0.0010, 2.4900, 50.0000, 0.0009, -2.4900, 4.8045},
+    {50.0000, -0.0010, 2.4900, 50.0000, 0.0010, -2.4900, 4.8045},
+    {50.0000, -0.0010, 2.4900, 50.0000, 0.0011, -2.4900, 4.7461},
+    {50.0000, 2.5000, 0.0000, 50.0000, 0.0000, -2.5000, 4.3065},
+    {50.0000, 2.5000, 0.0000, 73.0000, 25.0000, -18.0000, 27.1492},
+    {50.0000, 2.5000, 0.0000, 61.0000, -5.0000, 29.0000, 22.8977},
+    {50.0000, 2.5000, 0.0000, 56.0000, -27.0000, -3.0000, 31.9030},
+    {50.0000, 2.5000, 0.0000, 58.0000, 24.0000, 15.0000, 19.4535},
+    {50.0000, 2.5000, 0.0000, 50.0000, 3.1736, 0.5854, 1.0000},
+    {50.0000, 2.5000, 0.0000, 50.0000, 3.2972, 0.0000, 1.0000},
+    {50.0000, 2.5000, 0.0000, 50.0000, 1.8634, 0.5757, 1.0000},
+    {50.0000, 2.5000, 0.0000, 50.0000, 3.2592, 0.3350, 1.0000},
+    {60.2574, -34.0099, 36.2677, 60.4626, -34.1751, 39.4387, 1.2644},
+    {63.0109, -31.0961, -5.8663, 62.8187, -29.7946, -4.0864, 1.2630},
+    {61.2901, 3.7196, -5.3901, 61.4292, 2.2480, -4.9620, 1.8731},
+    {35.0831, -44.1164, 3.7933, 35.0232, -40.0716, 1.5901, 1.8645},
+    {22.7233, 20.0904, -46.6940, 23.0331, 14.9730, -42.5619, 2.0373},
+    {36.4612, 47.8580, 18.3852, 36.2715, 50.5065, 21.2231, 1.4146},
+    {90.8027, -2.0831, 1.4410, 91.1528, -1.6435, 0.0447, 1.4441},
+    {90.9257, -0.5406, -0.9208, 88.6381, -0.8985, -0.7239, 1.5381},
+    {6.7747, -0.2908, -2.4247, 5.8714, -0.0985, -2.2286, 0.6377},
+    {2.0776, 0.0795, -1.1350, 0.9033, -0.0636, -0.5514, 0.9082}
+}
+
+def test_ciede2000:
+    for int i in range(34):
+        TestData data = test_data[i]
+        double e = land_color_distance_ciede2000_lab(data.l1 / 100, data.a1 / 100,
+            data.b1 / 100, data.l2 / 100, data.a2 / 100, data.b2 / 100)
+        double e94 = land_color_distance_cie94_lab(data.l1 / 100, data.a1 / 100,
+            data.b1 / 100, data.l2 / 100, data.a2 / 100, data.b2 / 100)
+        double d = e * 100 - data.e
+        bool ok = d * d < 0.0001 * 0.0001
+        printf("%s%d: %.4f == %.4f (%.4f)%s\n",
+            color_bash(ok ? "green" : "red"),
+            1 + i, e * 100, data.e, e94 * 100,
+            color_bash("end"))
 
 def land_color_premul(float r, g, b, a) -> LandColor:
     LandColor c = {r * a, g * a, b * a, a}
