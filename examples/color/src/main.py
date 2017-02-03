@@ -14,7 +14,8 @@ class Color:
     LandColor rgb
     double l, a, b
     LandArray *close
-    double x, y, dx, dy
+    double x, y, z, dx, dy
+    bool fixed
 
 class Neighbor:
     Color *c
@@ -23,7 +24,8 @@ class Neighbor:
 class Xyz:
     int x, y, z
     
-LandArray *colors
+LandArray *colors # Color
+LandFloat mindist
 
 static def get_Y(int i) -> float:
     if i == 0: return 0.01
@@ -60,51 +62,6 @@ static def get_xi(float x) -> int:
 
 static def get_yi(float y) -> int:
     return 255 - (y - 0.0) / 0.6 * 255.0
-
-static def xyz_new(int x, y, z) -> Xyz*:
-    Xyz *xyz
-    land_alloc(xyz)
-    xyz.x = x
-    xyz.y = y
-    xyz.z = z
-    return xyz
-
-static def remove_neighbor(int n, LandColor *cube, double r,
-        LandColor c, int x, y, z):
-    LandArray *pos = land_array_new()
-    land_array_add(pos, xyz_new(x, y, z))
-    while True:
-        Xyz *xyz = land_array_pop(pos)
-        if not xyz:
-            break
-        x = xyz.x
-        y = xyz.y
-        z = xyz.z
-        land_free(xyz)
-        if x < 0: continue
-        if y < 0: continue
-        if z < 0: continue
-        if x >= n: continue
-        if y >= n: continue
-        if z >= n: continue
-        LandColor *o = &cube[x + y * n + z * n * n]
-        if o.a < 1: continue
-        double d = land_color_distance_ciede2000(c, *o)
-        if d < r:
-            o.a = 0
-            land_array_add(pos, xyz_new(x + 1, y, z))
-            land_array_add(pos, xyz_new(x - 1, y, z))
-            land_array_add(pos, xyz_new(x, y + 1, z))
-            land_array_add(pos, xyz_new(x, y - 1, z))
-            land_array_add(pos, xyz_new(x, y, z + 1))
-            land_array_add(pos, xyz_new(x, y, z - 1))
-    land_array_destroy(pos)
-
-static def remove_close(int n, LandColor *cube, double r, int x, y, z):
-    LandColor *c = &cube[x + y * n + z * n * n]
-    if c.a < 1:
-        return
-    remove_neighbor(n, cube, r, *c, x, y, z)
 
 static def init:
     mode = CIELAB
@@ -165,54 +122,67 @@ static def init:
                     rgba[yi * 256 * 4 + xi * 4 + 3] = ca
             land_image_set_rgba_data(zpics[m][zi], rgba)
 
-    # create a fixed color lattice
-    int n = 64
-    LandColor cube[n * n * n]
-    for int ri in range(n):
-        for int gi in range(n):
-            for int bi in range(n):
-                int i = ri + gi * n + bi * n * n
-                LandColor c
-                c.a = 1
-                c.r = ri / (n - 1.0)
-                c.g = gi / (n - 1.0)
-                c.b = bi / (n - 1.0)
-                cube[i] = c
+    # color cube
+    arrange_cube()
 
+def color_add(float r, g, b) -> Color*:
+    Color *color; land_alloc(color)
+    color.rgb.r = r
+    color.rgb.g = g
+    color.rgb.b = b
+    land_color_to_cielab(color.rgb, &color.l, &color.a, &color.b)
+    land_array_add(colors, color)
+    return color
+
+def color_addf(float r, g, b):
+    color_add(r, g, b)->fixed = True
+
+def arrange_prepare:
+    if colors:
+        land_array_destroy(colors)
     colors = land_array_new()
+    color_addf(0, 0, 0)
+    color_addf(1, 0, 0)
+    color_addf(0, 1, 0)
+    color_addf(0, 0, 1)
+    color_addf(0, 1, 1)
+    color_addf(1, 0, 1)
+    color_addf(1, 1, 0)
+    color_addf(1, 1, 1)
 
-    double r = 0.16
+def arrange_cube:
+    arrange_prepare()
+    for int x in range(5):
+        for int y in range(5):
+            for int z in range(5):
+                color_add(x / 4.0, y / 4.0, z / 4.0)
 
-    int s = n
-    while s > 0:
-        for int x_ in range(0, n + 1, s):
-            int x = x_ < n ? x_ : n - 1
-            for int y_ in range(0, n + 1, s):
-                int y = y_ < n ? y_ : n - 1
-                for int z_ in range(0, n + 1, s):
-                    int z = z_ < n ? z_ : n - 1
+def arrange_center
+    arrange_prepare()
+    for int x in range(5):
+        for int y in range(5):
+            for int z in range(5):
+                color_add(.5, .5, .5)
 
-                    LandColor *c = &cube[x + y * n + z * n * n]
-                    if c.a == 1:
-                        Color *color
-                        land_alloc(color)
-                        color.rgb.r = c.r
-                        color.rgb.g = c.g
-                        color.rgb.b = c.b
-                        land_color_to_cielab(*c, &color.l, &color.a, &color.b)
-                        land_array_add(colors, color)
-                        printf("%d %d %d: %.1f %.1f %.1f\n", x, y, z, c.r, c.g, c.b)
-                    remove_close(n, cube, r, x, y, z)
-        s /= 2
+def arrange_random
+    arrange_prepare()
+    for int x in range(5):
+        for int y in range(5):
+            for int z in range(5):
+                color_add(land_rand(0, 255) / 255.0,
+                    land_rand(0, 255) / 255.0,
+                    land_rand(0, 255) / 255.0)
 
-    printf("%d / %d colors with distance %f\n", land_array_count(colors),
-        n * n * n, r)
-
+def find_neighbors:
     double close = 0.3
+
+    land_array_sort(colors, comp_l)
 
     int cn = land_array_count(colors)
     for int i in range(cn):
         Color *c = land_array_get_nth(colors, i)
+        if c.close:
+            land_array_destroy(c.close)
         c.close = land_array_new()
         for int j in range(cn):
             if j == i: continue
@@ -226,15 +196,24 @@ static def init:
                 land_array_add(c.close, ne)
 
     for Color *col in colors:
-        land_array_sort(col.close, comp)
+        land_array_sort(col.close, comp_delta)
 
-static def comp(void const *a, void const *b) -> int:
+static def comp_delta(void const *a, void const *b) -> int:
     Neighbor * const *ap = a
     Neighbor * const *bp = b
     Neighbor *ac = *ap
     Neighbor *bc = *bp
     if ac.delta < bc.delta: return -1
     if ac.delta > bc.delta: return 1
+    return 0
+
+static def comp_l(void const *a, void const *b) -> int:
+    Color * const *ap = a
+    Color * const *bp = b
+    Color *ac = *ap
+    Color *bc = *bp
+    if ac.l < bc.l: return -1
+    if ac.l > bc.l: return 1
     return 0
 
 static def xdist(double x1, x2) -> double:
@@ -248,25 +227,40 @@ static def xdist(double x1, x2) -> double:
     if dx > 0: return dx - 1200
     return dx + 1200
 
+def clip(double x) -> double:
+    if x < 0: return 0
+    if x > 1: return 1
+    return x
+
 static def tick:
     if land_key_pressed(LandKeyEscape):
         land_quit()
     if land_closebutton():
         land_quit()
 
+    if land_key_pressed('1'): arrange_cube()
+    if land_key_pressed('2'): arrange_center()
+    if land_key_pressed('3'): arrange_random()
+
     if land_key_pressed(LandKeyFunction + 1): mode = XYY
     if land_key_pressed(LandKeyFunction + 2): mode = CIELAB
-    if land_key_pressed(LandKeyFunction + 3): mode = LIST
+    if land_key_pressed(LandKeyFunction + 3):
+        mode = LIST
+        find_neighbors()
+
     if land_key_pressed(LandKeyFunction + 4):
+        find_neighbors()
+
         int id = 0
         for Color *col in colors:
             col.x = 600
             col.y = 450
             if id == 0: col.y = 900 - 90
-            if id == 7: col.y = 90
+            if id == land_array_count(colors) - 1: col.y = 90
             id++
         mode = CLOUD
-    if land_key_pressed(LandKeyFunction + 5): mode = CUBE
+    if land_key_pressed(LandKeyFunction + 5):
+        mode = CUBE
 
     if mode == CLOUD:
         int id = 0
@@ -314,7 +308,7 @@ static def tick:
                         
             if c.y < 30: c.dy += 1
             if c.y > 900 - 30: c.dy -= 1
-            if id != 0 and id != 7:
+            if id != 0 and id != land_array_count(colors) - 1:
                 c.x += c.dx
                 c.y += c.dy
             c.dx *= 0.9
@@ -324,6 +318,44 @@ static def tick:
             if c.y < 0: c.y = 0
             if c.y > 900: c.y = 900
             id++
+
+    if mode == CUBE:
+        # LLoyd's (but too slow as brute force)
+        # 1. for each color, assign to it all the colors closer to it
+        #    than to any other
+        # 2. for each such voronoi cell, compute the centroid
+        # 3. move the color closer to its centroid
+        # 4. repeat
+
+        double t = land_get_time()
+        while land_get_time() < t + 1.0 / 100:
+            int i = land_rand(0, land_array_count(colors) - 1)
+            Color *col = land_array_get_nth(colors, i)
+            if col.fixed: continue
+            double md = -1
+            for Color *c in colors:
+                if c == col: continue
+                if fabs(c.l - col.l) > 0.2: continue
+                double d = land_color_distance_ciede2000(col.rgb, c.rgb)
+                if md < 0 or d < md:
+                    md = d
+            LandColor rgb2 = col.rgb
+            rgb2.r = clip(rgb2.r + land_rnd(-0.01, 0.01))
+            rgb2.g = clip(rgb2.g + land_rnd(-0.01, 0.01))
+            rgb2.b = clip(rgb2.b + land_rnd(-0.01, 0.01))
+            double md2 = -1
+            for Color *c in colors:
+                if c == col: continue
+                if fabs(c.l - col.l) > 0.2: continue
+                double d = land_color_distance_ciede2000(rgb2, c.rgb)
+                if md2 < 0 or d < md2:
+                    md2 = d
+            if md2 > md:
+                #printf("%f > %f\n", md2, md)
+                col.rgb = rgb2
+                land_color_to_cielab(col.rgb, &col.l, &col.a, &col.b)
+                mindist = mindist * 0.99 + md2 * 0.01
+                
 
 static def marker(float x, y):
     land_circle(x - 10, y - 10, x + 10, y + 10)
@@ -368,6 +400,54 @@ static def draw:
             float y = c.y
             land_filled_circle(x - 30, y - 30, x + 30, y + 30)
             land_filled_circle(1200 + x - 30, y - 30, 1200 + x + 30, y + 30)
+        return
+
+    if mode == CUBE:
+        land_clear(0.5, 0.5, 0.5, 1)
+        land_color(0.8, 0.8, 0.8, 1)
+
+        Land4x4Matrix m = land_4x4_matrix_identity()
+        m = land_4x4_matrix_mul(m, land_4x4_matrix_translate(600, 450, 0))
+        m = land_4x4_matrix_mul(m, land_4x4_matrix_rotate(1, 0, 0, LAND_PI / -4))
+        m = land_4x4_matrix_mul(m, land_4x4_matrix_rotate(0, 1, 0, land_get_ticks() * 2 * LAND_PI / 600))
+        m = land_4x4_matrix_mul(m, land_4x4_matrix_scale(400, -400, 400))
+        m = land_4x4_matrix_mul(m, land_4x4_matrix_translate(-0.5, -0.5, -0.5))
+
+        LandVector v[] = {
+            {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+            {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
+            }
+        for int i in range(8):
+            v[i] = land_vector_matmul(v[i], &m)
+        int lines[] = {0, 1, 1, 2, 2, 3, 3, 0,
+            4, 5, 5, 6, 6, 7, 7, 4,
+            0, 4, 1, 5, 2, 6, 3, 7}
+        for int i in range(0, 24, 2):
+            int a = lines[i]
+            int b = lines[i + 1]
+            land_line(v[a].x, v[a].y, v[b].x, v[b].y)
+
+        for Color *col in colors:
+            LandColor c = col.rgb
+            LandVector p = {c.r, c.g, c.b}
+            LandVector v = land_vector_matmul(p, &m)
+            col.x = v.x
+            col.y = v.y
+            col.z = v.z
+
+        LandArray *a = land_array_copy(colors)
+        land_array_sort(a, comp_z)
+
+        for Color *col in a:
+            LandColor c = col.rgb
+            land_color(c.r, c.g, c.b, 1)
+            land_filled_circle(col.x - 20, col.y - 20, col.x + 20, col.y + 20)
+
+        land_array_destroy(a)
+
+        land_color(0, 0, 0, 1)
+        land_text_pos(0, 0)
+        land_print("Minimum distance: %f", mindist)
         return
 
     if mode == XYY or mode == CIELAB:
@@ -436,6 +516,15 @@ static def draw:
                     if i == 11:
                         land_color(1, 1, 0, 1)
                         marker(x_ + get_ai(-0.22), y_ + get_bi(0.94))
+
+static def comp_z(void const *a, void const *b) -> int:
+    Color const * const *as = a
+    Color const * const *bs = b
+    Color const *ac = *as
+    Color const *bc = *bs
+    if ac.z < bc.z: return -1
+    if ac.z > bc.z: return 1
+    return 0
 
 static def _main:
     land_init()

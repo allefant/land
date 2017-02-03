@@ -284,7 +284,7 @@ static def find_offset_wrap(LandGrid *self, float view_x, float view_y,
 #               ..
 #
 # 
-static def placeholder(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
+def land_grid_isometric_placeholder(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
     int x_, y_
     int w = self.cell_w / 2
     int h = self.cell_h / 2
@@ -439,14 +439,14 @@ def land_isometric_init():
 
     land_alloc(land_grid_vtable_isometric)
     land_grid_vtable_isometric->draw = land_grid_draw_isometric
-    land_grid_vtable_isometric->draw_cell = placeholder
+    land_grid_vtable_isometric->draw_cell = land_grid_isometric_placeholder
     land_grid_vtable_isometric->get_cell_at = land_grid_pixel_to_cell_isometric
     land_grid_vtable_isometric->get_cell_position =\
         land_grid_cell_to_pixel_isometric
 
     land_alloc(land_grid_vtable_isometric_wrap)
     land_grid_vtable_isometric_wrap->draw = land_grid_draw_isometric_wrap
-    land_grid_vtable_isometric_wrap->draw_cell = placeholder
+    land_grid_vtable_isometric_wrap->draw_cell = land_grid_isometric_placeholder
     land_grid_vtable_isometric_wrap->get_cell_at =\
         land_grid_pixel_to_cell_isometric_wrap
     land_grid_vtable_isometric_wrap->get_cell_position =\

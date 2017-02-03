@@ -11,6 +11,7 @@ class LandWidgetButton:
     unsigned int yalign # 0 = top, 1 = bottom, 2 = center
     int xshift
     int yshift
+    float scale_x, scale_y
     # 0 = single line
     # 1 = multi line
     # 2 = multi line with word wrapping
@@ -57,7 +58,11 @@ def land_widget_button_draw(LandWidget *base):
 
         x += self.xshift
         y += self.yshift
-        land_image_draw(self.image, x + self->image->x, y + self->image->y)
+        if self.scale_x > 0 and self.scale_y > 0:
+            land_image_draw_scaled(self.image, x + self->image->x,
+                y + self->image->y, self.scale_x, self.scale_y)
+        else:
+            land_image_draw(self.image, x + self->image->x, y + self->image->y)
 
     if self.animation:
         float fps = self.animation->fps
@@ -193,6 +198,11 @@ def land_widget_button_new_with_image(LandWidget *parent,
         parent, text, image, clicked, x, y, w, h)
 
     return self
+
+def land_widget_button_image_scale(LandWidget *base, float xs, ys):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    button.scale_x = xs
+    button.scale_y = ys
 
 def land_widget_button_new_with_animation(LandWidget *parent,
     char const *text, LandAnimation *animation,

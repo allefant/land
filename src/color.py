@@ -128,9 +128,6 @@ def land_color_distance_cie94_lab(double l1, a1, b1, l2, a2, b2) -> double:
     dh /= 1 + 0.015 * c1
     return sqrt(dl * dl + dc * dc + dh * dh)
 
-static def sindeg(double x) -> double: return sin(x * LAND_PI / 180)
-static def cosdeg(double x) -> double: return cos(x * LAND_PI / 180)
-
 def land_color_distance_ciede2000(LandColor color, other) -> double:
     double l1, a1, b1
     double l2, a2, b2
@@ -142,6 +139,7 @@ def land_color_distance_ciede2000_lab(double l1, a1, b1, l2, a2, b2) -> double:
     """
     http://www.ece.rochester.edu/~gsharma/ciede2000/ciede2000noteCRNA.pdf
     """
+    double pi = LAND_PI
     double dl = l1 - l2
     double ml = (l1 + l2) / 2
     double c1 = sqrt(a1 * a1 + b1 * b1)
@@ -156,27 +154,26 @@ def land_color_distance_ciede2000_lab(double l1, a1, b1, l2, a2, b2) -> double:
     double dc = c2 - c1
     mc = (c1 + c2) / 2
     fac = sqrt(pow(mc, 7) / (pow(mc, 7) + tf7))
-    double h1 = fmod(360.0 + atan2(b1, a1) * 180 / LAND_PI, 360)
-    double h2 = fmod(360.0 + atan2(b2, a2) * 180 / LAND_PI, 360)
+    double h1 = fmod(2 * pi + atan2(b1, a1), 2 * pi)
+    double h2 = fmod(2 * pi + atan2(b2, a2), 2 * pi)
     double dh = 0
     double mh = h1 + h2
     if c1 * c2 != 0:
         dh = h2 - h1
-        if dh > 180: dh -= 360
-        if dh < -180: dh += 360
-        if fabs(h1 - h2) <= 180: mh = (h1 + h2) / 2
-        elif h1 + h2 < 360: mh = (h1 + h2 + 360) / 2
-        else: mh = (h1 + h2 - 360) / 2
-    dh = 2 * sqrt(c1 * c2) * sindeg(dh / 2)
-    double t = 1 - 0.17 * cosdeg(mh - 30) + 0.24 * cosdeg(2 * mh) +\
-            0.32 * cosdeg(3 * mh + 6) - 0.2 * cosdeg(4 * mh - 63)
+        if dh > pi: dh -= 2 * pi
+        if dh < -pi: dh += 2 * pi
+        if fabs(h1 - h2) <= pi: mh = (h1 + h2) / 2
+        elif h1 + h2 < 2 * pi: mh = (h1 + h2 + 2 * pi) / 2
+        else: mh = (h1 + h2 - 2 * pi) / 2
+    dh = 2 * sqrt(c1 * c2) * sin(dh / 2)
+
+    double t = 1 - 0.17 * cos(mh - pi / 6) + 0.24 * cos(2 * mh) +\
+            0.32 * cos(3 * mh + pi / 30) - 0.2 * cos(4 * mh - pi * 7 / 20)
     double mls = pow(ml - 0.5, 2)
     double sl = 1 + 1.5 * mls / sqrt(0.002 + mls)
     double sc = 1 + 4.5 * mc
     double sh = 1 + 1.5 * mc * t
-    double rt = -2 * fac * sindeg(60 * exp(-pow((mh - 275) / 25, 2)))
-    #printf("a1=%.4f a2=%.4f c1=%.4f c2=%.4f dh=%.4f mh=%.4f t=%.4f rt=%.4f\n",
-    #    a1, a2, c1, c2, dh, mh, t, rt)
+    double rt = -2 * fac * sin(pi / 3 * exp(-pow(mh / pi * 36 / 5 - 11, 2)))
     return sqrt(pow(dl / sl, 2) + pow(dc / sc, 2) + pow(dh / sh, 2) +
             rt * dc / sc * dh / sh)
 
