@@ -51,6 +51,9 @@ def land_yaml_get_scalar_nth_double(LandArray *s, int i) -> double:
 def land_yaml_get_entry(LandYAMLEntry *self, char const *name) -> LandYAMLEntry *:
     return land_hash_get(self.mapping, name)
 
+def land_yaml_get_entry_scalar(LandYAMLEntry *self, char const *name) -> char const *:
+    return land_yaml_get_scalar(land_yaml_get_entry(self, name))
+
 def land_yaml_get_entry_int(LandYAMLEntry *self,
         char const *name) -> int:
     return land_yaml_get_scalar_int(land_yaml_get_entry(self, name))
