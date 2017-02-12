@@ -204,3 +204,12 @@ def land_random(LandRandom *r, int rmin, int rmax) -> int:
     d++
     d -= rmin
     return rmin + genrand_int32(r) % d
+
+def land_shuffle(int *a, int n):
+    for int i in range(n):
+        a[i] = i
+    for int i in range(n - 1):
+        int j = land_rand(i, n - 1)
+        int t = a[i]
+        a[i] = a[j]
+        a[j] = t
