@@ -227,9 +227,9 @@ def test_ciede2000:
         double d = e * 100 - data.e
         bool ok = d * d < 0.0001 * 0.0001
         printf("%s%d: %.4f == %.4f (%.4f)%s\n",
-            color_bash(ok ? "green" : "red"),
+            land_color_bash(ok ? "green" : "red"),
             1 + i, e * 100, data.e, e94 * 100,
-            color_bash("end"))
+            land_color_bash("end"))
 
 def land_color_premul(float r, g, b, a) -> LandColor:
     LandColor c = {r * a, g * a, b * a, a}
@@ -258,7 +258,7 @@ def land_color_lerp(LandColor a, b, float t) -> LandColor:
         a.b + t * (b.b - a.b),
         a.a + t * (b.a - a.a))
 
-def color_bash(char const *x) -> char const *:
+def land_color_bash(char const *x) -> char const *:
     """
     bash("bright red")
     bash("back white")
