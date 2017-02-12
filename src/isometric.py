@@ -106,8 +106,11 @@ def land_grid_pixel_to_cell_isometric(LandGrid *self, LandView *view,
     """
     LandGridIsometric *iso = (void *)self
 
-    float x = view->scroll_x + mx - view->x
-    float y = view->scroll_y + my - view->y
+    float x = mx
+    float y = my
+    if view:
+        x += view->scroll_x - view->x
+        y += view->scroll_y - view->y
 
     float a = iso->cell_w1 * iso->cell_h2 + iso->cell_w2 * iso->cell_h1
 
