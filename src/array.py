@@ -9,54 +9,6 @@ class LandArrayIterator:
 
 static import mem
 
-*** "ifdef" LAND_MEMLOG
-
-*** "undef" land_array_new
-*** "undef" land_array_destroy
-*** "undef" land_array_add
-*** "undef" land_array_clear
-*** "undef" land_array_merge
-*** "undef" land_array_concat
-*** "undef" land_array_copy
-
-def land_array_new_memlog(char const *f, int l) -> LandArray *:
-    LandArray *array = land_array_new()
-    land_memory_add(array, "array", 1, f, l)
-    return array
-
-def land_array_destroy_memlog(LandArray *self, char const *f, int l):
-    land_memory_remove(self, "array", 1, f, l)
-    land_array_destroy(self)
-
-def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
-    land_array_add(self, data)
-    land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self.size, f, l)
-
-def land_array_copy_memlog(LandArray const *self, char const *f, int l) -> LandArray *:
-    LandArray *copy = land_array_copy(self)
-    land_memory_add(copy, "array", copy->size, f, l)
-    return copy
-
-def land_array_concat_memlog(LandArray *self, LandArray const *other,
-        char const *f, int l):
-    land_array_concat(self, other)
-    land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self.size, f, l)
-
-def land_array_merge_memlog(LandArray *self, *other, char const *f, int l):
-    land_array_merge(self, other)
-    land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self.size, f, l)
-    land_memory_remove(other, "array", 1, f, l)
-
-def land_array_clear_memlog(LandArray *self, char const *f, int l):
-    land_array_clear(self)
-    land_memory_remove(self, "array", 1, f, l)
-    land_memory_add(self, "array", self.size, f, l)
-
-*** "endif"
-
 def LandArrayIterator_first(LandArray *a) -> LandArrayIterator:
     LandArrayIterator i = {0}
     return i
@@ -198,6 +150,9 @@ static def cb_free(void *data, void *_) -> int:
     return 0
 
 def land_array_destroy_with_strings(LandArray *self):
+    land_array_destroy_with_free(self)
+
+def land_array_destroy_with_free(LandArray *self):
     """
     Like [land_array_destroy] but also calls land_free on every
     element.
@@ -310,6 +265,54 @@ def land_array_reverse(LandArray *self):
 
     for int i in range(self.count / 2):
         land_array_swap(self, i, self.count - 1 - i)
+
+*** "ifdef" LAND_MEMLOG
+
+*** "undef" land_array_new
+*** "undef" land_array_destroy
+*** "undef" land_array_add
+*** "undef" land_array_clear
+*** "undef" land_array_merge
+*** "undef" land_array_concat
+*** "undef" land_array_copy
+
+def land_array_new_memlog(char const *f, int l) -> LandArray *:
+    LandArray *array = land_array_new()
+    land_memory_add(array, "array", 1, f, l)
+    return array
+
+def land_array_destroy_memlog(LandArray *self, char const *f, int l):
+    land_memory_remove(self, "array", 1, f, l)
+    land_array_destroy(self)
+
+def land_array_add_memlog(LandArray *self, void *data, char const *f, int l):
+    land_array_add(self, data)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self.size, f, l)
+
+def land_array_copy_memlog(LandArray const *self, char const *f, int l) -> LandArray *:
+    LandArray *copy = land_array_copy(self)
+    land_memory_add(copy, "array", copy->size, f, l)
+    return copy
+
+def land_array_concat_memlog(LandArray *self, LandArray const *other,
+        char const *f, int l):
+    land_array_concat(self, other)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self.size, f, l)
+
+def land_array_merge_memlog(LandArray *self, *other, char const *f, int l):
+    land_array_merge(self, other)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self.size, f, l)
+    land_memory_remove(other, "array", 1, f, l)
+
+def land_array_clear_memlog(LandArray *self, char const *f, int l):
+    land_array_clear(self)
+    land_memory_remove(self, "array", 1, f, l)
+    land_memory_add(self, "array", self.size, f, l)
+
+*** "endif"
 
 global *** "ifdef" LAND_MEMLOG
 
