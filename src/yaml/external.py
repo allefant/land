@@ -1,3 +1,4 @@
+global *** "ifdef" LAND_USE_EXTERNAL_YAML
 *** "ifdef" LAND_USE_EXTERNAL_YAML
 import land.yaml
 static import global yaml
@@ -131,3 +132,4 @@ def land_yaml_save(LandYaml *yaml):
     if f: fclose(f)
 
 *** "endif"
+global *** "endif"

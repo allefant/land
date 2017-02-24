@@ -1,10 +1,11 @@
+global *** "ifndef" LAND_USE_EXTERNAL_YAML
 *** "ifndef" LAND_USE_EXTERNAL_YAML
 import land.land
 import land.yaml
-static import global yaml
 
 class YamlParser:
     LandFile *file
+    int line_length
 
 def land_yaml_load(char const *filename) -> LandYaml *:
     LandFile *f = land_file_new(filename, "rb")
@@ -35,29 +36,38 @@ def land_yaml_load(char const *filename) -> LandYaml *:
     land_buffer_destroy(value)
     return yaml
 
+static def _write(YamlParser *p, char const *s):
+    int n = strlen(s)
+    if p.line_length + n > 80:
+        land_file_write(p.file, "\n", 1)
+        p.line_length = 0
+    land_file_write(p.file, s, n)
+    p.line_length += n
+
 static def _save_mapping(LandYamlEntry *e, YamlParser *p) -> bool:
-    land_file_printnn(p.file, "{")
+    _write(p, "{")
     bool prev = False
     for char const *key in LandArray *e.sequence:
-        if prev: land_file_printnn(p.file, ",")
-        land_file_printnn(p.file, "%s:", key)
+        if prev: _write(p, ",")
+        _write(p, key)
+        _write(p, ":")
         _save_entry(land_hash_get(e.mapping, key), p)
         prev = True
-    land_file_printnn(p.file, "}")
+    _write(p, "}")
     return true
 
 static def _save_sequence(LandYamlEntry *e, YamlParser *p) -> bool:
-    land_file_printnn(p.file, "[")
+    _write(p, "[")
     bool prev = False
     for LandYamlEntry *e2 in LandArray *e.sequence:
-        if prev: land_file_printnn(p.file, ",")
+        if prev: _write(p, ",")
         _save_entry(e2, p)
         prev = True
-    land_file_printnn(p.file, "]")
+    _write(p, "]")
     return true
 
 static def _save_scalar(LandYamlEntry *e, YamlParser *p) -> bool:
-    land_file_printnn(p.file, e.scalar)
+    _write(p, e.scalar)
     return True
 
 static def _save_entry(LandYamlEntry *e, YamlParser *p) -> bool:
@@ -84,3 +94,4 @@ def land_yaml_save(LandYaml *yaml):
     if f: land_file_destroy(f)
 
 *** "endif"
+global *** "endif"
