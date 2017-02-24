@@ -75,15 +75,22 @@ def platform_font_print(LandFontState *lfs,
     
     ALLEGRO_COLOR c = al_map_rgba_f(d->color_r, d->color_g, d->color_b, d->color_a)
 
-    int a = ALLEGRO_ALIGN_INTEGER 
+    int a = ALLEGRO_ALIGN_INTEGER
 
-    if alignment == LandAlignAdjust:
+    if alignment & LandAlignMiddle:
+        y -= lfs->h / 2 / yscaling
+        lfs->y -= lfs->h / 2 / yscaling
+    elif alignment & LandAlignBottom:
+        y -= lfs->h
+        lfs->y -= lfs->h
+
+    if alignment & LandAlignAdjust:
         al_draw_justified_text(self.a5, c, x, x + lfs->adjust_width, y,
             lfs->adjust_width * 0.5,
             a | ALLEGRO_ALIGN_CENTRE, str)
-    elif alignment == LandAlignCenter:
+    elif alignment & LandAlignCenter:
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_CENTRE, str)
-    elif alignment == LandAlignRight:
+    elif alignment & LandAlignRight:
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_RIGHT, str)
         lfs->x -= lfs->w
     else:

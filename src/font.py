@@ -15,10 +15,11 @@ class LandFontState:
     float wordwrap_width, wordwrap_height
 
 enum:
-    LandAlignLeft
-    LandAlignRight
-    LandAlignCenter
-    LandAlignAdjust
+    LandAlignRight = 1
+    LandAlignCenter = 2
+    LandAlignAdjust = 4
+    LandAlignMiddle = 8
+    LandAlignBottom = 16
 
 static import global stdio
 static import font, exception, main
@@ -176,11 +177,16 @@ def land_print(char const *text, ...):
 
 def land_print_right(char const *text, ...):
     VPRINT
-    land_print_string(s, 1, 1)
+    land_print_string(s, 1, LandAlignRight)
 
 def land_print_center(char const *text, ...):
     VPRINT
-    land_print_string(s, 1, 2)
+    land_print_string(s, 1, LandAlignCenter)
+
+def land_print_middle(char const *text, ...):
+    VPRINT
+    land_print_string(s, 1, LandAlignCenter | LandAlignMiddle)
+
 
 def land_write(char const *text, ...):
     VPRINT
@@ -188,11 +194,15 @@ def land_write(char const *text, ...):
 
 def land_write_right(char const *text, ...):
     VPRINT
-    land_print_string(s, 0, 1)
+    land_print_string(s, 0, LandAlignRight)
 
 def land_write_center(char const *text, ...):
     VPRINT
-    land_print_string(s, 0, 2)
+    land_print_string(s, 0, LandAlignCenter)
+
+def land_write_middle(char const *text, ...):
+    VPRINT
+    land_print_string(s, 0, LandAlignCenter | LandAlignMiddle)
 
 def land_printv(char const *text, va_list args):
     va_list args2
