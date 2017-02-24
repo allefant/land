@@ -41,7 +41,7 @@ def draw(LandRunner *self):
     land_buffer_shorten(text, 1)
     land_text_pos(0, 0)
     land_color(0, 0, 0, 1)
-    land_print_lines(lines, LandAlignLeft)
+    land_print_lines(lines, 0)
     land_text_destroy_lines(lines)
 
 def done(LandRunner *self):

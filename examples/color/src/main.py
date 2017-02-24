@@ -141,21 +141,25 @@ def arrange_prepare:
     if colors:
         land_array_destroy(colors)
     colors = land_array_new()
-    color_addf(0, 0, 0)
-    color_addf(1, 0, 0)
-    color_addf(0, 1, 0)
-    color_addf(0, 0, 1)
-    color_addf(0, 1, 1)
-    color_addf(1, 0, 1)
-    color_addf(1, 1, 0)
-    color_addf(1, 1, 1)
+    #color_addf(0, 0, 0)
+    #color_addf(1, 0, 0)
+    #color_addf(0, 1, 0)
+    #color_addf(0, 0, 1)
+    #color_addf(0, 1, 1)
+    #color_addf(1, 0, 1)
+    #color_addf(1, 1, 0)
+    #color_addf(1, 1, 1)
 
 def arrange_cube:
     arrange_prepare()
     for int x in range(5):
         for int y in range(5):
             for int z in range(5):
-                color_add(x / 4.0, y / 4.0, z / 4.0)
+                Color * c = color_add(x / 4.0, y / 4.0, z / 4.0)
+                if x == 0 or x == 4:
+                    if y == 0 or y == 4:
+                        if z == 0 or z == 4:
+                            c.fixed = True
 
 def arrange_center
     arrange_prepare()
