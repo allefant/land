@@ -163,10 +163,7 @@ def csg_cone(int slices, void *shared) -> LandCSG *:
 
     return land_csg_new_from_polygons(polygons)
 
-def csg_prism(int slices, void *shared) -> LandCSG *:
-    return None
-
-static def add_quad(LandArray *polygons, LandVector a, b, c, d, void *shared):
+static def quad_vertices(LandVector a, b, c, d) -> LandArray*:
     LandArray *vertices = land_array_new()
     LandVector ab = land_vector_sub(b, a)
     LandVector bc = land_vector_sub(c, b)
@@ -175,9 +172,13 @@ static def add_quad(LandArray *polygons, LandVector a, b, c, d, void *shared):
     land_array_add(vertices, land_csg_vertex_new(b, normal))
     land_array_add(vertices, land_csg_vertex_new(c, normal))
     land_array_add(vertices, land_csg_vertex_new(d, normal))
+    return vertices
+
+static def add_quad(LandArray *polygons, LandVector a, b, c, d, void *shared):
+    LandArray *vertices = quad_vertices(a, b, c, d)
     land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
-static def add_tri(LandArray *polygons, LandVector a, b, c, void *shared):
+static def triangle_vertices(LandVector a, b, c) -> LandArray*:
     LandArray *vertices = land_array_new()
     LandVector ab = land_vector_sub(b, a)
     LandVector bc = land_vector_sub(c, b)
@@ -185,7 +186,23 @@ static def add_tri(LandArray *polygons, LandVector a, b, c, void *shared):
     land_array_add(vertices, land_csg_vertex_new(a, normal))
     land_array_add(vertices, land_csg_vertex_new(b, normal))
     land_array_add(vertices, land_csg_vertex_new(c, normal))
+    return vertices
+
+static def add_tri(LandArray *polygons, LandVector a, b, c, void *shared):
+    LandArray *vertices = triangle_vertices(a, b, c)
     land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+
+static def add_tri_flip(LandArray *polygons, LandVector a, b, c,
+        void *shared, bool flip):
+    add_tri(polygons, a, b, c, shared)
+    if flip:
+        land_csg_polygon_flip(land_array_get_last(polygons))
+
+static def add_quad_flip(LandArray *polygons, LandVector a, b, c, d,
+        void *shared, bool flip):
+    add_quad(polygons, a, b, c, d, shared)
+    if flip:
+        land_csg_polygon_flip(land_array_get_last(polygons))
 
 def csg_pyramid(void *shared) -> LandCSG *:
     """
@@ -277,6 +294,50 @@ def csg_block(int x, y, z, bool outside, void *shared) -> LandCSG *:
                     add_quad(polygons, f, e, a, b, shared) # back
                 if all or i == 0;
                     add_quad(polygons, e, h, d, a, shared) # left
+    return land_csg_new_from_polygons(polygons)
+
+def csg_prism(int n, void *shared) -> LandCSG *:
+    """
+    n is the shape - 3 for triangle, 4 for square, 5 for pentagon...
+    """
+    LandArray *polygons = land_array_new()
+    LandVector a = land_vector(0, 1, 1) # top front
+    LandVector b = land_vector(0, 1, -1) # top back
+    LandVector a0 = a
+    LandVector b0 = b
+    for int i in range(1, n + 1):
+        LandFloat angle = i * 2 * pi / n
+        LandVector c = land_vector(sin(angle), cos(angle), +1)
+        LandVector d = land_vector(sin(angle), cos(angle), -1)
+        add_quad(polygons, a, c, d, b, shared)
+        if i >= 2 and i < n:
+            add_tri(polygons, a0, c, a, shared)
+            add_tri(polygons, b0, b, d, shared)
+        a = c
+        b = d
+    return land_csg_new_from_polygons(polygons)
+
+def csg_extrude_triangle(LandVector a, b, LandFloat d, void *shared) -> LandCSG*:
+    LandArray *polygons = land_array_new()
+    LandVector z = land_vector(0, 0, 0)
+    LandVector n = land_vector_cross(a, b)
+    n = land_vector_normalize(n)
+    LandVector z_ = land_vector_add(z, land_vector_mul(n, d))
+    LandVector a_ = land_vector_add(a, land_vector_mul(n, d))
+    LandVector b_ = land_vector_add(b, land_vector_mul(n, d))
+    add_tri_flip(polygons, z, a, b, shared, d > 0)
+    add_tri_flip(polygons, z_, b_, a_, shared, d > 0)
+    add_quad_flip(polygons, a, z, z_, a_, shared, d > 0)
+    add_quad_flip(polygons, z, b, b_, z_, shared, d > 0)
+    add_quad_flip(polygons, b, a, a_, b_, shared, d > 0)
+    return land_csg_new_from_polygons(polygons)
+
+def csg_irregular_tetrahedron(LandVector a, b, c, d, void *shared) -> LandCSG*:
+    LandArray *polygons = land_array_new()
+    add_tri(polygons, a, b, c, shared)
+    add_tri(polygons, a, d, b, shared)
+    add_tri(polygons, b, d, c, shared)
+    add_tri(polygons, c, d, a, shared)
     return land_csg_new_from_polygons(polygons)
 
 static def torus_point(LandArray *vertices, LandFloat i, j, r):

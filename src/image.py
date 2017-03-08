@@ -106,6 +106,9 @@ static def _load2(LandImage *self):
 def land_image_load(char const *filename) -> LandImage *:
     return _load(filename, False)
 
+def land_image_was_loaded(LandImage *self) -> bool:
+    return (self.flags & LAND_LOADED) != 0
+
 def land_image_load_memory(char const *filename) -> LandImage *:
     return _load(filename, True)
 

@@ -136,6 +136,9 @@ def land_array_replace_nth(LandArray *array, int i, void *data) -> void *:
     array->data[i] = data
     return old
 
+def land_array_get_last(LandArray *array) -> void*:
+    return land_array_get_nth(array, array.count - 1)
+
 def land_array_destroy(LandArray *self):
     """
     Destroys an array. This does not destroy any of the data put into it - loop

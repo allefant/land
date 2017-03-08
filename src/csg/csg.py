@@ -267,7 +267,7 @@ def land_csg_polygon_clone(LandCSG *csg,
         clone_vertices(csg, self.vertices), self.shared)
     return clone
 
-static def csg_polygon_flip(LandCSGPolygon *self):
+def land_csg_polygon_flip(LandCSGPolygon *self):
     land_array_reverse(self.vertices)
     for LandCSGVertex *v in LandArray *self.vertices:
         csg_vertex_flip(v)
@@ -300,7 +300,7 @@ static def csg_node_destroy(LandCSGNode *self):
 
 static def csg_node_invert(LandCSGNode *self):
     for LandCSGPolygon *p in LandArray *self.polygons:
-        csg_polygon_flip(p)
+        land_csg_polygon_flip(p)
     csg_plane_flip(&self.plane)
 
     if self.front:
@@ -629,5 +629,5 @@ def land_csg_intersect(LandCSG *self, *csg) -> LandCSG *:
 def land_csg_inverse(LandCSG *self) -> LandCSG *:
     LandCSG *csg = land_csg_clone(self)
     for LandCSGPolygon *p in LandArray *csg.polygons:
-        csg_polygon_flip(p)
+        land_csg_polygon_flip(p)
     return csg
