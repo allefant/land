@@ -36,7 +36,7 @@ def land_yaml_load(char const *filename) -> LandYaml *:
     land_buffer_destroy(value)
     return yaml
 
-static def _write(YamlParser *p, char const *s):
+static def yaml_write(YamlParser *p, char const *s):
     int n = strlen(s)
     if p.line_length + n > 80:
         land_file_write(p.file, "\n", 1)
@@ -45,29 +45,29 @@ static def _write(YamlParser *p, char const *s):
     p.line_length += n
 
 static def _save_mapping(LandYamlEntry *e, YamlParser *p) -> bool:
-    _write(p, "{")
+    yaml_write(p, "{")
     bool prev = False
     for char const *key in LandArray *e.sequence:
-        if prev: _write(p, ",")
-        _write(p, key)
-        _write(p, ":")
+        if prev: yaml_write(p, ",")
+        yaml_write(p, key)
+        yaml_write(p, ":")
         _save_entry(land_hash_get(e.mapping, key), p)
         prev = True
-    _write(p, "}")
+    yaml_write(p, "}")
     return true
 
 static def _save_sequence(LandYamlEntry *e, YamlParser *p) -> bool:
-    _write(p, "[")
+    yaml_write(p, "[")
     bool prev = False
     for LandYamlEntry *e2 in LandArray *e.sequence:
-        if prev: _write(p, ",")
+        if prev: yaml_write(p, ",")
         _save_entry(e2, p)
         prev = True
-    _write(p, "]")
+    yaml_write(p, "]")
     return true
 
 static def _save_scalar(LandYamlEntry *e, YamlParser *p) -> bool:
-    _write(p, e.scalar)
+    yaml_write(p, e.scalar)
     return True
 
 static def _save_entry(LandYamlEntry *e, YamlParser *p) -> bool:

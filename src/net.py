@@ -1,15 +1,14 @@
 *** "ifndef" LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
-*** "ifdef" WINDOWS
-*** "include" <winsock2.h>
-*** "include" <ws2tcpip>
-static macro SHUT_RDWR SD_BOTH
-*** "else"
-static import global stdlib, string, signal
-static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet
-static import global netdb
-*** "endif"
+
+#*** "include" <winsock2.h>
+static import global ws2tcpip if defined WINDOWS
+#static macro SHUT_RDWR SD_BOTH
+static import global stdlib, string, signal if !defined(WINDOWS)
+static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet if !defined(WINDOWS)
+static import global netdb if !defined(WINDOWS)
+
 
 import global unistd, stdbool
 static import global stdlib, stdio

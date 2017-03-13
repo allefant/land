@@ -5,6 +5,8 @@ static import global allegro5.allegro_primitives
 static import land.land
 static import land.allegro5.a5_display
 static import land.allegro5.a5_sound
+static import land.allegro5.a5_joystick
+static import land.joystick
 
 *** "ifdef" ANDROID
 *** "include" "allegro5/allegro_android.h"
@@ -236,6 +238,10 @@ def platform_mainloop(LandParameters *parameters):
     if al_install_touch_input():
         al_register_event_source(queue, al_get_touch_input_event_source())
 
+    if al_install_joystick():
+        al_register_event_source(queue, al_get_joystick_event_source())
+    a5_joystick_create_mapping()
+
     al_register_event_source(queue, al_get_display_event_source(d->a5))
 
     al_register_event_source(queue, al_get_timer_event_source(timer))
@@ -344,6 +350,27 @@ def platform_frame:
                     al_acknowledge_drawing_resume(d->a5)
                     al_start_timer(timer)
                     break
+                case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
+                    al_reconfigure_joysticks()
+                    a5_joystick_create_mapping()
+                    break
+                case ALLEGRO_EVENT_JOYSTICK_AXIS:
+                    int a = a5_joystick_axis_to_land(event.joystick.id,
+                        event.joystick.stick, event.joystick.axis)
+                    land_joystick_axis_event(a, event.joystick.pos)
+                    break
+                case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
+                    int b = a5_joystick_button_to_land(event.joystick.id,
+                        event.joystick.button)
+                    land_joystick_button_down_event(b)
+                    break
+                case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
+                    int b = a5_joystick_button_to_land(event.joystick.id,
+                        event.joystick.button)
+                    land_joystick_button_up_event(b)
+                    break
+                    
+                
             *** "ifdef" __EMSCRIPTEN__
             continue
             *** "endif"

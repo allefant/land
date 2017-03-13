@@ -381,6 +381,11 @@ def land_premul(float r, g, b, a):
 def land_color_set(LandColor c):
     land_color(c.r, c.g, c.b, c.a)
 
+def land_color_get -> LandColor:
+    LandColor c
+    land_get_color(&c.r, &c.g, &c.b, &c.a)
+    return c
+
 def land_thickness(float t):
     LandDisplay *d = _land_active_display
     d->thickness = t

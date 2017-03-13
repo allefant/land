@@ -155,7 +155,8 @@ if (SHARED)
                 allegro_ttf-debug
                 allegro_image-debug
                 wsock32
-                z
+                zlib
+                opengl32
                 )
         else (WINDOWS)
             target_link_libraries(${libname}-debug
@@ -181,7 +182,8 @@ if (SHARED)
                 allegro_ttf
                 allegro_image
                 wsock32
-                z
+                zlib
+                opengl32
                 )
         else (WINDOWS)
             target_link_libraries(${libname}

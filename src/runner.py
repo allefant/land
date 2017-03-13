@@ -11,7 +11,8 @@ class LandRunner:
     void (*leave)(LandRunner *self)
     void (*destroy)(LandRunner *self)
 
-static import log, mem, global stdlib, string
+static import log, mem
+static import global stdlib, string
 
 static LandList *runners
 

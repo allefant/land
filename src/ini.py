@@ -106,10 +106,10 @@ static def is_whitespace(char c) -> bool:
     if c == ' ' or c == '\t' or c == '\n': return true
     return false
 
-static macro addc(var, len):
-    var[len] = c;
-    if len < (int)sizeof(var) - 1: len++
-    var[len] = '\0'
+static macro addc(var, l):
+    var[l] = c;
+    if l < (int)sizeof(var) - 1: l++
+    var[l] = '\0'
 
 static enum State:
     OUTSIDE

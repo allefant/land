@@ -463,7 +463,7 @@ def land_widget_create_interface(LandWidget *widget, char const *name):
 
 def land_widget_base_destroy(LandWidget *self):
     land_widget_remove_all_properties(self)
-    _land_gul_box_deinitialize(&self.box)
+    land_internal_land_gul_box_deinitialize(&self.box)
     land_free(self)
 
 static def land_widget_really_destroy(LandWidget *self):

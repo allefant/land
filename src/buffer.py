@@ -202,20 +202,27 @@ def land_buffer_finish(LandBuffer *self) -> char *:
 def land_buffer_println(LandBuffer *self):
     printf("%.*s\n", self.n, self.buffer)
 
-def land_buffer_split(LandBuffer const *self, char delim) -> LandArray *:
+def land_buffer_split(LandBuffer const *self, str delim) -> LandArray *:
     """
-    Creates an array of buffers. If there are n occurences of character delim
+    Creates an array of buffers. If there are n occurences of string delim
     in the buffer, the array contains n + 1 entries. No buffer in the array
-    contains the delim character.
+    contains the delim string.
     """
     LandArray *a = land_array_new()
     int start = 0
-    for int i = 0 while i < self.n with i++:
-        if self.buffer[i] == delim:
+    for int i in range(self.n):
+        bool matches = True
+        int j = 0
+        while delim[j]:
+            if self.buffer[i + j] != delim[j]:
+                matches = False
+                break
+            j++
+        if matches:
             LandBuffer *l = land_buffer_new()
             land_buffer_add(l, self.buffer + start, i - start)
             land_array_add(a, l)
-            start = i + 1
+            start = i + j
     LandBuffer *l = land_buffer_new()
     land_buffer_add(l, self.buffer + start, self->n - start)
     land_array_add(a, l)

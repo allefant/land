@@ -7,7 +7,8 @@ class LandPixelMask:
     bool flipped
     SinglePixelMask *rotation[0]
 
-static import font, global math
+static import font
+static import global math
 
 #*** "define" DEBUG_MASK
 

@@ -8,10 +8,8 @@ static import global stdio
 
 static import log
 
-*** "ifdef" LAND_HAVE_EXECINFO_h
-static import execinfo
-static import land.thread
-*** "endif"
+static import execinfo if defined LAND_HAVE_EXECINFO_H
+static import land.thread if defined LAND_HAVE_EXECINFO_H
 
 *** "ifdef" LAND_MEMLOG
 

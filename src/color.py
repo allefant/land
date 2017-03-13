@@ -298,7 +298,7 @@ static def bash_mode(char const *x, char const *mode) -> char const *:
         return r
 
     char *m = land_strdup("")
-    LandArray *a = land_split(x, ' ')
+    LandArray *a = land_split(x, " ")
     for char *c in LandArray *a:
         if land_equals(c, "bright"):
             if land_equals(mode, "3"):

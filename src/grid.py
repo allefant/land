@@ -96,7 +96,8 @@ class LandGrid:
     float scale_x, scale_y
     bool wrap
 
-static import grid, log, tilegrid, isometric, sprite, global math
+static import grid, log, tilegrid, isometric, sprite
+static import global math
 
 def land_grid_draw(LandGrid *self, LandView *view):
     self.vt->draw(self, view)

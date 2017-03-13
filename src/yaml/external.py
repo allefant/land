@@ -1,7 +1,7 @@
 global *** "ifdef" LAND_USE_EXTERNAL_YAML
 *** "ifdef" LAND_USE_EXTERNAL_YAML
 import land.yaml
-static import global yaml
+static import global yaml if defined LAND_USE_EXTERNAL_YAML
 
 def land_yaml_load(char const *filename) -> LandYaml *:
     yaml_parser_t parser

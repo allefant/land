@@ -20,6 +20,9 @@ def LandArrayIterator_next(LandArray *a, LandArrayIterator *i) -> bool:
     i->i++
     return i->i <= a->count
 
+def LandArray__len__(LandArray *a) -> int:
+    return a.count
+
 def land_array_new() -> LandArray *:
     """
     Create a new empty array.

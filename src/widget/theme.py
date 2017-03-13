@@ -270,7 +270,7 @@ def land_widget_theme_element_new(
     LandBuffer *argbuf = land_buffer_new()
     land_buffer_cat(argbuf, argline)
     land_buffer_strip(argbuf, " ")
-    LandArray *argv = land_buffer_split(argbuf, ' ')
+    LandArray *argv = land_buffer_split(argbuf, " ")
     land_buffer_del(argbuf)
     int argc = land_array_count(argv)
     
