@@ -465,7 +465,7 @@ static def gul_box_fit_children(LandWidget *self):
 
 # TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.
-def land_internal_land_gul_layout_updated(LandWidget *self):
+def land_internal_gul_layout_updated(LandWidget *self):
     """
     This is used if the size of a widget may have changed and therefore its own
     as well as its parent's layout needs updating.
@@ -484,12 +484,12 @@ def land_internal_land_gul_layout_updated(LandWidget *self):
     if self.parent and not (self->parent->box.flags & GUL_NO_LAYOUT):
         if self.no_layout_notify == 0:
             self.no_layout_notify = 1
-            land_internal_land_gul_layout_updated(self.parent)
+            land_internal_gul_layout_updated(self.parent)
             self.no_layout_notify = 0
     else:
         gul_box_fit_children(self)
 
-def land_internal_land_gul_layout_updated_during_layout(LandWidget *self):
+def land_internal_gul_layout_updated_during_layout(LandWidget *self):
     """
     FIXME: What the hell is this? Can't we do it the proper way?
     If widgets are added or removed in the middle of a layout algorithm run,

@@ -243,7 +243,10 @@ def land_replace(char **s, int off, char const *wat, *wit) -> int:
     re[n - 1] = 0
     land_free(*s)
     *s = re
-    return pn + strlen(wit) 
+    return pn + strlen(wit)
+
+def land_contains(str hay, needle) -> bool:
+    return strstr(hay, needle) != None
 
 def land_replace_all(char **s, char const *wat, char const *wit) -> int:
     int off = 0

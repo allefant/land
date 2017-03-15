@@ -72,6 +72,7 @@ def land_tick():
     land_runner_tick_active()
     land_mouse_tick()
     land_keyboard_tick()
+    land_joystick_tick()
     x_clicked = False
     _land_was_halted = _land_halted
 

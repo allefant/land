@@ -571,6 +571,9 @@ def land_display_desktop_size(int *w, *h):
 def land_display_title(char const *title):
     platform_display_title(title)
 
+def land_display_icon(LandImage *icon):
+    platform_display_icon(icon)
+
 def land_display_flags() -> int:
     LandDisplay *self = _land_active_display
     return self.flags

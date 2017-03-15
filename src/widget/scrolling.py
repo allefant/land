@@ -463,7 +463,7 @@ def land_widget_scrolling_layout_changed(LandWidget *widget):
     if widget->box.w != widget->box.ow or widget->box.h != widget->box.oh:
         int r = scrolling_update_layout(widget)
         if r:
-            land_internal_land_gul_layout_updated_during_layout(widget)
+            land_internal_gul_layout_updated_during_layout(widget)
             widget->layout_hack = 1
 
 def land_widget_scrolling_layout_changing(LandWidget *widget):

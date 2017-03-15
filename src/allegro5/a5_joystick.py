@@ -31,11 +31,13 @@ def a5_joystick_create_mapping:
         land_array_destroy_with_free(axis_names)
     joys = land_array_new()
     button_names = land_array_new()
+    land_array_add(button_names, land_strdup("none"))
     axis_names = land_array_new()
+    land_array_add(axis_names, land_strdup("none"))
 
     int jn = al_get_num_joysticks()
-    int axes = 0
-    int buttons = 0
+    int axes = 1
+    int buttons = 1
     for int j in range(jn):
         ALLEGRO_JOYSTICK *allegro = al_get_joystick(j)
         Joy *joy = land_calloc(sizeof *joy)
@@ -52,17 +54,19 @@ def a5_joystick_create_mapping:
             stick.first_axis = axes
             stick.axes = al_get_joystick_num_axes(allegro, s)
             land_array_add(joy.sticks, stick)
-            for int a in range(axes):
+            for int a in range(stick.axes):
                 char *name = land_strdup(al_get_joystick_stick_name(allegro, s))
-                land_concatenate(&name, al_get_joystick_axis_name(allegro, s, a))
+                land_concatenate_with_separator(&name, al_get_joystick_axis_name(allegro, s, a), " ")
+                land_log_message("joystick axis %d: %s\n", axes + a, name)
                 land_array_add(axis_names, name)
             joy.axes += stick.axes
             axes += stick.axes
             if axes > LandJoystickAxesCount - 1:
                 axes = LandJoystickAxesCount - 1
-                land_log_message("Error: too many joystick axes!")
-        for int b in range(buttons):
+                land_log_message("Error: too many joystick axes!\n")
+        for int b in range(joy.buttons):
             char *name = land_strdup(al_get_joystick_button_name(allegro, b))
+            land_log_message("joystick button %d: %s\n", buttons + b, name)
             land_array_add(button_names, name)
         buttons += joy.buttons
         if buttons > LandJoystickButtonsCount - 1:
@@ -82,8 +86,16 @@ def a5_joystick_button_to_land(ALLEGRO_JOYSTICK *allegro, int b) -> int:
             return joy.first_button + b
     return 0
 
+def platform_joystick_axis_count -> int:
+    return len(axis_names)
+
+def platform_joystick_button_count -> int:
+    return len(button_names)
+    
 def platform_joystick_button_name(int b) -> str:
+    if b >= len(button_names): return "none"
     return land_array_get_nth(button_names, b)
 
 def platform_joystick_axis_name(int a) -> str:
+    if a >= len(axis_names): return "none"
     return land_array_get_nth(axis_names, a)

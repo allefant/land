@@ -48,6 +48,10 @@ def platform_display_title(char const *title):
     SELF
     al_set_window_title(self->a5, title)
 
+def platform_display_icon(LandImage *icon):
+    SELF
+    al_set_display_icon(self->a5, ((LandImagePlatform *)icon)->a5)
+
 def platform_display_move(int x, y):
     SELF
     al_set_window_position(self->a5, x, y)

@@ -56,10 +56,16 @@ def platform_init():
     #al_android_set_apk_fs_interface()
     *** "endif"
 
+    queue = al_create_event_queue()
+
     al_init_image_addon()
     al_install_keyboard()
     al_install_mouse()
     al_init_primitives_addon()
+
+    if al_install_joystick():
+        al_register_event_source(queue, al_get_joystick_event_source())
+    a5_joystick_create_mapping()
 
 static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 0, \
@@ -230,17 +236,12 @@ def platform_unpause:
 
 def platform_mainloop(LandParameters *parameters):
     d = (void *)_land_active_display
-    queue = al_create_event_queue()
     timer = al_create_timer(1.0 / parameters->fps)
     al_register_event_source(queue, al_get_keyboard_event_source())
     al_register_event_source(queue, al_get_mouse_event_source())
 
     if al_install_touch_input():
         al_register_event_source(queue, al_get_touch_input_event_source())
-
-    if al_install_joystick():
-        al_register_event_source(queue, al_get_joystick_event_source())
-    a5_joystick_create_mapping()
 
     al_register_event_source(queue, al_get_display_event_source(d->a5))
 

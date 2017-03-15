@@ -4,7 +4,9 @@
 
 #*** "include" <winsock2.h>
 static import global ws2tcpip if defined WINDOWS
-#static macro SHUT_RDWR SD_BOTH
+static *** "ifdef" WINDOWS
+static macro SHUT_RDWR SD_BOTH
+static *** "endif"
 static import global stdlib, string, signal if !defined(WINDOWS)
 static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet if !defined(WINDOWS)
 static import global netdb if !defined(WINDOWS)
