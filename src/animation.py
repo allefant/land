@@ -67,3 +67,19 @@ def land_animation_draw_frame_scaled_rotated(LandAnimation *self, int i,
     float x, y, xs, ys, angle):
     LandImage *frame = land_animation_get_frame(self, i)
     land_image_draw_scaled_rotated(frame, x, y, xs, ys, angle)
+
+def land_animation_mirror(LandAnimation *self):
+    """
+    Assuming the animation is like this make it -> like this:
+    1 -> 1
+    1 2 -> 1 2
+    1 2 3 -> 1 2 3 2
+    1 2 3 4 -> 1 2 3 4 3 2
+    1 2 3 4 5 -> 1 2 3 4 5 4 3 2
+    ...
+    """
+    if not self.frames: return
+    int n = land_array_count(self.frames)
+    for int i in range(n - 2):
+        land_animation_add_frame(self, land_array_get_nth(self.frames,
+            n - 2 - i))

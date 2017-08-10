@@ -2,6 +2,7 @@ import land.array, land.hash, land.mem
 static import land.config
 import yaml.external
 import yaml.internal
+import yaml.xml
 
 enum LandYamlEntryType:
     YamlScalar
@@ -28,6 +29,10 @@ def land_yaml_get_mapping(LandYamlEntry *self) -> LandHash *:
     assert(self.type == YamlMapping)
     return self.mapping
 
+def land_yaml_get_if_mapping(LandYamlEntry *self) -> LandHash *:
+    if not self or self.type != YamlMapping: return None
+    return self.mapping
+
 def land_yaml_get_sequence(LandYamlEntry *self) -> LandArray *:
     assert(self.type == YamlSequence)
     return self.sequence
@@ -36,7 +41,12 @@ def land_yaml_get_scalar(LandYamlEntry *self) -> char const *:
     assert(self.type == YamlScalar)
     return self.scalar
 
+def land_yaml_get_if_scalar(LandYamlEntry *self) -> char const *:
+    if not self or self.type != YamlScalar: return None
+    return self.scalar
+
 def land_yaml_get_scalar_int(LandYamlEntry *self) -> int:
+    if not self: return 0
     return strtol(self.scalar, None, 0)
 
 def land_yaml_get_scalar_double(LandYamlEntry *self) -> double:
@@ -52,11 +62,15 @@ def land_yaml_get_entry(LandYamlEntry *self, char const *name) -> LandYamlEntry 
     return land_hash_get(self.mapping, name)
 
 def land_yaml_get_entry_scalar(LandYamlEntry *self, char const *name) -> char const *:
-    return land_yaml_get_scalar(land_yaml_get_entry(self, name))
+    return land_yaml_get_if_scalar(land_yaml_get_entry(self, name))
 
 def land_yaml_get_entry_int(LandYamlEntry *self,
         char const *name) -> int:
     return land_yaml_get_scalar_int(land_yaml_get_entry(self, name))
+
+def land_yaml_get_entry_double(LandYamlEntry *self,
+        char const *name) -> double:
+    return land_yaml_get_scalar_double(land_yaml_get_entry(self, name))
 
 def land_yaml_get_nth(LandYamlEntry *self, int i) -> LandYamlEntry *:
     return land_array_get_nth(land_yaml_get_sequence(self), i)
@@ -68,6 +82,9 @@ def land_yaml_get_nth_int(LandYamlEntry *self, int i) -> int:
 def land_yaml_get_nth_double(LandYamlEntry *self, int i) -> double:
     return land_yaml_get_scalar_double(
         land_array_get_nth(land_yaml_get_sequence(self), i))
+
+def land_yaml_get_entry_sequence(LandYamlEntry *self, char const *name) -> LandArray*:
+    return land_yaml_get_sequence(land_yaml_get_entry(self, name))
 
 def land_yaml_new(char const *filename) -> LandYaml *:
     LandYaml *yaml

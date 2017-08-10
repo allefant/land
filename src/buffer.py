@@ -202,6 +202,9 @@ def land_buffer_finish(LandBuffer *self) -> char *:
 def land_buffer_println(LandBuffer *self):
     printf("%.*s\n", self.n, self.buffer)
 
+def land_buffer_empty(LandBuffer *self) -> bool:
+    return self.n == 0
+
 def land_buffer_split(LandBuffer const *self, str delim) -> LandArray *:
     """
     Creates an array of buffers. If there are n occurences of string delim

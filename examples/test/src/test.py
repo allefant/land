@@ -60,13 +60,18 @@ def test_yaml4:
     LandYaml *y2 = land_yaml_load("test4.yaml")
     land_yaml_dump(y2)
 
+def test_xml:
+    LandYaml *y = land_yaml_load_xml("../../data/test.xml")
+    land_yaml_dump(y)
+
 def main() -> int:
     land_init()
-
+    
     #test_shuffle()
     test_yaml1()
     test_yaml2()
     test_yaml3()
     test_yaml4()
+    test_xml()
 
     return 0

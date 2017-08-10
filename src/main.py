@@ -8,6 +8,7 @@ class LandParameters:
     int w, h
     int fps
     int flags
+    int skip # how many render frames to skip (saves battery)
     LandRunner *start
 
 static import allegro5/a5_main
@@ -22,6 +23,7 @@ static bool x_clicked
 global int _land_frames
 global bool _land_synchronized
 static bool _maximize_fps
+static int skip_counter
 
 static def land_exit():
     if not land_active: return
@@ -77,6 +79,11 @@ def land_tick():
     _land_was_halted = _land_halted
 
 def land_draw():
+    if parameters.skip:
+        skip_counter++
+        if skip_counter <= parameters.skip:
+            return
+        skip_counter = 0
     land_runner_draw_active()
     land_flip()
 
@@ -101,6 +108,9 @@ def land_set_fps(int f):
 
     land_log_message("land_set_frequency %d\n", f)
     parameters->fps = f
+
+def land_skip_render(int skip):
+    parameters.skip = skip
 
 def land_set_display_parameters(int w, int h, int flags):
     """Set the display parameters to use initially.

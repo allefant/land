@@ -1,4 +1,6 @@
 static import global setjmp, stdio, stdarg, stdlib
+import land.common
+import land.allegro5.a5_misc
 
 static jmp_buf exception
 static char exception_string[1024]
@@ -36,3 +38,6 @@ def land_exception(char const *format, ...):
     int r = land_exception_handler(exception_string)
     if r: abort()
     #longjmp(exception, 1)
+
+def land_popup(str title, str message):
+    platform_popup(title, message)

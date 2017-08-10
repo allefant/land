@@ -243,22 +243,7 @@ def csg_cube(void *shared) -> LandCSG *:
     """
     Make a cube from -1/-1/-1 to 1/1/1.
     """
-    LandArray *polygons = land_array_new()
-    LandVector a = land_vector(-1, -1, -1)
-    LandVector b = land_vector( 1, -1, -1)
-    LandVector c = land_vector( 1,  1, -1)
-    LandVector d = land_vector(-1,  1, -1)
-    LandVector e = land_vector(-1, -1,  1)
-    LandVector f = land_vector( 1, -1,  1)
-    LandVector g = land_vector( 1,  1,  1)
-    LandVector h = land_vector(-1,  1,  1)
-    add_quad(polygons, a, d, c, b, shared) # bottom
-    add_quad(polygons, e, f, g, h, shared) # top
-    add_quad(polygons, h, g, c, d, shared) # front
-    add_quad(polygons, g, f, b, c, shared) # right
-    add_quad(polygons, f, e, a, b, shared) # back
-    add_quad(polygons, e, h, d, a, shared) # left
-    return land_csg_new_from_polygons(polygons)
+    return csg_trapezoid(-1, 1, shared);
 
 def csg_block(int x, y, z, bool outside, void *shared) -> LandCSG *:
     bool all = not outside
@@ -315,6 +300,38 @@ def csg_prism(int n, void *shared) -> LandCSG *:
             add_tri(polygons, b0, b, d, shared)
         a = c
         b = d
+    return land_csg_new_from_polygons(polygons)
+
+def csg_trapezoid(LandFloat x1, x2, void *shared) -> LandCSG*:
+    """
+    This is a prism, from one shape at z=-1 to another at z=1. The shape
+    is assymetrical, at y=-1 the length is 2, from x=-1 to x=1. At y=1
+    it goes from x1 to x2.
+    If x1=-1 and x2=1 this is identical to csg_cube.
+    y
+    1
+     x1__.__x2
+      |     \
+    0 |      \
+     |        \
+     |____.____\
+    -1    0    1 x
+    """
+    LandArray *polygons = land_array_new()
+    LandVector a = land_vector(-1, -1, -1)
+    LandVector b = land_vector( 1, -1, -1)
+    LandVector c = land_vector(x2,  1, -1)
+    LandVector d = land_vector(x1,  1, -1)
+    LandVector e = land_vector(-1, -1,  1)
+    LandVector f = land_vector( 1, -1,  1)
+    LandVector g = land_vector(x2,  1,  1)
+    LandVector h = land_vector(x1,  1,  1)
+    add_quad(polygons, a, d, c, b, shared) # bottom
+    add_quad(polygons, e, f, g, h, shared) # top
+    add_quad(polygons, h, g, c, d, shared) # front
+    add_quad(polygons, g, f, b, c, shared) # right
+    add_quad(polygons, f, e, a, b, shared) # back
+    add_quad(polygons, e, h, d, a, shared) # left
     return land_csg_new_from_polygons(polygons)
 
 def csg_extrude_triangle(LandVector a, b, LandFloat d, void *shared) -> LandCSG*:

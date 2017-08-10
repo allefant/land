@@ -92,6 +92,18 @@ def land_array_pop(LandArray *self) -> void *:
     # 0     0 (0 is special cased and we completely free)
     return self.data[i]
 
+def land_array_remove(LandArray *self, int i) -> void*:
+    """
+    Return item at position i and replace it with the last item,
+    shortening the array by one.
+
+    If i is the last item this is identical to land_array_pop.
+    """
+    void* last = land_array_pop(self)
+    # we removed the very last item
+    if i == land_array_count(self): return last
+    return land_array_replace_nth(self, i, last)
+
 def land_array_add_data(LandArray **array, void *data):
     """
     *deprecated*

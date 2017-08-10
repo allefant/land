@@ -493,7 +493,7 @@ def platform_triangles_draw(LandTriangles *t):
     LandTrianglesPlatform *tp = (void *)t
     LandImagePlatform *pim = (void *)t.image;
     check_blending_and_transform()
-    al_draw_prim(tp.v, None, pim.a5, 0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
+    al_draw_prim(tp.v, None, pim ? pim.a5 : None, 0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     uncheck_blending()
 
 def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):

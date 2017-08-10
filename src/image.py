@@ -127,6 +127,9 @@ def land_image_load_on_demand(LandImage *self) -> bool:
     _load2(self)
     return True
 
+def land_image_exists(LandImage *self) -> bool:
+    return platform_image_exists(self)
+
 def land_image_memory_new(int w, int h) -> LandImage *:
     """
     Creates a new image. If w or h are 0, the image will have no contents at
@@ -569,7 +572,7 @@ def land_image_memory_draw(LandImage *self, float x, float y):
 def land_image_center(LandImage *self):
     self.x = 0.5 * self->width
     self.y = 0.5 * self->height
-    self.flags |= LAND_IMAGE_WAS_CENTERED
+    self.flags |= LAND_IMAGE_WAS_CENTERED | LAND_IMAGE_CENTER
 
 def land_image_init():
     pass

@@ -248,6 +248,11 @@ def land_replace(char **s, int off, char const *wat, *wit) -> int:
 def land_contains(str hay, needle) -> bool:
     return strstr(hay, needle) != None
 
+def land_find(str hay, needle) -> int:
+    str x = strstr(hay, needle)
+    if not x: return -1
+    return x - hay
+
 def land_replace_all(char **s, char const *wat, char const *wit) -> int:
     int off = 0
     int c = 0
@@ -353,6 +358,13 @@ def land_split(char const *text, str c) -> LandArray *:
     land_array_destroy(lines)
     land_buffer_destroy(buf)
     return split
+
+def land_split_two(str text, str sep, char **a, **b) -> bool:
+    int x = land_find(text, sep)
+    if x < 0: return False
+    *a = land_substring(text, 0, x)
+    *b = land_substring(text, x + strlen(sep), strlen(text))
+    return True
 
 def land_split_lines(char const *text) -> LandArray *:
     return land_split(text, "\n")

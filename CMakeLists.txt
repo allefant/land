@@ -44,6 +44,7 @@ foreach(py ${pyfiles})
             -c "c/${out}.c"
             -h "c/${out}.h"
             -d "d/${out}.md"
+            -e "c/${out}.e"
             -n "${out}"
             -p _LAND
         DEPENDS src/${py})

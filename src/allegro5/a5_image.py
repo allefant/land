@@ -72,6 +72,9 @@ static def _platform_load(LandImage *super):
         al_restore_state(&state)
         super->flags |= LAND_FAILED
 
+def platform_image_exists(LandImage *super) -> bool:
+    return al_filename_exists(super.filename)
+
 def platform_image_load_on_demand(LandImage *super):
     LandImagePlatform *self = (void *)super
     if self.a5:
@@ -144,7 +147,8 @@ def platform_set_image_display(LandImage *super):
     LandDisplay *d = (void *)&global_image_display
     _land_active_display = d
 
-    global_image_display.a5 = prev->a5
+    if prev:
+        global_image_display.a5 = prev->a5
     global_image_display.c = al_map_rgb_f(1, 1, 1)
     d->w = super->width
     d->h = super->height

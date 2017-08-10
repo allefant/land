@@ -5,6 +5,7 @@ class LandFont:
     int size
     double xscaling
     double yscaling
+    int flags
 
 class LandFontState:
     float x_pos, y_pos
@@ -27,7 +28,142 @@ static import font, exception, main
 static import allegro5/a5_font
 
 static LandFontState *land_font_state
+static LandFont *initial
 static int active
+
+static def line(int x1, y1, x2, y2):
+    float px = x1
+    float py = y1
+    int dx = x2 - x1
+    int dy = y2 - y1
+    int d = abs(dx) > abs(dy) ? abs(dx) : abs(dy)
+
+    if x1 == x2 and y1 == y2:
+         land_filled_rectangle(x1, y1, x1 + 1, y1 + 1)
+         return
+
+    for int i in range(d + 1):
+        float fx = px + i * dx / (float)d
+        float fy = py + i * dy / (float)d
+        int x = fx
+        int y = fy
+        land_filled_rectangle(x, y, x + 1, y + 1)
+
+static def letter(char glyph, str code):
+    #            _______
+    # |         |        
+    # |         |
+    # |         |
+    # |_______  |
+    # |         |        
+    # |         |        
+    # |         |         
+    # |         |_______
+    #
+    int x = glyph * 16
+    int y = 0
+    int n = strlen(code)
+    int v[2] = {0, 0}
+    int vi = 0
+    int vc = 0
+    int vs = 0
+    int vn = 0
+    land_color(0, 0, 0, 0)
+    land_filled_rectangle(x + 1, y + 1, x + 11, y + 10)
+    land_color(1, 1, 1, 1)
+    for int i in range(n):
+        char c = code[i]
+        if c >= '0' and c <= '9':
+            vc = vc * 10
+            vc += c - '0'
+            vn++
+        elif c == '-':
+            vs = -1
+        else:
+            if vn:
+                if vs: vc = -vc
+                v[vi] = vc
+                vi++
+            vc = vs = vn = 0
+
+        if c == 'm':
+            x += v[0]
+            y += v[1]
+            vi = 0
+        elif c == 'l':
+            line(1 + x, 1 + y, 1 + x + v[0], 1 + y + v[1])
+            x += v[0]
+            y += v[1]
+            vi = 0
+
+static def initial_font:
+    LandImage *i = land_image_new(128 * 16, 16)
+    land_set_image_display(i)
+    land_blend(LAND_BLEND_SOLID) # applies only to the current image
+    land_clear(1, 1, 0, 1)
+    for int i in range(128): letter(i, "")
+    letter('A', "0 8 m 0 -8 l 8 0 l 0 8 l 0 -3 m -8 0 l")
+    letter('B', "0 8 l 6 0 l 2 -2 l -2 -2 l 2 -2 l -2 -2 l -6 0 l 0 4 m 6 0 l")
+    letter('C', "8 0 m -8 0 l 0 8 l 8 0 l")
+    letter('D', "0 8 l 4 0 l 4 -4 l -4 -4 l -4 0 l")
+    letter('E', "0 8 l 8 0 l -8 -4 m 8 0 l -8 -4 m 8 0 l")
+    letter('F', "0 8 l 0 -4 m 8 0 l -8 -4 m 8 0 l")
+    letter('G', "8 0 m -8 0 l 0 8 l 8 0 l 0 -4 l -4 0 l")
+    letter('H', "0 8 l 8 0 m 0 -8 l -8 4 m 8 0 l")
+    letter('I', "8 0 l -4 0 m 0 8 l -4 0 m 8 0 l")
+    letter('J', "0 8 m 8 0 l 0 -8 l")
+    letter('K', "0 8 l 0 -4 m 4 0 l 4 -4 l -4 4 m 4 4 l")
+    letter('L', "0 8 l 8 0 l")
+    letter('M', "0 8 m 0 -8 l 8 0 l 0 8 l -4 0 m 0 -8 l")
+    letter('N', "0 8 m 0 -8 l 8 0 l 0 8 l")
+    letter('O', "8 0 l 0 8 l -8 0 l 0 -8 l")
+    letter('P', "0 8 l 0 -8 m 6 0 l 2 2 l -2 2 l -6 0 l")
+    letter('Q', "8 0 l 0 8 l -8 0 l 0 -8 l 4 4 m 4 4 l")
+    letter('R', "0 8 l 0 -8 m 6 0 l 2 2 l -2 2 l -6 0 l 4 0 m 4 4 l")
+    letter('S', "8 0 m -8 0 l 0 4 l 8 0 l 0 4 l -8 0 l")
+    letter('T', "8 0 l -4 0 m 0 8 l")
+    letter('U', "0 8 l 8 0 l 0 -8 l")
+    letter('V', "0 4 l 4 4 l 4 -4 l 0 -4 l")
+    letter('W', "0 8 l 8 0 l 0 -8 l -4 0 m 0 8 l")
+    letter('X', "8 8 l -8 0 m 8 -8 l")
+    letter('Y', "4 4 l 0 4 l 0 -4 m 4 -4 l")
+    letter('Z', "8 0 l -8 8 l 8 0 l")
+    letter('a', "1 2 m 6 0 l 0 6 l -6 0 l 0 -3 l 6 0 l")
+    letter('b', "1 0 m 0 8 l 3 0 l 3 -3 l -3 -3 l -3 0 l")
+    letter('c', "7 8 m -6 -3 l 6 -3 l")
+    letter('d', "7 0 m 0 8 l -3 0 l -3 -3 l 3 -3 l 3 0 l")
+    letter('e', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 3 l -6 0 l")
+    letter('f', "3 0 m 0 8 l -2 -4 m 4 0 l -2 -4 m 4 0 l 0 4 l")
+    letter('g', "1 2 m 6 0 l 0 6 l -6 0 l 0 -2 m 6 0 l -6 0 m 0 -4 l")
+    letter('h', "1 0 m 0 8 l 0 -6 m 6 0 l 0 6 l")
+    letter('i', "1 4 m 3 0 l 0 4 l 3 0 l -3 -6 m 0 0 l")
+    letter('j', "5 4 m 0 4 l -4 0 l 4 -6 m 0 0 l")
+    letter('k', "1 0 m 0 8 l 0 -3 m 3 0 l 3 3 l -3 -3 m 3 -3 l")
+    letter('l', "1 0 m 3 0 l 0 8 l 3 0 l")
+    letter('m', "1 8 m 0 -6 l 6 0 l 0 6 l -3 0 m 0 -6 l")
+    letter('n', "1 8 m 0 -6 l 6 0 l 0 6 l")
+    letter('o', "1 2 m 6 0 l 0 6 l -6 0 l 0 -6 l")
+    letter('p', "1 2 m 6 0 l 0 4 l -6 0 l 0 2 m 0 -6 l")
+    letter('q', "1 2 m 6 0 l 0 6 l 0 -2 m -6 0 l 0 -4 l")
+    letter('r', "1 2 m 0 6 l 0 -3 m 3 -3 l 3 0 l")
+    letter('s', "7 2 m -3 0 l -3 3 l 6 0 l -3 3 l -3 0 l")
+    letter('t', "4 0 m 0 8 l -3 -6 m 6 0 l")
+    letter('u', "1 2 m 0 6 l 6 0 l 0 -6 l")
+    letter('v', "1 2 m 0 3 l 3 3 l 3 -3 l 0 -3 l")
+    letter('w', "1 2 m 0 6 l 6 0 l 0 -6 l -3 0 m 0 6 l")
+    letter('x', "1 2 m 6 6 l -6 0 m 6 -6 l")
+    letter('y', "1 2 m 3 3 l 3 -3 m -6 6 l")
+    letter('z', "1 2 m 6 0 l -6 6 l 6 0 l")
+    letter('.', "4 8 m 0 0 l")
+    letter('/', "0 8 m 8 -8 l")
+    letter('\\', "8 8 l")
+    letter('-', "1 4 m 6 0 l")
+    letter('+', "1 4 m 6 0 l -3 -3 m 0 6 l")
+    land_unset_image_display()
+    int r[] = {0, 127}
+    LandFont *f = land_font_from_image(i, 1, r)
+    land_font_state.font = initial = f
+    land_image_destroy(i)
 
 def land_font_init():
     if active: return
@@ -35,6 +171,7 @@ def land_font_init():
     land_alloc(land_font_state)
     platform_font_init()
     active = 1
+    initial_font()
 
 def land_font_exit():
     if not active: return
@@ -54,7 +191,8 @@ def land_font_load(char const *filename, float size) -> LandFont *:
     char *path = land_path_with_prefix(filename)
     LandFont *self = platform_font_load(path, size)
     land_free(path)
-    land_font_state.font = self
+    if self.flags & LAND_LOADED:
+        land_font_state.font = self
     return self
 
 def land_font_destroy(LandFont *self):
@@ -108,7 +246,7 @@ def land_text_state() -> int:
     return land_font_state.off
 
 def land_font_height(LandFont *self) -> float:
-    return self.size * land_font_current()->yscaling
+    return self.size * self.yscaling
 
 def land_font_current() -> LandFont *:
     return land_font_state.font

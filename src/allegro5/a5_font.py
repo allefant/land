@@ -25,6 +25,7 @@ def platform_font_load(char const *filename, float size) -> LandFont *:
     LandFont *super = (void *)self
     if self.a5:
         super->size = al_get_font_line_height(self.a5)
+        super.flags |= LAND_LOADED
     super.xscaling = 1.0
     super.yscaling = 1.0
     return super

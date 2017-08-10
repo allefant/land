@@ -192,6 +192,8 @@ import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
 import file, thread, protobuf
 import joystick
+import atlas
+import yaml
 
 import land/allegro5/a5_opengl
 
