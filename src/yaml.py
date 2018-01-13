@@ -224,3 +224,7 @@ def land_yaml_destroy(LandYaml *self):
 
 def land_yaml_dump(LandYaml *self):
     land_yaml_dump_entry(self.root, 0)
+
+def land_yaml_rename(LandYaml *self, str filename):
+    land_free(self.filename)
+    self.filename = land_strdup(filename)

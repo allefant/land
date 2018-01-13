@@ -2,7 +2,7 @@ import land.land
 import land.yaml
 import global ctype
 
-static enum State:
+static enum XmlState:
     Outside
     ElementName
     Attributes
@@ -11,7 +11,7 @@ static enum State:
     AttributeValue
 
 static class XmlParser:
-    State state
+    XmlState state
     bool closing
     LandBuffer *value
     LandYaml *yaml
@@ -129,3 +129,109 @@ static def close_tag(XmlParser *x):
     land_yaml_done(x.yaml) # tag mapping
     x.state = Outside
     x.closing = False
+
+# saving XML
+
+static def xml_write(YamlParser *p, char const *s, bool can_break_before):
+    int n = strlen(s)
+    if can_break_before and p.line_length + n > 80:
+        land_file_write(p.file, "\n", 1)
+        p.line_length = 0
+    land_file_write(p.file, s, n)
+    int i = land_find(s, "\n")
+    if i >= 0:
+        p.line_length = n - 1 - i
+    else:
+        p.line_length += n
+
+static def xml_save_mapping(LandYamlEntry *e, YamlParser *p) -> bool:
+    str name = land_yaml_get_entry_scalar(e, "<")
+    if not name: return False
+
+    xml_write(p, "<", False)
+    xml_write(p, name, False)
+
+    for char const *key in LandArray *e.sequence:
+        if land_equals(key, "<") or land_equals(key, ">"): continue
+        xml_write(p, " ", False)
+        xml_write(p, key, True)
+        xml_write(p, "=\"", False)
+        str value = land_yaml_get_entry_scalar(e, key)
+        xml_write(p, value, False)
+        xml_write(p, "\"", False)
+
+    LandYamlEntry *contents = land_yaml_get_entry(e, ">")
+    if contents:
+        xml_write(p, ">", True)
+        xml_save_sequence(contents, p)
+        
+        xml_write(p, "</", False)
+        xml_write(p, name, False)
+        xml_write(p, ">", True)
+    else:
+        xml_write(p, " />", True)
+
+    return True
+
+static def xml_save_sequence(LandYamlEntry *e, YamlParser *p) -> bool:
+    for LandYamlEntry *e2 in LandArray *e.sequence:
+        xml_save_entry(e2, p)
+    return True
+
+static def xml_save_scalar(LandYamlEntry *e, YamlParser *p) -> bool:
+    xml_write(p, e.scalar, False)
+    return True
+
+static def xml_save_entry(LandYamlEntry *e, YamlParser *p) -> bool:
+    if e.type == YamlMapping:
+        return xml_save_mapping(e, p)
+    elif e.type == YamlSequence:
+        return xml_save_sequence(e, p)
+    elif e.type == YamlScalar:
+        return xml_save_scalar(e, p)
+    return false
+
+def land_yaml_save_xml(LandYaml *yaml):
+    LandFile *f = land_file_new(yaml.filename, "wb")
+    if not f:
+        goto error
+
+    YamlParser p
+    memset(&p, 0, sizeof p)
+    p.file = f
+    
+    if not xml_save_entry(yaml.root, &p): goto error
+
+    label error
+
+    if f: land_file_destroy(f)
+
+def _xml(LandYaml *yaml):
+    if not yaml.root or not yaml.parent:
+        land_yaml_add_sequence(yaml)
+    elif yaml.parent->type == YamlMapping:
+        land_yaml_add_scalar(yaml, ">")
+        land_yaml_add_sequence(yaml)
+
+def land_yaml_xml_tag(LandYaml *yaml, str name):
+    _xml(yaml)
+    land_yaml_add_mapping(yaml)
+    land_yaml_add_scalar(yaml, "<")
+    land_yaml_add_scalar(yaml, name)
+
+def land_yaml_xml_content(LandYaml *yaml, str content):
+    _xml(yaml)
+    land_yaml_add_scalar(yaml, content)
+
+def land_yaml_xml_attribute(LandYaml *yaml, str key, value):
+    land_yaml_add_scalar(yaml, key)
+    land_yaml_add_scalar(yaml, value)
+
+def land_yaml_xml_end(LandYaml *yaml):
+    land_yaml_done(yaml)
+    # If we close a tag, we close the mapping, so additional children
+    # can be added. When we close the parent, we just closed the
+    # sequence, but we also need to close the mapping. Basically we
+    # always need to be in a sequence after this function returns.
+    if yaml.parent and yaml.parent->type == YamlMapping:
+        land_yaml_done(yaml)
