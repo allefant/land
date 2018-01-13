@@ -194,6 +194,7 @@ import file, thread, protobuf
 import joystick
 import atlas
 import yaml
+import noise
 
 import land/allegro5/a5_opengl
 
