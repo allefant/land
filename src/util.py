@@ -11,24 +11,8 @@ typedef char const *str
 macro LAND_PI 3.1415926535897931
 
 def land_read_text(char const *filename) -> char *:
-    FILE *pf = fopen(filename, "rb")
-    if not pf: return None
-    int s = 1
-    char *buf = land_malloc(s)
-    int n = 0
-    while 1:
-        int c = fgetc(pf)
-        if c <= 0: break
-        buf[n] = c
-        n++
-        if n >= s:
-            s *= 2
-            buf = land_realloc(buf, s)
-    fclose(pf)
-    buf[n] = 0
-    n++
-    buf = land_realloc(buf, n)
-    return buf
+    LandBuffer* bytebuffer = land_buffer_read_from_file(filename)
+    return land_buffer_finish(bytebuffer)
 
 def land_utf8_char(char **pos) -> int:
     """
@@ -191,6 +175,10 @@ def land_string_copy(char *target, char const *source, int size) -> char *:
     return target
 
 def land_equals(char const *s, *s2) -> bool:
+    if s == None:
+        return s2 == None
+    if s2 == None:
+        return False
     return strcmp(s, s2) == 0
 
 def land_ends_with(char const *s, *end) -> bool:
@@ -229,6 +217,12 @@ def land_prepend(char **s, char const *pre):
     *s = re
 
 def land_replace(char **s, int off, char const *wat, *wit) -> int:
+    """
+    Given a pointer to a string, replaces the string with a new string
+    which and deletes the original one. The new string will have the
+    first occurence of "wat" replaced with "wit", starting at byte
+    offset off.
+    """
     char *r = strstr(*s + off, wat)
     if not r:
         return strlen(*s)
@@ -254,6 +248,10 @@ def land_find(str hay, needle) -> int:
     return x - hay
 
 def land_replace_all(char **s, char const *wat, char const *wit) -> int:
+    """
+    Like land_replace but replaces all occurences. Returns the number
+    of replacements performed.
+    """
     int off = 0
     int c = 0
     while True:
