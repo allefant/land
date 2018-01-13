@@ -1,7 +1,7 @@
 import land.color
 import land.common
 static import global allegro5.allegro_color
-static import global allegro5.allegro_native_dialog
+static import global allegro5.allegro_native_dialog if !defined(ANDROID)
 
 def platform_color_hsv(float hue, sat, val) -> LandColor:
     LandColor c
@@ -16,6 +16,9 @@ def platform_color_name(char const *name) -> LandColor:
     return c
 
 def platform_popup(str title, str text):
+    *** "ifdef" ANDROID
+    *** "else"
     al_show_native_message_box(al_get_current_display(), title,
         title, text, None, ALLEGRO_MESSAGEBOX_ERROR)
+    *** "endif"
   

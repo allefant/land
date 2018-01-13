@@ -48,14 +48,6 @@ def platform_init():
         land_log_message("Allegro initialization failed.\n")
         land_exception("Error in allegro_init.")
 
-    *** "ifdef" ANDROID
-    al_android_set_apk_file_interface()
-    # FIXME: for loading data it can be useful to traverse the APK
-    # filesystem, but for everything else (like configuration or
-    # savegames) we need the normal filesystem.
-    #al_android_set_apk_fs_interface()
-    *** "endif"
-
     queue = al_create_event_queue()
 
     al_init_image_addon()
@@ -324,14 +316,19 @@ def platform_frame:
                 case ALLEGRO_EVENT_TOUCH_BEGIN:
                     land_touch_event(event.touch.x, event.touch.y,
                         event.touch.id, 1)
+                    land_mouse_move_event(event.touch.x, event.touch.y, 0)
+                    land_mouse_button_down_event(0)
                     break
                 case ALLEGRO_EVENT_TOUCH_END:
                     land_touch_event(event.touch.x, event.touch.y,
                         event.touch.id, -1)
+                    land_mouse_move_event(event.touch.x, event.touch.y, 0)
+                    land_mouse_button_up_event(0)
                     break
                 case ALLEGRO_EVENT_TOUCH_MOVE:
                     land_touch_event(event.touch.x, event.touch.y,
                         event.touch.id, 0)
+                    land_mouse_move_event(event.touch.x, event.touch.y, 0)
                     break
                 case ALLEGRO_EVENT_DISPLAY_RESIZE:
                     al_acknowledge_resize((ALLEGRO_DISPLAY *)event.any.source)

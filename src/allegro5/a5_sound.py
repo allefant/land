@@ -9,6 +9,7 @@ static class LandSoundPlatform:
     ALLEGRO_SAMPLE *a5
     ALLEGRO_SAMPLE_ID last_playing
     void *buffer
+    bool last_failed
 
 static class LandStreamPlatform:
     LandStream super
@@ -67,12 +68,16 @@ def platform_sound_seconds(LandSound *super) -> double:
 def platform_sound_play(LandSound *s, float volume, pan, frequency,
     bool loop):
     LandSoundPlatform *self = (void *)s
-    al_play_sample(self.a5, volume, pan, frequency,
-        loop ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE,
-        &self.last_playing)
+    self.last_failed = False
+    if not al_play_sample(self.a5, volume, pan, frequency,
+            loop ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE,
+            &self.last_playing):
+        self.last_failed = True
 
 def platform_sound_stop(LandSound *s):
     LandSoundPlatform *self = (void *)s
+    if self.last_failed:
+        return
     al_stop_sample(&self.last_playing)
 
 def platform_sound_destroy(LandSound *s):

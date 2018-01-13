@@ -15,7 +15,6 @@ class LandDisplayPlatform:
 static class LandTrianglesPlatform:
     LandTriangles super
     ALLEGRO_VERTEX *v
-    
 
 def platform_display_init():
     pass
@@ -457,7 +456,7 @@ def platform_textured_colored_polygon(LandImage *image, int n,
     al_draw_prim(v, None, pim ? pim->a5 : None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
     uncheck_blending()
 
-static def _add_vertex_data(LandTriangles *t, ALLEGRO_VERTEX *v):
+static def _add_vertex_data(LandTriangles *t, ALLEGRO_VERTEX v):
     LandTrianglesPlatform *tp = (void *)t
     int i = t.n
     t.n++
@@ -465,7 +464,7 @@ static def _add_vertex_data(LandTriangles *t, ALLEGRO_VERTEX *v):
         t.c++
         t.c *= 2
         tp.v = land_realloc(tp.v, t.c * sizeof *tp.v)
-    tp.v[i] = *v
+    tp.v[i] = v
 
 def platform_add_vertex(LandTriangles *t, float x, y, z, tu, tv, r, g, b, a):
     ALLEGRO_VERTEX v
@@ -478,16 +477,34 @@ def platform_add_vertex(LandTriangles *t, float x, y, z, tu, tv, r, g, b, a):
     v.color.g = g
     v.color.b = b
     v.color.a = a
-    _add_vertex_data(t, &v)
+    _add_vertex_data(t, v)
+
+def platform_update_vertex(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
+    LandTrianglesPlatform *tp = (void *)t
+    ALLEGRO_VERTEX *v = tp.v + i
+    v.x = x
+    v.y = y
+    v.z = z
+    v.u = tu
+    v.v = tv
+    v.color.r = r
+    v.color.g = g
+    v.color.b = b
+    v.color.a = a
 
 def platform_duplicate_vertex(LandTriangles *t, int i):
     LandTrianglesPlatform *tp = (void *)t
-    _add_vertex_data(t, &tp.v[t.n + i])
+    _add_vertex_data(t, tp.v[t.n + i])
 
 def platform_triangles_new -> LandTriangles *:
     LandTrianglesPlatform *self
     land_alloc(self)
     return &self.super
+
+def platform_triangles_destroy(LandTriangles *super):
+    LandTrianglesPlatform *self = (void*)super
+    land_free(self.v)
+    land_free(self)
 
 def platform_triangles_draw(LandTriangles *t):
     LandTrianglesPlatform *tp = (void *)t
@@ -591,3 +608,30 @@ def platform_set_default_shaders():
         al_build_shader(shader)
         self->default_shader = shader
     al_use_shader(self->default_shader)
+
+def platform_reset_projection:
+    ALLEGRO_TRANSFORM trans
+    al_identity_transform(&trans)
+    al_orthographic_transform(&trans, 0, 0, -1.0,
+        land_display_width(), land_display_height(), 1.0)
+    al_use_projection_transform(&trans)
+    
+def platform_projection(Land4x4Matrix m):
+    ALLEGRO_TRANSFORM t
+    t.m[0][0] = m.v[0]
+    t.m[1][0] = m.v[1]
+    t.m[2][0] = m.v[2]
+    t.m[3][0] = m.v[3]
+    t.m[0][1] = m.v[4]
+    t.m[1][1] = m.v[5]
+    t.m[2][1] = m.v[6]
+    t.m[3][1] = m.v[7]
+    t.m[0][2] = m.v[8]
+    t.m[1][2] = m.v[9]
+    t.m[2][2] = m.v[10]
+    t.m[3][2] = m.v[11]
+    t.m[0][3] = m.v[12]
+    t.m[1][3] = m.v[13]
+    t.m[2][3] = m.v[14]
+    t.m[3][3] = m.v[15]
+    al_use_projection_transform(&t)

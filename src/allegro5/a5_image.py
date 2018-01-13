@@ -27,7 +27,11 @@ def platform_del_image(LandImage *super):
 def platform_image_empty(LandImage *super):
     SELF
     if not self->a5:
+        if super.flags & LAND_IMAGE_DEPTH:
+            al_set_new_bitmap_depth(16)
         self->a5 = al_create_bitmap(super->width, super->height)
+        if super.flags & LAND_IMAGE_DEPTH:
+            al_set_new_bitmap_depth(0)
     int f = al_get_bitmap_format(self->a5)
     ALLEGRO_LOCKED_REGION *lock = al_lock_bitmap(self->a5, f, ALLEGRO_LOCK_WRITEONLY)
     int rowbytes = al_get_pixel_size(f) * super->width

@@ -1,4 +1,5 @@
 static import global allegro5/allegro5
+static import global allegro5/allegro_android if defined(ANDROID)
 import land/array, land/mem, land/log, land/file
 import global stdbool
 
@@ -66,7 +67,13 @@ static def add_files(char const *rel, LandArray **array, ALLEGRO_FS_ENTRY *entry
 
             char const *fpath
             if flags & LAND_FULL_PATH:
+                *** "ifdef" ANDROID
+                # TODO: with the standard file system we can actually do full paths,
+                # but with the APK filesystem we cannot...
+                fpath = rel2
+                *** "else"
                 fpath = al_path_cstr(path, '/')
+                *** "endif"
             elif flags & LAND_RELATIVE_PATH:
                 fpath = rel2
             else:
@@ -133,3 +140,16 @@ def platform_get_data_path -> char *:
 
 def platform_remove_file(char const *path) -> bool:
     return al_remove_filename(path)
+
+def land_android_apk_filesystem(bool onoff):
+    *** "ifdef" ANDROID
+    # for loading data it can be useful to traverse the APK
+    # filesystem, but for everything else (like configuration or
+    # savegames) we need the normal filesystem.
+    #al_android_set_apk_fs_interface()
+    if onoff:
+        al_android_set_apk_fs_interface()
+        al_change_directory("/")
+    else:
+        al_set_standard_fs_interface()
+    *** "endif"

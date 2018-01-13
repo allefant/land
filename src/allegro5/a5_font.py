@@ -79,11 +79,14 @@ def platform_font_print(LandFontState *lfs,
     int a = ALLEGRO_ALIGN_INTEGER
 
     if alignment & LandAlignMiddle:
-        y -= lfs->h / 2 / yscaling
-        lfs->y -= lfs->h / 2 / yscaling
+        # Note: y itself is affected by the transformation we set above.
+        # lfs.h already was multipled by yscaling. So we need to
+        # unmultiply or it would be applied twice.
+        y -= lfs.h / 2 / yscaling
+        lfs->y -= lfs.h / 2 / yscaling
     elif alignment & LandAlignBottom:
-        y -= lfs->h
-        lfs->y -= lfs->h
+        y -= lfs->h / yscaling
+        lfs->y -= lfs->h / yscaling
 
     if alignment & LandAlignAdjust:
         al_draw_justified_text(self.a5, c, x, x + lfs->adjust_width, y,
