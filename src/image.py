@@ -9,6 +9,7 @@ macro LAND_IMAGE_MEMORY 8
 macro LAND_AUTOCROP 16
 macro LAND_FAILED 32
 macro LAND_IMAGE_CENTER 64 # center on load
+macro LAND_IMAGE_DEPTH 128 # image has depth buffer
 
 static macro LOG_COLOR_STATS 0
 
@@ -140,12 +141,13 @@ def land_image_memory_new(int w, int h) -> LandImage *:
     assert(0)
     return None
 
-def land_image_new(int w, int h) -> LandImage *:
+def land_image_new_flags(int w, h, flags) -> LandImage *:
     """
     Creates a new image. If w and h are 0, the image will have no contents at
     all (this can be useful if the contents are to be added later).
     """
     LandImage *self = land_display_new_image()
+    self.flags = flags
     self.width = w
     self.height = h
     if w or h:
@@ -153,6 +155,9 @@ def land_image_new(int w, int h) -> LandImage *:
     bitmap_count++
     bitmap_memory += w * h * 4
     return self
+
+def land_image_new(int w, int h) -> LandImage *:
+    return land_image_new_flags(w, h, 0)
 
 def land_image_create(int w, int h) -> LandImage *:
     """
@@ -715,3 +720,66 @@ def land_image_from_xpm(char const **xpm) -> LandImage*:
     land_image_set_rgba_data(self, rgba)
     land_free(rgba)
     return self
+
+def land_image_write_callback(LandImage *self, void (*cb)(int x, int y,
+        unsigned char *rgba, void *user), void *user):
+    """
+    Run a callback for each pixel of a picture. The pointer passed to
+    the callback must be assigned 4 8-bit values in the range 0..255.
+    It must not be read from.
+    """
+    int w = self.width
+    int h = self.height
+    unsigned char *rgba = land_malloc(w * h * 4)
+    unsigned char *p = rgba
+    for int y in range(h):
+        for int x in range(w):
+            cb(x, y, p, user)
+            p += 4
+    land_image_set_rgba_data(self, rgba)
+    land_free(rgba)
+
+def land_image_read_write_callback(LandImage *self, void (*cb)(int x, int y,
+        unsigned char *rgba, void *user), void *user):
+    """
+    Run a callback for each pixel of a picture. The rgba pointer passed
+    to the callback will contain the current color as 4 consecutive
+    bytes and may be modified.
+    """
+    int w = self.width
+    int h = self.height
+    unsigned char *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba)
+    unsigned char *p = rgba
+    for int y in range(h):
+        for int x in range(w):
+            cb(x, y, p, user)
+            p += 4
+    land_image_set_rgba_data(self, rgba)
+    land_free(rgba)
+
+def land_image_read_backup_write_callback(LandImage *self, void (*cb)(int x, int y,
+        int w, int h,
+        unsigned char *rgba_in, unsigned char *rgba_out, void *user), void *user):
+    """
+    Same as land_image_read_write_callback but the previous image is
+    kept in a backup buffer and a separate pointer for reading is
+    provided. This is useful if you also want to read from neighboring
+    pixels. As a convenience the width and height of the buffers is
+    also passed to the callback to allow handling border conditions.
+    """
+    int w = self.width
+    int h = self.height
+    unsigned char *rgba_in = land_malloc(w * h * 4)
+    land_image_get_rgba_data(self, rgba_in)
+    unsigned char *p_in = rgba_in
+    unsigned char *rgba_out = land_malloc(w * h * 4)
+    unsigned char *p_out = rgba_out
+    for int y in range(h):
+        for int x in range(w):
+            cb(x, y, w, h, p_in, p_out, user)
+            p_in += 4
+            p_out += 4
+    land_image_set_rgba_data(self, rgba_out)
+    land_free(rgba_in)
+    land_free(rgba_out)

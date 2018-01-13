@@ -251,6 +251,10 @@ def land_color_name(char const *name) -> LandColor:
         return c
     return platform_color_name(name)
 
+def land_color_to_html(LandColor c, char html[8]):
+    sprintf(html, "#%02x%02x%02x", (int)(c.r * 255), (int)(c.g * 255),
+        (int)(c.b * 255))
+
 def land_color_lerp(LandColor a, b, float t) -> LandColor:
     return land_color_rgba(
         a.r + t * (b.r - a.r),

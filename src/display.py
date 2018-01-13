@@ -218,9 +218,9 @@ def land_display_del(LandDisplay *self):
 # how = 7: like 3 but keep 0/0 in top left corner
 # how = 8: stretch (non-square pixels, not recommended)
 # how = how + 256: do the inverse instead
-def land_scale_to_fit(float w, h, int how) -> double:
-    float dw = land_display_width()
-    float dh = land_display_height()
+def land_scale_to_fit_into(float w, h, l, t, r, b, int how) -> double:
+    float dw = r - l
+    float dh = b - t
     float sx, sy
     float ox = 0, oy = 0
     int back = how >> 8
@@ -254,11 +254,16 @@ def land_scale_to_fit(float w, h, int how) -> double:
     land_reset_transform()
     if back:
         land_scale(1 / sx, 1 / sy)
-        land_translate(-ox, -oy)
+        land_translate(-ox - l, -oy - t)
     else:
-        land_translate(ox, oy)
+        land_translate(ox + l, oy + t)
         land_scale(sx, sy)
     return sx
+
+def land_scale_to_fit(float w, h, int how) -> double:
+    float dw = land_display_width()
+    float dh = land_display_height()
+    return land_scale_to_fit_into(w, h, 0, 0, dw, dh, how)
 
 def land_get_left -> LandFloat:
     LandFloat *m = _land_active_display->matrix
@@ -578,7 +583,7 @@ def land_display_flags() -> int:
     LandDisplay *self = _land_active_display
     return self.flags
 
-def land_display_new_image() -> LandImage *:
+def land_display_new_image -> LandImage *:
     LandImage *image = platform_new_image()
     return image
 
@@ -730,6 +735,12 @@ def land_transform(LandFloat *x, *y, *z):
     *y = v.y
     *z = v.z
 
+def land_projection(Land4x4Matrix m):
+    platform_projection(m)
+
+def land_reset_projection:
+    platform_reset_projection()
+
 def land_display_transform_4x4(Land4x4Matrix *matrix):
     LandFloat *m = _land_active_display->matrix
     for int i in range(16):
@@ -749,6 +760,9 @@ def land_display_set_default_shaders():
 def land_triangles_new -> LandTriangles*:
     return platform_triangles_new()
 
+def land_triangles_destroy(LandTriangles *self):
+    return platform_triangles_destroy(self)
+
 def land_triangles_clear(LandTriangles *self):
     self.n = 0
 
@@ -760,6 +774,9 @@ def land_add_vertex(LandTriangles *self, float x, y, z, u, v, r, g, b, a):
 
 def land_duplicate_vertex(LandTriangles *self, int i):
     platform_duplicate_vertex(self, i)
+
+def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b, a):
+    platform_update_vertex(self, i, x, y, z, u, v, r, g, b, a)
 
 def land_triangles_draw(LandTriangles *self):
     platform_triangles_draw(self)

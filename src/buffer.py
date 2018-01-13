@@ -3,9 +3,7 @@ static import mem
 static import file
 import array, util
 
-*** "ifndef" LAND_NO_COMPRESS
-static import global zlib
-*** "endif"
+static import global zlib if !defined(LAND_NO_COMPRESS)
 
 class LandBuffer:
     int size # reserved memory
