@@ -91,6 +91,9 @@ string(COMPARE NOTEQUAL "${EMSCRIPTEN}" "" EMSCRIPTEN)
 if (WINDOWS)
     message("Windows version")
     set(CFLAGS "${CFLAGS} -DWINDOWS")
+
+    include_directories(/home/elias/prog/allegro/install_x86_64-w64-mingw32/include)
+    include_directories(/home/elias/prog/allegro/allegro_deps/include)
 else ()
     message("Linux version")
     set(CFLAGS "${CFLAGS} -DLINUX")
@@ -110,6 +113,7 @@ if (EMSCRIPTEN)
 endif ()
 
 if (STATIC)
+    set(CFLAGS "${CFLAGS} -DALLEGRO_STATICLINK")
     if (DEBUG)
         add_library(${libname}-static-debug STATIC ${cfiles})
         
