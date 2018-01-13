@@ -97,7 +97,11 @@ foreach(exsrc ${examples})
             set(libraries ${lib})
         else()
 
-            pkg_check_modules(ALLEGRO allegro_monolith-debug-static-5)  
+            if (DEBUG)
+                pkg_check_modules(ALLEGRO allegro_monolith-debug-static-5)
+            else ()
+                pkg_check_modules(ALLEGRO allegro_monolith-static-5)
+            endif ()
             
             set(libraries
                 ${lib}

@@ -60,9 +60,36 @@ def test_yaml4:
     LandYaml *y2 = land_yaml_load("test4.yaml")
     land_yaml_dump(y2)
 
-def test_xml:
+def test_yaml5:
+    # read XML into our internal structure
     LandYaml *y = land_yaml_load_xml("../../data/test.xml")
-    land_yaml_dump(y)
+
+    # write it out as .yaml
+    land_yaml_rename(y, "test5.yaml")
+    land_yaml_save(y)
+    
+    # and write it out as .xml
+    land_yaml_rename(y, "test5.yaml.xml")
+    land_yaml_save_xml(y)
+
+def test_yaml6:
+    LandYaml *y = land_yaml_new("test6.xml")
+    land_yaml_xml_tag(y, "html")
+    land_yaml_xml_tag(y, "body")
+    land_yaml_xml_tag(y, "table")
+    for int i in range(3):
+        land_yaml_xml_tag(y, "tr")
+        for int j in range(3):
+            land_yaml_xml_tag(y, "td")
+            char s[1024]
+            sprintf(s, "%dx%d", i, j)
+            land_yaml_xml_content(y, s)
+            land_yaml_xml_end(y)
+        land_yaml_xml_end(y)
+    land_yaml_xml_end(y) # table
+    land_yaml_xml_end(y) # body
+    land_yaml_xml_end(y) # html
+    land_yaml_save_xml(y)
 
 def main() -> int:
     land_init()
@@ -72,6 +99,7 @@ def main() -> int:
     test_yaml2()
     test_yaml3()
     test_yaml4()
-    test_xml()
+    test_yaml5()
+    test_yaml6()
 
     return 0

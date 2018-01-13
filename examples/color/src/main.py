@@ -153,7 +153,7 @@ def arrange_prepare:
 def arrange_cube:
     arrange_prepare()
     for int x in range(5):
-        for int y in range(5):
+        for int y in range(6):
             for int z in range(5):
                 Color * c = color_add(x / 4.0, y / 4.0, z / 4.0)
                 if x == 0 or x == 4:
