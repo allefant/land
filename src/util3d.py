@@ -674,6 +674,18 @@ def land_4x4_matrix_inverse_from_vectors(LandVector *p, *r, *u, *b) -> Land4x4Ma
     m.v[15] = 1
     return m
 
+def land_4x4_matrix_get_right(Land4x4Matrix *m) -> LandVector:
+    return land_vector(m.v[0], m.v[4], m.v[8])
+
+def land_4x4_matrix_get_up(Land4x4Matrix *m) -> LandVector:
+    return land_vector(m.v[1], m.v[5], m.v[9])
+
+def land_4x4_matrix_get_back(Land4x4Matrix *m) -> LandVector:
+    return land_vector(m.v[2], m.v[6], m.v[10])
+
+def land_4x4_matrix_get_position(Land4x4Matrix *m) -> LandVector:
+    return land_vector(m.v[3], m.v[7], m.v[11])
+
 def land_quaternion_normalize(LandQuaternion *q):
     """
     Normalize the quaternion. This may be useful to prevent deteriorating
