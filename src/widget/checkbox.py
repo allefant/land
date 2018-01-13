@@ -9,6 +9,8 @@ class LandWidgetCheckBox:
     char *checkbox_selected
     char *checkbox_unselected
 
+    bool *value
+    
 static import land/land
 
 global LandWidgetInterface *land_widget_checkbox_interface
@@ -26,17 +28,21 @@ static def cb_clicked(LandWidget *widget):
     else:
         widget->selected = 1
         land_widget_button_replace_text(widget, cb->checkbox_selected)
+    if cb.value:
+        *cb.value = widget.selected
 
 def land_widget_checkbox_initialize(LandWidget *base,
     LandWidget *parent,
     char const *checkbox_selected,
     char const *checkbox_unselected,
     char const *text,
+    bool *b,
     int x, int y, int w, int h):
 
     LandWidgetCheckBox *self = (void *)base
     self.checkbox_selected = land_strdup(checkbox_selected)
     self.checkbox_unselected = land_strdup(checkbox_unselected)
+    self.value = b
 
     land_widget_checkbox_interface_initialize()
 
@@ -60,7 +66,11 @@ def land_widget_checkbox_initialize(LandWidget *base,
     land_widget_layout_enable(base) # container disables it for some reason
     land_widget_layout(base)
 
-    land_widget_button_replace_text(checkbox, checkbox_unselected)
+    if b and *b:
+        land_widget_button_replace_text(checkbox, checkbox_selected)
+        checkbox.selected = True
+    else:
+        land_widget_button_replace_text(checkbox, checkbox_unselected)
 
 def land_widget_checkbox_new(LandWidget *parent,
     char const *checkbox_selected,
@@ -71,13 +81,36 @@ def land_widget_checkbox_new(LandWidget *parent,
     LandWidgetCheckBox *self; land_alloc(self)
 
     land_widget_checkbox_initialize((LandWidget *)self,
-        parent, checkbox_selected, checkbox_unselected, text, x, y, w, h)
+        parent, checkbox_selected, checkbox_unselected, text, None,
+        x, y, w, h)
 
     return (LandWidget *)self
+
+def land_widget_checkbox_new_boolean(LandWidget *parent,
+    char const *checkbox_selected,
+    char const *checkbox_unselected,
+    char const *text,
+    bool *b,
+    int x, int y, int w, int h) -> LandWidget *:
+    
+    LandWidgetCheckBox *self; land_alloc(self)
+
+    land_widget_checkbox_initialize((LandWidget *)self,
+        parent, checkbox_selected, checkbox_unselected, text, b, x, y, w, h)
+
+    return (LandWidget *)self
+
 
 def land_widget_checkbox_is_checked(LandWidget *self) -> bool:
     return land_widget_container_child(self)->selected
 
+def land_widget_checkbox_set(LandWidget *base, bool checked):
+    LandWidget *box = land_widget_container_child((void *)LAND_WIDGET_CONTAINER(base))
+    bool was = box.selected
+    if was != checked:
+        box.selected = checked
+        cb_clicked(box)
+    
 def land_widget_checkbox_interface_initialize():
     if land_widget_checkbox_interface: return
     land_widget_container_interface_initialize()
