@@ -8,7 +8,10 @@ static *** "ifdef" WINDOWS
 static macro SHUT_RDWR SD_BOTH
 static *** "endif"
 static import global stdlib, string, signal if !defined(WINDOWS)
-static import global sys/time, sys/socket, sys/ioctl, errno, arpa/inet if !defined(WINDOWS)
+static import global sys/time, sys/socket if !defined(WINDOWS)
+static import global sys/ioctl if !defined(WINDOWS)
+static import global errno
+static import global arpa/inet if !defined(WINDOWS)
 static import global netdb if !defined(WINDOWS)
 
 

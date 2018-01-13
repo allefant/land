@@ -183,6 +183,9 @@ def land_rnd(double rmin, double rmax) -> double:
         (double)genrand_int32(&default_state) / MAX_NUMBER) * (rmax - rmin)
 
 def land_rand(int rmin, int rmax) -> int:
+    """
+    rmax is inclusive, so there are (rmax - rmin + 1) total values
+    """
     if rmin >= rmax: return rmin
     int64_t d = rmax
     d++
