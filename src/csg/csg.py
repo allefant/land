@@ -393,6 +393,7 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
     if not land_array_count(polygons):
         land_array_destroy(polygons)
         return
+    int original = land_array_count(polygons)
     if not self.plane.normal.z and\
             not self.plane.normal.y and not self.plane.normal.x:
         LandCSGPolygon *p0 = land_array_get_nth(polygons, 0)
@@ -406,14 +407,24 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
             self.polygons, front, back)
     land_array_destroy(polygons)
 
-    if land_array_count(front):
+    int fc = land_array_count(front)
+    if fc:
+        if fc == original:
+            #printf("csg error: all polygons front\n")
+            #return
+            pass
         if not self.front:
             self.front = csg_node_new(csg, None)
         csg_node_build(csg, self.front, front)
     else:
         land_array_destroy(front)
 
-    if land_array_count(back):
+    int bc = land_array_count(back)
+    if bc:
+        if bc == original:
+            #printf("csg error: all polygons back\n")
+            #return
+            pass
         if not self.back:
             self.back = csg_node_new(csg, None)
         csg_node_build(csg, self.back, back)
@@ -432,7 +443,7 @@ static def csg_node_new(LandCSG *csg, LandArray *polygons) -> LandCSGNode *:
 def land_csg_transform(LandCSG *self, Land4x4Matrix matrix):
     Land4x4Matrix matrix2 = *(&matrix)
     # The normal should not be translated (nor scaled, but the scaling is
-    # taken care of be re-normalizing it)
+    # taken care of by re-normalizing it)
     matrix2.v[3] = 0
     matrix2.v[7] = 0
     matrix2.v[11] = 0
@@ -539,7 +550,7 @@ def land_csg_union(LandCSG *csg_a, *csg_b) -> LandCSG *:
 
     LandCSGNode *a = csg_node_new(c, clone_polygons(c, a_in))
     LandCSGNode *b = csg_node_new(c, clone_polygons(c, b_in))
-
+   
     csg_node_clip_to(c, a, b)
     csg_node_clip_to(c, b, a)
 

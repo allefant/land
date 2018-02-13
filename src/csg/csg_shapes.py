@@ -60,9 +60,11 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
 def csg_cylinder(int slices, void *shared) -> LandCSG *:
     return csg_cylinder_open(slices, False, shared)
 
-def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
+def csg_cut_cone_open(int slices, bool opened, float top_radius,
+        void *shared) -> LandCSG *:
     """
-    Make a cylinder along the z-axis with radius 1.0 and height 2.0.
+    Make a cut cone along the z-axis with radius 1.0 at the botton
+    and radius top_radius at the top at height 2.0.
     It fits within a cube from -1/-1/-1 to 1/1/1.
     """
     if slices < 3:
@@ -87,8 +89,8 @@ def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
         LandVector side1 = land_vector(c1, -s1, 0)
         LandVector v0d = land_vector(c0, -s0, -1)
         LandVector v1d = land_vector(c1, -s1, -1)
-        LandVector v0u = land_vector(c0, -s0, 1)
-        LandVector v1u = land_vector(c1, -s1, 1)
+        LandVector v0u = land_vector(c0 * top_radius, -s0 * top_radius, 1)
+        LandVector v1u = land_vector(c1 * top_radius, -s1 * top_radius, 1)
 
         LandArray *vertices
 
@@ -114,6 +116,9 @@ def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
     return land_csg_new_from_polygons(polygons)
+
+def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
+    return csg_cut_cone_open(slices, opened, 1.0, shared)
 
 def csg_cone(int slices, void *shared) -> LandCSG *:
     """
@@ -304,6 +309,9 @@ def csg_grid(int x, y, void *shared) -> LandCSG *:
 def csg_prism(int n, void *shared) -> LandCSG *:
     """
     n is the shape - 3 for triangle, 4 for square, 5 for pentagon...
+    The prism extrudes along the z axis from -1 to 1.
+    The first edge is at y = 1 the others are on a circle around 0/0
+    with radius 1 in the x/y plane.
     """
     LandArray *polygons = land_array_new()
     LandVector a = land_vector(0, 1, 1) # top front
@@ -355,6 +363,9 @@ def csg_trapezoid(LandFloat x1, x2, void *shared) -> LandCSG*:
     return land_csg_new_from_polygons(polygons)
 
 def csg_extrude_triangle(LandVector a, b, LandFloat d, void *shared) -> LandCSG*:
+    """
+    This extrudes a triangle with points 0/a/b along a distance of d.
+    """
     LandArray *polygons = land_array_new()
     LandVector z = land_vector(0, 0, 0)
     LandVector n = land_vector_cross(a, b)
