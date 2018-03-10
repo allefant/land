@@ -716,17 +716,17 @@ def land_quaternion_slerp(LandQuaternion qa, qb, double t) -> LandQuaternion:
         qb.y = -qb.y
         qb.z = -qb.z
 
-    double theta = acos(c);
+    double theta = acos(c)
 
     double s = sin(theta)
 
-    double fs = sin((1 - t) * theta) / s;
-    double ts = sin(t * theta) / s;
+    double fs = sin((1 - t) * theta) / s
+    double ts = sin(t * theta) / s
 
-    q.w = qa.w * fs + qb.w * ts;
-    q.x = qa.x * fs + qb.x * ts;
-    q.y = qa.y * fs + qb.y * ts;
-    q.z = qa.z * fs + qb.z * ts;
+    q.w = qa.w * fs + qb.w * ts
+    q.x = qa.x * fs + qb.x * ts
+    q.y = qa.y * fs + qb.y * ts
+    q.z = qa.z * fs + qb.z * ts
 
     return q
 

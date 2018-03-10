@@ -144,7 +144,7 @@ static def csg_plane(LandVector normal, LandFloat w) -> LandCSGPlane:
 
 static const LandFloat LandCSGPlaneEPSILON = 0.00001
 
-static def csg_plane_from_points(LandVector a, b, c) -> LandCSGPlane:
+def land_csg_plane_from_points(LandVector a, b, c) -> LandCSGPlane:
     LandVector ac = land_vector_sub(c, a)
     LandVector ab = land_vector_sub(b, a)
     LandVector n = land_vector_cross(ab, ac)
@@ -159,7 +159,7 @@ def land_csg_polygon_init(LandCSGPolygon *self, LandArray *vertices,
     LandCSGVertex *v0 = land_array_get_nth(vertices, 0)
     LandCSGVertex *v1 = land_array_get_nth(vertices, 1)
     LandCSGVertex *v2 = land_array_get_nth(vertices, 2)
-    self.plane = csg_plane_from_points(v0.pos, v1.pos, v2.pos)
+    self.plane = land_csg_plane_from_points(v0.pos, v1.pos, v2.pos)
 
 def land_csg_polygon_new(LandArray *vertices,
         void *shared) -> LandCSGPolygon *:

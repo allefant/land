@@ -10,11 +10,17 @@ class LandGLSLShader:
     GLuint vertex_shader
     GLuint fragment_shader
     GLuint program_object
+    char* name
 
 static def shader_setup(LandGLSLShader *self,
         char const *name,
         char const *vertex_glsl,
         char const *fragment_glsl):
+
+    if name:
+        self.name = land_strdup(name)
+    else:
+        name = self.name
 
     if vertex_glsl:
         self.vertex_shader = glCreateShader(GL_VERTEX_SHADER)
@@ -24,6 +30,8 @@ static def shader_setup(LandGLSLShader *self,
         
         GLint success
         glGetShaderiv(self.vertex_shader, GL_COMPILE_STATUS, &success);
+        land_log_message("%s: Vertex Shader compilation %s.\n", name,
+            success ? "succeeded" : "failed")
         if True:
             int size
             glGetShaderiv(self.vertex_shader, GL_INFO_LOG_LENGTH, &size);
@@ -70,6 +78,7 @@ static def shader_setup(LandGLSLShader *self,
                 land_log_message("%s: Shader Link Error:\n%s\n", name, error)
 
 static def shader_cleanup(LandGLSLShader *self):
+    land_free(self.name)
     if self.program_object:
         glDeleteProgram(self.program_object)
         glDeleteShader(self.vertex_shader)

@@ -552,10 +552,12 @@ def land_pick_color(float x, y):
 
 def land_display_width() -> int:
     LandDisplay *self = _land_active_display
+    if not self: return 0
     return self.w
 
 def land_display_height() -> int:
     LandDisplay *self = _land_active_display
+    if not self: return 0
     return self.h
 
 def land_display_resize(int w, h):

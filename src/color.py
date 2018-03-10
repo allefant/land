@@ -249,6 +249,32 @@ def land_color_name(char const *name) -> LandColor:
         c.b = (hexval(name[5]) * 16 + hexval(name[6])) / 255.0
         c.a = 1
         return c
+
+    # check for something like:
+    # red/2 red*3/4 red*9/2/5
+    int i1 = land_find(name, "*")
+    int i2 = land_find(name, "/")
+    if i1 >= 0 or i2 >= 0:
+        int i = i1
+        if i < 0 or i2 < i: i = i2
+        char *name2 = land_substring(name, 0, i)
+        LandColor c = platform_color_name(name2)
+        char prev = 0
+        while True:
+            if name[i] == 0: break
+            if name[i] >= '1' and name[i] <= '9':
+                float d = name[i] - '0'
+                if prev == '*':
+                    c.r *= d
+                    c.g *= d
+                    c.b *= d
+                elif prev == '/':
+                    c.r /= d
+                    c.g /= d
+                    c.b /= d
+            prev = name[i]
+            i++
+        return c
     return platform_color_name(name)
 
 def land_color_to_html(LandColor c, char html[8]):

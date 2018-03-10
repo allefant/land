@@ -196,8 +196,8 @@ def land_realloc_memlog(void *ptr, int size, char const *f, int l) -> void *:
     land_memory_add(p, "", size, f, l)
     return p
 
-def land_strdup_memlog(char const *str, char const *f, int l) -> char *:
-    void *p = strdup(str)
+def land_strdup_memlog(char const *s, char const *f, int l) -> char *:
+    void *p = strdup(s)
     land_memory_add(p, "", strlen(p), f, l)
     return p
 
@@ -216,8 +216,8 @@ def land_calloc(int size) -> void *:
 def land_realloc(void *ptr, int size) -> void *:
     return realloc(ptr, size)
 
-def land_strdup(char const *str) -> char *:
-    return strdup(str)
+def land_strdup(char const *s) -> char *:
+    return strdup(s)
 
 def land_free(void *ptr):
     free(ptr)

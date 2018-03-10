@@ -479,11 +479,7 @@ def land_wordwrap_text(int w, h, char const *str) -> LandArray *:
 
 def land_text_destroy_lines(LandArray *lines):
     if not lines: return
-    int n = land_array_count(lines)
-    for int i = 0 while i < n with i++:
-        char *s = land_array_get_nth(lines, i)
-        land_free(s)
-    land_array_destroy(lines)
+    land_array_destroy_with_strings(lines)
 
 def land_text_splitlines(char const *str) -> LandArray *:
     """
@@ -521,13 +517,16 @@ def land_print_lines(LandArray *lines, int alignment):
     """
     float cl, ct, cr, cb
     land_get_clip(&cl, &ct, &cr, &cb)
-    float fh = land_font_state.font->size
+    float fh = land_line_height()
     float ty = land_text_y_pos()
     int first = (ct - ty) / fh
     int last = (cb - ty) / fh
     int n = land_array_count(lines)
     if first < 0: first = 0
     if last > n - 1: last = n - 1
+    if alignment & LandAlignMiddle:
+        alignment ^= LandAlignMiddle
+        land_font_state.y_pos -= n * fh / 2
     land_font_state.y_pos += fh * first
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
@@ -538,3 +537,9 @@ def land_font_from_image(LandImage *image, int n_ranges,
     LandFont *self = platform_font_from_image(image, n_ranges, ranges)
     land_font_state.font = self
     return self
+
+def land_print_multiline(char const *text, ...):
+    VPRINT
+    auto a = land_text_splitlines(s)
+    land_print_lines(a, 0)
+    land_array_destroy_with_strings(a)

@@ -219,6 +219,11 @@ def land_yaml_xml_tag(LandYaml *yaml, str name):
     land_yaml_add_scalar(yaml, "<")
     land_yaml_add_scalar(yaml, name)
 
+def land_yaml_xml_tag_with_content(LandYaml *yaml, str name, str content):
+    land_yaml_xml_tag(yaml, name)
+    land_yaml_xml_content(yaml, content)
+    land_yaml_xml_end(yaml)
+
 def land_yaml_xml_content(LandYaml *yaml, str content):
     _xml(yaml)
     land_yaml_add_scalar(yaml, content)

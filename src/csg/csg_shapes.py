@@ -428,3 +428,17 @@ def csg_torus(int slices, segments, LandFloat diameter,
                 1.0 * (j + 1) / segments, diameter / 2)
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
     return land_csg_new_from_polygons(polygons)
+
+def land_csg_polygon_recalculate_normal(LandCSGPolygon *p):
+    LandCSGVertex *v0 = land_array_get(p.vertices, 0)
+    LandCSGVertex *v1 = land_array_get(p.vertices, 1)
+    LandCSGVertex *v2 = land_array_get(p.vertices, 2)
+
+    LandVector a = land_vector_sub(v0.pos, v1.pos)
+    LandVector b = land_vector_sub(v1.pos, v2.pos)
+    LandVector n = land_vector_normalize(land_vector_cross(a, b))
+
+    p.plane = land_csg_plane_from_points(v0.pos, v1.pos, v2.pos)
+
+    for LandCSGVertex *v in LandArray *p.vertices:
+        v.normal = n
