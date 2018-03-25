@@ -201,6 +201,22 @@ def land_concatenate(char **s, char const *cat):
     re[n - 1] = 0
     *s = re
 
+def land_appendv(char **s, str format, va_list args):
+    va_list args2
+    va_copy(args2, args)
+    int n = vsnprintf(None, 0, format, args2)
+    va_end(args2)
+    if n < 0: n = 1023
+    char f[n + 1]
+    vsnprintf(f, n + 1, format, args)
+    land_concatenate(s, f)
+
+def land_append(char **s, str format, ...):
+    va_list args
+    va_start(args, format)
+    land_appendv(s, format, args)
+    va_end(args)
+
 def land_concatenate_with_separator(char **s, char const *cat, *sep):
     if not *s or land_equals(*s, ""):
         land_concatenate(s, cat)

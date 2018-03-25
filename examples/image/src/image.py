@@ -2,6 +2,7 @@ import global land/land
 
 LandImage *image
 LandImage *image_parts[4]
+LandImage *cropped
 
 static def create_test_image() -> LandImage *:
     int w = 100
@@ -73,6 +74,9 @@ static def tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
 
+    if land_key_pressed(LandKeyFunction + 1):
+        crop_test()
+
 static def draw(LandRunner *self):
     static float angle = 0
     int w = land_image_width(image)
@@ -137,6 +141,21 @@ static def draw(LandRunner *self):
     int y = 50
 
     land_image_draw(image, 320 - x, 240 - y)
+    
+    land_image_draw_scaled(image, 320 - x, 240 + y, 0.5, 0.5)
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL,
+    if cropped:
+        land_image_draw(cropped, 320, 0)
+
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE | LAND_MULTISAMPLE,
     init, NULL, tick, draw, NULL, destroy)
+
+def crop_test:
+    if cropped:
+        land_image_destroy(cropped)
+
+    cropped = land_image_new(200, 200)
+    land_set_image_display(cropped)
+    land_image_draw(image, 0, 0)
+    land_unset_image_display()
+   

@@ -226,6 +226,32 @@ def land_image_auto_crop(LandImage *self):
     self.r = w - 1 - maxi
     self.b = h - 1 - maxj
 
+macro LandImageFit 1
+    
+def land_image_resize(LandImage *self, int new_w, new_h, int flags):
+    float old_w = self.width - self.l - self.r
+    float old_h = self.height - self.t - self.b
+    if new_w == 0: new_w = old_w
+    if new_h == 0: new_h = old_h
+    float xs = 1.0 * new_w / old_w
+    float ys = 1.0 * new_h / old_h
+    float xo = 0
+    float yo = 0
+    if flags & LandImageFit:
+        if xs > 1: xs = 1
+        if ys > 1: ys = 1
+        if xs < ys:
+            ys = xs
+        else:
+            xs = ys
+        xo = new_w * 0.5 - old_w * xs * 0.5
+        yo = new_h * 0.5 - old_h * ys * 0.5
+    LandImage *resized = land_image_new(new_w, new_h)
+    land_set_image_display(resized)
+    land_image_draw_scaled(self, xo - self.l * xs, yo - self.t * ys, xs, ys)
+    land_unset_image_display()
+    platform_image_merge(self, resized)
+
 def land_image_new_from(LandImage *copy, int x, int y, int w, int h) -> LandImage *:
     """
     Create a new image, copying pixel data from a rectangle in an existing

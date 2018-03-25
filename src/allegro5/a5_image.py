@@ -115,6 +115,8 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
 
+    if not self->a5: return
+
     land_a5_display_check_transform()
 
     bool restore = False
@@ -170,7 +172,6 @@ def platform_set_image_display(LandImage *super):
 
     previous = al_get_target_bitmap()
     al_set_target_bitmap(self->a5)
-
 
 def platform_unset_image_display():
     _land_active_display = global_previous_display
@@ -256,3 +257,17 @@ def platform_image_crop(LandImage *super, int x, y, w, h):
     al_restore_state(&state)
     super.width = w
     super.height = h
+
+def platform_image_merge(LandImage *super, LandImage *replacement_image):
+    SELF
+    LandImagePlatform *replacement = (void*)replacement_image
+    al_destroy_bitmap(self->a5)
+    self->a5 = replacement.a5
+    replacement.a5 = None
+    super.width = replacement_image.width
+    super.height = replacement_image.height
+    super.l = 0
+    super.t = 0
+    super.r = 0
+    super.b = 0
+    land_image_destroy(replacement_image)

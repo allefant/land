@@ -50,7 +50,7 @@ def land_widget_spinbutton_new(LandWidget *parent, LandImage *image,
     LandWidgetSpinButton *spinbutton
     land_alloc(spinbutton)
     LandWidget *self = (LandWidget *)spinbutton
-    land_widget_button_initialize(self, parent, NULL, image, clicked, x, y, w, h)
+    land_widget_button_initialize(self, parent, NULL, image, false, clicked, x, y, w, h)
     land_widget_spinbutton_interface_initialize()
     self.vt = land_widget_spinbutton_interface
 

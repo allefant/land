@@ -38,7 +38,7 @@ def land_widget_mover_new(LandWidget *parent, char const *text, int x, int y, in
 
     land_alloc(self)
     LandWidget *base = (LandWidget *)self
-    land_widget_button_initialize(base, parent, text, None, None, x, y, w, h)
+    land_widget_button_initialize(base, parent, text, None, false, None, x, y, w, h)
     base->vt = land_widget_mover_interface
     
     land_widget_layout_set_shrinking(base, 0, 1)

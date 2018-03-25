@@ -143,7 +143,7 @@ def land_widget_menubutton_new(LandWidget *parent, char const *name,
     if ((parent->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR):
         self.below = 1
     LandWidget *base = (void *)self
-    land_widget_button_initialize(base, parent, name, NULL,
+    land_widget_button_initialize(base, parent, name, None, false,
         menubutton_clicked, x, y, w, h)
     LAND_WIDGET_MENU(submenu)->menubutton = base
     base->vt = land_widget_menubutton_interface
@@ -206,7 +206,7 @@ def land_widget_menuitem_new(LandWidget *parent, char const *name,
     menuitem->callback = callback
 
     land_widget_button_initialize((LandWidget *)menuitem, parent, name,
-        None, menuitem_clicked, 0, 0, 10, 10)
+        None, false, menuitem_clicked, 0, 0, 10, 10)
 
     LandWidget *self = LAND_WIDGET(menuitem)
     self.vt = land_widget_menuitem_interface

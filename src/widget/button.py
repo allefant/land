@@ -18,6 +18,7 @@ class LandWidgetButton:
     int multiline
     LandAnimation *animation
     LandImage *image
+    bool want_image_destroyed
     char *text
     LandArray *lines
     void (*clicked)(LandWidget *self)
@@ -146,10 +147,9 @@ def land_widget_button_mouse_tick(LandWidget *base):
             if land_mouse_b() & 2:
                 button->rclicked(base)
 
-
 def land_widget_button_initialize(LandWidget *base,
     LandWidget *parent, char const *text,
-    LandImage *image,
+    LandImage *image, bool destroy,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h):
     
     #FIXME: Inhibit layout changes of parent, they make no sense before we
@@ -169,6 +169,7 @@ def land_widget_button_initialize(LandWidget *base,
 
     if image:
         self.image = image
+        self.want_image_destroyed = destroy
         land_widget_theme_set_minimum_size_for_image(base, image)
 
     self.clicked = clicked
@@ -183,19 +184,19 @@ def land_widget_button_new(LandWidget *parent, char const *text,
     LandWidget *self = (LandWidget *)button
 
     land_widget_button_initialize(self,
-        parent, text, NULL, clicked, x, y, w, h)
+        parent, text, None, false, clicked, x, y, w, h)
 
     return self
 
 def land_widget_button_new_with_image(LandWidget *parent,
-    char const *text, LandImage *image,
+    char const *text, LandImage *image, bool destroy,
     void (*clicked)(LandWidget *self), int x, int y, int w, int h) -> LandWidget *:
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
 
     land_widget_button_initialize(self,
-        parent, text, image, clicked, x, y, w, h)
+        parent, text, image, destroy, clicked, x, y, w, h)
 
     return self
 
@@ -212,7 +213,7 @@ def land_widget_button_new_with_animation(LandWidget *parent,
     LandWidget *self = (LandWidget *)button
 
     land_widget_button_initialize(self,
-        parent, text, NULL, clicked, x, y, w, h)
+        parent, text, None, false, clicked, x, y, w, h)
     button->animation = animation
 
     return self
@@ -221,7 +222,7 @@ def land_widget_text_initialize(LandWidget *self,
     LandWidget *parent, char const *text, int multiline, x, y, w, h) -> LandWidget *:
 
     land_widget_button_initialize(self,
-        parent, multiline ? None : text, NULL, NULL, x, y, w, h)
+        parent, multiline ? None : text, None, false, NULL, x, y, w, h)
     self.no_decoration = 1
 
     land_widget_theme_initialize(self)
@@ -349,4 +350,6 @@ def land_widget_button_destroy(LandWidget *base):
     if button->lines:
         land_array_for_each(button->lines, _linedelcb, None)
         land_array_destroy(button->lines)
+    if button.image and button.want_image_destroyed:
+        land_image_destroy(button.image)
     land_widget_base_destroy(base)
