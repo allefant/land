@@ -64,3 +64,29 @@ def land_joystick_axis_name(int a) -> str:
 
 def land_joystick_button_count -> int: return platform_joystick_button_count()
 def land_joystick_axis_count -> int: return platform_joystick_axis_count()
+
+def land_joystick_find_axis(str name) -> int:
+    int an = land_joystick_axis_count()
+    for int ai in range(1, an):
+        str axis = land_joystick_axis_name(ai)
+        if land_equals(axis, name):
+                return ai
+    return 0
+
+def land_joystick_find_button(str name) -> int:
+    int bn = land_joystick_button_count()
+    for int bi in range(1, bn):
+        str button = land_joystick_button_name(bi)
+        if land_equals(button, name):
+            return bi
+    return 0
+
+def land_joystick_debug:
+    int an = land_joystick_axis_count()
+    for int ai in range(1, an):
+        float v = land_joystick_axis(ai)
+        if v: printf("%s: %f\n", land_joystick_axis_name(ai), v)
+    int bn = land_joystick_button_count()
+    for int bi in range(1, bn)
+        int v = land_joystick_button_pressed(bi)
+        if v: printf("%s: %d\n", land_joystick_button_name(bi), v)
