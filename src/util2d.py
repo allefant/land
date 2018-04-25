@@ -53,17 +53,17 @@ def land_ortho2d(float ax, ay, *bx, *by):
     *bx = -ay;
     *by = ax;
 
-def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
-    l2x1, l2y1, l2x2, l2y2) -> bool:
+def land_line_line_collision2d(LandFloat l1x1, l1y1, l1x2, l1y2,
+        l2x1, l2y1, l2x2, l2y2) -> bool:
     """
     Checks if two line segments collide.
     """
-    float ax = l1x2 - l1x1
-    float ay = l1y2 - l1y1
-    float bx = l2x2 - l2x1
-    float by = l2y2 - l2y1
-    float cx = l2x1 - l1x1
-    float cy = l2y1 - l1y1
+    LandFloat ax = l1x2 - l1x1
+    LandFloat ay = l1y2 - l1y1
+    LandFloat bx = l2x2 - l2x1
+    LandFloat by = l2y2 - l2y1
+    LandFloat cx = l2x1 - l1x1
+    LandFloat cy = l2y1 - l1y1
 
     # They collide if:
     # cx + B bx = A ax (1)
@@ -85,15 +85,31 @@ def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
     # We have a collision if both A and B are within [0;1].
     
     # 0 -> parallel, >0 -> right, <0 -> left.
-    float ab = land_cross2d(ax, ay, bx, by)
+    LandFloat ab = land_cross2d(ax, ay, bx, by)
     # Where inside of b would be collision.
-    float ca = land_cross2d(cx, cy, ax, ay)
+    LandFloat ca = land_cross2d(cx, cy, ax, ay)
     # Where inside of a would be collision.
-    float cb = land_cross2d(cx, cy, bx, by)
+    LandFloat cb = land_cross2d(cx, cy, bx, by)
 
     # Only if a meets b and b meets a, they collide.
     if ab == 0:
-        # FIXME: they might overlap
+        if ca == 0:
+            # lines coincide
+            LandFloat dac = land_dot2d(ax, ay, cx, cy)
+            LandFloat dx = l2x2 - l1x1
+            LandFloat dy = l2y2 - l1y1
+            LandFloat dad = land_dot2d(ax, ay, dx, dy)
+            
+            if dac < 0:
+                if dad < 0: return False
+                return True
+            if dad < 0: return True
+
+            LandFloat daa = land_dot2d(ax, ay, ax, ay)
+
+            if dac * dac > daa * daa and dad * dad > daa * daa: return False 
+            
+            return True
         return False
     if ab < 0:
         if ca > 0 or cb > 0: return False
@@ -108,3 +124,41 @@ def land_line_line_collision2d(float l1x1, l1y1, l1x2, l1y2,
     # y = l1y1 + A * ay = l2y1 + B * by
 
     return True
+
+def circle_circle_collision2d(LandFloat c1x1, c1y1, c1r,
+        c2x1, c2y1, c2r) -> bool:
+    LandFloat ax = c2x1 - c1x1
+    LandFloat ay = c2y1 - c1y1
+    LandFloat r = c1r + c2r
+    return ax * ax + ay * ay <= r * r
+
+def land_line_circle_collision2d(LandFloat lx1, ly1, lx2, ly2,
+        cx1, cy1, cr) -> bool:
+
+    LandFloat ax = lx2 - lx1
+    LandFloat ay = ly2 - ly1
+    LandFloat bx = cx1 - lx1
+    LandFloat by = cy1 - ly1
+    LandFloat cx = cx1 - lx2
+    LandFloat cy = cy1 - ly2
+    LandFloat c = land_cross2d(ax, ay, bx, by)
+    LandFloat a = ax * ax + ay * ay
+    
+    if a == 0: # line is just a point
+        if bx * bx + by * by <= cr * cr: return True
+        return False
+
+    # circle is outside of the thick line
+    if c * c / a > cr * cr: return False
+
+    LandFloat ab = land_dot2d(ax, ay, bx, by)
+    LandFloat ac = land_dot2d(ax, ay, cx, cy)
+
+    # circle center is within line start and end
+    if ab >= 0 and ac <= 0: return True
+
+    # check distance to the two end-points
+    if bx * bx + by * by <= cr * cr: return True
+    if cx * cx + cy * cy <= cr * cr: return True
+    
+    return False
