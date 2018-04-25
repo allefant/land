@@ -55,12 +55,12 @@ def land_plasma_new(int w, h, float power_modifier, amplitude) -> LandPlasma*:
 
     return self
 
-def _read(LandPlasma *self, int x, y) -> float:
+def _plasma_read(LandPlasma *self, int x, y) -> float:
     x = land_mod(x, self.w)
     y = land_mod(y, self.h)
     return self.cache[y * self.w + x]
 
-def _write(LandPlasma *self, int x, y, float value):
+def _plasma_write(LandPlasma *self, int x, y, float value):
     x = land_mod(x, self.w)
     y = land_mod(y, self.h)
     self.cache[y * self.w + x] = value
@@ -73,10 +73,10 @@ def _write(LandPlasma *self, int x, y, float value):
 # there is no level 4 as a size of 1 would only overwrite pixels
 def _fractal(LandPlasma *self, int x, y, w, h, i):
     # in the very first recursion level, all of them will be the same
-    float c1 = _read(self, x, y)
-    float c2 = _read(self, x + w, y)
-    float c3 = _read(self, x + w, y + h)
-    float c4 = _read(self, x, y + h)
+    float c1 = _plasma_read(self, x, y)
+    float c2 = _plasma_read(self, x + w, y)
+    float c3 = _plasma_read(self, x + w, y + h)
+    float c4 = _plasma_read(self, x, y + h)
 
     float n2 = _blend(self, c1, c2, i)
     float n4 = _blend(self, c1, c4, i)
@@ -85,9 +85,9 @@ def _fractal(LandPlasma *self, int x, y, w, h, i):
     w /= 2
     h /= 2
 
-    _write(self, x + w, y, n2)
-    _write(self, x + w, y + h, n3)
-    _write(self, x, y + h, n4)
+    _plasma_write(self, x + w, y, n2)
+    _plasma_write(self, x + w, y + h, n3)
+    _plasma_write(self, x, y + h, n4)
 
 def _subdivide(LandPlasma *self):
     int dx = self.w
@@ -109,7 +109,7 @@ def _subdivide(LandPlasma *self):
         i++
 
 def land_plasma_generate(LandPlasma *self):
-    _write(self, 0, 0, 0)
+    _plasma_write(self, 0, 0, 0)
     _subdivide(self)
 
 def land_plasma_del(LandPlasma *self):

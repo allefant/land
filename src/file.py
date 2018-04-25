@@ -20,7 +20,7 @@ def land_file_new(char const *path, char const *mode) -> LandFile *:
         path2 = land_strdup(path)
     void *f = platform_fopen(path2, mode)
     if not f:
-        land_log_message("Opening file %s (%s) failed.", path2, mode)
+        land_log_message("Opening file %s (%s) failed.\n", path2, mode)
         land_free(path2)
         return None
     LandFile *self
@@ -64,6 +64,9 @@ def land_file_fputs(LandFile *self, char const *string) -> int:
 def land_file_getc(LandFile *self) -> int:
     return platform_fgetc(self.f)
 
+def land_file_putc(LandFile *self, int x):
+    return platform_fputc(self.f, x)
+
 def land_file_ungetc(LandFile *self, int c):
     platform_ungetc(self.f, c)
 
@@ -79,6 +82,16 @@ def land_file_get32le(LandFile *self) -> uint32_t:
     uint32_t c = platform_fgetc(self.f)
     uint32_t d = platform_fgetc(self.f)
     return a | (b << 8) | (c << 16) | (d << 24)
+
+def land_file_put32le(LandFile *self, uint32_t x):
+    uint32_t a = x & 255
+    uint32_t b = (x >> 8) & 255
+    uint32_t c = (x >> 16) & 255
+    uint32_t d = x >> 24
+    platform_fputc(self.f, a)
+    platform_fputc(self.f, b)
+    platform_fputc(self.f, c)
+    platform_fputc(self.f, d)
 
 def land_file_get16le(LandFile *self) -> uint16_t:
     uint16_t a = platform_fgetc(self.f)
@@ -164,3 +177,9 @@ def land_replace_filename(char const *path, char const *name) -> char *:
 
 def land_file_remove(char const *path) -> bool:
     return platform_remove_file(path)
+
+def land_file_time(char const *path) -> int64_t:
+    return platform_file_time(path)
+
+def land_user_data_path(char const *app, *path) -> char*:
+    return platform_get_app_data_file(app, path)

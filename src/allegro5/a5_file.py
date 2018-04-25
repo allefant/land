@@ -34,6 +34,9 @@ def platform_ungetc(void *f, int c):
 def platform_fgetc(void *f) -> int:
     return al_fgetc(f)
 
+def platform_fputc(void *f, int c):
+    al_fputc(f, c)
+
 def platform_feof(void *f) -> bool:
     return al_feof(f)
 
@@ -109,20 +112,29 @@ def platform_is_dir(char const *path) -> bool:
 def platform_file_exists(char const *path) -> bool:
     return al_filename_exists(path)
 
-def platform_get_save_file(char const *appname, char const *name) -> char *:
+def _get_app_file(char const *appname, int folder, char const *filename) -> char *:
     al_set_org_name("")
     al_set_app_name(appname)
-    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH)
+    ALLEGRO_PATH *path = al_get_standard_path(folder)
     const char *str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
     if not al_filename_exists(str):
-        land_log_message("Creating new settings path %s.\n", str);
+        land_log_message("Creating new path %s.\n", str);
         al_make_directory(str)
-    al_set_path_filename(path, name)
+    al_set_path_filename(path, filename)
     str = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)
-    land_log_message("Using save file %s.\n", str);
+    land_log_message("Using file %s.\n", str);
     char *dup = land_strdup(str)
     al_destroy_path(path)
     return dup
+
+def platform_get_save_file(char const *appname, char const *name) -> char *:
+    return _get_app_file(appname, ALLEGRO_USER_SETTINGS_PATH, name)
+
+def platform_get_app_settings_file(char const *appname) -> char *:
+    return _get_app_file(appname, ALLEGRO_USER_SETTINGS_PATH, "settings.cfg")
+
+def platform_get_app_data_file(char const *appname, char const *filename) -> char *:
+    return _get_app_file(appname, ALLEGRO_USER_DATA_PATH, filename)
 
 def platform_get_current_directory() -> char *:
     char *d = al_get_current_directory()
@@ -153,3 +165,9 @@ def land_android_apk_filesystem(bool onoff):
     else:
         al_set_standard_fs_interface()
     *** "endif"
+
+def platform_file_time(char const *path) -> int64_t:
+    ALLEGRO_FS_ENTRY *e = al_create_fs_entry(path)
+    time_t t = al_get_fs_entry_mtime(e)
+    al_destroy_fs_entry(e)
+    return t

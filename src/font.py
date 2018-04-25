@@ -451,7 +451,7 @@ def land_print_wordwrap_center(int w, h, char const *text, ...) -> int:
 
 static def land_wordwrap_text_cb(int a, b, void *data):
     void **p = data
-    char *text = p[0]
+    char const *text = p[0]
     LandArray *lines = p[1]
     char *s = land_malloc(b - a + 1)
     strncpy(s, text + a,  b - a + 1)

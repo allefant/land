@@ -93,7 +93,11 @@ def platform_sound_init():
     al_reserve_samples(8)
 
 def platform_sound_exit():
-    pass
+    if streaming:
+        for LandStream *s in LandArray *streaming:
+            LandStreamPlatform *s2 = (void *)s
+            al_destroy_audio_stream(s2.a5)
+            s2.a5 = None
 
 def platform_sound_resume():
     al_restore_default_mixer()

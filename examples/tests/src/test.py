@@ -1,6 +1,8 @@
 import global land.land
 import global land.yaml
 
+import collision
+
 def test_shuffle:
     for int i in range(100):
         int a[25]
@@ -95,11 +97,12 @@ def main() -> int:
     land_init()
     
     #test_shuffle()
-    test_yaml1()
-    test_yaml2()
-    test_yaml3()
-    test_yaml4()
-    test_yaml5()
-    test_yaml6()
+    #test_yaml1()
+    #test_yaml2()
+    #test_yaml3()
+    #test_yaml4()
+    #test_yaml5()
+    #test_yaml6()
+    test_collision()
 
     return 0

@@ -192,6 +192,7 @@ def land_mainloop():
 
     land_log_message("Commencing operations.\n")
     platform_mainloop(parameters)
+    land_log_message("Ceasing operations.\n")
 
     land_runner_switch_active(None)
     land_runner_destroy_all()
