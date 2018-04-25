@@ -83,6 +83,11 @@ def land_color_cielab(double L, a, b) -> LandColor:
     double z = Zn * cielab_f_inv((L + 0.16) / 1.16 - b / 2.00)
     return land_color_xyz(x, y, z)
 
+def land_color_lch(double l, c, h) -> LandColor:
+    double a = c * cos(h)
+    double b = c * sin(h)
+    return land_color_cielab(l, a, b)
+
 def land_color_xyy(double x, y, Y) -> LandColor:
     # x = X / (X + Y + Z)
     # y = Y / (X + Y + Z)
