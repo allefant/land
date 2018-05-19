@@ -12,6 +12,8 @@ macro LAND_PI 3.1415926535897931
 
 def land_read_text(char const *filename) -> char *:
     LandBuffer* bytebuffer = land_buffer_read_from_file(filename)
+    if not bytebuffer:
+        return None
     return land_buffer_finish(bytebuffer)
 
 def land_utf8_char(char **pos) -> int:
@@ -235,7 +237,7 @@ def land_prepend(char **s, char const *pre):
 def land_replace(char **s, int off, char const *wat, *wit) -> int:
     """
     Given a pointer to a string, replaces the string with a new string
-    which and deletes the original one. The new string will have the
+    and deletes the original one. The new string will have the
     first occurence of "wat" replaced with "wit", starting at byte
     offset off.
     """

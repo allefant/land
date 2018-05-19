@@ -228,6 +228,30 @@ def csg_pyramid(void *shared) -> LandCSG *:
     add_tri(polygons, d, a, e, shared)
     return land_csg_new_from_polygons(polygons)
 
+def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> LandCSG *:
+    """
+    Make a 4-sided pyramid with a side-length of 1 at the base and a
+    height of 2. The side-length at the top is top_x tims top_y.
+    """
+    LandFloat x = top_x
+    LandFloat y = top_y
+    LandArray *polygons = land_array_new()
+    LandVector a = land_vector(-1, -1, -1)
+    LandVector b = land_vector( 1, -1, -1)
+    LandVector c = land_vector( 1,  1, -1)
+    LandVector d = land_vector(-1,  1, -1)
+    LandVector e = land_vector(-x, -y,  1)
+    LandVector f = land_vector( x, -y,  1)
+    LandVector g = land_vector( x,  y,  1)
+    LandVector h = land_vector(-x,  y,  1)
+    if not opened: add_quad(polygons, a, d, c, b, shared) # bottom
+    if not opened: add_quad(polygons, e, f, g, h, shared) # top
+    add_quad(polygons, h, g, c, d, shared) # front
+    add_quad(polygons, g, f, b, c, shared) # right
+    add_quad(polygons, f, e, a, b, shared) # back
+    add_quad(polygons, e, h, d, a, shared) # left
+    return land_csg_new_from_polygons(polygons)
+
 def csg_tetrahedron(void *shared) -> LandCSG *:
     """
     Make a tetrahedron.
