@@ -429,6 +429,17 @@ def land_widget_container_child(LandWidget *super) -> LandWidget *:
             return first->data
     return None
 
+def land_widget_container_child_i(LandWidget *super, int i) -> LandWidget *:
+    """
+    Return the child i or else None.
+    """
+    LandWidgetContainer *self = (LandWidgetContainer *)super
+    int j = 0
+    for LandWidget *w in LandList *self.children:
+        if i == j: return w
+        j++
+    return None
+
 def land_widget_container_is_empty(LandWidget *super) -> int:
     LandWidgetContainer *self = (LandWidgetContainer *)super
     return not self.children or self->children->count == 0

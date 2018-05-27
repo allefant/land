@@ -7,33 +7,32 @@ macro GUL_CENTER_X 2
 macro GUL_RIGHT    4
 macro GUL_EQUAL_X  8
 
-macro GUL_LEAVE_X  16
-
 #GUL_EXPAND_Y 0
-macro GUL_SHRINK_Y  (1 * 256)
+macro GUL_SHRINK_Y  (16)
 #GUL_TOP 0
-macro GUL_CENTER_Y  (2 * 256)
-macro GUL_BOTTOM    (4 * 256)
-macro GUL_EQUAL_Y   (8 * 256)
+macro GUL_CENTER_Y  (32)
+macro GUL_BOTTOM    (64)
+macro GUL_EQUAL_Y   (128)
 
-macro GUL_LEAVE_Y  (16 * 256)
+macro GUL_HIDDEN    (256)
 
-macro GUL_HIDDEN    (1 * 65536)
-macro GUL_NO_LAYOUT (2 * 65536)
+macro GUL_NO_LAYOUT (512) # for containers only
+macro GUL_STEADFAST (1024) # for containers only
 
-macro GUL_RESIZE    (4 * 65536)
+macro GUL_RESIZE    (2048)
 
 # EQUAL_X:
 # bottom-up: Try to use width of largest column, until parent->max_width / n
 # top-down: use parent->w / n
 # else: space is added to min_width for all expanding ones
 #
-# LEAVE_X:
-# top-down: never modify, no matter what
-#
 # NO_LAYOUT:
-# The widget's children are not to be affected by the layout. The widget itself
-# is affected though. (Use LEAVE_X to make the widget itself not be affected.)
+# The widget's children are not to be affected by the layout. The widget
+# itself is affected though. This affects the top-down pass only.
+#
+# STEADFAST:
+# The widget is not ever affected by its children. This affects the
+# bottom-up pass only.
 #
 # GUL_RESIZE:
 # The widget is being resized - if not enough space, go ahead and modify its
@@ -59,7 +58,7 @@ class LandLayoutBox:
     int max_width              # Maximum outer width in pixels (0 for no limit). 
     int max_height             # Maximum outer height in pixels (0 for no limit). 
 
-    int current_min_width
+    int current_min_width      # when recalculating layout resets to min_width
     int current_min_height
 
     int flags
@@ -151,28 +150,20 @@ static def lookup_box_in_grid(LandWidget *self,
 
 # Get minimum height of the specified row. 
 static def row_min_height(LandWidget *self, int row) -> int:
-    int i
     int v = 0
-
-    for i = 0 while i < self.box.cols with i++:
+    for int i in range(self.box.cols):
         LandWidget *c = lookup_box_in_grid(self, i, row)
-
         if c and c->box.current_min_height > v:
             v = c->box.current_min_height
-
     return v
 
 # Get minimum width of the specified column. 
 static def column_min_width(LandWidget *self, int col) -> int:
-    int i
     int v = 0
-
-    for i = 0 while i < self.box.rows with i++:
+    for int i in range(self.box.rows):
         LandWidget *c = lookup_box_in_grid(self, col, i)
-    
         if c and c->box.current_min_width > v:
             v = c->box.current_min_width
-
     return v
 
 # Check if a column is expanding (at least one cell). 
@@ -223,38 +214,32 @@ static def expanding_rows(LandWidget * self) -> int:
 
 # Get minimum (outer) height so all children can possibly fit. 
 static def min_height(LandWidget *self) -> int:
-    int i
     int v = 0
-
-    for i = 0 while i < self.box.rows with i++:
+    for int i in range(self.box.rows):
         v += row_min_height(self, i)
-    
-    if self.element:
-        v += self.element->vgap * (i - 1) + self->element->it + self->element->ib
 
+    if self.element:
+        v += self.element->vgap * (self.box.rows - 1)
+        v += self->element->it + self->element->ib
     return v
 
 # Get minimum (outer) width so all children can possibly fit. 
 static def min_width(LandWidget *self) -> int:
-    int i
     int v = 0
-
-    for i = 0 while i < self.box.cols with i++:
+    for int i in range(self.box.cols):
         v += column_min_width(self, i)
-
     if self.element:
-        v += self.element->hgap * (i - 1) + self->element->il + self->element->ir
-
+        v += self.element->hgap * (self.box.cols - 1)
+        v += self->element->il + self->element->ir
     return v
 
 static def adjust_resize_width(LandWidget *self, int dx) -> int:
-    int i
-    for i = 0 while i < self.box.cols with i++:
+    for int i in range(self.box.cols):
         int j
         for j = 0 while j < self.box.rows with j++:
             LandWidget *c = lookup_box_in_grid(self, i, j)
             if c and c->box.flags & GUL_RESIZE:
-                c->box.current_min_width += dx
+                c.box.current_min_width += dx
                 return 1
     return 0
 
@@ -279,25 +264,26 @@ static def gul_box_bottom_up(LandWidget *self):
         self.box.current_min_width = 0
         self.box.current_min_height = 0
         return
-    
+
+    LandWidgetContainer *container = None
+    if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
+         container = LAND_WIDGET_CONTAINER(self)
+
     # A box with NO_LAYOUT is like a box without children.
-    if not (self.box.flags & GUL_NO_LAYOUT):
-        if land_widget_is(self, LAND_WIDGET_ID_CONTAINER):
-            LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
-            if container->children:
-                LandListItem *i = container->children->first
-                for  while i with i = i->next:
-                    LandWidget *c = i->data
-                    gul_box_bottom_up(LAND_WIDGET(c))
+    if (self.box.flags & GUL_NO_LAYOUT) or not container or not container.children:
+        self.box.current_min_width = self.box.min_width
+        self.box.current_min_height = self.box.min_height
+        return
 
-                self.box.current_min_width = max(self->box.min_width,
-                    min_width(self))
-                self.box.current_min_height = max(self->box.min_height,
-                    min_height(self))
-                return
+    for LandWidget *c in LandList* container.children:
+        gul_box_bottom_up(LAND_WIDGET(c))
 
-    self.box.current_min_width = self->box.min_width
-    self.box.current_min_height = self->box.min_height
+    if self.box.flags & GUL_STEADFAST: return
+
+    int min_w = min_width(self)
+    int min_h = min_height(self)
+    self.box.current_min_width = max(self.box.min_width, min_w)
+    self.box.current_min_height = max(self.box.min_height, min_h)
 
 static def gul_box_top_down(LandWidget *self):
     """
@@ -318,6 +304,7 @@ static def gul_box_top_down(LandWidget *self):
     int minw = min_width(self)
     int minh = min_height(self)
 
+    # If we go over the max width find a column which we can shrink.
     if self.box.max_width and minw > self->box.max_width:
         if not adjust_resize_width(self, self.box.max_width - minw):
             ERR("Fatal: Minimum width of children (%d) "
@@ -398,7 +385,7 @@ static def gul_box_top_down(LandWidget *self):
         int ch = row_min_height(self, j)
         int cy = y
 
-        if (is_row_expanding(self, j)):
+        if is_row_expanding(self, j):
             ch += share
             # The first rows may get an extra pixel, in case we can't
             # evenly share. 
@@ -456,12 +443,17 @@ static def gul_box_fit_children(LandWidget *self):
 
     gul_box_bottom_up(self)
 
-    self.box.w = self->box.current_min_width
-    self.box.h = self->box.current_min_height
+    if not (self.box.flags & GUL_STEADFAST):
+        self.box.w = self->box.current_min_width
+        self.box.h = self->box.current_min_height
 
-    land_call_method(self, layout_changing, (self))
+        if self.no_layout_notify == 0:
+            land_call_method(self, layout_changing, (self))
+
     gul_box_top_down(self)
-    land_call_method(self, layout_changed, (self))
+
+    if not (self.box.flags & GUL_STEADFAST) and self.no_layout_notify == 0:
+        land_call_method(self, layout_changed, (self))
 
 # TODO: provide functions for changing grid-size and cell-position, and do
 # optimized lookup of the lookup table in all cases.

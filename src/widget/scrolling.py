@@ -121,7 +121,8 @@ def land_widget_scrolling_autobars(LandWidget *widget) -> int:
     LAND_WIDGET_SCROLLBAR(vslider)->callback(vslider, 0, &ya, &yb, &yr, &yp)
 
     # Determine which bars are needed.
-    int needh = self.autohide & 1 ? 0 : 1, needv = self->autohide & 2 ? 0 : 1
+    int needh = self.autohide & 1 ? 0 : 1
+    int needv = self->autohide & 2 ? 0 : 1
     if xp > xa or 1 + xb - xa > xr: needh = 1
     if yp > ya or 1 + yb - ya > yr: needv = 1
 
@@ -195,7 +196,8 @@ def land_widget_scrolling_autobars(LandWidget *widget) -> int:
 
     label done
     if f: land_widget_layout_unfreeze(widget)
-    land_widget_layout(widget)
+
+    land_internal_gul_layout_updated_during_layout(widget)
 
     int after = 0
     if not vbox->hidden: after += 1
@@ -203,6 +205,10 @@ def land_widget_scrolling_autobars(LandWidget *widget) -> int:
     if not empty->hidden: after += 4
     if after == before: return 0
     return 1
+
+def land_widget_scrolling_need_vertical_bar(LandWidget *widget) -> bool:
+    LandWidget *vbox = land_widget_scrolling_get_vertical(widget)
+    return not vbox.hidden
 
 static def scrolling_update_layout(LandWidget *widget) -> int:
     """
@@ -253,13 +259,14 @@ def land_widget_scrolling_get_scroll_extents(LandWidget *base, float *x, *y):
     Determines the "scrollable area", that is how much overlap there is in
     horizontal and vertical direction.
     """
-    LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
+    LandWidget *contents = land_widget_scrolling_get_container(base)
     LandList *children = LAND_WIDGET_CONTAINER(contents)->children
     if not children:
         *x = 0
         *y = 0
         return
-    LandWidget *child =  children->first->data
+    LandWidget *child = children->first->data
+
     *x = child->box.w - contents->box.w + contents->element->il + contents->element->ir
     *y = child->box.h - contents->box.h + contents->element->it + contents->element->ib
     if *x < 0: *x = 0
@@ -293,19 +300,22 @@ def land_widget_scrolling_limit(LandWidget *base):
     float x, y, w, h
     land_widget_scrolling_get_scroll_position(base, &x, &y)
     land_widget_scrolling_get_scroll_extents(base, &w, &h)
+
     if y < -h: land_widget_scrolling_scrollto(base, x, -h)
     if y > 0: land_widget_scrolling_scrollto(base, x, 0)
 
 def land_widget_scrolling_mouse_tick(LandWidget *base):
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(base)
-    if land_mouse_delta_z() and self.scrollwheel:
-        if not (self.scrollwheel & 2):
+    if land_mouse_delta_z() and self.scrollwheel != 0:
+        if self.scrollwheel == 1:
             float w, h
             land_widget_scrolling_get_scroll_extents(base, &w, &h)
             if h <= 0: return
         int dy = land_mouse_delta_z() * land_font_height(base->element->font)
+
         land_widget_scrolling_scroll(base, 0, dy)
-        if not (self.scrollwheel & 2):
+        
+        if self.scrollwheel == 1:
             land_widget_scrolling_limit(base)
 
     land_widget_container_mouse_tick(base)
@@ -387,17 +397,18 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     land_widget_layout_enable(widget)
 
     # Add own widgets without special hook. 
-    widget->vt = land_widget_container_interface
+    widget.vt = land_widget_container_interface
+    widget.box.flags |= GUL_STEADFAST
 
     LandWidgetScrolling *scrolling = (void *)widget
     scrolling->scrollwheel = 1
 
     # child 1: container 
     LandWidget *contents = land_widget_container_new(widget, 0, 0, 0, 0)
-    # FIXME: shouldn't the theme handle this?
-    # contents->only_border = 1
     contents->vt = land_widget_scrolling_contents_container_interface
     land_widget_theme_initialize(contents)
+    contents.box.flags |= GUL_STEADFAST
+    contents.box.flags |= GUL_NO_LAYOUT
 
     # child 2: vertical scrollbar 
     LandWidget *right = land_widget_container_new(widget, 0, 0, 0, 0)

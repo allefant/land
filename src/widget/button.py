@@ -224,11 +224,11 @@ def land_widget_text_initialize(LandWidget *self,
     land_widget_button_initialize(self,
         parent, multiline ? None : text, None, false, NULL, x, y, w, h)
     self.no_decoration = 1
-
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
+    button.multiline = multiline
     land_widget_theme_initialize(self)
 
     if multiline:
-        land_widget_button_multiline(self, multiline)
         land_widget_button_set_text(self, text)
     else:
         land_widget_layout(parent)
@@ -316,6 +316,9 @@ def land_widget_button_multiline(LandWidget *self, int style):
             land_array_destroy(button->lines)
             button->lines = land_wordwrap_text(ww, 0, button->text)
             land_wordwrap_extents(&ww, &wh)
+        # FIXME: REMOVE outer_w and outer_h!!!
+        #self.outer_w = ww
+        #self.outer_h = wh
         land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
 
 def land_widget_button_align(LandWidget *self, int x, int y):

@@ -38,10 +38,8 @@ def land_widget_layout_set_grid_extra(LandWidget *self, int columns, rows):
 def land_widget_layout_set_minimum_size(LandWidget *self, int w, h):
     self.box.min_width = w
     self.box.min_height = h
-    self.box.current_min_width = w
-    self.box.current_min_height = h
-    #self.box.w = w
-    #self.box.h = h
+    self.outer_w = w
+    self.outer_h = h
 
 def land_widget_layout_set_maximum_size(LandWidget *self, int w, h):
     self.box.max_width = w

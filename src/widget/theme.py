@@ -364,6 +364,9 @@ def land_widget_theme_element_new(
     return self
 
 def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
+    """
+    Load a new theme and make it the default theme.
+    """
     LandWidgetTheme *self
     land_alloc(self)
 
@@ -395,6 +398,7 @@ def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
 
     land_ini_destroy(config)
 
+    land_widget_theme_set_default(self)
     return self
 
 def land_widget_theme_destroy(LandWidgetTheme *self):

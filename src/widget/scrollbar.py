@@ -48,7 +48,7 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
         if not set:
             *min = 0
             *max = 0
-            *range = 0
+            *range = 1
             *pos = 0
 
 
@@ -80,7 +80,7 @@ static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
         if not set:
             *min = 0
             *max = 0
-            *range = 0
+            *range = 1
             *pos = 0
 
 static def get_size(LandWidget *super) -> int:

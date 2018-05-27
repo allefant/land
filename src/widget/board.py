@@ -31,9 +31,17 @@ def land_widget_board_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
 def land_widget_board_add(LandWidget *base, LandWidget *add):
     land_widget_container_add(base, add)
 
+def land_widget_board_size(LandWidget *super, float dx, dy):
+    pass
+
+def land_widget_board_update(LandWidget *widget):
+    pass
+
 def land_widget_board_interface_initialize():
     land_widget_container_interface_initialize()
     land_widget_board_interface = land_widget_copy_interface(
         land_widget_container_interface, "board")
     land_widget_board_interface->id |= LAND_WIDGET_ID_BOARD
     land_widget_board_interface->add = land_widget_board_add
+    land_widget_board_interface->size = land_widget_board_size
+    land_widget_board_interface->update = land_widget_board_update
