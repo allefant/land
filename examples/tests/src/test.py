@@ -2,6 +2,7 @@ import global land.land
 import global land.yaml
 
 import collision
+import test_widget
 
 def test_shuffle:
     for int i in range(100):
@@ -103,6 +104,7 @@ def main() -> int:
     #test_yaml4()
     #test_yaml5()
     #test_yaml6()
-    test_collision()
+    #test_collision()
+    test_widget()
 
     return 0

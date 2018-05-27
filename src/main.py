@@ -160,6 +160,14 @@ def land_set_synchronized(bool onoff):
 def land_maximize_fps(bool onoff):
     _maximize_fps = onoff
 
+def land_mainloop_prepare:
+    land_exit_function(land_exit)
+
+    land_display_init()
+    land_font_init()
+    land_image_init()
+    land_grid_init()
+
 def land_mainloop():
     """Run Land. This function will use all the parameters set before to
     initialize everything, then run the initial runner. It will return when
@@ -167,12 +175,7 @@ def land_mainloop():
     """
     land_log_message("land_mainloop\n")
 
-    land_exit_function(land_exit)
-
-    land_display_init()
-    land_font_init()
-    land_image_init()
-    land_grid_init()
+    land_mainloop_prepare()
 
     LandDisplay *display = land_display_new(parameters->w,
         parameters->h, parameters->flags)
