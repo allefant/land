@@ -474,6 +474,26 @@ def land_4x4_matrix_scale(LandFloat x, y, z) -> Land4x4Matrix:
     m.v[15] = 1
     return m
 
+def land_4x4_matrix_skew(LandFloat xy, xz, yx, yz, zx, zy) -> Land4x4Matrix:
+    Land4x4Matrix m
+    m.v[0] = 1
+    m.v[1] = xy
+    m.v[2] = xz
+    m.v[3] = 0
+    m.v[4] = yx
+    m.v[5] = 1
+    m.v[6] = yz
+    m.v[7] = 0
+    m.v[8] = zx
+    m.v[9] = zy
+    m.v[10] = 1
+    m.v[11] = 0
+    m.v[12] = 0
+    m.v[13] = 0
+    m.v[14] = 0
+    m.v[15] = 1
+    return m
+
 def land_4x4_matrix_rotate(LandFloat x, y, z, angle) -> Land4x4Matrix:
     Land4x4Matrix m
 
