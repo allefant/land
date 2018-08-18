@@ -7,6 +7,7 @@ static enum Mode:
     LIST
     CLOUD
     CUBE
+    CUBE2
     
 static Mode mode
 
@@ -26,6 +27,8 @@ class Xyz:
     
 LandArray *colors # Color
 LandFloat mindist
+Color *maximum_grid_color
+LandFloat maximum_grid_distance
 
 static def get_Y(int i) -> float:
     if i == 0: return 0.01
@@ -125,12 +128,16 @@ static def init:
     # color cube
     arrange_cube()
 
-def color_add(float r, g, b) -> Color*:
+def color_new(float r, g, b) -> Color*:
     Color *color; land_alloc(color)
     color.rgb.r = r
     color.rgb.g = g
     color.rgb.b = b
     land_color_to_cielab(color.rgb, &color.l, &color.a, &color.b)
+    return color
+
+def color_add(float r, g, b) -> Color*:
+    auto color = color_new(r, g, b)
     land_array_add(colors, color)
     return color
 
@@ -141,41 +148,128 @@ def arrange_prepare:
     if colors:
         land_array_destroy(colors)
     colors = land_array_new()
-    #color_addf(0, 0, 0)
-    #color_addf(1, 0, 0)
-    #color_addf(0, 1, 0)
-    #color_addf(0, 0, 1)
-    #color_addf(0, 1, 1)
-    #color_addf(1, 0, 1)
-    #color_addf(1, 1, 0)
-    #color_addf(1, 1, 1)
+
+def add8:
+    color_addf(0, 0, 0)
+    color_addf(1, 0, 0)
+    color_addf(0, 1, 0)
+    color_addf(0, 0, 1)
+    color_addf(0, 1, 1)
+    color_addf(1, 0, 1)
+    color_addf(1, 1, 0)
+    color_addf(1, 1, 1)
 
 def arrange_cube:
     arrange_prepare()
     for int x in range(5):
         for int y in range(6):
             for int z in range(5):
-                Color * c = color_add(x / 4.0, y / 4.0, z / 4.0)
+                Color * c = color_add(x / 4.0, y / 5.0, z / 4.0)
                 if x == 0 or x == 4:
-                    if y == 0 or y == 4:
+                    if y == 0 or y == 5:
                         if z == 0 or z == 4:
                             c.fixed = True
 
-def arrange_center
+def arrange_center:
     arrange_prepare()
-    for int x in range(5):
-        for int y in range(5):
-            for int z in range(5):
-                color_add(.5, .5, .5)
+    add8()
+    for int i in range(154 - 8):
+        color_add(.5, .5, .5)
 
-def arrange_random
+def arrange_random:
     arrange_prepare()
-    for int x in range(5):
-        for int y in range(5):
-            for int z in range(5):
-                color_add(land_rand(0, 255) / 255.0,
-                    land_rand(0, 255) / 255.0,
-                    land_rand(0, 255) / 255.0)
+    add8()
+    for int i in range(154 - 8):
+        color_add(land_rand(0, 255) / 255.0,
+            land_rand(0, 255) / 255.0,
+            land_rand(0, 255) / 255.0)
+
+class ThreadData:
+    int xoffset, xcount
+    Color *maximum_grid_color
+    LandFloat maximum_grid_distance
+
+ThreadData _data[8]
+def find_grid_distances:
+    for int i in range(8):
+        ThreadData *d = _data + i
+        d.xoffset = i * 8
+        d.xcount = 8
+        d.maximum_grid_color = None
+        land_thread_run(find_grid_distances_thread, d)
+
+def find_grid_distances_thread(void *v):
+    ThreadData *data = v
+    LandColor maximum = {0}
+    double maximum_distance = 0
+    int xn = 64, yn = 64, zn = 64
+
+    for int x in range(data.xoffset, data.xoffset + data.xcount):
+        for int y in range(yn):
+            for int z in range(zn):
+                double minimum = -1
+                LandColor gc = land_color_rgba(x / (xn - 1.0),
+                    y / (yn - 1.0),
+                    z / (zn - 1.0),
+                    1.0)
+                for Color *c in colors:
+                    double d = land_color_distance_ciede2000(gc, c.rgb)
+                    if minimum < 0 or d < minimum:
+                        minimum = d
+
+                if minimum > maximum_distance:
+                    maximum = gc
+                    maximum_distance = minimum
+
+    data.maximum_grid_distance = maximum_distance
+    data.maximum_grid_color = color_new(maximum.r, maximum.g, maximum.b)
+    int m = -1
+    for int i in range(8):
+        if not _data[i].maximum_grid_color: return
+        if m < 0 or _data[i].maximum_grid_distance > _data[m].maximum_grid_distance:
+            m = i
+
+    maximum_grid_distance = _data[m].maximum_grid_distance
+    maximum_grid_color = _data[m].maximum_grid_color
+
+str custom = """
+#400000#8b4513#452209#5c4305#808000#008000#003200#004040#172727#0c0c38
+#250041#400040#630a42#000000#800000#ff0000#a0522d#7f725a#6b8e23#228b22
+#2a3517#2f4f4f#708090#483d8b#005f7f#000080#800080#5e4747#343434#8b0000
+#d2691e
+#e9967a#daa520#bdb76b#32cd32#006400#008080#778899#4169e1#191970#8b008b
+#c71585#696969#a52a2a#ff4500#d2b48c#ffd700#f0e68c#9acd32#556b2f#008b8b
+#b0c4de#4682b4#4b0082#9400d3#ff1493#808080#b22222#b8860b#deb887#f5deb3
+#eee8aa#00fa9a#2e8b57#20b2aa#add8e6#1e90ff#0000cd#6c5f6c#ff00ff#a9a9a9
+#dc143c#cd853f#ffdab9#ffe4b5#f5f5dc#00ff00#3cb371#00ced1#b0e0e6#5f9ea0
+#0000ff#9932cc#db7093#c0c0c0#cd5c5c#ff7f50#ffdead#ffebcd#fafad2#00ff7f
+#8fbc8f#48d1cc#e6e6fa#6495ed#663399#ba55d3#bc8f8f#d3d3d3#ff6347#ff8c00
+#ffe4c4#ffefd5#fff8dc#7cfc00#66cdaa#40e0d0#f0f8ff#00bfff#8a2be2#da70d6
+#ff69b4#dcdcdc#f08080#f4a460#faebd7#fdf5e6#fffacd#7fff00#90ee90#afeeee
+#f8f8ff#87ceeb#6a5acd#ee82ee#ffb6c1#f5f5f5#fa8072#ffa07a#faf0e6#ffff00
+#ffffe0#98fb98#f0fff0#00ffff#e0ffff#87cefa#7b68ee#dda0dd#ffc0cb#fffafa
+#ffe4e1#ffa500#fff5ee#fffaf0#fffff0#adff2f#f5fffa#7fffd4#f0ffff#9370db
+#d8bfd8#fff0f5#ffffff
+"""
+
+def print_colors:
+    int i = 1
+    for Color *c in colors:
+        printf("color%03d #%02x%02x%02x\n", i, (int)(c.rgb.r * 255),
+            (int)(c.rgb.g * 255), (int)(c.rgb.b * 255))
+        i++
+
+def arrange_custom:
+    arrange_prepare()
+    str p = custom
+    while *p:
+        if *p == '#':
+            LandColor c = land_color_name(p)
+            p += 7
+            auto c2 = color_add(c.r, c.g, c.b)
+            c2.fixed = True
+        else:
+            p++
 
 def find_neighbors:
     double close = 0.3
@@ -245,6 +339,17 @@ static def tick:
     if land_key_pressed('1'): arrange_cube()
     if land_key_pressed('2'): arrange_center()
     if land_key_pressed('3'): arrange_random()
+    if land_key_pressed('4'): arrange_custom()
+    
+    if land_key_pressed('s'): print_colors()
+    if land_key_pressed('d'): find_grid_distances()
+    if land_key_pressed('a'):
+        if maximum_grid_color:
+            LandColor rgb = maximum_grid_color.rgb
+            printf("adding #%02x%02x%02x\n",
+                (int)(rgb.r * 255), (int)(rgb.g * 255), (int)(rgb.b * 255))
+                
+            color_add(rgb.r, rgb.g, rgb.b)
 
     if land_key_pressed(LandKeyFunction + 1): mode = XYY
     if land_key_pressed(LandKeyFunction + 2): mode = CIELAB
@@ -265,6 +370,8 @@ static def tick:
         mode = CLOUD
     if land_key_pressed(LandKeyFunction + 5):
         mode = CUBE
+    if land_key_pressed(LandKeyFunction + 6):
+        mode = CUBE2
 
     if mode == CLOUD:
         int id = 0
@@ -323,7 +430,7 @@ static def tick:
             if c.y > 900: c.y = 900
             id++
 
-    if mode == CUBE:
+    if mode == CUBE or mode == CUBE2:
         # LLoyd's (but too slow as brute force)
         # 1. for each color, assign to it all the colors closer to it
         #    than to any other
@@ -359,7 +466,6 @@ static def tick:
                 col.rgb = rgb2
                 land_color_to_cielab(col.rgb, &col.l, &col.a, &col.b)
                 mindist = mindist * 0.99 + md2 * 0.01
-                
 
 static def marker(float x, y):
     land_circle(x - 10, y - 10, x + 10, y + 10)
@@ -376,7 +482,10 @@ static def draw_color(Color *c, float x, y):
         float dy = sin(LAND_PI * 2 * i / 6)
         float ox = x + 20 * dx
         float oy = y + 20 * dy
-        land_color(0, 0, 0, 1)
+        if c.l < 0.5:
+            land_color(1, 1, 1, 1)
+        else:
+            land_color(0, 0, 0, 1)
         land_line(x + 10 * dx, y + 10 * dy, x + 15 * dx, y + 15 * dy)
         land_color(o.rgb.r, o.rgb.g, o.rgb.b, 1)
         land_filled_circle(ox - 5, oy - 5, ox + 5, oy + 5)
@@ -406,7 +515,7 @@ static def draw:
             land_filled_circle(1200 + x - 30, y - 30, 1200 + x + 30, y + 30)
         return
 
-    if mode == CUBE:
+    if mode == CUBE or mode == CUBE2:
         land_clear(0.5, 0.5, 0.5, 1)
         land_color(0.8, 0.8, 0.8, 1)
 
@@ -434,6 +543,8 @@ static def draw:
         for Color *col in colors:
             LandColor c = col.rgb
             LandVector p = {c.r, c.g, c.b}
+            if mode == CUBE2:
+                p = (LandVector){col.a + 0.5, col.l, col.b + 0.5}
             LandVector v = land_vector_matmul(p, &m)
             col.x = v.x
             col.y = v.y
@@ -445,13 +556,19 @@ static def draw:
         for Color *col in a:
             LandColor c = col.rgb
             land_color(c.r, c.g, c.b, 1)
-            land_filled_circle(col.x - 20, col.y - 20, col.x + 20, col.y + 20)
+            float ra = 20
+            if col.fixed: ra *= 1.5
+            land_filled_circle(col.x - ra, col.y - ra, col.x + ra, col.y + ra)
 
         land_array_destroy(a)
 
         land_color(0, 0, 0, 1)
         land_text_pos(0, 0)
+        land_print("Colors: %d", land_array_count(colors))
         land_print("Minimum distance: %f", mindist)
+        if maximum_grid_color:
+            land_print("Maximum distance: %f", maximum_grid_distance)
+            draw_color(maximum_grid_color, 30, land_text_y() + 60)
         return
 
     if mode == XYY or mode == CIELAB:

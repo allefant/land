@@ -185,14 +185,10 @@ def land_equals(char const *s, *s2) -> bool:
 
 def land_ends_with(char const *s, *end) -> bool:
     size_t n = strlen(end)
-    if strlen(end) > n:
-        return False
     return strncmp(s + strlen(s) - n, end, n) == 0
 
 def land_starts_with(char const *s, *start) -> bool:
     size_t n = strlen(start)
-    if strlen(start) > n:
-        return False
     return strncmp(s, start, n) == 0
 
 def land_concatenate(char **s, char const *cat):
@@ -264,6 +260,17 @@ def land_find(str hay, needle) -> int:
     str x = strstr(hay, needle)
     if not x: return -1
     return x - hay
+
+def land_find_from_back(str hay, needle) -> int:
+    # 0123456 01 
+    # abcdef  e
+    int hn = strlen(hay)
+    int nn = strlen(needle)
+    int i = hn - nn
+    while i >= 0:
+        if strncmp(hay + i, needle, nn) == 0: return i
+        i--
+    return -1
 
 def land_replace_all(char **s, char const *wat, char const *wit) -> int:
     """
