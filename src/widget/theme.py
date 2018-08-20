@@ -499,10 +499,8 @@ def land_widget_theme_set_minimum_size_for_contents(LandWidget *self,
     self.inner_h = h
     w += element->il + element->ir
     h += element->it + element->ib
-    if element->minw > w: w = element->minw
-    if element->minh > h: h = element->minh
-    if self.outer_w > w: w = self->outer_w
-    if self.outer_h > h: h = self->outer_h
+    if w < element.minw: w = element.minw
+    if h < element.minh: h = element.minh
     land_widget_layout_set_minimum_size(self, w, h)
 
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
@@ -529,12 +527,9 @@ def land_widget_theme_initialize(LandWidget *self):
     """
     if not self.element: return
     self.element = land_widget_theme_find_element(self->element->theme, self)
-    # FIXME: Do this in land_widget_base_initialize instead
-    self.outer_w = self->box.min_width
-    self.outer_h = self->box.min_height
-    #int w = self.box.min_width - self->element->il - self->element->ir
-    #int h = self.box.min_height - self->element->it - self->element->ib
-    land_widget_theme_set_minimum_size_for_contents(self, 0, 0)
+    int w = self.box.min_width - self->element->il - self->element->ir
+    int h = self.box.min_height - self->element->it - self->element->ib
+    land_widget_theme_set_minimum_size_for_contents(self, w, h)
 
 def land_widget_theme_update(LandWidget *self):
     """

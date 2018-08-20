@@ -134,7 +134,7 @@ def land_widget_button_draw(LandWidget *base):
 def land_widget_button_size(LandWidget *base, float dx, dy):
     if not (dx or dy): return
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    land_widget_button_multiline(base, button->multiline)
+    land_widget_button_multiline(base, button.multiline)
 
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -236,7 +236,20 @@ def land_widget_text_initialize(LandWidget *self,
     return self
 
 def land_widget_text_new(LandWidget *parent, char const *text,
-    int multiline, x, y, w, h) -> LandWidget *:
+        int multiline, x, y, w, h) -> LandWidget *:
+    """
+    For normal text the minimum size is the rectangle to fit it into a
+    single line. (multiline == 0)
+
+    For multi-line text it is the rectangle to contain all lines of
+    text. (multiline == 1)
+
+    For multi-line text with word-wrap the initial width is taken for
+    word-wrapping and then the rectangle to fit the word-wrapped text is
+    used. This can be less than w if the longest line is less, or more
+    than w if wordwrapping needs more width (i.e. the longest word is
+    longer than w). (multiline == 2)
+    """
     LandWidgetButton *button
     land_alloc(button)
     LandWidget *self = (LandWidget *)button
@@ -301,7 +314,7 @@ def land_widget_button_multiline(LandWidget *self, int style):
         float x, y, w, h
         land_widget_theme_font(self)
         land_widget_inner(self, &x, &y, &w, &h)
-        if style == 1:
+        if style == 0 or style == 1:
             button->lines = land_text_splitlines(button->text)
         else:
             button->lines = land_wordwrap_text(w, 0, button->text)
@@ -316,9 +329,6 @@ def land_widget_button_multiline(LandWidget *self, int style):
             land_array_destroy(button->lines)
             button->lines = land_wordwrap_text(ww, 0, button->text)
             land_wordwrap_extents(&ww, &wh)
-        # FIXME: REMOVE outer_w and outer_h!!!
-        #self.outer_w = ww
-        #self.outer_h = wh
         land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
 
 def land_widget_button_align(LandWidget *self, int x, int y):

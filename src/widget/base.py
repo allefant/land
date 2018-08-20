@@ -289,9 +289,6 @@ class LandWidget:
     # properties removed. They cache the minimum dimensions needed for
     # the contents of the window (without theme border).
     int inner_w, inner_h
-    # FIXME: as above, not needed. Those cache the minimum size independent of
-    # content.
-    int outer_w, outer_h
 
 class LandWidgetProperty:
     void (*destroy)(void *data)
@@ -520,6 +517,8 @@ def land_widget_size(LandWidget *self, float dx, dy):
     self.box.w += dx
     self.box.h += dy
     land_call_method(self, size, (self, dx, dy))
+    # after a resize we need to update the layout
+    #land_widget_layout(self)
 
 def land_widget_resize(LandWidget *self, float dx, dy):
     """
@@ -530,8 +529,11 @@ def land_widget_resize(LandWidget *self, float dx, dy):
     self.box.min_height = self->box.h + dy
     land_widget_size(self, dx, dy)
 
-def land_widget_set_size(LandWidget *self, float w, float h):
+def land_widget_set_size_permanent(LandWidget *self, float w, float h):
     land_widget_resize(self, w - self.box.w, h - self->box.h)
+
+def land_widget_set_size(LandWidget *self, float w, float h):
+    land_widget_size(self, w - self.box.w, h - self->box.h)
 
 def land_widget_set_height(LandWidget *self, float h):
     land_widget_resize(self, 0, h - self->box.h)
@@ -609,6 +611,15 @@ def land_widget_unhide(LandWidget *self):
     self.box.flags &= ~GUL_HIDDEN
     if self.parent: land_widget_layout(self->parent)
 
+def land_widget_set_hidden(LandWidget *self, bool hidden):
+    if self.hidden == hidden: return
+    self.hidden = hidden
+    self.box.flags ^= GUL_HIDDEN
+    if self.parent: land_widget_layout(self->parent)
+
+def land_widget_is_hidden(LandWidget *self) -> bool:
+    return self.hidden
+
 def land_widget_outer(LandWidget *self, float *x, *y, *w, *h):
     *x = self.box.x
     *y = self.box.y
@@ -638,6 +649,16 @@ def land_widget_inner_extents(LandWidget *self, float *l, *t, *r, *b):
         *t += self.element->it
         *r -= self.element->ir
         *b -= self.element->ib
+
+def land_widget_get_inner_size(LandWidget *self, float *w, *h):
+    *w = self->box.w
+    *h = self->box.h 
+    
+    if self.element:
+        *w -= self.element->il
+        *h -= self.element->it
+        *w -= self.element->ir
+        *h -= self.element->ib
 
 def land_widget_base_interface_initialize():
     if land_widget_base_interface: return

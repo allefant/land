@@ -9,7 +9,7 @@ class LandWidgetScrollbar:
     int dragged
     int drag_x, drag_y
     bool vertical
-    void (*callback)(LandWidget *self, int set, int *min, int *max, int *range,
+    void (*callback)(LandWidget *self, bool update_target, int *min, int *max, int *range,
         int *pos)
 
 macro LAND_WIDGET_SCROLLBAR(widget) ((LandWidgetScrollbar *)
@@ -20,8 +20,8 @@ static import box
 global LandWidgetInterface *land_widget_scrollbar_vertical_interface
 global LandWidgetInterface *land_widget_scrollbar_horizontal_interface
 
-static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
-    *pos):
+static def scroll_vertical_cb(LandWidget *self, bool update_target,
+        int *min, *max, *range, *pos):
     """
     If set is not 0, then the target window is scrolled according to the
     scrollbar position.
@@ -32,7 +32,7 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
     if target:
         LandWidget *viewport = target->parent
 
-        if set:
+        if update_target:
             int ty = viewport->box.y + viewport->element->it
             if target->box.y > ty: ty = target->box.y
             ty -= *pos
@@ -45,7 +45,7 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
     else:
-        if not set:
+        if not update_target:
             *min = 0
             *max = 0
             *range = 1
@@ -57,13 +57,13 @@ static def scroll_vertical_cb(LandWidget *self, int set, *min, *max, *range,
 # |..|___|...|
 #    pos
 
-static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
-    *pos):
+static def scroll_horizontal_cb(LandWidget *self, bool update_target,
+        int *min, *max, *range, *pos):
     LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self)
     LandWidget *target = bar->target
     if target:
         LandWidget *viewport = target->parent
-        if set:
+        if update_target:
             int tx = viewport->box.x + viewport->element->il
             if target->box.x > tx: tx = target->box.x
             tx -= *pos
@@ -77,7 +77,7 @@ static def scroll_horizontal_cb(LandWidget *self, int set, *min, *max, *range,
             if *pos < *min: *min = *pos
             if *pos + *range - 1 > *max: *max = *pos + *range - 1
     else:
-        if not set:
+        if not update_target:
             *min = 0
             *max = 0
             *range = 1
@@ -90,14 +90,14 @@ static def get_size(LandWidget *super) -> int:
     else:
         return super->box.w
 
-def land_widget_scrollbar_update(LandWidget *super, int set):
+def land_widget_scrollbar_update(LandWidget *super, bool update_target):
     """
-    If set is not 0, then the target is updated from the scrollbar. Else the
+    If update_target is set, then the target is updated from the scrollbar. Else the
     scrollbar adjusts to the target's scrolled position.
     """
     LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super)
     int minval, maxval, val, valrange
-    int minpos, maxpos, pos, posrange, minlen
+    int minpos, maxpos, pos, minlen
 
     self.callback(super, 0, &minval, &maxval, &valrange, &val)
 
@@ -105,16 +105,18 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         minpos = super->parent->box.y + super->parent->element->it
         maxpos = super->parent->box.y + super->parent->box.h - super->parent->element->ib - 1
         pos = super->box.y
-        posrange = super->box.h
         minlen = super->element->minh
     else:
         minpos = super->parent->box.x + super->parent->element->il
         maxpos = super->parent->box.x + super->parent->box.w - super->parent->element->ir - 1
         pos = super->box.x
-        posrange = super->box.w
         minlen = super->element->minw
 
-    if set:
+    int posrange = 0
+    if maxval > minval:
+        posrange = (1 + maxpos - minpos) * valrange / (1 + maxval - minval)
+
+    if update_target:
         maxpos -= posrange - 1
         maxval -= valrange - 1
 
@@ -131,10 +133,6 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         # minpos/maxpos: pixel positions which can be covered in view
         # minval/maxval: pixel position which can be covered in scrollbar
         # valrage: length of viewed area in view
-        if maxval > minval:
-            posrange = (1 + maxpos - minpos) * valrange / (1 + maxval - minval)
-        else:
-            posrange = 0
         # posrange: length of scrollbar
         if posrange < minlen: posrange = minlen
         maxpos -= posrange - 1
@@ -145,25 +143,26 @@ def land_widget_scrollbar_update(LandWidget *super, int set):
         else:
             pos = minpos + (val - minval) * (maxpos - minpos) / (maxval - minval)
 
-        int dx = 0, dy = 0, dw = 0, dh = 0
+        int dx = 0, dy = 0
         if self.vertical:
-            dw = super->parent->box.w - (
+            super.box.w = super->parent->box.w - (
                 super->parent->element->ir +
-                super->parent->element->il) - super->box.w
-            dh = posrange - super->box.h
+                super->parent->element->il)
+            super.box.h = posrange
             dx = super->parent->box.x + super->parent->element->il -\
                 super->box.x
             dy = pos - super->box.y
         else:
-            dw = posrange - super->box.w
-            dh = super->parent->box.h - (
+            super.box.w = posrange
+            super.box.h = super->parent->box.h - (
                 super->parent->element->ib +
-                super->parent->element->it) - super->box.h
+                super->parent->element->it)
             dx = pos - super->box.x
             dy = super->parent->box.y + super->parent->element->it -\
                 super->box.y
+        super.box.min_width = super.box.w
+        super.box.min_height = super.box.h
         land_widget_move(super, dx, dy)
-        land_widget_size(super, dw, dh)
 
 def land_widget_scrollbar_draw(LandWidget *self):
     # land_widget_scrollbar_update(self, 0)
@@ -225,7 +224,7 @@ def land_widget_scrollbar_new(LandWidget *parent, *target,
         super->vt = land_widget_scrollbar_horizontal_interface
     
     land_widget_theme_initialize(super)
-    
+
     return super
 
 def land_widget_scrollbar_interface_initialize():

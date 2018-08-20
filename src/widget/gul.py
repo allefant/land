@@ -30,13 +30,12 @@ macro GUL_RESIZE    (2048)
 # The widget's children are not to be affected by the layout. The widget
 # itself is affected though. This affects the top-down pass only.
 #
-# STEADFAST:
-# The widget is not ever affected by its children. This affects the
-# bottom-up pass only.
-#
 # GUL_RESIZE:
 # The widget is being resized - if not enough space, go ahead and modify its
 # minimum dimensions to fit.
+#
+# GUL_STEADFAST:
+# The widget will not adjust its size to the size of its children.
 
 class LandLayoutBox:
     int x, y, w, h # outer box
@@ -68,7 +67,7 @@ static import container, theme
 static import global stdio, stdlib, assert, string, stdarg
 static import land/log, land/mem
 
-static int gul_debug;
+static int gul_debug
 
 static macro D(_) if (gul_debug) _
 #static macro D(_) (void)0;
@@ -278,8 +277,6 @@ static def gul_box_bottom_up(LandWidget *self):
     for LandWidget *c in LandList* container.children:
         gul_box_bottom_up(LAND_WIDGET(c))
 
-    if self.box.flags & GUL_STEADFAST: return
-
     int min_w = min_width(self)
     int min_h = min_height(self)
     self.box.current_min_width = max(self.box.min_width, min_w)
@@ -289,14 +286,21 @@ static def gul_box_top_down(LandWidget *self):
     """
     Recursively fit in all child widgets into the given widget.
     """
-    # A hidden box needs no layout since it gets assigned no space. A box
-    # without layout is fully affected by the layout of its parent - but does
-    # not allow the layout algorithm to run on its children.
-    if self.box.flags & (GUL_HIDDEN | GUL_NO_LAYOUT): return
 
     D(printf("Box (%s[%p]): %d[%d] x %d[%d] at %d/%d\n", self.vt->name, self,
         self.box.w, self->box.cols, self->box.h, self->box.rows, self->box.x,
         self.box.y))
+        
+    # A hidden box needs no layout since it gets assigned no space. A box
+    # without layout is fully affected by the layout of its parent - but does
+    # not allow the layout algorithm to run on its children.
+    if self.box.flags & GUL_HIDDEN:
+        D(printf("    hidden.\n"))
+        return
+    if self.box.flags & GUL_NO_LAYOUT:
+        D(printf("    no layout.\n"))
+        return
+
     if self.box.cols == 0 or self->box.rows == 0:
         D(printf("    empty.\n"))
         return
@@ -444,15 +448,16 @@ static def gul_box_fit_children(LandWidget *self):
     gul_box_bottom_up(self)
 
     if not (self.box.flags & GUL_STEADFAST):
+        # TODO: we also resize the box itself here? why?
         self.box.w = self->box.current_min_width
         self.box.h = self->box.current_min_height
 
-        if self.no_layout_notify == 0:
-            land_call_method(self, layout_changing, (self))
+    if self.no_layout_notify == 0:
+        land_call_method(self, layout_changing, (self))
 
     gul_box_top_down(self)
 
-    if not (self.box.flags & GUL_STEADFAST) and self.no_layout_notify == 0:
+    if self.no_layout_notify == 0:
         land_call_method(self, layout_changed, (self))
 
 # TODO: provide functions for changing grid-size and cell-position, and do
@@ -465,7 +470,7 @@ def land_internal_gul_layout_updated(LandWidget *self):
     D(printf("gul_layout_updated %s[%p]\n", self.vt->name, self))
     # If the parent has NO_LAYOUT set, then our own layout change also does
     # not trigger propagation of the layout change over this barrier. For
-    # example, a button inside a window changes its size. Its parent uses
+    # example, a button inside a window changes its size. That parent window uses
     # layout, so we recurse upwards to the window. The window sees that its
     # parent is a desktop with NO_LAYOUT, so now we call gul_box_fit_children
     # on the window, not propagating anything to the desktop.
