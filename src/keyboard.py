@@ -50,6 +50,8 @@ enum LandKeyboardKeys:
     LandKeyUnknown3 = 127 # 127=U''+0, ..., 227=U''+100
     LandKeysCount = 228
 
+    LandKeyF5 = LandKeyFunction + 5
+
 static int key_state[LandKeysCount]
 static int key_pressed[LandKeysCount]
 static int keybuffer_keycode[256]
@@ -98,3 +100,8 @@ def land_keybuffer_next(int *k, int *u):
 
 def land_key_name(int k) -> char const *:
     return platform_key_name(k)
+
+def land_key_get_pressed(int first) -> int:
+    for int i in range(first, LandKeysCount):
+        if key_pressed[i]: return i
+    return 0
