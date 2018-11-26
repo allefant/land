@@ -276,6 +276,10 @@ def land_widget_button_set_text(LandWidget *base, char const *text):
     land_widget_button_replace_text(base, text)
     land_widget_button_layout_text(base)
 
+def land_widget_button_get_text(LandWidget *base) -> str:
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    return button.text
+
 def land_widget_button_layout_text(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->text:
@@ -366,3 +370,6 @@ def land_widget_button_destroy(LandWidget *base):
     if button.image and button.want_image_destroyed:
         land_image_destroy(button.image)
     land_widget_base_destroy(base)
+
+def land_widget_button_set_minimum_text(LandWidget *base, char const *text):
+    land_widget_theme_set_minimum_size_for_text(base, text)

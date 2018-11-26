@@ -20,7 +20,7 @@ global LandWidgetInterface *land_widget_checkbox_description_interface
 macro LAND_WIDGET_CHECKBOX(widget) ((LandWidgetCheckBox *)
     land_widget_check(widget, LAND_WIDGET_ID_CHECKBOX, __FILE__, __LINE__))
 
-static def cb_clicked(LandWidget *widget):
+def _cb_clicked(LandWidget *widget):
     LandWidgetCheckBox *cb = LAND_WIDGET_CHECKBOX(widget->parent)
     if widget->selected:
         widget->selected = 0
@@ -50,7 +50,7 @@ def land_widget_checkbox_initialize(LandWidget *base,
     base->vt = land_widget_checkbox_interface
 
     LandWidget *checkbox = land_widget_button_new(base, checkbox_selected,
-        cb_clicked, 0, 0, 8, 8)
+        _cb_clicked, 0, 0, 8, 8)
     checkbox->vt = land_widget_checkbox_button_interface
     land_widget_theme_initialize(checkbox)
     land_widget_layout_set_shrinking(checkbox, 1, 0)
@@ -108,8 +108,8 @@ def land_widget_checkbox_set(LandWidget *base, bool checked):
     LandWidget *box = land_widget_container_child((void *)LAND_WIDGET_CONTAINER(base))
     bool was = box.selected
     if was != checked:
-        box.selected = checked
-        cb_clicked(box)
+        # _cb_clicked will change the state for us!
+        _cb_clicked(box)
     
 def land_widget_checkbox_interface_initialize():
     if land_widget_checkbox_interface: return
