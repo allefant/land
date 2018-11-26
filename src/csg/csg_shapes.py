@@ -1,6 +1,7 @@
 import land.csg.csg
 static import land.util
-
+static import land.mem
+import csg_octree
 static macro pi LAND_PI
 
 static def sphere_point(LandArray *vertices, LandFloat i, j):
@@ -55,6 +56,108 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
 
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
             
+    return land_csg_new_from_polygons(polygons)
+
+def _sphere_point(LandVector a, b) -> LandVector:
+    LandVector half = land_vector_mul(land_vector_add(a, b), 0.5)
+    return land_vector_normalize(half)
+
+def _sphere_tri(LandArray *polygons, LandVector a, b, c,
+        int divisions, void *shared):
+    """
+          c
+          .
+         / \
+       /     \
+     X---------X
+   /   \     /   \
+ /       \ /       \
+.---------I---------.
+a                   b
+    """
+    if divisions == 0:
+        LandArray *vertices = land_array_new()
+        land_array_add(vertices, land_csg_vertex_new(a, a))
+        land_array_add(vertices, land_csg_vertex_new(b, b))
+        land_array_add(vertices, land_csg_vertex_new(c, c))
+        land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+    else:
+        LandVector ab2 = _sphere_point(a, b)
+        LandVector bc2 = _sphere_point(b, c)
+        LandVector ca2 = _sphere_point(c, a)
+        _sphere_tri(polygons, a, ab2, ca2, divisions - 1, shared)
+        _sphere_tri(polygons, b, bc2, ab2, divisions - 1, shared)
+        _sphere_tri(polygons, c, ca2, bc2, divisions - 1, shared)
+        _sphere_tri(polygons, ab2, bc2, ca2, divisions - 1, shared)
+
+def csg_tetrasphere(int divisions, void *shared) -> LandCSG *:
+    """
+    Make a sphere out of a repeatedly subdivided tetrahedron.
+    """
+    LandArray *polygons = land_array_new()
+    LandFloat r = 1 / sqrt(1.5)
+    LandFloat t = 1 / sqrt(3)
+
+    LandVector a = land_vector(-r, 0, -t)
+    LandVector b = land_vector( r, 0, -t)
+    LandVector c = land_vector( 0, -r, t)
+    LandVector d = land_vector( 0,  r, t)
+    _sphere_tri(polygons, a, d, b, divisions, shared)
+    _sphere_tri(polygons, d, c, b, divisions, shared)
+    _sphere_tri(polygons, c, d, a, divisions, shared)
+    _sphere_tri(polygons, c, a, b, divisions, shared)
+    return land_csg_new_from_polygons(polygons)
+
+def csg_icosphere(int divisions, void *shared) -> LandCSG *:
+    LandArray *polygons = land_array_new()
+
+    const LandFloat u = (1.0 + sqrt(5)) / 2.0
+    const LandFloat r = sqrt(1 + u * u)
+    const LandFloat icosahedron_coords[] = {
+        0, 1, u, # top B 1
+        0,-1, u, # top F 2
+        0, 1, -u,
+        0, -1, -u,
+        1, u, 0, # R B 5
+        -1, u, 0, # L B 6
+        1, -u, 0, # R F 7
+        -1, -u, 0, # L F 8
+        u, 0, 1, # top R 9
+        u, 0, -1,
+        -u, 0, 1, # top L 11
+        -u, 0, -1
+        }
+    const int icosahedron_triangles[] = {
+        1, 11, 2,
+        1, 6, 11,
+        1, 5, 6,
+        1, 9, 5,
+        1, 2, 9, # top back
+        2, 7, 9,
+        2, 8, 7,
+        2, 11, 8, # top front
+        3, 10, 4,
+        3, 5, 10,
+        3, 6, 5,
+        3, 12, 6,
+        3, 4, 12, # bottom back
+        4, 10, 7,
+        4, 7, 8,
+        4, 8, 12, # bottom front
+        11, 12, 8,
+        12, 11, 6, # left
+        9, 7, 10,
+        10, 5, 9 # right
+        }
+    for int i in range(20):
+        int const *vi = icosahedron_triangles + i * 3
+        LandFloat const *va = icosahedron_coords + vi[0] * 3 - 3
+        LandFloat const *vb = icosahedron_coords + vi[1] * 3 - 3
+        LandFloat const *vc = icosahedron_coords + vi[2] * 3 - 3
+        LandVector a = land_vector(va[0] / r, va[1] / r, va[2] / r)
+        LandVector b = land_vector(vb[0] / r, vb[1] / r, vb[2] / r)
+        LandVector c = land_vector(vc[0] / r, vc[1] / r, vc[2] / r)
+        _sphere_tri(polygons, a, b, c, divisions, shared)
     return land_csg_new_from_polygons(polygons)
 
 def csg_cylinder(int slices, void *shared) -> LandCSG *:
@@ -466,3 +569,123 @@ def land_csg_polygon_recalculate_normal(LandCSGPolygon *p):
 
     for LandCSGVertex *v in LandArray *p.vertices:
         v.normal = n
+
+static class CallbackData:
+    void (*callback)(LandCSGPolygon *p, void *data)
+    void *data
+    LandVector pos
+    LandFloat r
+
+def _merge_callback_callback(LandArray *array, void *data):
+    CallbackData *data2 = data
+
+    if not array: return
+    for LandCSGPolygon *p in array:
+        bool touches = False
+        for LandCSGVertex *v in LandArray* p.vertices:
+            LandVector sub = land_vector_sub(data2.pos, v.pos)
+            LandFloat d = land_vector_dot(sub, sub)
+            if d <= data2.r * data2.r:
+                touches = True
+                break
+        if touches:
+            data2.callback(p, data2.data)
+
+def _lookup_close_polygons(LandCSG *csg, LandVector pos, LandFloat r,
+        void (*callback)(LandCSGPolygon *p, void *data), void *data):
+
+    CallbackData data2 = {callback, data, pos, r}
+    
+    # for LandCSGPolygon *p in LandArray *csg.polygons:
+        # bool touches = False
+        # for LandCSGVertex *v in LandArray* p.vertices:
+            # LandVector sub = land_vector_sub(pos, v.pos)
+            # LandFloat d = land_vector_dot(sub, sub)
+    land_octree_callback_in_cube(csg.octree,
+        pos.x - r, pos.y - r, pos.z - r,
+        pos.x + r, pos.y + r, pos.z + r,
+        _merge_callback_callback, &data2)
+
+static class Data:
+    LandVector normal
+
+def _merge_callback(LandCSGPolygon *p, void *v):
+    Data *data = v
+    data.normal.x += p.plane.normal.x
+    data.normal.y += p.plane.normal.y
+    data.normal.z += p.plane.normal.z
+
+def land_csg_recalculate_smooth_normals(LandCSG* csg):
+    csg.octree = land_octree_new_from_aabb(&csg.bbox, 10)
+    # do the face normals which we will use as base
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        land_csg_polygon_recalculate_normal(p)
+        LandFloat x = 0, y = 0, z = 0
+        int i = 0
+        for LandCSGVertex *v in LandArray *p.vertices:
+            i++
+            x += v.pos.x
+            y += v.pos.y
+            z += v.pos.z
+        if i > 0:
+            land_octree_insert(csg.octree, x / i, y / i, z / i, p)
+        
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        for LandCSGVertex *v in LandArray *p.vertices:
+            Data data
+            data.normal.x = 0
+            data.normal.y = 0
+            data.normal.z = 0
+            _lookup_close_polygons(csg, v.pos, 0.001, _merge_callback,
+                &data)
+            v.normal = land_vector_normalize(data.normal)
+
+    land_octree_del(csg.octree)
+    csg.octree = None
+
+# land_csg_subdivide
+# ideas:
+# - verson which just splits each edge in half
+# - version which only splits edges longer than some treshold
+# - version which uses some kind of spline interpolation to split into
+#   something more rounded...
+
+def land_csg_voxelize(LandCSG* csg, double radius) -> LandCSG*:
+    """
+    FIXME: implement!
+    The idea is to create a mesh from another mesh which is a voxelized
+    version. Everything is cubes.
+    """
+    # .-2   .-1   .0    .1    .2
+    #     -1.5              1.5
+    #     ------------------
+    #     |                |
+    #     ------------------
+    #
+    int x0 = floor(csg.bbox.x1 / radius)
+    int y0 = floor(csg.bbox.y1 / radius)
+    int z0 = floor(csg.bbox.z1 / radius)
+    int xn = ceil(csg.bbox.x2 / radius) - x0
+    int yn = ceil(csg.bbox.y2 / radius) - y0
+    int zn = ceil(csg.bbox.z2 / radius) - z0
+
+    char* voxels = land_calloc(xn * yn * zn)
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        for LandCSGVertex *v in LandArray *p.vertices:
+            int x = floor(v.pos.x / radius) - x0
+            int y = floor(v.pos.y / radius) - y0
+            int z = floor(v.pos.z / radius) - z0
+            voxels[x + y * xn + z * xn * yn] = 1
+        # FIXME: we don't need just the vertices but the entire polygon
+        # idea: What if we subdivide each polygon first small enough to
+        # cover each cube with at least one vertex
+        # Maybe something like, as long as any edge is longer than 1,
+        # subdivide.
+
+    LandArray *polygons = land_array_new()
+
+    LandCSG *csg2 = land_csg_new_from_polygons(polygons)
+    
+    land_free(voxels)
+
+    return csg2

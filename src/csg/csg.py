@@ -8,6 +8,7 @@ static import land.mem
 import land.pool
 import land.color
 import csg_aabb
+import csg_octree
 
 class LandCSG:
     """
@@ -16,6 +17,7 @@ class LandCSG:
     LandArray *polygons # LandCSGPolygon
     LandMemoryPool *pool
     LandCSGAABB bbox
+    LandOctree *octree
 
 class LandCSGVertex:
     LandVector pos
