@@ -189,7 +189,7 @@ def land_hash_remove(LandHash *self, char const *thekey) -> void *:
 
 static def land_hash_get_entry(LandHash *self,
         char const *thekey) -> LandHashEntry *:
-    if not self.size: return None
+    if not self.size or not thekey: return None
     int i = self.hash_function(self, thekey)
     if not self.entries[i]: return None
     int j

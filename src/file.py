@@ -130,6 +130,7 @@ def land_get_data_path() -> char *:
     return platform_get_data_path()
 
 def land_path_with_prefix(char const *name) -> char *:
+    if name and name[0] == '/': return land_strdup(name)
     int n = strlen(name)
     if prefix:
         n += strlen(prefix)
@@ -145,6 +146,7 @@ def land_path_with_prefix(char const *name) -> char *:
 def land_set_prefix(char const *path):
     if not path:
         land_free(prefix)
+        prefix = None
         land_log_message("Prefix unset.\n")
     else:
         prefix = land_realloc(prefix, strlen(path) + 1)

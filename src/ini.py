@@ -160,14 +160,13 @@ def land_ini_read(char const *filename) -> LandIniFile *:
         elif state == KEY: # key name
             if c == '\n': state = OUTSIDE
             elif c == '=': state = EQUALS
-            elif not is_whitespace(c):
-                addc(key_name, klen)
+            else: addc(key_name, klen)
 
         elif state == EQUALS: # = sign
             if c == '\n':
                 value[0] = 0
                 goto got_value
-            if c == '\n' or not is_whitespace(c):
+            if not is_whitespace(c):
                 state = VALUE
                 vlen = 0
                 addc(value, vlen)
@@ -175,6 +174,16 @@ def land_ini_read(char const *filename) -> LandIniFile *:
         elif state == VALUE: # key value
             if c == '\n':
                 label got_value
+
+                # remove trailing whitespace
+                int trailing = strlen(key_name)
+                while trailing > 1:
+                    trailing--
+                    if is_whitespace(key_name[trailing]):
+                        key_name[trailing] = 0;
+                    else:
+                        break
+
                 land_ini_set_string(ini, section_name, key_name, value)
                 state = OUTSIDE
             else:

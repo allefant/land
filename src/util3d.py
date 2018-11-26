@@ -191,6 +191,18 @@ def land_vector_add(LandVector v, w) -> LandVector:
     LandVector r = {v.x + w.x, v.y + w.y, v.z + w.z}
     return r
 
+def land_vector_add4(LandVector v, w, a, b) -> LandVector:
+    LandVector r = {v.x + w.x + a.x + b.x, v.y + w.y + a.y + b.y,
+        v.z + w.z + a.z + b.z}
+    return r
+
+def land_vector_add8(LandVector v, w, a, b, c, d, e, f) -> LandVector:
+    LandVector r = {
+        v.x + w.x + a.x + b.x + c.x + d.x + e.x + f.x,
+        v.y + w.y + a.y + b.y + c.y + d.y + e.y + f.y,
+        v.z + w.z + a.z + b.z + c.z + d.z + e.z + f.z}
+    return r
+
 def land_vector_sub(LandVector v, w) -> LandVector:
     LandVector r = {v.x - w.x, v.y - w.y, v.z - w.z}
     return r

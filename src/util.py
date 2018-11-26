@@ -2,6 +2,7 @@ macro land_method(_returntype, _name, _params) _returntype (*_name)_params
 macro land_call_method(self, method, params) if (self->vt->method) self->vt->method params
 
 import global stdbool
+import global ctype
 import land/array
 import land/buffer
 static import allegro5/a5_file
@@ -96,7 +97,12 @@ def land_utf8_realloc_insert(char *s, int pos, int c) -> char *:
     int clen = land_utf8_encode(c, None)
     s = land_realloc(s, l + clen + 1)
     char *p = s
-    for int i = 0 while i < pos with i++: land_utf8_char(&p)
+    if pos >= 0:
+        for int i = 0 while i < pos with i++:
+            land_utf8_char(&p)
+    else:
+        p += l # to before the 0 character
+        # TODO: -1 is at end, -2 before last character, and so on...
     memmove(p + clen, p, l + 1 - (p - s))
     land_utf8_encode(c, p)
     return s
@@ -284,6 +290,15 @@ def land_replace_all(char **s, char const *wat, char const *wit) -> int:
         if not (*s)[off]:
             return c
         c++
+
+def land_lowercase_copy(str s) -> char*:
+    char const *pos = s
+    char *news = land_strdup("")
+    while True:
+        int c = land_utf8_char_const(&pos)
+        if not c: break
+        news = land_utf8_realloc_insert(news, -1, tolower(c))
+    return news
 
 def land_shorten(char **s, int start, end):
     char *replace = land_substring(*s, start, strlen(*s) - end)

@@ -10,6 +10,11 @@ def land_constrain(LandFloat *v, v_min, v_max) -> LandFloat:
     if *v > v_max: *v = v_max
     return *v
 
+def land_constrainf(float v, v_min, v_max) -> float:
+    if v < v_min: v = v_min
+    if v > v_max: v = v_max
+    return v
+
 def land_mod(int x, d) -> int:
     """
     Version of % that always is positive.
