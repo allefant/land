@@ -4,21 +4,41 @@ import noise_dialog
 typedef unsigned char byte
 
 LandImage *image
-LandRandom *gen
-int seed
+LandVector *normals
 Dialog *dialog
+global LandWidget *color_picker
 LandVector light
 LandTriangles *triangles
 LandTriangles *triangles_debug
 Camera *camera
+LandFile *export_f
+float export_dupl[11 * 12]
+int export_dupl_i
 
-LandFloat water_start_z = -0.1
-LandFloat water_end_z = 0
-LandFloat grass_start_z = 0.1
-LandFloat grass_end_z = 0.5
-LandFloat mountain_start_z = 0.6
-LandFloat mountain_end_z = 0.9
-LandFloat snow_start_z = 0.95
+LandFloat water_start_z
+LandFloat water_end_z
+LandFloat grass_start_z
+LandFloat grass_end_z
+LandFloat mountain_start_z
+LandFloat mountain_end_z
+LandFloat snow_start_z
+
+LandColor water_c
+LandColor shore_c
+LandColor grass_c
+LandColor hills_c
+LandColor mountain_c
+LandColor snow_c
+
+def _export_dupl_add(float *v):
+    memcpy(export_dupl + export_dupl_i * 11, v, 11 * 4)
+    export_dupl_i++
+    if export_dupl_i == 12: export_dupl_i = 0
+
+def _export_dupl_get(int offset) -> float*:
+    offset += export_dupl_i
+    if offset < 0: offset += 12
+    return export_dupl + offset * 11
 
 def cb_gray(int x, y, byte *rgba, void *user):
     LandNoise *noise = user
@@ -33,10 +53,11 @@ def cb_gray(int x, y, byte *rgba, void *user):
     rgba[2] = b 
     rgba[3] = 255
 
-def _blend(LandFloat r1, g1, b1, r2, g2, b2, f, *r, *g, *b):
-    *r = r2 * f + r1 * (1 - f)
-    *g = g2 * f + g1 * (1 - f)
-    *b = b2 * f + b1 * (1 - f)
+def _blend(LandColor c1, c2, float f) -> LandColor:
+    return land_color_rgba(
+        c2.r * f + c1.r * (1 - f),
+        c2.g * f + c1.g * (1 - f),
+        c2.b * f + c1.b * (1 - f), 1)
 
 def get_type(float height) -> int:
     if height < grass_start_z: return 0
@@ -44,103 +65,104 @@ def get_type(float height) -> int:
     if height < mountain_end_z: return 2
     return 3
 
-def cb_color(int x, y, byte *rgba, void *user):
-    LandNoise *noise = user
-    LandFloat v = land_noise_at(noise, x, y)
+def get_color_for_height(LandFloat v) -> LandColor:
     v = (1 + v) / 2
-    
-    LandFloat r = 0
-    LandFloat g = 0
-    LandFloat b = 0
-
+    LandColor rgb
     if v < water_start_z:
-        r = 0
-        g = 0
-        b = 1
+        rgb = water_c
     elif v < water_end_z:
         v -= water_start_z
         v /= water_end_z - water_start_z
-
-        _blend(0, 0, 1,
-            0.1, 0.5, 1,
-            v, &r, &g, &b)
+        rgb = _blend(water_c, shore_c, v)
     elif v < grass_start_z:
         v -= water_end_z
         v /= grass_start_z - water_end_z
-
-        _blend(0.1, 0.5, 1,
-            0.55, 1, 0.3,
-            v, &r, &g, &b)
+        rgb = _blend(shore_c, grass_c, v)
     elif v < grass_end_z:
-        r = 0.55
-        g = 1
-        b = 0.3
+        v -= grass_start_z
+        v /= grass_end_z - grass_start_z
+        rgb = _blend(grass_c, hills_c, v)
     elif v < mountain_start_z:
         v -= grass_end_z
         v /= mountain_start_z - grass_end_z
-
-        _blend(0.55, 1, 0.3,
-            1, 0.6, 0.3,
-            v, &r, &g, &b)
+        rgb = _blend(hills_c, mountain_c, v)
     elif v < mountain_end_z:
-        r = 1
-        g = 0.6
-        b = 0.3
+        rgb = mountain_c
     elif v < snow_start_z:
         v -= mountain_end_z
         v /= snow_start_z - mountain_end_z
-        _blend(1, 0.6, 0.3,
-            1, 1, 1,
-            v, &r, &g, &b)
+        rgb = _blend(mountain_c, snow_c, v)
     else:
-        r = 1
-        g = 1
-        b = 1
+        rgb = snow_c
+    return rgb
+
+def cb_color(int x, y, byte *rgba, void *user):
+    LandNoise *noise = user
+    LandFloat v = land_noise_at(noise, x, y)
+
+    LandColor rgb = get_color_for_height(v)
 
     float l = calculate_light(noise, x, y)
     l = (1 + l) / 2
-    r *= l
-    g *= l
-    b *= l
-    
-    rgba[0] = land_constrain(&r, 0, 1) * 255 
-    rgba[1] = land_constrain(&g, 0, 1) * 255
-    rgba[2] = land_constrain(&b, 0, 1) * 255
-    rgba[3] = 255
+    rgb.r *= l
+    rgb.g *= l
+    rgb.b *= l
+
+    int a = 255
+    rgba[0] = land_constrainf(rgb.r, 0, 1) * a 
+    rgba[1] = land_constrainf(rgb.g, 0, 1) * a
+    rgba[2] = land_constrainf(rgb.b, 0, 1) * a
+    rgba[3] = a
 
 def calculate_light(LandNoise *noise, int x, y) -> float:
     """
-    0     1     .
-     \ upper
-  lower \
-    2     3     .
-
-
-    .     .     .
+    #
+    # 1           2
+    #   .   a   .
+    #     .   .
+    #   d   5   b
+    #     .   .
+    #   .   c   .
+    # 3           4
+    #
     """
-    LandFloat v0 = land_noise_at(noise, x, y)
-    LandFloat v1 = land_noise_at(noise, x + 1, y)
-    LandFloat v2 = land_noise_at(noise, x, y + 1)
-    LandFloat v3 = land_noise_at(noise, x + 1, y + 1)
+    LandFloat v1 = land_noise_at(noise, x, y)
+    LandFloat v2 = land_noise_at(noise, x + 1, y)
+    LandFloat v3 = land_noise_at(noise, x, y + 1)
+    LandFloat v4 = land_noise_at(noise, x + 1, y + 1)
+    LandFloat v5 = (v1 + v2 + v3 + v4) / 4
 
     LandFloat zs = 16
-    LandVector l1 = land_vector(1, 0, zs * (v1 - v0))
-    LandVector l2 = land_vector(0, 1, zs * (v2 - v0))
-    LandVector l3 = land_vector(1, 1, zs * (v3 - v0))
+    LandVector l1 = land_vector(-.5, -.5, zs * (v1 - v5))
+    LandVector l2 = land_vector(+.5, -.5, zs * (v2 - v5))
+    LandVector l3 = land_vector(-.5, +.5, zs * (v3 - v5))
+    LandVector l4 = land_vector(+.5, +.5, zs * (v4 - v5))
+    
     l1 = land_vector_normalize(l1)
     l2 = land_vector_normalize(l2)
     l3 = land_vector_normalize(l3)
+    l4 = land_vector_normalize(l4)
 
-    LandVector upper = land_vector_cross(l1, l3)
-    LandVector lower = land_vector_cross(l3, l2)
+    LandVector upper = land_vector_cross(l1, l2)
+    LandVector right = land_vector_cross(l2, l4)
+    LandVector lower = land_vector_cross(l4, l3)
+    LandVector left = land_vector_cross(l3, l1)
 
     #printf("%f/%f/%f . %f/%f/%f\n", light.x, light.y, light.z,
     #    upper.x, upper.y, upper.z)
 
     LandFloat upper_light = -land_vector_dot(light, upper)
+    LandFloat right_light = -land_vector_dot(light, right)
     LandFloat lower_light = -land_vector_dot(light, lower)
+    LandFloat left_light = -land_vector_dot(light, left)
 
-    return (upper_light + lower_light) / 2
+    LandVector *normal = normals + y * noise.w * 4 + x * 4
+    normal[0] = upper
+    normal[1] = right
+    normal[2] = lower
+    normal[3] = left
+
+    return (upper_light + lower_light + right_light + left_light) / 4
 
 def color(byte *rgba, float *c):
     c[0] = rgba[0] / 255.0
@@ -148,7 +170,38 @@ def color(byte *rgba, float *c):
     c[2] = rgba[2] / 255.0
     c[3] = rgba[3] / 255.0
 
-def make_triangles(LandNoise *noise, int w, h, bool debug_grid):
+def _export_v(LandVector p, LandVector n):
+    float zs = 16
+    LandColor c = get_color_for_height(p.z / zs)
+
+    float xa = 1
+    float ya = 1
+    int w = land_image_width(image)
+    int h = land_image_height(image)
+    if p.y < 10: ya = p.y * 1.0 / 10
+    if p.x < 10: xa = p.x * 1.0 / 10
+    if p.y > h - 10: ya = (h - p.y) * 1.0 / 10
+    if p.x > w - 10: xa = (w - p.x) * 1.0 / 10
+    float a = xa
+    if ya < a: a = ya
+    
+    float fb[] = {p.x, p.y, p.z, n.x, n.y, n.z, c.r * a, c.g * a, c.b * a, a, 0}
+    _export_dupl_add(fb)
+    land_file_write(export_f, (char *)&fb, 44)         
+
+def _export_v_dupl(int offset):
+    float *fb = _export_dupl_get(offset)
+    _export_dupl_add(fb)
+    land_file_write(export_f, (char *)fb, 44)         
+
+def _add_vertex(LandTriangles *t, LandVector v, float tu, tv, r, g, b, a, bool export):
+    land_add_vertex(t, v.x, v.y, v.z, tu, tv, r, g, b, a)
+
+def _duplicate_vertex(LandTriangles *t, int offset, bool export):
+    land_duplicate_vertex(t, offset)
+
+def make_triangles(LandNoise *noise, int w, h, bool debug_grid,
+        bool export):
     #
     # 1           2
     #   .       .
@@ -160,6 +213,12 @@ def make_triangles(LandNoise *noise, int w, h, bool debug_grid):
     #
     byte *rgba = land_calloc(w * h * 4)
     land_image_get_rgba_data(image, rgba)
+
+    if export:
+        land_file_put32le(export_f, 1) # frames
+
+        land_file_put32le(export_f, w * h * 12) # vertices
+        land_file_put32le(export_f, 3 + 3 + 4 + 1) # stride
 
     LandTriangles *t = land_triangles_new()
     LandTriangles *td = None
@@ -186,21 +245,68 @@ def make_triangles(LandNoise *noise, int w, h, bool debug_grid):
             for int i in range(4):
                 c5[i] = (c1[i] + c2[i] + c3[i] + c4[i]) / 4
 
-            land_add_vertex(t, x + 0.5, y + 0.5, z5, 0, 0, c5[0], c5[1], c5[2], c5[3])
-            land_add_vertex(t, x, y, z1, 0, 0, c1[0], c1[1], c1[2], c1[3])
-            land_add_vertex(t, x + 1, y, z2, 0, 0, c2[0], c2[1], c2[2], c2[3])
+            LandVector v1 = land_vector(x, y, z1)
+            LandVector v2 = land_vector(x + 1, y, z2)
+            LandVector v3 = land_vector(x, y + 1, z3)
+            LandVector v4 = land_vector(x + 1, y + 1, z4)
+            LandVector v5 = land_vector(x + 0.5, y + 0.5, z5)
+
+            _add_vertex(t, v5, 0, 0, c5[0], c5[1], c5[2], c5[3], export)
+            _add_vertex(t, v1, 0, 0, c1[0], c1[1], c1[2], c1[3], export)
+            _add_vertex(t, v2, 0, 0, c2[0], c2[1], c2[2], c2[3], export)
             
-            land_duplicate_vertex(t, -3)
-            land_duplicate_vertex(t, -2)
-            land_add_vertex(t, x + 1, y + 1, z4, 0, 0, c4[0], c4[1], c4[2], c4[3])
+            _duplicate_vertex(t, -3, export)
+            _duplicate_vertex(t, -2, export)
+            _add_vertex(t, v4, 0, 0, c4[0], c4[1], c4[2], c4[3], export)
             
-            land_duplicate_vertex(t, -3)
-            land_duplicate_vertex(t, -2)
-            land_add_vertex(t, x, y + 1, z3, 0, 0, c3[0], c3[1], c3[2], c3[3])
+            _duplicate_vertex(t, -3, export)
+            _duplicate_vertex(t, -2, export)
+            _add_vertex(t, v3, 0, 0, c3[0], c3[1], c3[2], c3[3], export)
             
-            land_duplicate_vertex(t, -3)
-            land_duplicate_vertex(t, -2)
-            land_duplicate_vertex(t, -10)
+            _duplicate_vertex(t, -3, export)
+            _duplicate_vertex(t, -2, export)
+            _duplicate_vertex(t, -10, export)
+
+            if export:
+                LandVector n[36]
+                #.-------.-------.-------.
+                #| \ 0 / | \ 4 / | \ 8 / |
+                #| 3 X 1 | 7 X 5 |11 X 9 |
+                #| / 2 \ | / 6 \ | /10 \ |
+                #.-------*-------*-------.
+                #| \ 12/ | \ 16/ | \ 20/ |
+                #|15 X 13|19 X 17|23 X 21|
+                #| /14 \ | /18 \ | /22 \ |
+                #.-------*-------*-------.
+                #| \ 24/ | \ 28/ | \ 32/ |
+                #|27 X 25|31 X 29|35 X 33|
+                #| /26 \ | /30 \ | /34 \ |
+                #.-------.-------.-------.
+                for int nj in range(3):
+                    for int ni in range(3):
+                        int yn = (y + nj + h - 1) % h
+                        int xn = (x + ni + w - 1) % w
+                        int nc = ni + 3 * nj
+                        for int nk in range(4):
+                            n[nc * 4 + nk] = normals[yn * noise.w * 4 +
+                                xn * 4 + nk]
+                LandVector n1 = land_vector_add8(n[1], n[2], n[6], n[7], n[16], n[19], n[12], n[13])
+                LandVector n2 = land_vector_add8(n[5], n[6], n[10], n[11], n[20], n[23], n[16], n[17])
+                LandVector n3 = land_vector_add8(n[13], n[14], n[18], n[19], n[28], n[31], n[24], n[25])
+                LandVector n4 = land_vector_add8(n[17], n[18], n[22], n[23], n[32], n[35], n[28], n[29])
+                LandVector n5 = land_vector_add4(n[16], n[17], n[18], n[19])
+                _export_v(v5, land_vector_normalize(n5))
+                _export_v(v1, land_vector_normalize(n1))
+                _export_v(v2, land_vector_normalize(n2))
+                _export_v_dupl(-3)
+                _export_v_dupl(-2)
+                _export_v(v4, land_vector_normalize(n4))
+                _export_v_dupl(-3)
+                _export_v_dupl(-2)
+                _export_v(v3, land_vector_normalize(n3))
+                _export_v_dupl(-3)
+                _export_v_dupl(-2)
+                _export_v_dupl(-10)
 
             if debug_grid:
                 land_add_vertex(td, x + 0.05, y + 0.05, z1 + 1, 0, 0, 1, 0, 0, 1)
@@ -214,6 +320,9 @@ def make_triangles(LandNoise *noise, int w, h, bool debug_grid):
             p += 4
             
     land_free(rgba)
+
+    if export:
+        land_file_put32le(export_f, 0) # markers
 
     triangles = t
     if triangles_debug:
@@ -231,40 +340,62 @@ def init(LandRunner *self):
 
     dialog = dialog_new()
 
-    gen = land_random_new(0)
-
     light = land_vector_normalize(land_vector(1, 1, -1))
+
+    land_set_prefix(None)
 
     main_heightmap()
 
     land_alloc(camera)
     camera_init(camera)
 
-def main_generate(bool want_color, bool want_triangles, bool debug):
+def main_generate(bool want_color, bool want_triangles, bool debug, bool export):
+
+    water_start_z = dialog.pos0->v / 31.0
+    water_end_z = dialog.pos1->v / 31.0
+    grass_start_z = dialog.pos2->v / 31.0
+    grass_end_z = dialog.pos3->v / 31.0
+    mountain_start_z = dialog.pos4->v / 31.0
+    mountain_end_z = dialog.pos5->v / 31.0
+    snow_start_z = dialog.pos6->v / 31.0
+
+    water_c = land_color_int(dialog.color1->v)
+    shore_c = land_color_int(dialog.color2->v)
+    grass_c = land_color_int(dialog.color3->v)
+    hills_c = land_color_int(dialog.color4->v)
+    mountain_c = land_color_int(dialog.color5->v)
+    snow_c = land_color_int(dialog.color6->v)
+    
     int w = 0
     int h = 0
     if image:
         w = land_image_width(image)
         h = land_image_height(image)
-    int s = 1 << dialog.size->v
-    if s != w or s != h:
-        w = h = s
+    int sw = 1 << dialog.width->v
+    int sh = 1 << dialog.height->v
+    if sw != w or sh != h:
+        w = sw
+        h = sh
         if image: land_image_destroy(image)
         image = land_image_new(w, h)
+
+        if normals: land_free(normals)
+        normals = land_calloc(4 * w * h * sizeof *normals)
 
     if triangles:
         land_triangles_destroy(triangles)
         triangles = None
 
-    LandNoiseType x[] = {LandNoiseVoronoi, LandNoisePerlinMulti,
-        LandNoisePlasma, LandNoiseWhite}
+    LandNoiseType x[] = {LandNoiseVoronoi, LandNoisePerlin,
+        LandNoisePlasma, LandNoiseWhite, LandNoiseWaves}
     LandNoiseType t = x[dialog.noise->v]
 
     LandPerlinLerp lerp = dialog.lerp->v
 
-    land_seed(seed)
+    land_seed(dialog.seed->v)
     LandNoise *noise = land_noise_new(t)
     land_noise_set_size(noise, w, h)
+    land_noise_set_wrap(noise, dialog.wrap->v)
     land_noise_set_count(noise, dialog.count->v)
     land_noise_set_levels(noise, dialog.levels->v)
     land_noise_set_lerp(noise, lerp)
@@ -279,12 +410,14 @@ def main_generate(bool want_color, bool want_triangles, bool debug):
         float wsx = dialog.warp_scale_x->v * s
         float wsy = dialog.warp_scale_y->v * s
         LandNoise *n2 = land_noise_new(t)
+        land_noise_set_wrap(n2, dialog.wrap->v)
         land_noise_set_warp(n2, noise, wox, woy, wsx, wsy)
         noise = n2
 
     if dialog.blur->v:
         int s = dialog.blur_size->v
         LandNoise *n2 = land_noise_new(t)
+        land_noise_set_wrap(n2, dialog.wrap->v)
         land_noise_set_blur(n2, noise, s)
         noise = n2
 
@@ -293,26 +426,76 @@ def main_generate(bool want_color, bool want_triangles, bool debug):
     land_noise_z_ease(noise, dialog.z_ease->v / 16.0)
     land_noise_prepare(noise)
 
+    if dialog.plateau->v:
+        land_noise_set_minmax(noise, -1 + dialog.plateau->v / 32.0, 1000)
+
     land_image_write_callback(image, want_color ? cb_color : cb_gray, noise)
 
     if want_triangles:
-        make_triangles(noise, w, h, debug)
+        make_triangles(noise, w, h, debug, export)
 
     land_noise_destroy(noise)  
 
 def main_seed:
-    seed = land_random(gen, 0, 1000000)
-    main_generate(False, False, False)
+    dialog.seed->v = land_rand(0, 0xfffffff)
+    main_generate(False, False, False, False)
 
 def main_color:
-    main_generate(True, False, False)
+    main_generate(True, False, False, False)
     
 def main_heightmap:
-    main_generate(False, False, False)
+    main_generate(False, False, False, False)
 
 def main_triangles(bool debug):
-    main_generate(True, True, debug)
+    main_generate(True, True, debug, False)
 
+def _add_split(LandHash *sets, str key, int size, char *v):
+    LandBuffer *b = land_hash_get(sets, key)
+    if not b:
+        printf("split for %s\n", key)
+        b = land_buffer_new()
+        land_hash_insert(sets, key, b)
+    land_buffer_add(b, v, size)
+
+def main_export(int (*split_cb)(float x, float y, float z), bool debug):
+    export_f = land_file_new("perlin.mesh", "wb")
+    main_generate(True, True, debug, True)
+    land_file_destroy(export_f)
+
+    if split_cb:
+        LandHash *sets = land_hash_new()
+        LandFile *f = land_file_new("perlin.mesh", "rb")
+        int fn = land_file_get32le(f)
+        for int fi in range(fn):
+            int vn = land_file_get32le(f)
+            int stride = land_file_get32le(f)
+            for int vi in range(0, vn, 12):
+                char b[stride * 4 * 12]
+                land_file_read(f, b, stride * 4 * 12)
+                float *x = (void *)b
+                float *y = (void *)(b + 4)
+                float *z = (void *)(b + 8)
+                int s = split_cb(*x, *y, *z)
+                char key[10]
+                sprintf(key, "%05d", s)
+                _add_split(sets, key, stride * 4 * 12, b)
+            int mn = land_file_get32le(f)
+            for int im in range(mn):
+                int sn = land_file_get32le(f)
+                land_file_skip(f, sn)
+        land_file_destroy(f)
+
+        f = land_file_new("perlin.mesh", "wb")
+        land_file_put32le(f, sets.count)
+        LandArray *a = land_hash_keys(sets, False)
+        land_array_sort_alphabetical(a)
+        for str key in a:
+            LandBuffer *b = land_hash_get(sets, key)
+            land_file_put32le(f, b.n / (11 * 4))
+            land_file_put32le(f, 11)
+            land_file_write(f, b.buffer, b.n)
+            land_file_put32le(f, 0) # no markers
+        land_file_destroy(f)
 
 class Camera:
     LandVector p, x, y, z
@@ -358,8 +541,11 @@ def camera_init(Camera *c):
 
 def tick(LandRunner *self):
 
-    dialog_hide_show(dialog)
-    land_widget_tick(dialog.view)
+    if color_picker:
+        land_widget_tick(color_picker)
+    else:
+        dialog_hide_show(dialog)
+        land_widget_tick(dialog.view)
     
     if land_key_pressed(LandKeyEscape):
         land_quit()
@@ -399,6 +585,8 @@ def tick(LandRunner *self):
 
     camera_move(camera, -dx, -dy, 0)
 
+    if land_mouse_x() >= 1024: return
+
     if land_mouse_button(1):
         dx = land_mouse_delta_x() * 0.01
         dy = land_mouse_delta_y() * 0.01
@@ -432,11 +620,14 @@ def draw(LandRunner *self):
         land_triangles_draw(triangles)
         if triangles_debug: land_triangles_draw(triangles_debug)
     else:
-        land_image_draw_scaled(image, 0, 0, 1024.0 / w, 1024.0 / h)
+        land_image_draw_scaled(image, 0, 0, 1024.0 / w, 1024.0 / w)
 
     land_render_state(LAND_DEPTH_TEST, False)
     land_projection(land_4x4_matrix_orthographic(0, land_display_height(), 1, land_display_width(), 0, -1))
-    land_widget_draw(dialog.view)
+    if color_picker:
+        land_widget_draw(color_picker)
+    else:
+        land_widget_draw(dialog.view)
 
-land_begin_shortcut(1024 + 200, 1024, 60, LAND_OPENGL | LAND_WINDOWED,
+land_begin_shortcut(1024 + 250, 1024, 60, LAND_OPENGL | LAND_WINDOWED,
     init, NULL, tick, draw, NULL, NULL)

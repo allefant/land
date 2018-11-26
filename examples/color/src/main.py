@@ -30,6 +30,12 @@ LandFloat mindist
 Color *maximum_grid_color
 LandFloat maximum_grid_distance
 
+def hex(Color *c, char *out):
+    sprintf(out, "#%02x%02x%02x",
+        (int)(255 * c.rgb.r),
+        (int)(255 * c.rgb.g),
+        (int)(255 * c.rgb.b))
+
 static def get_Y(int i) -> float:
     if i == 0: return 0.01
     return i * 0.07
@@ -233,6 +239,23 @@ def find_grid_distances_thread(void *v):
     maximum_grid_color = _data[m].maximum_grid_color
 
 str custom = """
+#400000#800000#452209#5c4305#808000#2a3517#003200#004040#172727#0c0c38#000080#250041#400040#000000
+#5e4747#8b0000#8b4513#7f725a#daa520#006400#008000#008080#2f4f4f#005f7f#191970#4b0082#630a42#343434
+#a52a2a#b22222#cd853f#b8860b#bdb76b#556b2f#228b22#3cb371#008b8b#4682b4#0000cd#663399#800080#696969
+#dc143c#a0522d#ff8c00#d2b48c#f5deb3#6b8e23#2e8b57#20b2aa#5f9ea0#708090#483d8b#9400d3#8b008b#808080
+#cd5c5c#ff0000#f4a460#ffd700#f0e68c#9acd32#8fbc8f#66cdaa#00ced1#778899#0000ff#6c5f6c#c71585#a9a9a9
+#bc8f8f#d2691e#ffa500#ffdead#eee8aa#32cd32#48d1cc#87ceeb#1e90ff#6a5acd#8a2be2#ff1493#c0c0c0
+#f08080#ff4500#deb887#ffe4b5#ffefd5#7fff00#90ee90#40e0d0#add8e6#6495ed#4169e1#9932cc#ff00ff#d3d3d3
+#fa8072#ff6347#ffdab9#faebd7#ffff00#adff2f#00ff00#00fa9a#b0e0e6#00bfff#7b68ee#ba55d3#db7093#dcdcdc
+#ffb6c1#ff7f50#ffe4c4#ffebcd#fff8dc#f5f5dc#00ff7f#00ffff#afeeee#b0c4de#9370db#ee82ee#da70d6#f5f5f5
+#ffc0cb#e9967a#faf0e6#fdf5e6#fffacd#fafad2#98fb98#7fffd4#e0ffff#87cefa#e6e6fa#dda0dd#ff69b4#fffafa
+#ffe4e1#ffa07a#fff5ee#fffaf0#ffffe0#fffff0#f0fff0#f5fffa#f0ffff#f0f8ff#f8f8ff#d8bfd8#fff0f5#ffffff
+#9585a5
+"""
+
+
+
+str custom2 = """
 #400000#8b4513#452209#5c4305#808000#008000#003200#004040#172727#0c0c38
 #250041#400040#630a42#000000#800000#ff0000#a0522d#7f725a#6b8e23#228b22
 #2a3517#2f4f4f#708090#483d8b#005f7f#000080#800080#5e4747#343434#8b0000
@@ -273,7 +296,10 @@ def arrange_custom:
 
 def find_neighbors:
     double close = 0.3
-
+    double min_close = close
+    Color *min_a = None
+    Color *min_b = None
+    
     land_array_sort(colors, comp_l)
 
     int cn = land_array_count(colors)
@@ -292,9 +318,19 @@ def find_neighbors:
                 ne.c = o
                 ne.delta = d
                 land_array_add(c.close, ne)
+            if d < min_close:
+                min_close = d
+                min_a = c
+                min_b = o
 
     for Color *col in colors:
         land_array_sort(col.close, comp_delta)
+
+    if min_a:
+        char ha[100], hb[100]
+        hex(min_a, ha)
+        hex(min_b, hb)
+        printf("Closest pair: %.2f: %s <-> %s\n", min_close, ha, hb)
 
 static def comp_delta(void const *a, void const *b) -> int:
     Neighbor * const *ap = a
@@ -389,6 +425,8 @@ static def tick:
                         c.dx -= dx / d * (90 - d) / 90
                         c.dy -= dy / d * (90 - d) / 90
 
+            if not c.close: continue
+
             int ci = 0
             for Neighbor *n in LandArray *c.close:
                 Color *o = n.c
@@ -442,7 +480,7 @@ static def tick:
         while land_get_time() < t + 1.0 / 100:
             int i = land_rand(0, land_array_count(colors) - 1)
             Color *col = land_array_get_nth(colors, i)
-            if col.fixed: continue
+            
             double md = -1
             for Color *c in colors:
                 if c == col: continue
@@ -463,8 +501,9 @@ static def tick:
                     md2 = d
             if md2 > md:
                 #printf("%f > %f\n", md2, md)
-                col.rgb = rgb2
-                land_color_to_cielab(col.rgb, &col.l, &col.a, &col.b)
+                if not col.fixed:
+                    col.rgb = rgb2
+                    land_color_to_cielab(col.rgb, &col.l, &col.a, &col.b)
                 mindist = mindist * 0.99 + md2 * 0.01
 
 static def marker(float x, y):

@@ -3,6 +3,7 @@ import global land.yaml
 
 import collision
 import test_widget
+import test_string
 
 def test_shuffle:
     for int i in range(100):
@@ -105,6 +106,7 @@ def main() -> int:
     #test_yaml5()
     #test_yaml6()
     #test_collision()
-    test_widget()
+    #test_widget()
+    test_string()
 
     return 0
