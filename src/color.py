@@ -280,11 +280,26 @@ def land_color_name(char const *name) -> LandColor:
             prev = name[i]
             i++
         return c
+
     return platform_color_name(name)
 
 def land_color_to_html(LandColor c, char html[8]):
     sprintf(html, "#%02x%02x%02x", (int)(c.r * 255), (int)(c.g * 255),
         (int)(c.b * 255))
+
+def land_color_int(int i) -> LandColor:
+    int r = i & 255
+    int g = (i >> 8) & 255
+    int b = (i >> 16) & 255
+    int a = (i >> 24) & 255
+    return land_color_rgba(r / 255.0, g / 255.0, b / 255.0, a / 255.0)
+
+def land_color_to_int(LandColor c) -> int:
+    int r = c.r * 255
+    int g = c.g * 255
+    int b = c.b * 255
+    int a = c.a * 255
+    return r + (g << 8) + (b << 16) + (a << 24)
 
 def land_color_lerp(LandColor a, b, float t) -> LandColor:
     return land_color_rgba(
