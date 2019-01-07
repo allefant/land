@@ -22,6 +22,8 @@ class LandNoise:
     int w, h
     int count
     int levels
+    LandRandom *seed
+    bool use_external_seed
     float randomness
     float power_modifier
     float amplitude
@@ -40,7 +42,7 @@ class LandNoise:
 static class Waves:
     float x[3], y[3]
 
-def land_noise_new(LandNoiseType t) -> LandNoise*:
+def land_noise_new(LandNoiseType t, int seed) -> LandNoise*:
     LandNoise *self; land_alloc(self)
 
     self.t = t
@@ -55,8 +57,19 @@ def land_noise_new(LandNoiseType t) -> LandNoise*:
     self.maxval = +1e9
 
     self.wrap = True
+    self.seed = land_random_new(seed)
 
     return self
+
+def land_noise_set_random(LandNoise *self, LandRandom *random):
+    """
+    Note: Ownership of the LandRandom object remains at the caller who
+    must make sure it lives as long as the noise is being used.
+    """
+    if self.seed and not self.use_external_seed:
+        land_random_del(self.seed)
+    self.seed = random
+    self.use_external_seed = True
 
 def land_noise_set_size(LandNoise *self, int w, h):
     self.w = w
@@ -169,7 +182,7 @@ def _white(LandNoise *self) -> float*:
 
     for int y in range(self.h):
         for int x in range(self.w):
-            noise[x + self.w * y] = land_rnd(-1, 1)
+            noise[x + self.w * y] = land_random_f(self.seed, -1, 1)
 
     return noise
 
@@ -181,7 +194,6 @@ def land_noise_prepare(LandNoise *self):
     if self.blur:
         land_noise_prepare(land_array_get_nth(self.noise, 0))
         _smoothen(self)
-                
         return
 
     if self.t == LandNoiseWhite:
@@ -208,10 +220,10 @@ def land_noise_prepare(LandNoise *self):
                 self.cache[x + w * y] = v / p
         
     if self.t == LandNoiseVoronoi:
-        void *noise = land_voronoi_create(self.w, self.h, self.count, self.randomness)
+        void *noise = land_voronoi_create(self.seed, self.w, self.h, self.count, self.randomness)
         land_array_add(self.noise, noise)
     if self.t == LandNoiseWaves:
-        void *noise = _waves_create(self.w, self.h)
+        void *noise = _waves_create(self, self.w, self.h)
         land_array_add(self.noise, noise)
     if self.t == LandNoisePerlin:
         int n = self.levels
@@ -227,7 +239,7 @@ def land_noise_prepare(LandNoise *self):
             w = h * self.w / self.h
 
         for int i in range(0, n):
-            LandPerlin *noise = land_perlin_create(w, h)
+            LandPerlin *noise = land_perlin_create(self.seed, w, h)
             land_perlin_set_lerp(noise, self.lerp)
             land_array_add(self.noise, noise)
             if w < self.w and h < self.h:
@@ -251,7 +263,7 @@ def land_noise_prepare(LandNoise *self):
                 self.cache[x + self.w * y] = v
         
     if self.t == LandNoisePlasma:
-        void *noise = land_plasma_new(self.w, self.h, self.power_modifier, self.amplitude)
+        void *noise = land_plasma_new(self.seed, self.w, self.h, self.power_modifier, self.amplitude)
         land_plasma_generate(noise)
         land_array_add(self.noise, noise)
 
@@ -261,6 +273,8 @@ def land_noise_callback(LandNoise *self, float (*cb)(float x)):
             self.cache[x + self.w * y] = cb(self.cache[x + self.w * y])
 
 def land_noise_destroy(LandNoise *self):
+    if self.seed and not self.use_external_seed:
+        land_random_del(self.seed)
     land_free(self)
 
 def land_noise_at(LandNoise *self, float x, y) -> float:
@@ -306,11 +320,11 @@ def land_noise_at_raw(LandNoise *self, float x, y) -> float:
         return _waves_at(land_array_get_nth(self.noise, 0), self.power_modifier, self.amplitude, x, y)
     return 0
 
-def _waves_create(int w, h) -> void*:
+def _waves_create(LandNoise *noise, int w, h) -> void*:
     Waves *waves; land_alloc(waves)
     for int i in range(3):
-        waves.x[i] = land_rnd(0, w)
-        waves.y[i] = land_rnd(0, h)
+        waves.x[i] = land_random_f(noise.seed, 0, w)
+        waves.y[i] = land_random_f(noise.seed, 0, h)
     return waves
 
 def _waves_at(Waves *self, float power_modifier, amplitude, int x, y) -> float:

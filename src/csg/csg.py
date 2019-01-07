@@ -644,3 +644,14 @@ def land_csg_inverse(LandCSG *self) -> LandCSG *:
     for LandCSGPolygon *p in LandArray *csg.polygons:
         land_csg_polygon_flip(p)
     return csg
+
+def land_csg_polygon_paint(LandCSGPolygon *self, float r, g, b, a):
+    for LandCSGVertex *v in LandArray *self.vertices:
+        v.rgba.r = r
+        v.rgba.g = g
+        v.rgba.b = b
+        v.rgba.a = a
+
+def land_csg_paint_all(LandCSG *self, float r, g, b, a):
+    for LandCSGPolygon *p in LandArray *self.polygons:
+        land_csg_polygon_paint(p, r, g, b, a)

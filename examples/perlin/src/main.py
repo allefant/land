@@ -14,6 +14,7 @@ Camera *camera
 LandFile *export_f
 float export_dupl[11 * 12]
 int export_dupl_i
+LandRandom *rgen
 
 LandFloat water_start_z
 LandFloat water_end_z
@@ -392,8 +393,10 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
 
     LandPerlinLerp lerp = dialog.lerp->v
 
-    land_seed(dialog.seed->v)
-    LandNoise *noise = land_noise_new(t)
+    if rgen: land_random_del(rgen)
+    rgen = land_random_new(dialog.seed->v)
+    LandNoise *noise = land_noise_new(t, 0)
+    land_noise_set_random(noise, rgen)
     land_noise_set_size(noise, w, h)
     land_noise_set_wrap(noise, dialog.wrap->v)
     land_noise_set_count(noise, dialog.count->v)
@@ -409,14 +412,16 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
         float woy = dialog.warp_offset_y->v * s * 4
         float wsx = dialog.warp_scale_x->v * s
         float wsy = dialog.warp_scale_y->v * s
-        LandNoise *n2 = land_noise_new(t)
+        LandNoise *n2 = land_noise_new(t, 0)
+        land_noise_set_random(n2, rgen)
         land_noise_set_wrap(n2, dialog.wrap->v)
         land_noise_set_warp(n2, noise, wox, woy, wsx, wsy)
         noise = n2
 
     if dialog.blur->v:
         int s = dialog.blur_size->v
-        LandNoise *n2 = land_noise_new(t)
+        LandNoise *n2 = land_noise_new(t, 0)
+        land_noise_set_random(n2, rgen)
         land_noise_set_wrap(n2, dialog.wrap->v)
         land_noise_set_blur(n2, noise, s)
         noise = n2

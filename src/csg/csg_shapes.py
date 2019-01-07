@@ -108,7 +108,7 @@ def csg_tetrasphere(int divisions, void *shared) -> LandCSG *:
     _sphere_tri(polygons, c, a, b, divisions, shared)
     return land_csg_new_from_polygons(polygons)
 
-def csg_icosphere(int divisions, void *shared) -> LandCSG *:
+def land_csg_icosphere(int divisions, void *shared) -> LandCSG *:
     LandArray *polygons = land_array_new()
 
     const LandFloat u = (1.0 + sqrt(5)) / 2.0

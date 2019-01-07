@@ -33,6 +33,9 @@ static def get_data(LandHash *self, LandHashIterator *i, void **data) -> bool:
         i->i++
     return False
 
+def land_hash_count(LandHash *self) -> int:
+    return self.count
+
 def LandHashIterator_first(LandHash *self) -> LandHashIterator:
     LandHashIterator i = {0, 0}
     return i

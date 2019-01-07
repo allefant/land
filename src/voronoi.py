@@ -34,7 +34,7 @@ static def get_closest(LandVoronoi *self, int x, y) -> int:
             md = dx * dx + dy * dy
     return mi
 
-def land_voronoi_new(int w, h, n) -> LandVoronoi *:
+def land_voronoi_new(LandRandom *seed, int w, h, n) -> LandVoronoi *:
     LandVoronoi *self; land_alloc(self)
     self.w = w
     self.h = h
@@ -45,8 +45,8 @@ def land_voronoi_new(int w, h, n) -> LandVoronoi *:
     self.max_distance = 0
 
     for int i in range(n):
-        int x = land_rand(0, w - 1)
-        int y = land_rand(0, h - 1)
+        int x = land_random(seed, 0, w - 1)
+        int y = land_random(seed, 0, h - 1)
         self.xy[i].x = x
         self.xy[i].y = y
 
@@ -57,10 +57,10 @@ def land_voronoi_new(int w, h, n) -> LandVoronoi *:
 
     return self
 
-def land_voronoi_create(int w, h, n, float randomness) -> LandVoronoi*:
-    auto self = land_voronoi_new(w, h, n)
+def land_voronoi_create(LandRandom *seed, int w, h, n, float randomness) -> LandVoronoi*:
+    auto self = land_voronoi_new(seed, w, h, n)
 
-    land_voronoi_distort_with_perlin(self, randomness)
+    land_voronoi_distort_with_perlin(self, seed, randomness)
 
     land_voronoi_calculate_distance(self)
 
@@ -79,7 +79,7 @@ def land_voronoi_calculate_distance(LandVoronoi *self):
             if d > self.max_distance:
                 self.max_distance = d
 
-def land_voronoi_distort_with_perlin(LandVoronoi *self, float randomness):
+def land_voronoi_distort_with_perlin(LandVoronoi *self, LandRandom *seed, float randomness):
     int w = self.w
     int h = self.h
     int *map2 = land_calloc(w * h * sizeof *map2)
@@ -87,7 +87,7 @@ def land_voronoi_distort_with_perlin(LandVoronoi *self, float randomness):
     # distort distances to closest cell
     float rs = randomness
     if rs < 1: rs = 1
-    LandPerlin *perlin = land_perlin_create(w / rs, h / rs)
+    LandPerlin *perlin = land_perlin_create(seed, w / rs, h / rs)
     for int y in range(h):
         for int x in range(w):
             float xd, yd

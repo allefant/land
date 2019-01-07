@@ -188,6 +188,7 @@ global *** "undef" yn
 
 import config
 import main, array, display, runner, random, mouse, keyboard, image
+import triangles
 import exception, font, sprite, map, tilegrid, isometric, sprite
 import log, color, data, mem, widget, net, queue, sound, buffer, ini
 import file, thread, protobuf

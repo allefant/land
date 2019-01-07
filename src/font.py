@@ -325,7 +325,6 @@ def land_print_middle(char const *text, ...):
     VPRINT
     land_print_string(s, 1, LandAlignCenter | LandAlignMiddle)
 
-
 def land_write(char const *text, ...):
     VPRINT
     land_print_string(s, 0, 0)

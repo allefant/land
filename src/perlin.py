@@ -41,7 +41,7 @@ def _smoothest_step_lerp(float a0, a1, w) -> float:
     float f = -20 * pow(w, 7) + 70 * pow(w, 6) - 84 * pow(w, 5) + 35 * pow(w, 4)
     return  a0 * (1 - f) + a1 * f
 
-def land_perlin_create(int w, h) -> LandPerlin*:
+def land_perlin_create(LandRandom *seed, int w, h) -> LandPerlin*:
     """
     Create a Perlin noise of the given resolution.
 
@@ -83,7 +83,7 @@ def land_perlin_create(int w, h) -> LandPerlin*:
     self.xy = land_calloc(w * h * sizeof *self.xy)
     for int j in range(h):
         for int i in range(w):
-            float a = land_rnd(0, LAND_PI * 2)
+            float a = land_random_f(seed, 0, LAND_PI * 2)
             self.xy[i + j * w].x = cos(a)
             self.xy[i + j * w].y = sin(a)
     self.lerp = _cosine_lerp

@@ -83,6 +83,11 @@ def land_yaml_get_nth_double(LandYamlEntry *self, int i) -> double:
     return land_yaml_get_scalar_double(
         land_array_get_nth(land_yaml_get_sequence(self), i))
 
+def land_yaml_get_nth_scalar(LandYamlEntry *self, int i) -> char const *:
+    return land_yaml_get_scalar(
+        land_array_get_nth(land_yaml_get_sequence(self), i))
+
+
 def land_yaml_get_entry_sequence(LandYamlEntry *self, char const *name) -> LandArray*:
     return land_yaml_get_sequence(land_yaml_get_entry(self, name))
 

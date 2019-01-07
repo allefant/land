@@ -417,7 +417,10 @@ def land_widget_base_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     return self
 
 def land_widget_remove(LandWidget *self):
-    """Remove a widget from its parent."""
+    """Remove a widget from its parent.
+    Note: If the reference held by the parent was the last this will
+    also destroy the widget.
+    """
     if not self.parent: return
     land_call_method(self.parent, remove, (self->parent, self))
 

@@ -8,6 +8,7 @@ class LandPlasma:
     float *cache
     float power_modifier
     float amplitude
+    LandRandom *rndgen
 
 # old crispness c:
 # level n - 1: c
@@ -32,7 +33,7 @@ class LandPlasma:
 # level n - 1: 2^(a-n+1) = c
 #
 def _blend(LandPlasma *self, float c1, c2, level) -> float:
-    float rnd = land_rnd(-1, 1)
+    float rnd = land_random_f(self.rndgen, -1, 1)
 
     float scale = pow(2 + self.power_modifier, -level + self.amplitude)
     float ret = (c1 + c2 + rnd * scale) / 2
@@ -42,7 +43,7 @@ def _blend(LandPlasma *self, float c1, c2, level) -> float:
 
     return ret
 
-def land_plasma_new(int w, h, float power_modifier, amplitude) -> LandPlasma*:
+def land_plasma_new(LandRandom *rndgen, int w, h, float power_modifier, amplitude) -> LandPlasma*:
     LandPlasma *self
     land_alloc(self)
 
@@ -50,6 +51,7 @@ def land_plasma_new(int w, h, float power_modifier, amplitude) -> LandPlasma*:
     self.h = h
     self.power_modifier = power_modifier
     self.amplitude = amplitude
+    self.rndgen = rndgen
 
     self.cache = land_calloc(w * h * sizeof *self.cache)
 

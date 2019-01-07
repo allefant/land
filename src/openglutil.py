@@ -12,6 +12,9 @@ def land_bind_vbo(GLuint *vbo, void *data, int n, int draw):
         glBindBuffer(GL_ARRAY_BUFFER, *vbo)
         glBufferData(GL_ARRAY_BUFFER, n, data, draw)
 
+def land_unbind_vbo(GLuint vbo):
+    glBindBuffer(GL_ARRAY_BUFFER, 0)
+
 def land_opengl_error() -> char const *:
     GLenum e = glGetError()
 ***scramble

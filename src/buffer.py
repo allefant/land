@@ -89,15 +89,23 @@ def land_buffer_destroy(LandBuffer *self):
     if self.buffer: land_free(self->buffer)
     land_free(self)
 
-def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
+def land_buffer_grow(LandBuffer *self, int n):
     self.n += n
-    if self.n > self->size:
-        if not self.size: self->size = 1
-        while self.size < self->n:
+    if self.n > self.size:
+        if not self.size: self.size = 1
+        while self.size < self.n:
             self.size *= 2
-        self.buffer = land_realloc(self->buffer, self->size)
-    memmove(self.buffer + pos + n, self->buffer + pos, self->n - n - pos)
+        self.buffer = land_realloc(self.buffer, self.size)
+
+def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
+    land_buffer_grow(self, n)
+    memmove(self.buffer + pos + n, self.buffer + pos, self.n - n - pos)
     memcpy(self.buffer + pos, buffer, n)
+
+def land_buffer_move(LandBuffer *self, int from_pos, int to_pos, int n):
+    if from_pos < 0: from_pos += self.n
+    if to_pos < 0: to_pos += self.n
+    memmove(self.buffer + to_pos, self.buffer + from_pos, n)
 
 def land_buffer_cut(LandBuffer *self, int pos, int n):
     memmove(self.buffer + pos, self.buffer + pos + n, self.n - pos - n)
