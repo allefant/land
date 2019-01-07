@@ -23,9 +23,9 @@ global LandWidgetInterface *land_widget_scrollbar_horizontal_interface
 static def scroll_vertical_cb(LandWidget *self, bool update_target,
         int *min, *max, *range, *pos):
     """
-    If set is not 0, then the target window is scrolled according to the
+    If update_target is not 0, then the target window is scrolled according to the
     scrollbar position.
-    If set is 0, then the min/max/range/pos parameters are updated.
+    If update_target is 0, then the min/max/range/pos parameters are updated.
     """
     LandWidgetScrollbar *bar = LAND_WIDGET_SCROLLBAR(self)
     LandWidget *target = bar->target
@@ -90,31 +90,35 @@ static def get_size(LandWidget *super) -> int:
     else:
         return super->box.w
 
-def land_widget_scrollbar_update(LandWidget *super, bool update_target):
+def land_widget_scrollbar_update(LandWidget *handle, bool update_target):
     """
     If update_target is set, then the target is updated from the scrollbar. Else the
     scrollbar adjusts to the target's scrolled position.
     """
-    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super)
+    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(handle)
     int minval, maxval, val, valrange
     int minpos, maxpos, pos, minlen
 
-    self.callback(super, 0, &minval, &maxval, &valrange, &val)
+    LandWidget* bar_area = handle.parent
+
+    self.callback(handle, 0, &minval, &maxval, &valrange, &val)
 
     if self.vertical:
-        minpos = super->parent->box.y + super->parent->element->it
-        maxpos = super->parent->box.y + super->parent->box.h - super->parent->element->ib - 1
-        pos = super->box.y
-        minlen = super->element->minh
+        minpos = bar_area->box.y + bar_area->element->it
+        maxpos = bar_area->box.y + bar_area->box.h - bar_area->element->ib - 1
+        pos = handle->box.y
+        minlen = handle->element->minh
     else:
-        minpos = super->parent->box.x + super->parent->element->il
-        maxpos = super->parent->box.x + super->parent->box.w - super->parent->element->ir - 1
-        pos = super->box.x
-        minlen = super->element->minw
+        minpos = bar_area->box.x + bar_area->element->il
+        maxpos = bar_area->box.x + bar_area->box.w - bar_area->element->ir - 1
+        pos = handle->box.x
+        minlen = handle->element->minw
 
     int posrange = 0
     if maxval > minval:
         posrange = (1 + maxpos - minpos) * valrange / (1 + maxval - minval)
+
+    if posrange < minlen: posrange = minlen
 
     if update_target:
         maxpos -= posrange - 1
@@ -127,14 +131,13 @@ def land_widget_scrollbar_update(LandWidget *super, bool update_target):
             int rounded = maxpos - minpos - 1
             val = (minval + (pos - minpos) * (maxval - minval) + rounded) / (maxpos - minpos)
 
-        self.callback(super, 1, &minval, &maxval, &valrange, &val)
+        self.callback(handle, 1, &minval, &maxval, &valrange, &val)
 
     else:
         # minpos/maxpos: pixel positions which can be covered in view
         # minval/maxval: pixel position which can be covered in scrollbar
         # valrage: length of viewed area in view
         # posrange: length of scrollbar
-        if posrange < minlen: posrange = minlen
         maxpos -= posrange - 1
         maxval -= valrange - 1
 
@@ -145,61 +148,61 @@ def land_widget_scrollbar_update(LandWidget *super, bool update_target):
 
         int dx = 0, dy = 0
         if self.vertical:
-            super.box.w = super->parent->box.w - (
-                super->parent->element->ir +
-                super->parent->element->il)
-            super.box.h = posrange
-            dx = super->parent->box.x + super->parent->element->il -\
-                super->box.x
-            dy = pos - super->box.y
+            handle.box.w = bar_area->box.w - (
+                bar_area->element->ir +
+                bar_area->element->il)
+            handle.box.h = posrange
+            dx = bar_area->box.x + bar_area->element->il - handle->box.x
+            dy = pos - handle->box.y
         else:
-            super.box.w = posrange
-            super.box.h = super->parent->box.h - (
-                super->parent->element->ib +
-                super->parent->element->it)
-            dx = pos - super->box.x
-            dy = super->parent->box.y + super->parent->element->it -\
-                super->box.y
-        super.box.min_width = super.box.w
-        super.box.min_height = super.box.h
-        land_widget_move(super, dx, dy)
+            handle.box.w = posrange
+            handle.box.h = bar_area->box.h - (
+                bar_area->element->ib +
+                bar_area->element->it)
+            dx = pos - handle->box.x
+            dy = bar_area->box.y + bar_area->element->it - handle->box.y
+        handle.box.min_width = handle.box.w
+        handle.box.min_height = handle.box.h
+        land_widget_move(handle, dx, dy)
 
 def land_widget_scrollbar_draw(LandWidget *self):
     # land_widget_scrollbar_update(self, 0)
     land_widget_theme_draw(self)
 
-def land_widget_scrollbar_mouse_tick(LandWidget *super):
-    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(super)
+def land_widget_scrollbar_mouse_tick(LandWidget *handle):
+    LandWidgetScrollbar *self = LAND_WIDGET_SCROLLBAR(handle)
     if land_mouse_delta_b():
         if land_mouse_b() & 1:
-            self.drag_x = land_mouse_x() - super->box.x
-            self.drag_y = land_mouse_y() - super->box.y
+            self.drag_x = land_mouse_x() - handle->box.x
+            self.drag_y = land_mouse_y() - handle->box.y
             self.dragged = 1
 
         else:
             self.dragged = 0
 
+    LandWidget* bar_area = handle.parent
+
     if (land_mouse_b() & 1) and self.dragged:
         int newx = land_mouse_x() - self.drag_x
         int newy = land_mouse_y() - self.drag_y
-        int l = super->parent->box.x + super->parent->element->il
-        int t = super->parent->box.y + super->parent->element->it
-        int r = super->parent->box.x + super->parent->box.w - super->box.w - super->parent->element->ir
-        int b = super->parent->box.y + super->parent->box.h - super->box.h - super->parent->element->ib
+        int l = bar_area->box.x + bar_area->element->il
+        int t = bar_area->box.y + bar_area->element->it
+        int r = bar_area->box.x + bar_area->box.w - handle->box.w - bar_area->element->ir
+        int b = bar_area->box.y + bar_area->box.h - handle->box.h - bar_area->element->ib
         if newx > r: newx = r
         if newy > b: newy = b
         if newx < l: newx = l
         if newy < t: newy = t
-        int dx = newx - super->box.x
-        int dy = newy - super->box.y
-        land_widget_move(super, dx, dy)
-        int old_size = get_size(super)
-        land_widget_scrollbar_update(super, 1)
+        int dx = newx - handle->box.x
+        int dy = newy - handle->box.y
+        land_widget_move(handle, dx, dy)
+        int old_size = get_size(handle)
+        land_widget_scrollbar_update(handle, 1)
 
         # layout of target may change by scrolling (e.g. when scrolled outside normal range) 
-        land_widget_scrollbar_update(super, 0)
-        int new_size = get_size(super)
-        # If we scroll down, and layout changed, anchor to bottom. 
+        land_widget_scrollbar_update(handle, 0)
+        int new_size = get_size(handle)
+        # If we scroll down or right and layout changed, anchor to bottom. 
         if new_size > old_size:
             if self.vertical and dy > 0: self->drag_y += new_size - old_size
             if not self.vertical and dx > 0: self->drag_x += new_size - old_size
