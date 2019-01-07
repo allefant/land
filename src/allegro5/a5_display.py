@@ -1,4 +1,4 @@
-import land.display
+import land.triangles
 import a5_image
 static import global allegro5.allegro5
 static import global allegro5.allegro_primitives
@@ -11,10 +11,6 @@ class LandDisplayPlatform:
     ALLEGRO_STATE blend_state
     ALLEGRO_TRANSFORM transform
     ALLEGRO_SHADER *default_shader
-
-static class LandTrianglesPlatform:
-    LandTriangles super
-    ALLEGRO_VERTEX *v
 
 def platform_display_init():
     pass
@@ -83,7 +79,7 @@ def land_a5_display_check_transform():
         al_use_transform(&self.transform)
         super.matrix_modified = False
 
-static def check_blending_and_transform():
+def platform_check_blending_and_transform():
     SELF
     land_a5_display_check_transform()
 
@@ -97,10 +93,13 @@ static def check_blending_and_transform():
         elif super->blend & LAND_BLEND_ADD:
             al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE)
 
-static def uncheck_blending():
+def platform_uncheck_blending():
     SELF
     if super->blend:
         al_restore_state(&self->blend_state)
+
+def check_blending_and_transform: platform_check_blending_and_transform()
+def uncheck_blending: platform_uncheck_blending()
 
 def platform_display_set():
     SELF
@@ -454,63 +453,6 @@ def platform_textured_colored_polygon(LandImage *image, int n,
             v[i].color = self->c
     check_blending_and_transform()
     al_draw_prim(v, None, pim ? pim->a5 : None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
-    uncheck_blending()
-
-static def _add_vertex_data(LandTriangles *t, ALLEGRO_VERTEX v):
-    LandTrianglesPlatform *tp = (void *)t
-    int i = t.n
-    t.n++
-    if t.n > t.c:
-        t.c++
-        t.c *= 2
-        tp.v = land_realloc(tp.v, t.c * sizeof *tp.v)
-    tp.v[i] = v
-
-def platform_add_vertex(LandTriangles *t, float x, y, z, tu, tv, r, g, b, a):
-    ALLEGRO_VERTEX v
-    v.x = x
-    v.y = y
-    v.z = z
-    v.u = tu
-    v.v = tv
-    v.color.r = r
-    v.color.g = g
-    v.color.b = b
-    v.color.a = a
-    _add_vertex_data(t, v)
-
-def platform_update_vertex(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
-    LandTrianglesPlatform *tp = (void *)t
-    ALLEGRO_VERTEX *v = tp.v + i
-    v.x = x
-    v.y = y
-    v.z = z
-    v.u = tu
-    v.v = tv
-    v.color.r = r
-    v.color.g = g
-    v.color.b = b
-    v.color.a = a
-
-def platform_duplicate_vertex(LandTriangles *t, int i):
-    LandTrianglesPlatform *tp = (void *)t
-    _add_vertex_data(t, tp.v[t.n + i])
-
-def platform_triangles_new -> LandTriangles *:
-    LandTrianglesPlatform *self
-    land_alloc(self)
-    return &self.super
-
-def platform_triangles_destroy(LandTriangles *super):
-    LandTrianglesPlatform *self = (void*)super
-    land_free(self.v)
-    land_free(self)
-
-def platform_triangles_draw(LandTriangles *t):
-    LandTrianglesPlatform *tp = (void *)t
-    LandImagePlatform *pim = (void *)t.image;
-    check_blending_and_transform()
-    al_draw_prim(tp.v, None, pim ? pim.a5 : None, 0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     uncheck_blending()
 
 def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):

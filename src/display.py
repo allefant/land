@@ -162,10 +162,6 @@ class LandDisplay:
     int matrix_stack_depth
     bool matrix_modified
 
-class LandTriangles:
-    int n, c
-    LandImage *image
-
 static import allegro5/a5_display
 static import allegro5/a5_image
 static import main
@@ -758,27 +754,3 @@ def land_display_set_default_shaders():
     builtin functions.
     """
     platform_set_default_shaders()
-
-def land_triangles_new -> LandTriangles*:
-    return platform_triangles_new()
-
-def land_triangles_destroy(LandTriangles *self):
-    return platform_triangles_destroy(self)
-
-def land_triangles_clear(LandTriangles *self):
-    self.n = 0
-
-def land_triangles_texture(LandTriangles *self, LandImage *texture):
-    self.image = texture
-
-def land_add_vertex(LandTriangles *self, float x, y, z, u, v, r, g, b, a):
-    platform_add_vertex(self, x, y, z, u, v, r, g, b, a)
-
-def land_duplicate_vertex(LandTriangles *self, int i):
-    platform_duplicate_vertex(self, i)
-
-def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b, a):
-    platform_update_vertex(self, i, x, y, z, u, v, r, g, b, a)
-
-def land_triangles_draw(LandTriangles *self):
-    platform_triangles_draw(self)
