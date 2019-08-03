@@ -256,6 +256,12 @@ def land_scale_to_fit_into(float w, h, l, t, r, b, int how) -> double:
         land_scale(sx, sy)
     return sx
 
+def land_get_scaled_dimensions(float *x, *y, *w, *h):
+    *x = land_get_left()
+    *y = land_get_top()
+    *w = land_display_width() / land_get_x_scale()
+    *h = land_display_height() / land_get_y_scale()
+
 def land_scale_to_fit(float w, h, int how) -> double:
     float dw = land_display_width()
     float dh = land_display_height()
@@ -426,6 +432,7 @@ def land_clip_intersect(float x, float y, float x_, float y_):
 def land_clip_push():
     LandDisplay *d = _land_active_display
     if d->clip_stack_depth > LAND_MAX_CLIP_DEPTH:
+        printf("error: exceeded clip depth\n")
         return
     int *clip = d->clip_stack + d->clip_stack_depth * 5
     clip[0] = d->clip_x1
@@ -564,6 +571,7 @@ def land_display_resize(int w, h):
     d->w = w
     d->h = h
     platform_display_resize(w, h)
+    land_resize_event(w, h)
 
 def land_display_move(int x, y):
     platform_display_move(x, y)
@@ -754,3 +762,6 @@ def land_display_set_default_shaders():
     builtin functions.
     """
     platform_set_default_shaders()
+
+def land_display_dpi -> int:
+    return platform_get_dpi()

@@ -1,5 +1,6 @@
 import global land.land
 import noise_dialog
+import rivers
 
 typedef unsigned char byte
 
@@ -42,8 +43,8 @@ def _export_dupl_get(int offset) -> float*:
     return export_dupl + offset * 11
 
 def cb_gray(int x, y, byte *rgba, void *user):
-    LandNoise *noise = user
-    LandFloat v = land_noise_at(noise, x, y)
+    LandNoise **noises = user
+    LandFloat v = land_noise_at(noises[0], x, y)
     land_constrain(&v, -1, 1)
     int c = (1 + v) / 2 * 255
     int r = c
@@ -67,7 +68,9 @@ def get_type(float height) -> int:
     return 3
 
 def get_color_for_height(LandFloat v) -> LandColor:
-    v = (1 + v) / 2
+    """
+    v is from -1 to +1
+    """
     LandColor rgb
     if v < water_start_z:
         rgb = water_c
@@ -98,12 +101,21 @@ def get_color_for_height(LandFloat v) -> LandColor:
     return rgb
 
 def cb_color(int x, y, byte *rgba, void *user):
-    LandNoise *noise = user
-    LandFloat v = land_noise_at(noise, x, y)
+    LandNoise **noises = user
+    LandFloat v = land_noise_at(noises[0], x, y)
 
     LandColor rgb = get_color_for_height(v)
+    if noises[1]:
+        LandFloat r = land_noise_at(noises[1], x, y)
+        if r > 0:
+            rgb.r *= (1 - r)
+            rgb.g *= (1 - r)
+            rgb.b *= (1 - r)
+            rgb.r += r * water_c.r
+            rgb.g += r * water_c.g
+            rgb.b += r * water_c.b
 
-    float l = calculate_light(noise, x, y)
+    float l = calculate_light(noises[0], x, y)
     l = (1 + l) / 2
     rgb.r *= l
     rgb.g *= l
@@ -173,7 +185,7 @@ def color(byte *rgba, float *c):
 
 def _export_v(LandVector p, LandVector n):
     float zs = 16
-    LandColor c = get_color_for_height(p.z / zs)
+    LandColor c = get_color_for_height(p.z / zs * 2 - 1)
 
     float xa = 1
     float ya = 1
@@ -352,13 +364,13 @@ def init(LandRunner *self):
 
 def main_generate(bool want_color, bool want_triangles, bool debug, bool export):
 
-    water_start_z = dialog.pos0->v / 31.0
-    water_end_z = dialog.pos1->v / 31.0
-    grass_start_z = dialog.pos2->v / 31.0
-    grass_end_z = dialog.pos3->v / 31.0
-    mountain_start_z = dialog.pos4->v / 31.0
-    mountain_end_z = dialog.pos5->v / 31.0
-    snow_start_z = dialog.pos6->v / 31.0
+    water_start_z = dialog.pos0->v / 31.0 * 2 - 1
+    water_end_z = dialog.pos1->v / 31.0 * 2 - 1
+    grass_start_z = dialog.pos2->v / 31.0 * 2 - 1
+    grass_end_z = dialog.pos3->v / 31.0 * 2 - 1
+    mountain_start_z = dialog.pos4->v / 31.0 * 2 - 1
+    mountain_end_z = dialog.pos5->v / 31.0 * 2 - 1
+    snow_start_z = dialog.pos6->v / 31.0 * 2 - 1
 
     water_c = land_color_int(dialog.color1->v)
     shore_c = land_color_int(dialog.color2->v)
@@ -434,7 +446,14 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
     if dialog.plateau->v:
         land_noise_set_minmax(noise, -1 + dialog.plateau->v / 32.0, 1000)
 
-    land_image_write_callback(image, want_color ? cb_color : cb_gray, noise)
+    LandNoise* rn = None
+    if dialog.river->v:
+        rn = rivers(noise, water_end_z, mountain_end_z)
+
+    void *blah[2] = {noise, rn}
+
+    land_image_write_callback(image, want_color ? cb_color : cb_gray,
+        blah)
 
     if want_triangles:
         make_triangles(noise, w, h, debug, export)

@@ -48,8 +48,6 @@ static import display, data
 
 static import allegro5/a5_image
 
-extern LandDataFile *_land_datafile
-
 static void (*_cb)(char const *path, LandImage *image)
 
 static int bitmap_count, bitmap_memory
@@ -178,7 +176,8 @@ def land_image_del(LandImage *self):
     if not (self.flags & LAND_SUBIMAGE):
         land_image_destroy_pixelmasks(self)
         if self.name: land_free(self->name)
-        if self.filename and self->filename != self->name: land_free(self->filename)
+        if self.filename and self->filename != self->name:
+            land_free(self->filename)
         bitmap_count--
         bitmap_memory -= self.width * self->height * 4
     land_display_del_image(self)
@@ -459,8 +458,8 @@ def land_load_images_cb(char const *pattern,
 
     LandArray *filenames = None
     int count = 0
-    if _land_datafile:
-        count = land_datafile_for_each_entry(_land_datafile, pattern, callback,
+    if land_datafile:
+        count = land_datafile_for_each_entry(land_datafile, pattern, callback,
             &filenames)
 
     if not count:
@@ -647,6 +646,10 @@ def land_image_width(LandImage *self) -> int:
     return self.width
 
 def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
+    """
+    Copies rgba data into the specified buffer. It has to be large
+    enough (w * h * 4 bytes) to hold all the data.
+    """
     platform_image_get_rgba_data(self, rgba)
 
 def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):

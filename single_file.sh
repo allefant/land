@@ -9,4 +9,13 @@ for row in open("land_tmp.py"):
 HERE
 python3 tmp.py
 rm land_tmp.py
-scramble -i land.py -c land.c -h land.h -N
+scramble -i land.py -c land.c -h land_tmp.h -N
+
+cat > tmp.py <<HERE
+out = open("land.h", "w")
+for row in open("land_tmp.h"):
+    if row == "#include <land/util.h>\n": continue
+    out.write(row)
+HERE
+python3 tmp.py
+

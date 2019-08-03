@@ -39,7 +39,6 @@ def platform_image_empty(LandImage *super):
         memset(lock->data + lock->pitch * i, 0, rowbytes)
     al_unlock_bitmap(self->a5)
 
-
 def platform_image_load(char const *filename, bool mem) -> LandImage *:
     LandImage *super = land_display_new_image()
     super->filename = land_strdup(filename)

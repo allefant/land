@@ -261,6 +261,7 @@ def land_callbacks(VoidFunction *init, VoidFunction *tick,
     shortcut_runner = land_runner_new("shortcut",
             (void *)init, None, (void *)tick, (void *)draw,
             None, (void *)done)
+    land_runner_register(shortcut_runner)
     land_set_initial_runner(shortcut_runner)
 
 global int land_argc

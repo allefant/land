@@ -58,7 +58,6 @@ execute_process(COMMAND ${CMAKE_C_COMPILER} --version OUTPUT_VARIABLE EMSCRIPTEN
 string(REGEX MATCH emcc EMSCRIPTEN "${EMSCRIPTEN}")
 string(COMPARE NOTEQUAL "" "${EMSCRIPTEN}" EMSCRIPTEN)
 
-CHECK_INCLUDE_FILES(yaml.h LAND_HAVE_YAML_H)
 CHECK_INCLUDE_FILES(execinfo.h LAND_HAVE_EXECINFO_H)
 CONFIGURE_FILE(config.cmake c/land/config.h)
 
@@ -166,7 +165,6 @@ if (SHARED)
         else (WINDOWS)
             target_link_libraries(${libname}-debug
                 allegro_monolith-debug
-                yaml
                 )
         endif (WINDOWS)
     endif (DEBUG)
@@ -193,7 +191,6 @@ if (SHARED)
         else (WINDOWS)
             target_link_libraries(${libname}
                 allegro_monolith
-                yaml
                 )
         endif (WINDOWS)
     endif (RELEASE)

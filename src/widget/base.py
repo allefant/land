@@ -587,8 +587,10 @@ def land_widget_draw(LandWidget *self):
     if not self.dont_clip:
         land_clip_push()
         land_clip_on()
+
         land_clip_intersect(self.box.x, self->box.y, self->box.x + self->box.w,
             self.box.y + self->box.h)
+
         pop = 1
 
     land_call_method(self, draw, (self))
@@ -685,3 +687,9 @@ def land_widget_debug(LandWidget *w, int indentation):
             for LandWidget *child in LandList *c.children:
                 land_widget_debug(child, indentation + 1)
     
+def land_widget_keyboard_leave(LandWidget *self):
+    land_call_method(self, keyboard_leave, (self))
+
+def land_widget_keyboard_focus(LandWidget *self):
+    self.want_focus = True
+

@@ -150,7 +150,6 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}-debug
                 ${libname}-debug
-                yaml
                 m
                 GL
                 )
@@ -163,7 +162,6 @@ foreach(exsrc ${examples})
                 )
             target_link_libraries(${exname}
                 ${libname}
-                yaml
                 )
         endif (RELEASE)
     endif (SHARED)

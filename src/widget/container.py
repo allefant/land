@@ -84,20 +84,31 @@ def land_widget_container_keyboard_enter(LandWidget *super):
                 land_widget_reference(self.keyboard)
                 break
 
+def land_widget_container_get_keyboard_focus(LandWidget *super) -> LandWidget*:
+    LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
+    return self.keyboard
+
 # Remove keyboard focus from the container and its children.
 def land_widget_container_keyboard_leave(LandWidget *super):
     LandWidgetContainer *self = LAND_WIDGET_CONTAINER(super)
 
     if self.keyboard:
-        self.keyboard->got_keyboard = 0
-        land_call_method(self.keyboard, keyboard_leave, (self->keyboard))
-        if self.keyboard->got_keyboard:
-            super->got_keyboard = 1
+        LandWidget* keyboard = self.keyboard
+        self.keyboard = NULL
+        
+        keyboard.got_keyboard = 0
+        land_call_method(keyboard, keyboard_leave, (keyboard))
+
+        if keyboard.got_keyboard:
+            super.got_keyboard = 1
+            self.keyboard = keyboard
+            # we still have the reference
             return
 
-        land_widget_unreference(self.keyboard)
-        self.keyboard = NULL
+        land_widget_unreference(keyboard)
 
+        if super.parent:
+            land_widget_keyboard_leave(super.parent)
 
 # Returns the item/iterator for the given child of the container.
 def land_widget_container_child_item(LandWidget *super, *child) -> LandListItem *:
@@ -240,7 +251,7 @@ static def transfer_keyboard_focus(LandWidget *base):
     if base->got_keyboard:
         return
 
-    # At this point, no childs have focus anymore. Next we give focus to
+    # At this point, no children have focus anymore. Next we give focus to
     # those who want it.
     base->want_focus = 0
     base->got_keyboard = 1

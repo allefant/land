@@ -168,9 +168,9 @@ def land_hash_remove(LandHash *self, char const *thekey) -> void *:
     The returned pointer might need to be destroyed after you remove it from
     the hash, if it has no more use.
     """
-    if not self.size: return NULL
+    if not self.size: return None
     int i = self.hash_function(self, thekey)
-    if not self.entries[i]: return NULL
+    if not self.entries[i]: return None
     int n = self.entries[i][0].n
     int j
     for j = 0 while j < n with j++:

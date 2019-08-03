@@ -6,6 +6,7 @@ char const* noises[] = {"Voronoi", "Perlin", "Plasma", "White", "Waves"}
 char const* lerps[] = {"None", "Linear", "Cosine", "Smooth", "Smoother", "Smoothest"}
 char const* warps[] = {"none", "warp"}
 char const* blurs[] = {"none", "blur"}
+char const* river_types[] = {"none", "big"}
 
 class Dialog:
     Value *preset
@@ -20,6 +21,7 @@ class Dialog:
     Value *randomness
     Value *crispness
     Value *wrap
+    Value *river
 
     Value *warp
     Value *warp_offset_x
@@ -76,7 +78,7 @@ def dialog_hide_show(Dialog *self):
 
     value_show_if(self.blur.v == 1, self.blur_size)
 
-    value_show_if(self.noise.v == 0, self.count)
+    value_show_if(self.noise.v == 0 or self.noise.v == 4, self.count)
     value_show_if(self.noise.v == 0, self.randomness)
     
     value_show_if(self.noise.v == 1, self.lerp)
@@ -227,8 +229,8 @@ def dialog_new -> Dialog*:
     self.lerp = value_new(vbox, "lerp", 2, 0, 5, 1, lerps)
     self.count = value_new(vbox, "count", 1, 0, 32, 1, None)
     self.randomness = value_new(vbox, "randomness", 1, 0, 16, 1, None)
-    self.levels = value_new(vbox, "levels", 6, 0, 10, 1, None)
-    self.amplitude = value_new(vbox, "amplitude", 8, -16, 16, 1, None)
+    self.levels = value_new(vbox, "levels", 4, 0, 10, 1, None)
+    self.amplitude = value_new(vbox, "amplitude", 10, -16, 16, 1, None)
     self.power_modifier = value_new(vbox, "power modifier", 0, -16, 16, 1, None)
 
     self.warp = value_new(vbox, "warp", 0, 0, 1, 1, warps)
@@ -245,6 +247,7 @@ def dialog_new -> Dialog*:
     self.z_ease = value_new(vbox, "z ease", 0, 0, 16, 1, None)
 
     self.plateau = value_new(vbox, "plateau", 0, 0, 31, 1, None)
+    self.river = value_new(vbox, "river", 1, 0, 1, 1, river_types)
 
     self.pos0 = value_new(vbox, "water start", 0, 0, 31, 1, None)
     self.color1 = value_color_new(vbox, "water", "blue")

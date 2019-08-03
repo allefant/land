@@ -63,7 +63,7 @@ def land_set_vertex_index(LandTriangles *self, float i):
 def land_duplicate_vertex(LandTriangles *self, int i):
     self.n++
     land_buffer_grow(self.buf, self.size)
-    land_buffer_move(self.buf, -self.size * 2, -self.size, self.size)
+    land_buffer_move(self.buf, self.size * (-1 + i), -self.size, self.size)
 
 def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b, a):
     platform_update_vertex(self, i, x, y, z, u, v, r, g, b, a)

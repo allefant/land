@@ -188,6 +188,8 @@ def csg_cut_cone_open(int slices, bool opened, float top_radius,
         LandFloat c0 = cos(angle0), s0 = sin(angle0)
         LandFloat c1 = cos(angle1), s1 = sin(angle1)
 
+        # the lower normals point straight out - so technically our
+        # cone is weirdly bent towards the top
         LandVector side0 = land_vector(c0, -s0, 0)
         LandVector side1 = land_vector(c1, -s1, 0)
         LandVector v0d = land_vector(c0, -s0, -1)
@@ -334,7 +336,7 @@ def csg_pyramid(void *shared) -> LandCSG *:
 def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> LandCSG *:
     """
     Make a 4-sided pyramid with a side-length of 1 at the base and a
-    height of 2. The side-length at the top is top_x tims top_y.
+    height of 2. The side-length at the top is top_x times top_y.
     """
     LandFloat x = top_x
     LandFloat y = top_y

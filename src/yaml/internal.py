@@ -11,6 +11,7 @@ class YamlParser:
     int line_length
     int flags
     int indent
+    bool cannot_break # whatever is written next cannot start on a new line
     
 def land_yaml_load(char const *filename) -> LandYaml *:
     LandFile *f = land_file_new(filename, "rb")
@@ -44,13 +45,18 @@ def land_yaml_load(char const *filename) -> LandYaml *:
     land_buffer_destroy(value)
     return yaml
 
-static def yaml_write(YamlParser *p, char const *s):
+def _yaml_write(YamlParser *p, char const *s):
     int n = strlen(s)
-    if p.line_length + n > 80:
-        land_file_write(p.file, "\n", 1)
-        p.line_length = 0
+    if not p.cannot_break:
+        if p.line_length + n > 80:
+            land_file_write(p.file, "\n", 1)
+            p.line_length = 0
+    p.cannot_break = False
     land_file_write(p.file, s, n)
     p.line_length += n
+
+static def yaml_write(YamlParser *p, char const *s):
+    _yaml_write(p, s)
 
 def _pretty_newline(YamlParser *p):
     if p.flags & LandYamlPretty:
@@ -66,8 +72,10 @@ static def _save_mapping(LandYamlEntry *e, YamlParser *p) -> bool:
     for char const *key in LandArray *e.sequence:
         if prev: yaml_write(p, ",")
         _pretty_newline(p)
-        yaml_write(p, key)
-        yaml_write(p, ":")
+        _yaml_write(p, key)
+        p.cannot_break = True
+        _yaml_write(p, ": ") # YAML specs say colon-space (not just colon) must be used as separator
+        p.cannot_break = True
         _save_entry(land_hash_get(e.mapping, key), p)
         prev = True
     p.indent -= 1

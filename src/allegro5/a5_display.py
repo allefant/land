@@ -577,3 +577,6 @@ def platform_projection(Land4x4Matrix m):
     t.m[2][3] = m.v[14]
     t.m[3][3] = m.v[15]
     al_use_projection_transform(&t)
+
+def platform_get_dpi -> int:
+    return al_get_monitor_dpi(0)

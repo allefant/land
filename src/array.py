@@ -154,6 +154,15 @@ def land_array_replace_nth(LandArray *array, int i, void *data) -> void *:
     array->data[i] = data
     return old
 
+def land_array_replace_or_resize(LandArray *array, int i, void *data) -> void*:
+    """
+    Replaces the entry at i and returns the previous data.
+    If i is outside the size of the array, resize it.
+    """
+    while array->count < i + 1:
+        land_array_add(array, None)
+    return land_array_replace_nth(array, i, data)
+
 def land_array_get_last(LandArray *array) -> void*:
     return land_array_get_nth(array, array.count - 1)
 

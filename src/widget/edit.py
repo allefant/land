@@ -54,7 +54,7 @@ def land_widget_edit_draw(LandWidget *base):
         y -= land_font_height(land_font_current())
         land_widget_theme_color(base)
 
-        land_text_pos(x, y)
+        land_text_pos(x - self.scroll, y)
         land_print(self.text)
 
         if base->got_keyboard:
@@ -62,6 +62,13 @@ def land_widget_edit_draw(LandWidget *base):
             pos -= floor(pos)
             if pos < 0.5:
                 int cx = land_text_get_char_offset(self.text, self->cursor)
+                cx -= self.scroll
+
+                if cx < 0:
+                    self.scroll += cx
+                if cx > base.box.w:
+                    self.scroll += cx - base.box.w
+
                 land_line(x + cx + 0.5, y, x + cx + 0.5, base->box.y + base->box.h -
                     base->element->ib)
 
@@ -75,7 +82,7 @@ def land_widget_edit_mouse_tick(LandWidget *base):
         if land_mouse_b() & 1:
             base->want_focus = 1
             int x = land_mouse_x() - get_x_offset(base)
-            edit->cursor = land_text_get_char_index(edit->text, x)
+            edit->cursor = land_text_get_char_index(edit->text, x - edit.scroll)
 
 static macro M if (edit->modified) edit->modified(base)
 def land_widget_edit_keyboard_tick(LandWidget *base):
@@ -115,7 +122,9 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
             elif k == LandKeyEnd:
                 edit->cursor = l
             elif k == LandKeyEnter:
-                land_widget_container_keyboard_leave(base.parent)
+                if base.parent:
+                    land_widget_keyboard_leave(base.parent)
+                M
 
 def land_widget_edit_destroy(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)

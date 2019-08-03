@@ -23,6 +23,7 @@ class LandWidgetButton:
     LandArray *lines
     void (*clicked)(LandWidget *self)
     void (*rclicked)(LandWidget *self)
+    void (*dynamic_text_cb)(LandWidget *self)
 
 macro LAND_WIDGET_BUTTON(widget) ((LandWidgetButton *)
     land_widget_check(widget, LAND_WIDGET_ID_BUTTON, __FILE__, __LINE__))
@@ -34,6 +35,9 @@ global LandWidgetInterface *land_widget_button_interface
 def land_widget_button_draw(LandWidget *base):
     LandWidgetButton *self = LAND_WIDGET_BUTTON(base)
     land_widget_box_draw(base)
+
+    if self.dynamic_text_cb:
+        self.dynamic_text_cb(base)
 
     if not base->dont_clip:
         float l, t, r, b
@@ -271,6 +275,8 @@ def land_widget_button_replace_text(LandWidget *base, char const *text):
     button->text = None
     if text:
         button->text = land_strdup(text)
+    if button.multiline:
+        land_widget_button_multiline(base, button.multiline)
 
 def land_widget_button_set_text(LandWidget *base, char const *text):
     land_widget_button_replace_text(base, text)
@@ -319,21 +325,28 @@ def land_widget_button_multiline(LandWidget *self, int style):
         land_widget_theme_font(self)
         land_widget_inner(self, &x, &y, &w, &h)
         if style == 0 or style == 1:
-            button->lines = land_text_splitlines(button->text)
+            button.lines = land_text_splitlines(button->text)
+            int ww = 0
+            int wh = 0
+            for char* row in LandArray* button.lines:
+                ww = max(ww, land_text_get_width(row))
+                wh += land_line_height()
+            land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
+            land_widget_layout(self)
         else:
             button->lines = land_wordwrap_text(w, 0, button->text)
-        float ww, wh
-        land_wordwrap_extents(&ww, &wh)
-        if ww - w > 0.1:
-            # We can not wrap up text shorter than the single longest word
-            # (which can't be split). So if our first try of wrapping was not
-            # sucessful because it was too narrow, we wrap it again with a
-            # width guaranteed to succeed.
-            land_array_for_each(button->lines, _linedelcb, None)
-            land_array_destroy(button->lines)
-            button->lines = land_wordwrap_text(ww, 0, button->text)
+            float ww, wh
             land_wordwrap_extents(&ww, &wh)
-        land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
+            if ww - w > 0.1:
+                # We can not wrap up text shorter than the single longest word
+                # (which can't be split). So if our first try of wrapping was not
+                # sucessful because it was too narrow, we wrap it again with a
+                # width guaranteed to succeed.
+                land_array_for_each(button->lines, _linedelcb, None)
+                land_array_destroy(button->lines)
+                button->lines = land_wordwrap_text(ww, 0, button->text)
+                land_wordwrap_extents(&ww, &wh)
+            land_widget_theme_set_minimum_size_for_contents(self, ww, wh)
 
 def land_widget_button_align(LandWidget *self, int x, int y):
     """
@@ -373,3 +386,7 @@ def land_widget_button_destroy(LandWidget *base):
 
 def land_widget_button_set_minimum_text(LandWidget *base, char const *text):
     land_widget_theme_set_minimum_size_for_text(base, text)
+
+def land_widget_button_set_dynamic_text_callback(LandWidget *self, void (*cb)(LandWidget*)):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
+    button.dynamic_text_cb = cb

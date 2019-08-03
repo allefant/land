@@ -5,7 +5,7 @@ LandWidgetTheme *theme, *classic, *green
 LandWidget *desktop, *panel
 int page = 0
 
-extern int gul_debug;
+#extern int gul_debug;
 
 def my_draw(LandWidget *self):
     land_widget_theme_draw(self)

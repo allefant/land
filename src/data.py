@@ -12,7 +12,7 @@ class LandDataFile:
 
 static import global string
 
-global LandDataFile *_land_datafile
+global LandDataFile *land_datafile
 
 static def read32(FILE *f) -> int:
     unsigned int u = fgetc(f)
@@ -135,7 +135,7 @@ def land_datafile_for_each_entry(LandDataFile *self, char const *pattern,
     return n
 
 def land_set_datafile(LandDataFile *datafile):
-    _land_datafile = datafile
+    land_datafile = datafile
 
 def land_get_datafile() -> LandDataFile *:
-    return _land_datafile
+    return land_datafile

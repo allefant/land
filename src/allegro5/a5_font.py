@@ -94,6 +94,7 @@ def platform_font_print(LandFontState *lfs,
             a | ALLEGRO_ALIGN_CENTRE, str)
     elif alignment & LandAlignCenter:
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_CENTRE, str)
+        lfs.x -= lfs.w / 2
     elif alignment & LandAlignRight:
         al_draw_text(self.a5, c, x, y, a | ALLEGRO_ALIGN_RIGHT, str)
         lfs->x -= lfs->w
