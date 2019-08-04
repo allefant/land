@@ -13,6 +13,7 @@ scramble -i land.py -c land.c -h land_tmp.h -N
 
 cat > tmp.py <<HERE
 out = open("land.h", "w")
+out.write("#define ALLEGRO_UNSTABLE\n")
 for row in open("land_tmp.h"):
     if row == "#include <land/util.h>\n": continue
     out.write(row)

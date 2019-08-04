@@ -158,7 +158,6 @@ def land_android_apk_filesystem(bool onoff):
     # for loading data it can be useful to traverse the APK
     # filesystem, but for everything else (like configuration or
     # savegames) we need the normal filesystem.
-    #al_android_set_apk_fs_interface()
     if onoff:
         al_android_set_apk_fs_interface()
         al_change_directory("/")

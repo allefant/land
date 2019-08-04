@@ -154,14 +154,17 @@ def platform_display_set():
         super->clip_y2 = super->h
 
     *** "ifdef" ANDROID
-    #f |= ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE
+    f |= ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE
     *** "endif"
 
     #f |= ALLEGRO_OPENGL_ES_PROFILE;
     
     if f:
         al_set_new_display_flags(f)
-    al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
+        
+    #al_set_new_display_option(ALLEGRO_COLOR_SIZE, 32, ALLEGRO_SUGGEST)
+    #al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
+    
     land_log_message("Calling al_create_display(%d, %d).\n", super->w,
         super->h)
     self->a5 = al_create_display(super->w, super->h)
@@ -520,7 +523,6 @@ static int a5func[] = {
     ALLEGRO_RENDER_GREATER,
     ALLEGRO_RENDER_NOT_EQUAL,
     ALLEGRO_RENDER_GREATER_EQUAL
-
     }
 
 def platform_render_state(int state, value):

@@ -51,21 +51,21 @@ def _gety(LandOctree *self, LandFloat y) -> int:
 def _getz(LandOctree *self, LandFloat z) -> int:
     return between((z - self.zo) / self.cz, 0, self.zs - 1)
 
-def _get(LandOctree *self, LandFloat x, y, z) -> int:
+def _get_i(LandOctree *self, LandFloat x, y, z) -> int:
     int xi = _getx(self, x)
     int yi = _getx(self, y)
     int zi = _getx(self, z)
     return xi + yi * self.xs + zi * self.xs * self.ys
 
 def land_octree_insert(LandOctree *self, LandFloat x, y, z, void *data):
-    int i = _get(self, x, y, z)
+    int i = _get_i(self, x, y, z)
     LandArray *array = self.data[i]
     if not array:
         array = self.data[i] = land_array_new()
     land_array_add(array, data)
 
 def land_octree_get(LandOctree *self, LandFloat x, y, z) -> LandArray*:
-    int i = _get(self, x, y, z)
+    int i = _get_i(self, x, y, z)
     return self.data[i]
 
 def land_octree_callback_in_cube(LandOctree *self, LandFloat x1, y1, z1,

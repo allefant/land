@@ -59,6 +59,10 @@ def platform_init():
         al_register_event_source(queue, al_get_joystick_event_source())
     a5_joystick_create_mapping()
 
+    *** "ifdef "ANDROID
+    al_android_set_apk_file_interface()
+    *** "endif"
+
 static macro _UnkKey(x) \
     LandKeyUnknown3 + x + 0, \
     LandKeyUnknown3 + x + 1, \
