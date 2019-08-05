@@ -84,7 +84,8 @@ def land_widget_edit_mouse_tick(LandWidget *base):
             int x = land_mouse_x() - get_x_offset(base)
             edit->cursor = land_text_get_char_index(edit->text, x - edit.scroll)
 
-static macro M if (edit->modified) edit->modified(base)
+static macro M:
+    if edit->modified: edit->modified(base)
 def land_widget_edit_keyboard_tick(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     while not land_keybuffer_empty():

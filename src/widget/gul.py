@@ -69,7 +69,8 @@ static import land/log, land/mem
 
 static int gul_debug
 
-static macro D(_) if (gul_debug) _
+static macro D(_):
+    if gul_debug: _
 #static macro D(_) (void)0;
 
 static def ERR(char const *format, ...):
