@@ -100,7 +100,6 @@ def land_widget_checkbox_new_boolean(LandWidget *parent,
 
     return (LandWidget *)self
 
-
 def land_widget_checkbox_is_checked(LandWidget *self) -> bool:
     return land_widget_container_child(self)->selected
 

@@ -355,8 +355,16 @@ def land_widget_info_string(LandWidget *w) -> char const *:
         sprintf(str, "scrollbar")
     elif land_widget_is(w, LAND_WIDGET_ID_BOOKPAGE):
         sprintf(str, "bookpage")
+    elif land_widget_is(w, LAND_WIDGET_ID_LIST):
+        sprintf(str, "list")
+    elif land_widget_is(w, LAND_WIDGET_ID_LISTITEM):
+        sprintf(str, "listitem")
+    elif land_widget_is(w, LAND_WIDGET_ID_VBOX):
+        sprintf(str, "vbox")
+    elif land_widget_is(w, LAND_WIDGET_ID_HBOX):
+        sprintf(str, "hbox")
     else:
-        sprintf(str, "unknown")
+        sprintf(str, "unknown (%d)", w.vt.id)
     return str
 
 def land_widget_set_property(LandWidget *self, char const *property,
@@ -678,8 +686,8 @@ def land_widget_base_interface_initialize():
 def land_widget_debug(LandWidget *w, int indentation):
     for int i in range(indentation):
         printf("  ");
-    printf("%s %d %d %d %d\n", land_widget_info_string(w),
-        w->box.x, w->box.y, w->box.w, w->box.h)
+    printf("%s %d %d %d %d %s\n", land_widget_info_string(w),
+        w->box.x, w->box.y, w->box.w, w->box.h, land_widget_flags_string(w))
 
     if land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
         LandWidgetContainer *c = LAND_WIDGET_CONTAINER(w)
@@ -693,3 +701,12 @@ def land_widget_keyboard_leave(LandWidget *self):
 def land_widget_keyboard_focus(LandWidget *self):
     self.want_focus = True
 
+char _blah[100]
+def land_widget_flags_string(LandWidget *w) -> str:
+    strcpy(_blah, "")
+    if w.box.flags & GUL_SHRINK_X: strcat(_blah, " xsh")
+    if w.box.flags & GUL_SHRINK_Y: strcat(_blah, " ysh")
+    if w.box.flags & GUL_HIDDEN: strcat(_blah, " hid")
+    if w.box.flags & GUL_NO_LAYOUT: strcat(_blah, " nol")
+    if w.box.flags & GUL_STEADFAST: strcat(_blah, " stf")
+    return _blah

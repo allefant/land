@@ -45,6 +45,9 @@ def land_triangles_clear(LandTriangles *self):
     self.n = 0
 
 def land_triangles_texture(LandTriangles *self, LandImage *texture):
+    """
+    Ownership remains at the caller.
+    """
     self.image = texture
 
 def land_add_vertex(LandTriangles *self, float x, y, z, u, v, r, g, b, a):
@@ -61,6 +64,11 @@ def land_set_vertex_index(LandTriangles *self, float i):
     platform_set_vertex_index(self, i)
 
 def land_duplicate_vertex(LandTriangles *self, int i):
+    """
+    -1 .. duplicate most recent
+    -2 .. duplicate the second most recent
+    ...
+    """
     self.n++
     land_buffer_grow(self.buf, self.size)
     land_buffer_move(self.buf, self.size * (-1 + i), -self.size, self.size)
@@ -69,6 +77,7 @@ def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b,
     platform_update_vertex(self, i, x, y, z, u, v, r, g, b, a)
 
 def land_triangles_draw(LandTriangles *self):
+    if not self.n: return
     platform_triangles_draw(self)
 
 def land_triangles_get_vertex(LandTriangles* self, int i) -> void*:

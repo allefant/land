@@ -509,7 +509,7 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     if not element: return
     land_font_set(element->font)
     int w = land_text_get_width(text)
-    int h = land_font_height(land_font_current())
+    int h = land_text_height() # not line height (or we would cut off over/under parts)
     land_widget_theme_set_minimum_size_for_contents(self, w, h)
 
 def land_widget_theme_set_minimum_size_for_image(LandWidget *self,

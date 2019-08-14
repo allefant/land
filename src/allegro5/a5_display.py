@@ -128,6 +128,8 @@ def platform_display_set():
     if super->flags & LAND_LANDSCAPE:
         al_set_new_display_option(ALLEGRO_SUPPORTED_ORIENTATIONS,
             ALLEGRO_DISPLAY_ORIENTATION_LANDSCAPE, ALLEGRO_SUGGEST)
+    if super->flags & LAND_FRAMELESS:
+        f |= ALLEGRO_FRAMELESS;
 
     if super->flags & LAND_ANTIALIAS:
         al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
