@@ -10,8 +10,8 @@ static LandDisplay *global_previous_display
 static LandDisplayPlatform global_image_display
 static ALLEGRO_BITMAP *previous
 
-static macro SELF \
-    LandImagePlatform *self = (void *)super;
+static macro SELF:
+    LandImagePlatform *self = (void *)super
 
 def platform_new_image() -> LandImage *:
     LandImagePlatform *self
@@ -102,11 +102,6 @@ def platform_image_save(LandImage *super, char const *filename):
     LandImagePlatform *self = (void *)super
     al_save_bitmap(filename, self->a5)
 
-def platform_image_prepare(LandImage *super):
-    #LandImagePlatform *self = (void *)super
-    land_log_message("platform_image_prepare\n")
-    #al_remove_opengl_fbo(self->a5)
-
 def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float y, float sx, float sy,
     float angle, float r, float g, float b, float alpha, int flip):
@@ -114,6 +109,13 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
 
+    if super.flags & (LAND_LOADING | LAND_LOADING_COMPLETE):
+        if super.flags & LAND_LOADING_COMPLETE:
+            # attempt to draw an image that has completed loading asynchronously
+            # - we may as well transfer it here during drawing
+            land_image_load_async(super)
+        else:
+            return
     if not self->a5: return
 
     land_a5_display_check_transform()
@@ -270,3 +272,15 @@ def platform_image_merge(LandImage *super, LandImage *replacement_image):
     super.r = 0
     super.b = 0
     land_image_destroy(replacement_image)
+
+def platform_image_transfer_from_memory(LandImage* super):
+    if not (super.flags & LAND_IMAGE_MEMORY): return
+    SELF
+    ALLEGRO_BITMAP* old = self->a5
+    self->a5 = al_clone_bitmap(old)
+    land_log_message("platform_image_transfer %s: %s -> %s\n",
+        super.name,
+        "mem" if al_get_bitmap_flags(old) & ALLEGRO_MEMORY_BITMAP else "vid",
+        "mem" if al_get_bitmap_flags(self->a5) & ALLEGRO_MEMORY_BITMAP else "vid")
+    al_destroy_bitmap(old)
+    super.flags &= ~LAND_IMAGE_MEMORY

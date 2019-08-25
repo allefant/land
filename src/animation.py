@@ -83,3 +83,11 @@ def land_animation_mirror(LandAnimation *self):
     for int i in range(n - 2):
         land_animation_add_frame(self, land_array_get_nth(self.frames,
             n - 2 - i))
+
+def land_animation_load_on_demand(LandAnimation* self):
+    for LandImage* image in LandArray* self.frames:
+        land_image_load_on_demand(image)
+
+def land_animation_load_async(LandAnimation* self):
+    for LandImage* image in LandArray* self.frames:
+        land_image_load_async(image)

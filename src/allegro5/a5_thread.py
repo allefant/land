@@ -8,6 +8,8 @@ static class PlatformThread:
 
 static class PlatformLock:
     ALLEGRO_MUTEX *a5
+    ALLEGRO_COND *cond
+    bool triggered
 
 static def proc(void *data) -> void *:
     LandThread *t = data
@@ -44,9 +46,17 @@ def platform_thread_new_lock() -> LandLock *:
     l.a5 = al_create_mutex()
     return (void *)l
 
+def platform_thread_new_waitable_lock() -> LandLock *:
+    PlatformLock *l; land_alloc(l)
+    l.a5 = al_create_mutex()
+    l.cond = al_create_cond()
+    return (void *)l
+
 def platform_thread_delete_lock(LandLock *lock):
     PlatformLock *l = (void *)lock
     al_destroy_mutex(l.a5)
+    if l.cond:
+        al_destroy_cond(l.cond)
     land_free(l)
 
 def platform_thread_lock(LandLock *lock):
@@ -56,3 +66,18 @@ def platform_thread_lock(LandLock *lock):
 def platform_thread_unlock(LandLock *lock):
     PlatformLock *l = (void *)lock
     al_unlock_mutex(l.a5)
+
+def platform_thread_wait_lock(LandLock *lockp):
+    PlatformLock* lock = (void*)lockp
+    al_lock_mutex(lock.a5)
+    while not lock.triggered:
+        al_wait_cond(lock.cond, lock.a5)
+    lock.triggered = False
+    al_unlock_mutex(lock.a5)
+
+def platform_thread_trigger_lock(LandLock *lockp):
+    PlatformLock* lock = (void*)lockp
+    al_lock_mutex(lock.a5)
+    lock.triggered = True
+    al_broadcast_cond(lock.cond)
+    al_unlock_mutex(lock.a5)

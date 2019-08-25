@@ -14,6 +14,9 @@ class LandFontState:
     float x, y, w, h
     bool off
     float wordwrap_width, wordwrap_height
+    bool in_paragraph
+    float paragraph_x
+    float paragraph_wrap
 
 enum:
     LandAlignRight = 1
@@ -260,12 +263,30 @@ def land_text_off():
 def land_text_on():
     land_font_state.off = 0
 
+def land_paragraph_start(float wrap_width):
+    land_font_state.in_paragraph = True
+    land_font_state.paragraph_x = land_font_state.x_pos
+    land_font_state.paragraph_wrap = wrap_width
+
+def land_paragraph_end:
+    land_font_state.in_paragraph = False
+
 def land_print_string(char const *str, int newline, int alignment):
+    auto lfs = land_font_state
+    if lfs.in_paragraph and lfs.paragraph_wrap > 0:
+        float w = land_text_get_width(str)
+        if lfs.x_pos + w > lfs.paragraph_x + lfs.paragraph_wrap:
+            lfs.x_pos = lfs.paragraph_x
+            lfs.y_pos += lfs.h
+
     platform_font_print(land_font_state, str, alignment)
+
     if newline:
-        land_font_state.y_pos = land_font_state.y + land_font_state.h
+        lfs.y_pos = lfs.y + lfs.h
+        if lfs.in_paragraph:
+            lfs.x_pos = lfs.paragraph_x
     else:
-        land_font_state.x_pos = land_font_state.x + land_font_state.w
+        lfs.x_pos = lfs.x + lfs.w
 
 def land_text_get_width(char const *str) -> float:
     int onoff = land_font_state.off

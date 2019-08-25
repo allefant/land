@@ -10,6 +10,8 @@ macro LAND_AUTOCROP 16
 macro LAND_FAILED 32
 macro LAND_IMAGE_CENTER 64 # center on load
 macro LAND_IMAGE_DEPTH 128 # image has depth buffer
+macro LAND_LOADING 256 # async loading in progress
+macro LAND_LOADING_COMPLETE 512 # async loading complete
 
 static macro LOG_COLOR_STATS 0
 
@@ -47,10 +49,15 @@ static import global string
 static import display, data
 
 static import allegro5/a5_image
+static import land.thread
 
 static void (*_cb)(char const *path, LandImage *image)
 
 static int bitmap_count, bitmap_memory
+LandThread *_loader_thread
+LandLock *_loader_event
+LandLock *_loader_mutex
+LandArray *_loader_queue
 
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
@@ -69,7 +76,7 @@ static def _load(char const *filename, bool mem) -> LandImage *:
 
     return self
 
-static def _load2(LandImage *self):
+def _load2(LandImage *self):
 
     if self.flags & LAND_LOADED:
         int w = land_image_width(self)
@@ -81,11 +88,8 @@ static def _load2(LandImage *self):
 
         if self.flags & LAND_AUTOCROP:
             land_image_auto_crop(self)
-
-        if not (self.flags & LAND_IMAGE_MEMORY):
-            land_image_prepare(self)
             
-        land_log_message("prepared l=%.0f, t=%.0f, r=%.0f, b=%.0f\n",
+        land_log_message(" crop l=%.0f, t=%.0f, r=%.0f, b=%.0f\n",
             self.l, self.t, self.r, self.b)
 
         *** "ifdef" LOG_COLOR_STATS
@@ -117,13 +121,83 @@ def land_image_new_deferred(char const *filename) -> LandImage *:
     return self
 
 def land_image_load_on_demand(LandImage *self) -> bool:
+    """
+    Load an image that was previously declared "on demand".
+    """
+
+    if self.flags & LAND_LOADING:
+        # TODO: wait until it is done...
+        # TODO: technically we don't support mixing async and on-demand though
+        return True
+
+    if self.flags & LAND_LOADING_COMPLETE:
+        land_image_load_async(self)
+        return True
+    
     if self.flags & LAND_LOADED:
         return False
     if self.flags & LAND_FAILED:
         return False
     land_log_message("land_image_load_on_demand %s..", self.filename)
     platform_image_load_on_demand(self)
+    bitmap_count += 1
     _load2(self)
+    return True
+
+def _thread_func(void *data):
+    while True:
+        while True:
+            land_thread_lock(_loader_mutex)
+        
+            LandArray *copy = land_array_copy(_loader_queue)
+            land_array_clear(_loader_queue)
+            
+            land_thread_unlock(_loader_mutex)
+
+            bool empty = land_array_is_empty(copy)
+            land_log_message("image queue has %d images\n", land_array_count(copy))
+
+            for LandImage* image in copy:
+                land_log_message("queing %s\n", image.filename)
+                platform_image_load_on_demand(image)
+                bitmap_count += 1
+                _load2(image)
+                image.flags |= LAND_LOADING_COMPLETE
+                image.flags &= ~LAND_LOADING
+            land_array_destroy(copy)
+
+            if empty: break
+
+        land_thread_wait_lock(_loader_event)
+
+def land_image_load_async(LandImage* self) -> bool:
+    if self.flags & LAND_LOADING:
+        return True
+
+    if self.flags & LAND_LOADING_COMPLETE:
+        platform_image_transfer_from_memory(self)
+        self.flags &= ~LAND_LOADING_COMPLETE
+        return True
+
+    if self.flags & LAND_LOADED:
+        return False
+    if self.flags & LAND_FAILED:
+        return False
+
+    if not _loader_thread:
+        _loader_event = land_thread_new_waitable_lock()
+        _loader_mutex = land_thread_new_lock()
+        _loader_queue = land_array_new()
+        _loader_thread = land_thread_new(_thread_func, None)
+
+    land_log_message("Asynchronously loading %s\n", self.filename)
+    land_thread_lock(_loader_mutex)
+    self.flags &= ~LAND_LOADING
+    self.flags |= LAND_IMAGE_MEMORY
+    land_array_add(_loader_queue, self)
+    land_thread_unlock(_loader_mutex)
+    land_thread_trigger_lock(_loader_event)
+
     return True
 
 def land_image_exists(LandImage *self) -> bool:
@@ -396,7 +470,6 @@ def land_image_colorize_replace(LandImage *self, int n, int *rgb):
             p += 4
 
     land_image_set_rgba_data(self, rgba)
-    land_image_prepare(self)
 
 def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     int *rgb) -> LandImage *:
@@ -411,15 +484,6 @@ def land_image_split_mask_from_colors(LandImage *self, int n_rgb,
     image, but tint the white mask to other colors.
     """
     assert(0)
-
-def land_image_prepare(LandImage *self):
-    """
-    This is used to convert image data into a device dependent format, which
-    is used to display the image (instead of the raw R/G/B/A values). Usually
-    this is not needed, but it can be useful for certain optimizations, where
-    the automatic synchronization is circumvented.
-    """
-    platform_image_prepare(self)
 
 static def callback(const char *filename, int attrib, void *param) -> int:
     LandArray **filenames = param

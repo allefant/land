@@ -1,4 +1,5 @@
 import base, land/image, land/animation
+import land.color
 
 # TODO: It's time to split this up into simple buttons, image buttons, and
 # text widgets.
@@ -18,6 +19,8 @@ class LandWidgetButton:
     int multiline
     LandAnimation *animation
     LandImage *image
+    LandColor color
+    bool color_override
     bool want_image_destroyed
     char *text
     LandArray *lines
@@ -45,9 +48,18 @@ def land_widget_button_draw(LandWidget *base):
         land_clip_push()
         land_clip_intersect(l, t, r, b)
 
-    if self.image:
-        int w = land_image_width(self.image)
-        int h = land_image_height(self.image)
+    LandImage* image = self.image
+    if self.animation:
+        float fps = self.animation->fps
+        int i = (int)(land_get_time() * fps) % self.animation->frames->count
+        image = land_animation_get_frame(self.animation, i)
+
+    if image:
+        int w = land_image_width(image)
+        int h = land_image_height(image)
+        if self.scale_x > 0 and self.scale_y > 0:
+            w *= self.scale_x
+            h *= self.scale_y
 
         float x = base->box.x + base->element->il
         switch self.xalign:
@@ -64,36 +76,18 @@ def land_widget_button_draw(LandWidget *base):
         x += self.xshift
         y += self.yshift
         if self.scale_x > 0 and self.scale_y > 0:
-            land_image_draw_scaled(self.image, x + self->image->x,
-                y + self->image->y, self.scale_x, self.scale_y)
+            land_image_draw_scaled(image, x + image->x * self.scale_x,
+                y + image->y * self.scale_y, self.scale_x, self.scale_y)
         else:
-            land_image_draw(self.image, x + self->image->x, y + self->image->y)
+            land_image_draw(image, x + image->x, y + image->y)
 
-    if self.animation:
-        float fps = self.animation->fps
-        int i = (int)(land_get_time() * fps) % self.animation->frames->count
-        LandImage *image = land_animation_get_frame(self.animation, i)
-        int w = land_image_width(image)
-        int h = land_image_height(image)
-        float x = base->box.x + base->element->il
-        switch self.xalign:
-            case 1: x = base->box.x + base->box.w - base->element->ir - w; break
-            case 2: x = base->box.x + (base->box.w -
-                base->element->il - base->element->ir - w) * 0.5; break
-
-        float y = base->box.y + base->element->it
-        switch self.yalign:
-            case 1: y = base->box.y + base->box.h - base->element->ib - h; break
-            case 2: y = base->box.y + (base->box.h -
-                base->element->it - base->element->ib - h) * 0.5; break
-
-        x += self.xshift
-        y += self.yshift
-        land_image_draw(image, x + image->x, y + image->y)
 
     if self.text:
         int x, y = base->box.y + base->element->it
-        land_widget_theme_color(base)
+        if self.color_override:
+            land_color_set(self.color)
+        else:
+            land_widget_theme_color(base)
         land_widget_theme_font(base)
         int th = land_font_height(land_font_current())
         switch self.yalign:
@@ -390,3 +384,8 @@ def land_widget_button_set_minimum_text(LandWidget *base, char const *text):
 def land_widget_button_set_dynamic_text_callback(LandWidget *self, void (*cb)(LandWidget*)):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(self)
     button.dynamic_text_cb = cb
+
+def land_widget_button_set_color(LandWidget *base, LandColor c):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    button.color_override = True
+    button.color = c
