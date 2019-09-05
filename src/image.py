@@ -175,8 +175,8 @@ def land_image_load_async(LandImage* self) -> bool:
         return True
 
     if self.flags & LAND_LOADING_COMPLETE:
-        platform_image_transfer_from_memory(self)
         self.flags &= ~LAND_LOADING_COMPLETE
+        platform_image_transfer_from_memory(self)
         return True
 
     if self.flags & LAND_LOADED:

@@ -1,7 +1,8 @@
 import global land/land
 
 LandFont *font
-LandWidgetTheme *theme, *classic, *green
+LandWidgetTheme *theme[4]
+int selected, count = 4
 LandWidget *desktop, *panel
 int page = 0
 
@@ -114,9 +115,11 @@ def panel_5():
 
 def init(LandRunner *self):
     font = land_font_load("../../data/galaxy.ttf", 12)
-    theme = classic = land_widget_theme_new("../../data/classic.cfg")
-    green = land_widget_theme_new("../../data/green.cfg")
-    land_widget_theme_set_default(theme)
+    theme[0] = land_widget_theme_new("../../data/classic.cfg")
+    theme[1] = land_widget_theme_new("../../data/green.cfg")
+    theme[2] = land_widget_theme_new("../../data/blue/agup.cfg")
+    theme[3] = land_widget_theme_new("../../data/wesnoht_ui/widget.ini")
+    land_widget_theme_set_default(theme[selected])
     desktop = land_widget_board_new(NULL, 20, 20, 600, 440)
 
     land_widget_reference(desktop)
@@ -139,11 +142,9 @@ def tick(LandRunner *self):
             page = 0
             panel_0()
     if land_key_pressed(13):
-        if theme == classic:
-            theme = green
-        else:
-            theme = classic
-        land_widget_theme_apply(desktop, theme)
+        selected++
+        selected %= count
+        land_widget_theme_apply(desktop, theme[selected])
 
 def draw(LandRunner *self):
     land_clear(0.5, 0.5, 1, 1)
@@ -157,8 +158,8 @@ def draw(LandRunner *self):
 
 def done(LandRunner *self):
     land_widget_unreference(desktop)
-    land_widget_theme_destroy(classic)
-    land_widget_theme_destroy(green)
+    for int i in range(count):
+        land_widget_theme_destroy(theme[i])
     land_font_destroy(font)
 
 land_begin_shortcut(640, 480, 100,
