@@ -403,13 +403,14 @@ def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
 
 def land_widget_theme_destroy(LandWidgetTheme *self):
     LandListItem *item
-    for item = self.elements->first while item with item = item->next:
-        LandWidgetThemeElement *elem = item->data
-        land_free(elem->name)
-        land_image_destroy(elem->bmp)
-        land_free(elem)
+    if self.elements:
+        for item = self.elements->first while item with item = item->next:
+            LandWidgetThemeElement *elem = item->data
+            land_free(elem->name)
+            land_image_destroy(elem->bmp)
+            land_free(elem)
 
-    land_list_destroy(self.elements)
+        land_list_destroy(self.elements)
     land_free(self.name)
     land_free(self.prefix)
     land_free(self.suffix)
@@ -584,3 +585,4 @@ def land_widget_theme_change_font(LandWidgetTheme *theme):
             element.selected.font = land_font_current()
         if element.disabled:
             element.disabled.font = land_font_current()
+

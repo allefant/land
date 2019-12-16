@@ -185,6 +185,7 @@ def platform_display_set():
 
     if f & ALLEGRO_PROGRAMMABLE_PIPELINE:
         land_display_set_default_shaders()
+        land_render_state(LAND_ALPHA_TEST, False)
 
 def platform_display_color():
     SELF

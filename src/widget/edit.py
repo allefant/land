@@ -126,6 +126,10 @@ def land_widget_edit_keyboard_tick(LandWidget *base):
                 if base.parent:
                     land_widget_keyboard_leave(base.parent)
                 M
+            elif k == LandKeyUp:
+                M
+            elif k == LandKeyDown:
+                M
 
 def land_widget_edit_destroy(LandWidget *base):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
@@ -195,3 +199,7 @@ def land_widget_edit_interface_initialize():
     land_widget_edit_interface->draw = land_widget_edit_draw
     land_widget_edit_interface->mouse_tick = land_widget_edit_mouse_tick
     land_widget_edit_interface->keyboard_tick = land_widget_edit_keyboard_tick
+
+def land_widget_edit_last_key(LandWidget* self) -> int:
+    LandWidgetEdit *edit = LAND_WIDGET_EDIT(self)
+    return edit.last_key

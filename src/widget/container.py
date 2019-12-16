@@ -99,12 +99,13 @@ def land_widget_container_keyboard_leave(LandWidget *super):
         keyboard.got_keyboard = 0
         land_call_method(keyboard, keyboard_leave, (keyboard))
 
-        if keyboard.got_keyboard:
+        if keyboard.got_keyboard: # if keyboard_leave set it again
             super.got_keyboard = 1
             self.keyboard = keyboard
             # we still have the reference
             return
 
+        super.got_keyboard = 0
         land_widget_unreference(keyboard)
 
         if super.parent:

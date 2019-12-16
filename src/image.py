@@ -66,7 +66,7 @@ static def _load(char const *filename, bool mem) -> LandImage *:
 
     LandImage *self 
     char *path = land_path_with_prefix(filename)
-    land_log_message("land_image_load %s..", path)
+    land_log_message("land_image_load %s..\n", path)
     self = platform_image_load(path, mem)
     land_free(path)
 
@@ -81,7 +81,8 @@ def _load2(LandImage *self):
     if self.flags & LAND_LOADED:
         int w = land_image_width(self)
         int h = land_image_height(self)
-        land_log_message_nostamp("success (%d x %d)\n", w, h)
+        land_log_message("loading %s success (%d x %d)\n",
+            self.filename, w, h)
 
         if self.flags & LAND_IMAGE_CENTER:
             land_image_center(self)
@@ -138,15 +139,15 @@ def land_image_load_on_demand(LandImage *self) -> bool:
         return False
     if self.flags & LAND_FAILED:
         return False
-    land_log_message("land_image_load_on_demand %s..", self.filename)
+    land_log_message("land_image_load_on_demand %s..\n", self.filename)
     platform_image_load_on_demand(self)
     bitmap_count += 1
     _load2(self)
     return True
 
 def _thread_func(void *data):
-    while True:
-        while True:
+    while not _land_quit:
+        while not _land_quit:
             land_thread_lock(_loader_mutex)
         
             LandArray *copy = land_array_copy(_loader_queue)
@@ -159,11 +160,12 @@ def _thread_func(void *data):
 
             for LandImage* image in copy:
                 land_log_message("queing %s\n", image.filename)
-                platform_image_load_on_demand(image)
+                platform_image_preload_memory(image)
                 bitmap_count += 1
                 _load2(image)
                 image.flags |= LAND_LOADING_COMPLETE
                 image.flags &= ~LAND_LOADING
+                if _land_quit: break
             land_array_destroy(copy)
 
             if empty: break
@@ -192,8 +194,7 @@ def land_image_load_async(LandImage* self) -> bool:
 
     land_log_message("Asynchronously loading %s\n", self.filename)
     land_thread_lock(_loader_mutex)
-    self.flags &= ~LAND_LOADING
-    self.flags |= LAND_IMAGE_MEMORY
+    self.flags |= LAND_LOADING
     land_array_add(_loader_queue, self)
     land_thread_unlock(_loader_mutex)
     land_thread_trigger_lock(_loader_event)
@@ -341,7 +342,7 @@ def land_image_new_from(LandImage *copy, int x, int y, int w, int h) -> LandImag
     land_image_draw_partial(copy, copy->x, copy->y, x, y, w, h)
     land_unset_image_display()
     
-    land_log_message_nostamp("success (%d x %d)\n", w, h)
+    land_log_message_nostamp(" success (%d x %d)\n", w, h)
 
     *** "ifdef" LOG_COLOR_STATS
     float red, green, blue, alpha

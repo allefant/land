@@ -24,6 +24,7 @@ class LandWidgetButton:
     bool want_image_destroyed
     char *text
     LandArray *lines
+    LandHash *line_colors
     void (*clicked)(LandWidget *self)
     void (*rclicked)(LandWidget *self)
     void (*dynamic_text_cb)(LandWidget *self)
@@ -64,14 +65,14 @@ def land_widget_button_draw(LandWidget *base):
         float x = base->box.x + base->element->il
         switch self.xalign:
             case 1: x = base->box.x + base->box.w - base->element->ir - w; break
-            case 2: x = base->box.x + (base->box.w -
+            case 2: x = base->box.x + base->element->il + (base->box.w -
                 base->element->il - base->element->ir - w) * 0.5; break
 
         float y = base->box.y + base->element->it
         switch self.yalign:
             case 1: y = base->box.y + base->box.h - base->element->ib - h; break
-            case 2: y = base->box.y + (base->box.h - base->element->it -
-                base->element->ib - h) * 0.5; break
+            case 2: y = base->box.y + base->element->it + (base->box.h -
+                base->element->it - base->element->ib - h) * 0.5; break
 
         x += self.xshift
         y += self.yshift
@@ -102,7 +103,7 @@ def land_widget_button_draw(LandWidget *base):
                 x += self.xshift
                 land_text_pos(x, y)
                 if self.multiline:
-                    land_print_lines(self.lines, 0)
+                    land_print_colored_lines(self.lines, 0, self.line_colors)
                 else:
                     land_print("%s", self.text)
                 break
@@ -137,13 +138,10 @@ def land_widget_button_size(LandWidget *base, float dx, dy):
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->clicked:
-        if land_mouse_delta_b() & 1:
-            if land_mouse_b() & 1:
-                button->clicked(base)
-    if button->rclicked:
-        if land_mouse_delta_b() & 2:
-            if land_mouse_b() & 2:
-                button->rclicked(base)
+        if land_mouse_button_clicked(0):
+            button->clicked(base)
+    if land_mouse_button_clicked(1):
+        button->rclicked(base)
 
 def land_widget_button_initialize(LandWidget *base,
     LandWidget *parent, char const *text,
@@ -202,6 +200,11 @@ def land_widget_button_image_scale(LandWidget *base, float xs, ys):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     button.scale_x = xs
     button.scale_y = ys
+
+def land_widget_button_set_image(LandWidget* base, LandImage* image, bool destroy):
+    LandWidgetButton *self = LAND_WIDGET_BUTTON(base)
+    self.image = image
+    self.want_image_destroyed = destroy
 
 def land_widget_button_new_with_animation(LandWidget *parent,
     char const *text, LandAnimation *animation,
@@ -289,6 +292,15 @@ def land_widget_button_layout_text(LandWidget *base):
             land_widget_theme_set_minimum_size_for_text(base, button->text)
     if base->parent: land_widget_layout(base->parent)
 
+def land_widget_button_append(LandWidget *base, char const *text):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    char *newt = button.text
+    if not newt:
+        newt = land_strdup("")
+    land_concatenate(&newt, text)
+    button.text = newt
+    land_widget_button_layout_text(base)
+
 def land_widget_button_append_row(LandWidget *base, char const *text):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     char *newt = button.text
@@ -299,6 +311,13 @@ def land_widget_button_append_row(LandWidget *base, char const *text):
     land_concatenate(&newt, text)
     button.text = newt
     land_widget_button_layout_text(base)
+
+def land_widget_button_line_count(LandWidget* base) -> int:
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    if not button.text[0]: return 0
+    if not button.lines:
+        return 1
+    return land_array_count(button.lines)
 
 def land_widget_button_multiline(LandWidget *self, int style):
     """
@@ -374,6 +393,8 @@ def land_widget_button_destroy(LandWidget *base):
     if button->lines:
         land_array_for_each(button->lines, _linedelcb, None)
         land_array_destroy(button->lines)
+    if button.line_colors:
+        land_hash_destroy(button.line_colors)
     if button.image and button.want_image_destroyed:
         land_image_destroy(button.image)
     land_widget_base_destroy(base)
@@ -389,3 +410,9 @@ def land_widget_button_set_color(LandWidget *base, LandColor c):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     button.color_override = True
     button.color = c
+
+def land_widget_button_set_line_color(LandWidget* base, int i, str color):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    if not button.line_colors:
+        button.line_colors = land_hash_new()
+    land_set_line_color(button.line_colors, i, color)

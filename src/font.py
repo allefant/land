@@ -1,11 +1,13 @@
 import global assert
-import array, display
+import array, display, hash
 
 class LandFont:
     int size
     double xscaling
     double yscaling
     int flags
+
+typedef void (PrintFunc)(char const *s, int alignment)
 
 class LandFontState:
     float x_pos, y_pos
@@ -17,6 +19,7 @@ class LandFontState:
     bool in_paragraph
     float paragraph_x
     float paragraph_wrap
+    PrintFunc *print_override
 
 enum:
     LandAlignRight = 1
@@ -271,15 +274,21 @@ def land_paragraph_start(float wrap_width):
 def land_paragraph_end:
     land_font_state.in_paragraph = False
 
-def land_print_string(char const *str, int newline, int alignment):
+def land_print_string(char const *s, int newline, int alignment):
     auto lfs = land_font_state
     if lfs.in_paragraph and lfs.paragraph_wrap > 0:
-        float w = land_text_get_width(str)
+        float w = land_text_get_width(s)
         if lfs.x_pos + w > lfs.paragraph_x + lfs.paragraph_wrap:
             lfs.x_pos = lfs.paragraph_x
             lfs.y_pos += lfs.h
 
-    platform_font_print(land_font_state, str, alignment)
+    if lfs.print_override:
+        PrintFunc *backup = lfs.print_override
+        lfs.print_override = None
+        backup(s, alignment)
+        lfs.print_override = backup
+    else:
+        platform_font_print(land_font_state, s, alignment)
 
     if newline:
         lfs.y_pos = lfs.y + lfs.h
@@ -287,6 +296,9 @@ def land_print_string(char const *str, int newline, int alignment):
             lfs.x_pos = lfs.paragraph_x
     else:
         lfs.x_pos = lfs.x + lfs.w
+
+def land_font_set_print_override(PrintFunc print_override):
+    land_font_state.print_override = print_override
 
 def land_text_get_width(char const *str) -> float:
     int onoff = land_font_state.off
@@ -531,12 +543,13 @@ def land_wordwrap_extents(float *w, float *h):
     if w: *w = land_font_state.wordwrap_width
     if h: *h = land_font_state.wordwrap_height
 
-def land_print_lines(LandArray *lines, int alignment):
+def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     """
     Given an array of lines, print the visible ones.
     """
     float cl, ct, cr, cb
     land_get_clip(&cl, &ct, &cr, &cb)
+    LandColor original = land_color_get()
     float fh = land_line_height()
     float ty = land_text_y_pos()
     int first = (ct - ty) / fh
@@ -550,7 +563,23 @@ def land_print_lines(LandArray *lines, int alignment):
     land_font_state.y_pos += fh * first
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
+        char ckey[] = {i % 256, i / 256, 0}
+        if colors:
+            char *c = land_hash_get(colors, ckey)
+
+            if c:
+                land_color_set(land_color_name(c))
+            else:
+                land_color_set(original)
         land_print_string(s, 1, alignment)
+    land_color_set(original)
+
+def land_set_line_color(LandHash *colors, int i, str col):
+    char ckey[] = {i % 256, i / 256, 0}
+    land_hash_insert(colors, ckey, (void *)col)
+
+def land_print_lines(LandArray *lines, int alignment):
+    land_print_colored_lines(lines, alignment, None)
 
 def land_font_from_image(LandImage *image, int n_ranges,
         int *ranges) -> LandFont *:

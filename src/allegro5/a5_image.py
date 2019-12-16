@@ -5,6 +5,7 @@ static import land.allegro5.a5_display
 class LandImagePlatform:
     LandImage super
     ALLEGRO_BITMAP *a5
+    ALLEGRO_BITMAP *memory
 
 static LandDisplay *global_previous_display
 static LandDisplayPlatform global_image_display
@@ -58,14 +59,13 @@ static def _platform_load(LandImage *super):
     # right now apk file interface is always active
     land_log_message("open %s", super.filename)
     *** "endif"
-    ALLEGRO_BITMAP *bmp
-    if strchr(super.filename, '.'):
-        bmp = al_load_bitmap(super.filename)
-    else:
-        bmp = al_load_bitmap(super.filename)
+    ALLEGRO_BITMAP *bmp = al_load_bitmap(super.filename)
     if bmp:
         LandImagePlatform *self = (void *)super
-        self->a5 = bmp
+        if super.flags & LAND_LOADING:
+            self->memory = bmp
+        else:
+            self->a5 = bmp
         super->width = al_get_bitmap_width(bmp)
         super->height = al_get_bitmap_height(bmp)
         super->flags |= LAND_LOADED
@@ -73,7 +73,11 @@ static def _platform_load(LandImage *super):
         super->flags |= LAND_FAILED
     if super.flags & LAND_IMAGE_MEMORY:
         al_restore_state(&state)
-        super->flags |= LAND_FAILED
+
+def platform_image_preload_memory(LandImage* super):
+    super.flags |= LAND_IMAGE_MEMORY
+    _platform_load(super)
+    super.flags &= ~LAND_IMAGE_MEMORY
 
 def platform_image_exists(LandImage *super) -> bool:
     return al_filename_exists(super.filename)
@@ -109,13 +113,14 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
 
-    if super.flags & (LAND_LOADING | LAND_LOADING_COMPLETE):
-        if super.flags & LAND_LOADING_COMPLETE:
-            # attempt to draw an image that has completed loading asynchronously
-            # - we may as well transfer it here during drawing
-            land_image_load_async(super)
-        else:
-            return
+    if super.flags & LAND_LOADING:
+        return
+
+    if super.flags & LAND_LOADING_COMPLETE:
+        # attempt to draw an image that has completed loading asynchronously
+        # - we may as well transfer it here during drawing
+        land_image_load_async(super)
+
     if not self->a5: return
 
     land_a5_display_check_transform()
@@ -192,9 +197,12 @@ def platform_image_get_rgba_data(LandImage *super, unsigned char *rgba):
     SELF
     int w = super->width
     int h = super->height
+    ALLEGRO_BITMAP* a5 = self->a5
+    if self->memory:
+        a5 = self->memory
     unsigned char *p = rgba
     ALLEGRO_LOCKED_REGION *lock
-    lock = al_lock_bitmap(self->a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
+    lock = al_lock_bitmap(a5, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
         ALLEGRO_LOCK_READONLY)
     unsigned char *p2 = lock->data
     for int y = 0 while y < h with y++:
@@ -210,7 +218,7 @@ def platform_image_get_rgba_data(LandImage *super, unsigned char *rgba):
             *(p++) = b
             *(p++) = a
         p2 += lock->pitch
-    al_unlock_bitmap(self->a5)
+    al_unlock_bitmap(a5)
 
 def platform_image_set_rgba_data(LandImage *super,
     unsigned char const *rgba):
@@ -274,13 +282,13 @@ def platform_image_merge(LandImage *super, LandImage *replacement_image):
     land_image_destroy(replacement_image)
 
 def platform_image_transfer_from_memory(LandImage* super):
-    if not (super.flags & LAND_IMAGE_MEMORY): return
     SELF
-    ALLEGRO_BITMAP* old = self->a5
-    self->a5 = al_clone_bitmap(old)
+    if not self->memory:
+        return
+    self->a5 = al_clone_bitmap(self->memory)
     land_log_message("platform_image_transfer %s: %s -> %s\n",
         super.name,
-        "mem" if al_get_bitmap_flags(old) & ALLEGRO_MEMORY_BITMAP else "vid",
+        "mem" if al_get_bitmap_flags(self->memory) & ALLEGRO_MEMORY_BITMAP else "vid",
         "mem" if al_get_bitmap_flags(self->a5) & ALLEGRO_MEMORY_BITMAP else "vid")
-    al_destroy_bitmap(old)
-    super.flags &= ~LAND_IMAGE_MEMORY
+    al_destroy_bitmap(self->memory)
+    self->memory = None

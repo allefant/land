@@ -21,7 +21,6 @@ def platform_shader_new(
 
     if vertex_glsl:
         al_attach_shader_source(self.a5, ALLEGRO_VERTEX_SHADER, vertex_glsl)
-        
 
     if fragment_glsl:
         al_attach_shader_source(self.a5, ALLEGRO_PIXEL_SHADER, fragment_glsl)

@@ -279,6 +279,15 @@ def land_find_from_back(str hay, needle) -> int:
         i--
     return -1
 
+def land_count(str hay, str needle) -> int:
+    str p = hay
+    int n = 0
+    while True:
+        str x = strstr(p, needle)
+        if not x: return n
+        n += 1
+        p = x + 1
+
 def land_replace_all(char **s, char const *wat, char const *wit) -> int:
     """
     Like land_replace but replaces all occurences. Returns the number
@@ -302,7 +311,22 @@ def land_lowercase_copy(str s) -> char*:
     return news
 
 def land_shorten(char **s, int start, end):
+    """
+    Shorten a string so it starts at stat and ends before end.
+
+    land_shorten("abcd", 1, 3) -> "bc"
+    land_shorten("abcd", 1, -1) -> "bc"
+    """
     char *replace = land_substring(*s, start, strlen(*s) - end)
+    land_free(*s)
+    *s = replace
+
+def land_cut(char **s, int start, end):
+    """
+    Cut the given sequence from start to before end out of the string.
+    """
+    char *replace = land_substring(*s, 0, start)
+    land_concatenate(&replace, *s + end)
     land_free(*s)
     *s = replace
 

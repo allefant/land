@@ -144,6 +144,11 @@ def land_widget_scrolling_scroll(LandWidget *base, float dx, dy):
     land_widget_scrolling_get_scroll_position(base, &x, &y)
     land_widget_scrolling_scrollto(base, x + dx, y + dy)
 
+def land_widget_scrolling_scroll_to_bottom(LandWidget* base):
+    float x, y
+    land_widget_scrolling_get_scroll_extents(base, &x, &y)
+    land_widget_scrolling_scrollto(base, 0, -y)
+
 def land_widget_scrolling_limit(LandWidget *base):
     float x, y, w, h
     land_widget_scrolling_get_scroll_position(base, &x, &y)

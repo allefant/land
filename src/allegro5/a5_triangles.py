@@ -106,3 +106,10 @@ def platform_triangles_draw(LandTriangles *t):
         al_draw_prim(t.buf->buffer, platform.decl, pim ? pim.a5 : None,
         0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     platform_uncheck_blending()
+
+def platform_triangles_get_xyz(LandTriangles* t, int i, float *x, *y, *z):
+    LandVertexAllegro *v = land_triangles_get_vertex(t, i)
+    *x = v.x
+    *y = v.y
+    *z = v.z
+    

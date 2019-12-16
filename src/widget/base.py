@@ -363,6 +363,10 @@ def land_widget_info_string(LandWidget *w) -> char const *:
         sprintf(str, "vbox")
     elif land_widget_is(w, LAND_WIDGET_ID_HBOX):
         sprintf(str, "hbox")
+    elif land_widget_is(w, LAND_WIDGET_ID_PANEL):
+        sprintf(str, "panel")
+    elif land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
+        sprintf(str, "container")
     else:
         sprintf(str, "unknown (%d)", w.vt.id)
     return str
@@ -510,13 +514,29 @@ def land_widget_move_to(LandWidget *self, float x, y):
     land_widget_move(self, x - self.box.x, y - self.box.y)
 
 def land_widget_center(LandWidget *self):
+    land_widget_align(self, LandAlignCenter | LandAlignMiddle)
+
+def land_widget_align(LandWidget *self, int align):
     int dw = land_display_width()
     int dh = land_display_height()
     int x = self.box.x
     int y = self.box.y
     int w = self.box.w
     int h = self.box.h
-    land_widget_move(self, (dw - w) / 2 - x, (dh - h) / 2 - y)
+
+    int px = x
+    int py = y
+
+    if align & LandAlignRight:
+        px = dw - w
+    if align & LandAlignCenter:
+        px = (dw - w) / 2
+    if align & LandAlignBottom:
+        py = dh - h
+    if align & LandAlignMiddle:
+        py = (dh - h) / 2
+
+    land_widget_move(self, px - x, py - y)
 
 def land_widget_base_size(LandWidget *self, float dx, dy):
     pass
@@ -567,7 +587,11 @@ def land_widget_request_keyboard_focus(LandWidget *self):
     Called in mouse_tick (or elsewhere), will cause the widget to receive the
     keyboard focus.
     """
-    self.want_focus = 1
+    auto w = self
+    while w:
+        w.want_focus = True
+        w = w.parent
+
 
 def land_widget_retain_keyboard_focus(LandWidget *self):
     """
@@ -699,7 +723,7 @@ def land_widget_keyboard_leave(LandWidget *self):
     land_call_method(self, keyboard_leave, (self))
 
 def land_widget_keyboard_focus(LandWidget *self):
-    self.want_focus = True
+    land_widget_request_keyboard_focus(self)
 
 char _blah[100]
 def land_widget_flags_string(LandWidget *w) -> str:
@@ -709,4 +733,7 @@ def land_widget_flags_string(LandWidget *w) -> str:
     if w.box.flags & GUL_HIDDEN: strcat(_blah, " hid")
     if w.box.flags & GUL_NO_LAYOUT: strcat(_blah, " nol")
     if w.box.flags & GUL_STEADFAST: strcat(_blah, " stf")
+    if w.got_keyboard: strcat(_blah, " K")
+    if w.got_mouse: strcat(_blah, " M")
+    if w.want_focus: strcat(_blah, " F!")
     return _blah

@@ -343,12 +343,7 @@ def land_buffer_read_from_file(char const *filename) -> LandBuffer *:
     if not pf:
         return None
     LandBuffer *self = land_buffer_new()
-    while 1:
-        char kb[16384]
-        size_t n = land_file_read(pf, kb, 16384)
-        land_buffer_add(self, kb, n)
-        if n < 16384:
-            break
+    land_file_add_to_buffer(pf, self)
     land_file_destroy(pf)
     return self
 

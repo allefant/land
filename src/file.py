@@ -1,6 +1,7 @@
 import global stdio, stdint, stdbool
 import land/mem
 import allegro5/a5_file
+import land.buffer
 
 enum:
     LAND_FULL_PATH = 1
@@ -39,6 +40,28 @@ def land_file_read(LandFile *self, char *buffer, int bytes) -> int:
 
 def land_file_write(LandFile *self, char const *buffer, int bytes) -> int:
     return platform_fwrite(self.f, buffer, bytes)
+
+def land_file_add_to_buffer(LandFile* self, LandBuffer* buf):
+    while 1:
+        char kb[16384]
+        size_t n = land_file_read(self, kb, 16384)
+        land_buffer_add(buf, kb, n)
+        if n < 16384:
+            break
+
+def land_file_lines(LandFile *self) -> LandArray*:
+    """
+    Return the file contents as an array of strings. Once done with the
+    strings you can destroy them (and the array) with:
+
+    land_array_destroy_with_strings
+    """
+    LandBuffer* buf = land_buffer_new()
+    land_file_add_to_buffer(self, buf)
+    char* text = land_buffer_finish(buf)
+    LandArray* lines = land_split(text, "\n")
+    land_free(text)
+    return lines
 
 def land_file_print(LandFile *self, char const *f, ...):
     char s[1024]

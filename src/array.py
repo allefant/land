@@ -138,6 +138,10 @@ def land_array_get_nth(LandArray const *array, int i) -> void *:
     if i < 0: i += array->count
     return array->data[i]
 
+def land_array_get_or_none(LandArray const *array, int i) -> void *:
+    if i < 0 or i >= array.count: return None
+    return land_array_get_nth(array, i)
+
 def land_array_get(LandArray const *array, int i) -> void *:
     return land_array_get_nth(array, i)
 

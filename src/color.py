@@ -381,4 +381,5 @@ static def bash_mode(char const *x, char const *mode) -> char const *:
 
     return m
         
-   
+def land_premul_alpha(LandColor c, float a) -> LandColor:
+    return land_color_premul(c.r, c.g, c.b, a)

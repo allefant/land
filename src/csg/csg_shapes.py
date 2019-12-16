@@ -314,18 +314,17 @@ static def add_quad_flip(LandArray *polygons, LandVector a, b, c, d,
     if flip:
         land_csg_polygon_flip(land_array_get_last(polygons))
 
-def csg_pyramid(void *shared) -> LandCSG *:
+def csg_irregular_pyramid(LandFloat top_x, top_y, top_z, void *shared) -> LandCSG *:
     """
-    Make a 4-sided pyramid with a side-length of 1 and a height of 2.
-    The top is at 0/0/1.
-    It fits within a cube from -1/-1/-1 to 1/1/1.
+    Make a 4-sided pyramid with a side-length of 1 at the base.
+    The top is at top_x/top_y/top_z.
     """
     LandArray *polygons = land_array_new()
     LandVector a = land_vector(-1, -1, -1)
     LandVector b = land_vector( 1, -1, -1)
     LandVector c = land_vector( 1,  1, -1)
     LandVector d = land_vector(-1,  1, -1)
-    LandVector e = land_vector( 0,  0,  1)
+    LandVector e = land_vector(top_x,  top_y,  top_z)
     add_quad(polygons, a, d, c, b, shared)
     add_tri(polygons, a, b, e, shared)
     add_tri(polygons, b, c, e, shared)
@@ -333,22 +332,28 @@ def csg_pyramid(void *shared) -> LandCSG *:
     add_tri(polygons, d, a, e, shared)
     return land_csg_new_from_polygons(polygons)
 
-def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> LandCSG *:
+def csg_pyramid(void *shared) -> LandCSG *:
+    return csg_irregular_pyramid(0, 0, 1, shared)
+
+def csg_cut_irregular_pyramid_open(bool opened, LandFloat top_x, top_y, top_z, top_w, top_h, void *shared) -> LandCSG *:
     """
-    Make a 4-sided pyramid with a side-length of 1 at the base and a
-    height of 2. The side-length at the top is top_x times top_y.
+    Make a 4-sided pyramid with a side-length of 1 at the base.
+    The top is centered at top_x/y/z and extends by
+    top_w, top_h.
     """
-    LandFloat x = top_x
-    LandFloat y = top_y
+    LandFloat x = top_w
+    LandFloat y = top_h
+    LandFloat u = top_x
+    LandFloat v = top_y
     LandArray *polygons = land_array_new()
     LandVector a = land_vector(-1, -1, -1)
     LandVector b = land_vector( 1, -1, -1)
     LandVector c = land_vector( 1,  1, -1)
     LandVector d = land_vector(-1,  1, -1)
-    LandVector e = land_vector(-x, -y,  1)
-    LandVector f = land_vector( x, -y,  1)
-    LandVector g = land_vector( x,  y,  1)
-    LandVector h = land_vector(-x,  y,  1)
+    LandVector e = land_vector(-x + u, -y + v, top_z)
+    LandVector f = land_vector( x + u, -y + v, top_z)
+    LandVector g = land_vector( x + u,  y + v, top_z)
+    LandVector h = land_vector(-x + u,  y + v, top_z)
     if not opened: add_quad(polygons, a, d, c, b, shared) # bottom
     if not opened: add_quad(polygons, e, f, g, h, shared) # top
     add_quad(polygons, h, g, c, d, shared) # front
@@ -356,6 +361,13 @@ def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> L
     add_quad(polygons, f, e, a, b, shared) # back
     add_quad(polygons, e, h, d, a, shared) # left
     return land_csg_new_from_polygons(polygons)
+
+def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> LandCSG *:
+    """
+    Make a 4-sided pyramid with a side-length of 1 at the base and a
+    height of 2. The half side-length at the top is top_x times top_y.
+    """
+    return csg_cut_irregular_pyramid_open(opened, 0, 0, top_x, top_y, 1, shared)
 
 def csg_tetrahedron(void *shared) -> LandCSG *:
     """

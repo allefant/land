@@ -41,6 +41,11 @@ def land_triangles_add_csg(LandTriangles* self, LandCSG *csg):
 def land_triangles_destroy(LandTriangles *self):
     return platform_triangles_deinit(self)
 
+def land_triangles_destroy_with_image(LandTriangles *self):
+    land_image_destroy(self.image)
+    self.image = None
+    return platform_triangles_deinit(self)
+
 def land_triangles_clear(LandTriangles *self):
     self.n = 0
 
@@ -84,3 +89,11 @@ def land_triangles_get_vertex(LandTriangles* self, int i) -> void*:
     char* pointer = self.buf.buffer
     pointer += i * self.size
     return pointer
+
+def land_triangles_draw_debug(LandTriangles *self):
+    for int i in range(0, self.n, 3):
+        float xy[6], z[1]
+        platform_triangles_get_xyz(self, i + 0, xy + 0, xy + 1, z)
+        platform_triangles_get_xyz(self, i + 1, xy + 2, xy + 3, z)
+        platform_triangles_get_xyz(self, i + 2, xy + 4, xy + 5, z)
+        land_polygon(3, xy)
