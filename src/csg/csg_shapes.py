@@ -367,7 +367,7 @@ def csg_cut_pyramid_open(bool opened, LandFloat top_x, top_y, void *shared) -> L
     Make a 4-sided pyramid with a side-length of 1 at the base and a
     height of 2. The half side-length at the top is top_x times top_y.
     """
-    return csg_cut_irregular_pyramid_open(opened, 0, 0, top_x, top_y, 1, shared)
+    return csg_cut_irregular_pyramid_open(opened, 0, 0, 1, top_x, top_y, shared)
 
 def csg_tetrahedron(void *shared) -> LandCSG *:
     """
