@@ -137,11 +137,12 @@ def land_widget_button_size(LandWidget *base, float dx, dy):
 
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    if button->clicked:
+    if not base.disabled and button.clicked:
         if land_mouse_button_clicked(0):
             button->clicked(base)
-    if land_mouse_button_clicked(1):
-        button->rclicked(base)
+    if button.rclicked:
+        if land_mouse_button_clicked(1):
+            button->rclicked(base)
 
 def land_widget_button_initialize(LandWidget *base,
     LandWidget *parent, char const *text,

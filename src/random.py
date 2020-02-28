@@ -177,6 +177,7 @@ def land_rnd(double rmin, rmax) -> double:
     return land_random_f(&default_state, rmin, rmax)
 
 # both rmin and rmax are inclusive
+# note: not threadsafe, will crash in genrand_int32
 def land_rand(int rmin, int rmax) -> int:
     return land_random(&default_state, rmin, rmax)
 

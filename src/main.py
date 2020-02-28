@@ -24,6 +24,9 @@ global int _land_frames
 global bool _land_synchronized
 static bool _maximize_fps
 static int skip_counter
+int _flip_count
+int _flips_at_tick[256]
+int _flip_tick_i
 
 static def land_exit():
     if not land_active: return
@@ -77,6 +80,9 @@ def land_tick():
     land_joystick_tick()
     x_clicked = False
     _land_was_halted = _land_halted
+    _flip_tick_i--
+    if _flip_tick_i < 0: _flip_tick_i = 255
+    _flips_at_tick[_flip_tick_i] = _flip_count
 
 def land_draw():
     if parameters.skip:
@@ -85,6 +91,7 @@ def land_draw():
             return
         skip_counter = 0
     land_runner_draw_active()
+    _flip_count++
     land_flip()
 
 def land_quit():
@@ -133,9 +140,17 @@ def land_get_fps() -> double:
     """Return the current frequency."""
     return parameters->fps
 
+def land_get_current_fps -> int:
+    # _flips_at_tick[0] will always be identical to _flip_count during a tick
+    int i = (_flip_tick_i + parameters.fps) % 256
+    return _flip_count - _flips_at_tick[i]
+
 def land_get_ticks() -> int:
     """Return the number of ticks Land has executed."""
     return _land_frames
+
+def land_get_flips -> int:
+    return _flip_count
 
 def land_get_time() -> double:
     """Get the time in seconds since Land has started."""

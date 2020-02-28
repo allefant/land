@@ -53,6 +53,24 @@ def land_ortho2d(float ax, ay, *bx, *by):
     *bx = -ay;
     *by = ax;
 
+def land_rotate2d(LandFloat *x, *y, angle):
+    """
+    Rotate x/y around 0/0 by angle in counter clockwise direction.
+    cos(0) = 1, cos(45°) = 0.7, cos(90°) = 0
+    sin(0) = 0, sin(45°) = 0.7, sin(90°) = 1
+          0/1
+  -0.7/0.7     0.7/0.7
+      .       .
+         . .
+          0------1/0
+    """
+    LandFloat c = cos(angle)
+    LandFloat s = sin(angle)
+    LandFloat rx = *x * c - *y * s
+    LandFloat ry = *y * c + *x * s
+    *x = rx
+    *y = ry
+
 def land_line_line_collision2d(LandFloat l1x1, l1y1, l1x2, l1y2,
         l2x1, l2y1, l2x2, l2y2) -> bool:
     """

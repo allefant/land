@@ -16,13 +16,16 @@ class LandStream:
     char *filename
 
 static import allegro5/a5_sound
+static import file
 
 static int active
 
 LandStream *_default
 
 def land_sound_load(char const *filename) -> LandSound *:
-    LandSound *sound = platform_sound_load(filename)
+    char *path = land_path_with_prefix(filename)
+    LandSound *sound = platform_sound_load(path)
+    land_free(path)
     return sound
 
 def land_sound_new(int samples, float frequency, int bits,
@@ -78,12 +81,12 @@ def land_stream_fill(LandStream *self):
     platform_stream_fill(self)
 
 def land_stream_music(LandStream *self, char const *filename):
-    self.filename = land_strdup(filename)
-    platform_stream_music(self, filename, true)
+    self.filename = land_path_with_prefix(filename)
+    platform_stream_music(self, self.filename, true)
 
 def land_stream_music_once(LandStream *self, char const *filename):
-    self.filename = land_strdup(filename)
-    platform_stream_music(self, filename, false)
+    self.filename = land_path_with_prefix(filename)
+    platform_stream_music(self, self.filename, false)
 
 def land_stream_volume(LandStream *self, float volume):
     platform_stream_volume(self, volume)

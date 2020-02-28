@@ -36,6 +36,10 @@ def platform_thread_new(void (*cb)(void *data), void *data) -> LandThread *:
     al_start_thread(t->a5)
     return &t->super
 
+def platform_thread_wait_until_complete(LandThread* self):
+    PlatformThread *t = (void *)self
+    al_join_thread(t.a5, None)
+
 def platform_thread_destroy(LandThread *self):
     PlatformThread *t = (void *)self
     al_destroy_thread(t->a5)

@@ -16,6 +16,9 @@ def land_thread_new(void (*cb)(void *data), void *data) -> LandThread *:
 def land_thread_destroy(LandThread *t):
     platform_thread_destroy(t)
 
+def land_thread_wait_until_complete(LandThread *t):
+    platform_thread_wait_until_complete(t)
+
 def land_thread_new_lock() -> LandLock *:
     return platform_thread_new_lock()
 

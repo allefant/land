@@ -43,7 +43,7 @@ def land_map_find_layer(LandMap *map, char const *name) -> LandLayer *:
 def land_map_new() -> LandMap *:
     """
     Create a new map. This is not called directly normally, as you likely want
-    to use one of the convenience function to already create layers of the
+    to use one of the convenience functions to already create layers of the
     right type along with it.
     """
     LandMap *self

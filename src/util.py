@@ -431,3 +431,6 @@ def land_split_two(str text, str sep, char **a, **b) -> bool:
 
 def land_split_lines(char const *text) -> LandArray *:
     return land_split(text, "\n")
+
+def land_null_or_empty(str text) -> bool:
+    return not text or not text[0]

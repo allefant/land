@@ -452,6 +452,22 @@ def land_widget_container_child_i(LandWidget *super, int i) -> LandWidget *:
         j++
     return None
 
+def land_widget_get_sibling(LandWidget *widget, int d) -> LandWidget *:
+    """
+    Return the previous (d=-1) or next (d=1) sibling. Returns None as
+    previous/next sibling for the first/last widget.
+
+    Crashes if you pass a widget not in a container.
+    """
+    LandWidgetContainer *self = (LandWidgetContainer *)widget.parent
+    LandWidget* prev = None
+    for LandWidget *w in LandList *self.children:
+        if w == widget and d == -1: return prev
+        if prev == widget and d == 1: return w
+        prev = w
+    return None
+
+
 def land_widget_container_is_empty(LandWidget *super) -> int:
     LandWidgetContainer *self = (LandWidgetContainer *)super
     return not self.children or self->children->count == 0

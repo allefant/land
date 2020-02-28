@@ -11,15 +11,18 @@ class LandTriangles:
     LandBuffer *buf
     LandImage *image
     void *platform
+    bool can_cache
     
 def land_triangles_new -> LandTriangles*:
     LandTriangles *self; land_alloc(self)
+    self.can_cache = True
     platform_triangles_init(self)
     return self
 
 def land_triangles_new_with_normals -> LandTriangles*:
     LandTriangles *self; land_alloc(self)
     self.has_normals = True
+    self.can_cache = True
     platform_triangles_init(self)
     return self
 
@@ -48,6 +51,9 @@ def land_triangles_destroy_with_image(LandTriangles *self):
 
 def land_triangles_clear(LandTriangles *self):
     self.n = 0
+
+def land_triangles_refresh(LandTriangles* self):
+    platform_triangles_refresh(self)
 
 def land_triangles_texture(LandTriangles *self, LandImage *texture):
     """
@@ -97,3 +103,6 @@ def land_triangles_draw_debug(LandTriangles *self):
         platform_triangles_get_xyz(self, i + 1, xy + 2, xy + 3, z)
         platform_triangles_get_xyz(self, i + 2, xy + 4, xy + 5, z)
         land_polygon(3, xy)
+
+def land_triangles_can_cache(LandTriangles* self, bool can_cache):
+    self.can_cache = can_cache

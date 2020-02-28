@@ -1,8 +1,7 @@
 *** "ifndef" LAND_NO_NET
 # This is a simple sockets/TCP wrapper, to exchange bytes between programs.
 
-
-#*** "include" <winsock2.h>
+static import global winsock2 if defined WINDOWS
 static import global ws2tcpip if defined WINDOWS
 static *** "ifdef" WINDOWS
 static macro SHUT_RDWR SD_BOTH

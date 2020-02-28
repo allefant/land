@@ -7,13 +7,14 @@ class LandWidgetSlider:
     value.
     """
     LandWidgetContainer super
+    float *valuep
 
 class LandWidgetHandle:
     """A handle widget is a widget which can move around inside its parent."""
     LandWidget super
     bool vertical
     float minval, maxval, value
-    void (*update)(LandWidget *);
+    void (*update)(LandWidget *)
     int dragged
     int drag_x, drag_y
 
@@ -68,6 +69,20 @@ def land_widget_slider_new(LandWidget *parent, float minval, maxval,
         handle->box.min_height + super->element->il + super->element->it)
 
     return super
+
+def _slider_cb(LandWidget *w):
+    LandWidgetSlider* self = (void*) w.parent
+    if self.valuep:
+        *self.valuep = land_widget_slider_get_value(w.parent)
+
+def land_widget_slider_new_val(LandWidget* parent, float minval, maxval,
+        bool vertical, float* val, int x, y, w, h) -> LandWidget*:
+    auto widget = land_widget_slider_new(parent, minval, maxval, vertical,
+        _slider_cb, x, y, w, h)
+    LandWidgetSlider* self = (void*) widget
+    self.valuep = val
+    land_widget_slider_set_value(widget, *val)
+    return widget
 
 def land_widget_slider_size(LandWidget *widget, float dx, float dy):
     if not (dx or dy): return
@@ -146,6 +161,11 @@ def land_widget_slider_get_value(LandWidget *super) -> float:
     LandListItem *item = container->children->first
     LandWidgetHandle *handle = LAND_WIDGET_HANDLE(item->data)
     return handle->value
+
+def land_widget_slider_get_handle(LandWidget *super) -> LandWidget*:
+    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(super)
+    LandListItem *item = container->children->first
+    return item.data
 
 def land_widget_slider_interface_initialize():
     if land_widget_slider_interface: return

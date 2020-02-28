@@ -94,7 +94,7 @@ def platform_triangles_deinit(LandTriangles *self):
 
 def platform_triangles_draw(LandTriangles *t):
     LandTrianglesPlatform* platform = t.platform
-    if not platform.vb:
+    if t.can_cache and not platform.vb:
         platform.vb = al_create_vertex_buffer(platform.decl,
             t.buf->buffer, t.n, 0)
     LandImagePlatform *pim = (void *)t.image;
@@ -104,7 +104,7 @@ def platform_triangles_draw(LandTriangles *t):
             0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     else:
         al_draw_prim(t.buf->buffer, platform.decl, pim ? pim.a5 : None,
-        0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
+            0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     platform_uncheck_blending()
 
 def platform_triangles_get_xyz(LandTriangles* t, int i, float *x, *y, *z):
@@ -112,4 +112,15 @@ def platform_triangles_get_xyz(LandTriangles* t, int i, float *x, *y, *z):
     *x = v.x
     *y = v.y
     *z = v.z
-    
+
+def platform_triangles_refresh(LandTriangles* t):
+    LandTrianglesPlatform* platform = t.platform
+    if platform.vb
+        
+        #void* data = al_lock_vertex_buffer(platform.vb, 0, t.n, ALLEGRO_LOCK_WRITEONLY)
+        #al_unlock_vertex_buffer(platform.vb)
+
+        # have to copy the data with the above so maybe better to just recreate?
+        al_destroy_vertex_buffer(platform.vb)
+        platform.vb = al_create_vertex_buffer(platform.decl,
+            t.buf->buffer, t.n, 0)

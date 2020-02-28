@@ -196,7 +196,7 @@ def land_replace_filename(char const *path, char const *name) -> char *:
     char *result = land_malloc(n + strlen("/") + strlen(name) + 1)
     strncpy(result, path, n)
     result[n] = 0
-    strcat(result, "/")
+    if n > 0: strcat(result, "/")
     strcat(result, name)
     return result
 
