@@ -42,6 +42,8 @@ def test_string:
     _test(insert2)
     _test(insert3)
     _test(lowercase)
+    _test(prepend)
+    _test(prepend2)
 
 def _test_insert:
     char* s = land_strdup("")
@@ -72,3 +74,13 @@ def _test_lowercase:
     char* s = land_strdup("ABC")
     char* t = land_lowercase_copy(s)
     _assert_equals(t, "abc")
+
+def _test_prepend:
+    char* s = land_strdup("abcd")
+    land_prepend(&s, "ef")
+    _assert_equals(s, "efabcd")
+
+def _test_prepend2:
+    char* s = land_strdup("mouth\",\"eye\",\"antler\"}")
+    land_prepend(&s, "{\"")
+    _assert_equals(s, "{\"mouth\",\"eye\",\"antler\"}")

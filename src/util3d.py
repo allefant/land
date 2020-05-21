@@ -280,6 +280,23 @@ def land_vector_matmul(LandVector v, Land4x4Matrix *m) -> LandVector:
     LandFloat z = m->v[8] * v.x + m->v[9] * v.y + m->v[10] * v.z + m->v[11]
     return land_vector(x, y, z)
 
+def land_vector_backmul3x3(LandVector v, Land4x4Matrix *m) -> LandVector:
+    """
+    Multiplies with the transpose of the 3x3 portion of the matrix.
+    """
+    LandFloat x = m->v[0] * v.x + m->v[4] * v.y + m->v[8] * v.z
+    LandFloat y = m->v[1] * v.x + m->v[5] * v.y + m->v[9] * v.z
+    LandFloat z = m->v[2] * v.x + m->v[6] * v.y + m->v[10] * v.z
+    return land_vector(x, y, z)
+
+
+def land_vector_project(LandVector v, Land4x4Matrix *m) -> LandVector:
+    LandFloat x = m->v[0] * v.x + m->v[1] * v.y + m->v[2] * v.z + m->v[3]
+    LandFloat y = m->v[4] * v.x + m->v[5] * v.y + m->v[6] * v.z + m->v[7]
+    LandFloat z = m->v[8] * v.x + m->v[9] * v.y + m->v[10] * v.z + m->v[11]
+    LandFloat w = m->v[12] * v.x + m->v[13] * v.y + m->v[14] * v.z + m->v[15]
+    return land_vector(x / w, y / w, z / w)
+
 def land_vector_backtransform(LandVector v, p, r, u, b) -> LandVector:
     """
     Do the inverse of transform, i.e. you can use it to transform from
@@ -352,6 +369,36 @@ def land_quaternion_to_array(LandQuaternion *q, LandFloat *f):
     f[1] = q->x
     f[2] = q->y
     f[3] = q->z
+
+def _copy_sign(double x, double y) -> double:
+    if x > 0:
+        if y > 0: return x
+        return -x
+    if y > 0:
+        return -x
+    return x
+
+def land_quaternion_from_vectors(LandVector x, y, z) -> LandQuaternion:
+    double m00 = x.x
+    double m01 = y.x
+    double m02 = z.x
+    double m10 = x.y
+    double m11 = y.y
+    double m12 = z.y
+    double m20 = x.z
+    double m21 = y.z
+    double m22 = z.z
+
+    LandQuaternion q
+    q.w = sqrt( max( 0, 1 + m00 + m11 + m22 ) ) / 2
+    q.x = sqrt( max( 0, 1 + m00 - m11 - m22 ) ) / 2
+    q.y = sqrt( max( 0, 1 - m00 + m11 - m22 ) ) / 2
+    q.z = sqrt( max( 0, 1 - m00 - m11 + m22 ) ) / 2
+    q.x = _copy_sign( q.x, m21 - m12 )
+    q.y = _copy_sign( q.y, m02 - m20 )
+    q.z = _copy_sign( q.z, m10 - m01 )
+
+    return q
 
 def land_quaternion_iadd(LandQuaternion *q, LandQuaternion p):
     q->w += p.w
@@ -718,7 +765,7 @@ def land_4x4_matrix_get_back(Land4x4Matrix *m) -> LandVector:
 def land_4x4_matrix_get_position(Land4x4Matrix *m) -> LandVector:
     return land_vector(m.v[3], m.v[7], m.v[11])
 
-def land_quaternion_normalize(LandQuaternion *q):
+def land_quaternion_normalize(LandQuaternion *q) -> double:
     """
     Normalize the quaternion. This may be useful to prevent deteriorating
     the quaternion if it is used for a long time, due to floating point
@@ -729,6 +776,7 @@ def land_quaternion_normalize(LandQuaternion *q):
     q->x /= n
     q->y /= n
     q->z /= n
+    return n
 
 def land_quaternion_slerp(LandQuaternion qa, qb, double t) -> LandQuaternion:
     """
@@ -751,6 +799,35 @@ def land_quaternion_slerp(LandQuaternion qa, qb, double t) -> LandQuaternion:
     double theta = acos(c)
 
     double s = sin(theta)
+
+    double fs = sin((1 - t) * theta) / s
+    double ts = sin(t * theta) / s
+
+    q.w = qa.w * fs + qb.w * ts
+    q.x = qa.x * fs + qb.x * ts
+    q.y = qa.y * fs + qb.y * ts
+    q.z = qa.z * fs + qb.z * ts
+
+    return q
+
+def land_quaternion_towards(LandQuaternion qa, qb, double av) -> LandQuaternion:
+    LandQuaternion q
+    double c = qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z
+
+    if c < 0:
+        c = -c
+        qb.w = -qb.w
+        qb.x = -qb.x
+        qb.y = -qb.y
+        qb.z = -qb.z
+
+    double theta = acos(c)
+
+    double s = sin(theta)
+
+    double t = 0.01
+    if theta > av and theta > t:
+        t = av / theta
 
     double fs = sin((1 - t) * theta) / s
     double ts = sin(t * theta) / s

@@ -4,13 +4,23 @@ macro land_call_method(self, method, params):
 
 import global stdbool
 import global ctype
+import global stdio
 import land/array
 import land/buffer
 static import allegro5/a5_file
 
 typedef char const *str
 
-macro LAND_PI 3.1415926535897931
+macro LAND_PI ALLEGRO_PI
+macro LandPi ALLEGRO_PI
+macro pi ALLEGRO_PI
+
+def print(char const *s, ...):
+    va_list args
+    va_start(args, s)
+    vprintf(s, args)
+    va_end(args)
+    printf("\n")
 
 def land_read_text(char const *filename) -> char *:
     LandBuffer* bytebuffer = land_buffer_read_from_file(filename)
@@ -230,9 +240,10 @@ def land_concatenate_with_separator(char **s, char const *cat, *sep):
         land_concatenate(s, cat)
 
 def land_prepend(char **s, char const *pre):
-    int n = strlen(*s) + strlen(pre) + 1
+    int slen = strlen(*s)
+    int n = slen + strlen(pre) + 1
     char *re = land_realloc(*s, n)
-    memmove(re + strlen(pre), re, strlen(*s))
+    memmove(re + strlen(pre), re, slen)
     memmove(re, pre, strlen(pre))
     re[n - 1] = 0
     *s = re
@@ -331,6 +342,10 @@ def land_cut(char **s, int start, end):
     *s = replace
 
 def land_substring(char const *s, int a, b) -> char *:
+    """
+    a is inlusive
+    b is exclusive
+    """
     #    a=2  b=6
     # AB[CDEF]G
     # CDEFEFG memmove(s, s + 2, 4)

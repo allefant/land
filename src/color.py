@@ -144,7 +144,6 @@ def land_color_distance_ciede2000_lab(double l1, a1, b1, l2, a2, b2) -> double:
     """
     http://www.ece.rochester.edu/~gsharma/ciede2000/ciede2000noteCRNA.pdf
     """
-    double pi = LAND_PI
     double dl = l1 - l2
     double ml = (l1 + l2) / 2
     double c1 = sqrt(a1 * a1 + b1 * b1)

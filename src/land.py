@@ -197,6 +197,7 @@ import atlas
 import yaml
 import noise
 import image_op
+import camera
 
 import land/allegro5/a5_opengl
 

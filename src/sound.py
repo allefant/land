@@ -46,6 +46,10 @@ def land_sound_play(LandSound *s, float volume, pan, frequency):
     if not s: return
     platform_sound_play(s, volume, pan, frequency, false)
 
+def land_sound_change(LandSound *s, float volume, pan, frequency):
+    if not s: return
+    platform_sound_change(s, volume, pan, frequency)
+
 def land_sound_loop(LandSound *s, float volume, pan, frequency):
     if not s: return
     platform_sound_play(s, volume, pan, frequency, true)

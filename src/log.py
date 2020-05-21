@@ -5,6 +5,7 @@ static import mem
 *** "include" "android/log.h"
 *** "endif"
 
+bool _nolog
 static char *logname = NULL
 
 def land_log_overwrite(char const *name):
@@ -59,6 +60,7 @@ def land_log_new(char const *base, int unique):
     *** "endif"
 
 def land_log_message_nostamp (char const *format, ...):
+    if _nolog: return
     if not logname: land_log_new("land", 0)
 
     va_list va_args
@@ -70,8 +72,11 @@ def land_log_message_nostamp (char const *format, ...):
     __android_log_print(ANDROID_LOG_INFO, "land", "%s", s)
     *** "else"
     FILE *logfile = fopen(logname, "a")
-    vfprintf(logfile, format, va_args)
-    fclose(logfile)
+    if logfile:
+        vfprintf(logfile, format, va_args)
+        fclose(logfile)
+    else:
+        _nolog = True
     *** "endif"
     #vprintf(template, va_args)
 
@@ -80,7 +85,7 @@ def land_log_message_nostamp (char const *format, ...):
     
 
 def land_log_message(char const *format, ...):
-    
+    if _nolog: return
     if not logname: land_log_new("land", 0)
 
     va_list va_args
@@ -105,16 +110,19 @@ def land_log_message(char const *format, ...):
     tm = *gmtime(&t)
 
     FILE * logfile = fopen(logname, "a")
-    fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
-        tm.tm_year + 1900,
-        tm.tm_mon + 1,
-        tm.tm_mday,
-        tm.tm_hour,
-        tm.tm_min,
-        tm.tm_sec,
-        tv.tv_usec)
-    vfprintf(logfile, format, va_args)
-    fclose(logfile)
+    if logfile:
+        fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
+            tm.tm_year + 1900,
+            tm.tm_mon + 1,
+            tm.tm_mday,
+            tm.tm_hour,
+            tm.tm_min,
+            tm.tm_sec,
+            tv.tv_usec)
+        vfprintf(logfile, format, va_args)
+        fclose(logfile)
+    else:
+        _nolog = True
     *** "endif"
 
     #vprintf(template, va_args)

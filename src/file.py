@@ -153,6 +153,10 @@ def land_get_data_path() -> char *:
     return platform_get_data_path()
 
 def land_path_with_prefix(char const *name) -> char *:
+    """
+    Returns a new string with has the global data prefix prefixed to
+    the given path.
+    """
     if name and name[0] == '/': return land_strdup(name)
     int n = strlen(name)
     if prefix:
@@ -184,6 +188,18 @@ def land_find_data_prefix(char const *path):
         if land_file_is_dir(p):
             land_set_prefix(p)
             land_free(p)
+
+            # If the data folder has a single file named "link" in it
+            # then we append the path in that file. So for example
+            # "data" is passed to this function and ../data/link has
+            # "../blah" in it then the path will be ../data/../blah.
+            char* link = land_read_text("link")
+            if link:
+                land_strip(&link)
+                p = land_path_with_prefix(link)
+                land_set_prefix(p)
+                land_free(p)
+                land_free(link)
             return
         strcat(s, "../")
     land_set_prefix(path)

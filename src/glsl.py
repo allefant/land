@@ -4,6 +4,7 @@ with GLSL.
 """
 static import log
 static import mem
+import land.util
 import allegro5.a5_opengl
 
 class LandGLSLShader:
@@ -14,18 +15,24 @@ class LandGLSLShader:
 
 static def shader_setup(LandGLSLShader *self,
         char const *name,
-        char const *vertex_glsl,
-        char const *fragment_glsl):
+        char const *vertex_glsl_s,
+        char const *fragment_glsl_s):
 
     if name:
         self.name = land_strdup(name)
     else:
         name = self.name
 
-    if vertex_glsl:
+    if vertex_glsl_s:
+        char *vertex_glsl = land_strdup("")
+        *** "ifdef" ALLEGRO_OPENGL_ES
+        #land_append(&vertex_glsl, "#version 100\n")
+        *** "endif"
+        land_append(&vertex_glsl, vertex_glsl_s)
+        
         self.vertex_shader = glCreateShader(GL_VERTEX_SHADER)
 
-        glShaderSource(self.vertex_shader, 1, &vertex_glsl, NULL)
+        glShaderSource(self.vertex_shader, 1, (char const**)&vertex_glsl, NULL)
         glCompileShader(self.vertex_shader)
         
         GLint success
@@ -41,9 +48,17 @@ static def shader_setup(LandGLSLShader *self,
                 land_log_message("%s: Vertex Shader %s:\n%s\n", name,
                     success ? "Warning" : "Error", error)
 
-    if fragment_glsl:
+        land_free(vertex_glsl)
+
+    if fragment_glsl_s:
+        char *fragment_glsl = land_strdup("")
+        *** "ifdef" ALLEGRO_OPENGL_ES
+        #land_append(&fragment_glsl, "#version 100\n")
+        *** "endif"
+        land_append(&fragment_glsl, fragment_glsl_s)
+        
         self.fragment_shader = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(self.fragment_shader, 1, &fragment_glsl, NULL)
+        glShaderSource(self.fragment_shader, 1, (char const**)&fragment_glsl, NULL)
         glCompileShader(self.fragment_shader)
 
         GLint success
@@ -56,6 +71,8 @@ static def shader_setup(LandGLSLShader *self,
             if size:
                 land_log_message("%s: Fragment Shader %s:\n%s\n", name,
                     success ? "Warning" : "Error", error)
+
+        land_free(fragment_glsl)
 
     if not self.program_object:
         self.program_object = glCreateProgram()

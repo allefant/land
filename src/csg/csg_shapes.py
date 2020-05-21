@@ -2,7 +2,6 @@ import land.csg.csg
 static import land.util
 static import land.mem
 import csg_octree
-static macro pi LAND_PI
 
 static def sphere_point(LandArray *vertices, LandFloat i, j):
     LandFloat theta = 2 * pi * i
@@ -161,9 +160,9 @@ def land_csg_icosphere(int divisions, void *shared) -> LandCSG *:
     return land_csg_new_from_polygons(polygons)
 
 def csg_cylinder(int slices, void *shared) -> LandCSG *:
-    return csg_cylinder_open(slices, False, shared)
+    return csg_cylinder_open(slices, 1, False, shared)
 
-def csg_cut_cone_open(int slices, bool opened, float top_radius,
+def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
         void *shared) -> LandCSG *:
     """
     Make a cut cone along the z-axis with radius 1.0 at the botton
@@ -175,55 +174,67 @@ def csg_cut_cone_open(int slices, bool opened, float top_radius,
 
     LandVector up = land_vector(0, 0, 1)
     LandVector down = land_vector(0, 0, -1)
-    
+
     LandArray *polygons = land_array_new()
 
-    for int i in range(slices):
-        
-        LandCSGVertex *start = land_csg_vertex_new(down, down)
-        LandCSGVertex *end = land_csg_vertex_new(up, up)
+    for int j in range(discs):
+        for int i in range(slices):
 
-        LandFloat angle0 = i * 2 * pi / slices
-        LandFloat angle1 = (i + 1) * 2 * pi / slices
-        LandFloat c0 = cos(angle0), s0 = sin(angle0)
-        LandFloat c1 = cos(angle1), s1 = sin(angle1)
+            LandFloat angle0 = i * 2 * pi / slices
+            LandFloat angle1 = (i + 1) * 2 * pi / slices
+            LandFloat c0 = cos(angle0), s0 = sin(angle0)
+            LandFloat c1 = cos(angle1), s1 = sin(angle1)
 
-        # the lower normals point straight out - so technically our
-        # cone is weirdly bent towards the top
-        LandVector side0 = land_vector(c0, -s0, 0)
-        LandVector side1 = land_vector(c1, -s1, 0)
-        LandVector v0d = land_vector(c0, -s0, -1)
-        LandVector v1d = land_vector(c1, -s1, -1)
-        LandVector v0u = land_vector(c0 * top_radius, -s0 * top_radius, 1)
-        LandVector v1u = land_vector(c1 * top_radius, -s1 * top_radius, 1)
+            LandFloat pbot = j * 1.0 / discs
+            LandFloat ptop = (j + 1) * 1.0 / discs
 
-        LandArray *vertices
+            LandFloat zbot = -1 + pbot * 2
+            LandFloat ztop = -1 + ptop * 2
 
-        if not opened:
+            LandFloat rbot = 1 * (1 - pbot) + top_radius * pbot
+            LandFloat rtop = 1 * (1 - ptop) + top_radius * ptop
+            
+            # FIXME: wrong normals for a cone (different from cylinder)
+            LandVector side0 = land_vector(c0, -s0, 0)
+            LandVector side1 = land_vector(c1, -s1, 0)
+            LandVector v0d = land_vector(c0 * rbot, -s0 * rbot, zbot)
+            LandVector v1d = land_vector(c1 * rbot, -s1 * rbot, zbot)
+            LandVector v0u = land_vector(c0 * rtop, -s0 * rtop, ztop)
+            LandVector v1u = land_vector(c1 * rtop, -s1 * rtop, ztop)
+
+            LandArray *vertices
+
+            # bottom disc
+            if not opened and j == 0:
+                vertices = land_array_new()
+                land_array_add(vertices, land_csg_vertex_new(down, down))
+                land_array_add(vertices, land_csg_vertex_new(v0d, down))
+                land_array_add(vertices, land_csg_vertex_new(v1d, down))
+                land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+
             vertices = land_array_new()
-            land_array_add(vertices, start)
-            land_array_add(vertices, land_csg_vertex_new(v0d, down))
-            land_array_add(vertices, land_csg_vertex_new(v1d, down))
+            land_array_add(vertices, land_csg_vertex_new(v1d, side1))
+            land_array_add(vertices, land_csg_vertex_new(v0d, side0))
+            land_array_add(vertices, land_csg_vertex_new(v0u, side0))
+            land_array_add(vertices, land_csg_vertex_new(v1u, side1))
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
-        vertices = land_array_new()
-        land_array_add(vertices, land_csg_vertex_new(v1d, side1))
-        land_array_add(vertices, land_csg_vertex_new(v0d, side0))
-        land_array_add(vertices, land_csg_vertex_new(v0u, side0))
-        land_array_add(vertices, land_csg_vertex_new(v1u, side1))
-        land_array_add(polygons, land_csg_polygon_new(vertices, shared))
-
-        if not opened:
-            vertices = land_array_new()
-            land_array_add(vertices, end)
-            land_array_add(vertices, land_csg_vertex_new(v1u, up))
-            land_array_add(vertices, land_csg_vertex_new(v0u, up))
-            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+            # top disc
+            if not opened and j == discs - 1:
+                vertices = land_array_new()
+                land_array_add(vertices, land_csg_vertex_new(up, up))
+                land_array_add(vertices, land_csg_vertex_new(v1u, up))
+                land_array_add(vertices, land_csg_vertex_new(v0u, up))
+                land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
     return land_csg_new_from_polygons(polygons)
 
-def csg_cylinder_open(int slices, bool opened, void *shared) -> LandCSG *:
-    return csg_cut_cone_open(slices, opened, 1.0, shared)
+def csg_cut_cone_open(int slices, bool opened, float top_radius,
+        void *shared) -> LandCSG *:
+    return csg_cut_cone_open_disced(slices, 1, opened, top_radius, shared)
+
+def csg_cylinder_open(int slices, discs, bool opened, void *shared) -> LandCSG *:
+    return csg_cut_cone_open_disced(slices, discs, opened, 1.0, shared)
 
 def csg_cone(int slices, void *shared) -> LandCSG *:
     """
@@ -703,3 +714,66 @@ def land_csg_voxelize(LandCSG* csg, double radius) -> LandCSG*:
     land_free(voxels)
 
     return csg2
+
+def _dome_point(LandArray *vertices, LandFloat x, y, z, t):
+    LandVector pos = land_vector(x, y, z)
+    LandVector normal = land_vector(x, y, 0) if t < 0 else land_vector(x, y, z)
+    land_array_add(vertices, land_csg_vertex_new(pos, normal))
+
+def _dome_point_bottom(LandArray *vertices, LandFloat x, y, z):
+    LandVector pos = land_vector(x, y, z)
+    LandVector normal = land_vector(0, 0, -1)
+    land_array_add(vertices, land_csg_vertex_new(pos, normal))
+
+def csg_dome(bool open, int slices, discs, void *shared) -> LandCSG*:
+    """
+z 1   __
+     /  \
+  0 |    |
+    |    |
+ -1 |    |
+    """
+    LandArray *polygons = land_array_new()
+
+    for int i in range(discs):
+        LandFloat r1, z1, r2, z2
+
+        LandFloat t1 = -1.0 + i * 2.0 / discs
+        LandFloat t2 = -1.0 + (i + 1) * 2.0 / discs
+
+        if t1 < 0:
+            r1 = 1
+            z1 = t1
+        else:
+            r1 = cos(t1 * pi / 2)
+            z1 = sin(t1 * pi / 2)
+
+        if t2 < 0:
+            r2 = 1
+            z2 = t2
+        else:
+            r2 = cos(t2 * pi / 2)
+            z2 = sin(t2 * pi / 2)
+        
+        for int j in range(slices):
+            LandFloat a1 = j * 2.0 * pi / slices
+            LandFloat a2 = (j + 1) * 2.0 * pi / slices
+
+            LandArray *vertices = land_array_new()
+
+            _dome_point(vertices, cos(a1) * r1, sin(a1) * r1, z1, t1)
+            _dome_point(vertices, cos(a2) * r1, sin(a2) * r1, z1, t1)
+            _dome_point(vertices, cos(a2) * r2, sin(a2) * r2, z2, t2)
+            if i < discs - 1:
+                _dome_point(vertices, cos(a1) * r2, sin(a1) * r2, z2, t2)
+
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+
+            if i == 0 and not open: # bottom circle segment
+                LandArray *bv = land_array_new()
+                _dome_point_bottom(bv, cos(a2) * r1, sin(a2) * r1, z1)
+                _dome_point_bottom(bv, cos(a1) * r1, sin(a1) * r1, z1)
+                _dome_point_bottom(bv, 0, 0, z1)
+                land_array_add(polygons, land_csg_polygon_new(bv, shared))
+
+    return land_csg_new_from_polygons(polygons)

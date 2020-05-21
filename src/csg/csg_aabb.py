@@ -46,3 +46,13 @@ def land_csg_aabb_intersect(LandCSGAABB a, b) -> LandCSGAABB:
     if b.z1 > c.z1: c.z1 = b.z1
     if b.z2 < c.z2: c.z2 = b.z2
     return c
+
+def land_csg_aabb_combine(LandCSGAABB a, b) -> LandCSGAABB:
+    LandCSGAABB c = a
+    if b.x1 < c.x1: c.x1 = b.x1
+    if b.x2 > c.x2: c.x2 = b.x2
+    if b.y1 < c.y1: c.y1 = b.y1
+    if b.y2 > c.y2: c.y2 = b.y2
+    if b.z1 < c.z1: c.z1 = b.z1
+    if b.z2 > c.z2: c.z2 = b.z2
+    return c

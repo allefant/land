@@ -19,4 +19,4 @@ for row in open("land_tmp.h"):
     out.write(row)
 HERE
 python3 tmp.py
-
+rm land_tmp.h tmp.py

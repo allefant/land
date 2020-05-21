@@ -1,7 +1,10 @@
 cmake_minimum_required (VERSION 2.6)
-include(FindPkgConfig)
- 
+
+cmake_policy(SET CMP0072 NEW) # use new OpenGL dependency search
 cmake_policy(SET CMP0009 NEW) # don't follow symlinks
+
+include(FindPkgConfig)
+
 include_directories(${CMAKE_BINARY_DIR}/c)
 include_directories(${CMAKE_BINARY_DIR}/examples/c)
 
@@ -56,7 +59,7 @@ foreach(exsrc ${examples})
 
     set(WFLAGS "-W -Wall")
     set(WFLAGS "${WFLAGS} -Wno-unused-parameter")
-    set(CFLAGS "--std=gnu99")
+    set(CFLAGS "--std=gnu99 -DALLEGRO_UNSTABLE")
     set(DFLAGS "-g")
     set(PFLAGS "-g -p")
     set(RFLAGS "-O3")

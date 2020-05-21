@@ -6,9 +6,10 @@ import test_widget
 import test_string
 
 macro _test(name):
-    _test_before(***name)
-    _test_******name()
-    _test_after()
+    if _want_test(***name):
+        _test_before(***name)
+        _test_******name()
+        _test_after()
 
 str test_name
 bool test_failed
@@ -146,9 +147,25 @@ def _test_yaml6:
     land_yaml_xml_end(y) # html
     land_yaml_save_xml(y)
 
+def _test_camera:
+    land_camera_tests()
+    
+def _test_collision:
+    test_collision()
+    
+def _test_widget:
+    test_widget()
+    
+def _test_string:
+    test_string()
+
+def _want_test(str name) -> bool:
+    return land_equals(name, "string")
+
 def main() -> int:
     land_init()
-    
+
+    _test(camera)
     _test(shuffle)
     _test(yaml1)
     _test(yaml2)
@@ -156,8 +173,8 @@ def main() -> int:
     _test(yaml4)
     _test(yaml5)
     _test(yaml6)
-    #test_collision()
-    #test_widget()
-    #test_string()
+    _test(collision)
+    _test(widget)
+    _test(string)
 
     return 0

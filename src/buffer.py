@@ -164,6 +164,10 @@ def land_buffer_get_byte(LandBuffer *self, int pos) -> uint8_t:
     uint8_t *uc = (uint8_t *)self->buffer + pos
     return *uc
 
+def land_buffer_get_float(LandBuffer *self, int pos) -> float:
+    float *uc = (float *)(self->buffer + pos)
+    return *uc
+
 def land_buffer_add_float(LandBuffer *self, float f):
     uint32_t *i = (void *)&f
     land_buffer_add_uint32_t(self, *i)
@@ -339,7 +343,7 @@ def land_buffer_read_from_file(char const *filename) -> LandBuffer *:
     """
     Read a buffer from the given file. If the file cannot be read, return None.
     """
-    LandFile *pf = land_file_new(filename, "r")
+    LandFile *pf = land_file_new(filename, "rb")
     if not pf:
         return None
     LandBuffer *self = land_buffer_new()
@@ -348,7 +352,7 @@ def land_buffer_read_from_file(char const *filename) -> LandBuffer *:
     return self
 
 def land_buffer_write_to_file(LandBuffer *self, char const *filename) -> bool
-    LandFile *pf = land_file_new(filename, "w")
+    LandFile *pf = land_file_new(filename, "wb")
     if not pf:
         return False
     int written = land_file_write(pf, self.buffer, self.n)

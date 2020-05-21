@@ -8,18 +8,28 @@ class LandTriangles:
     int n # number of vertices (not triangles)
     int size # size of a single vertex, in bytes
     bool has_normals
+    bool has_texture
     LandBuffer *buf
     LandImage *image
     void *platform
     bool can_cache
-    
+
 def land_triangles_new -> LandTriangles*:
     LandTriangles *self; land_alloc(self)
     self.can_cache = True
+    self.has_texture = True
     platform_triangles_init(self)
     return self
 
 def land_triangles_new_with_normals -> LandTriangles*:
+    LandTriangles *self; land_alloc(self)
+    self.has_normals = True
+    self.has_texture = True
+    self.can_cache = True
+    platform_triangles_init(self)
+    return self
+
+def land_triangles_new_with_normals_no_texture -> LandTriangles*:
     LandTriangles *self; land_alloc(self)
     self.has_normals = True
     self.can_cache = True
@@ -89,7 +99,11 @@ def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b,
 
 def land_triangles_draw(LandTriangles *self):
     if not self.n: return
-    platform_triangles_draw(self)
+    platform_triangles_draw(self, False)
+
+def land_triangles_draw_more(LandTriangles *self, bool more):
+    if not self.n: return
+    platform_triangles_draw(self, more)
 
 def land_triangles_get_vertex(LandTriangles* self, int i) -> void*:
     char* pointer = self.buf.buffer
@@ -106,3 +120,18 @@ def land_triangles_draw_debug(LandTriangles *self):
 
 def land_triangles_can_cache(LandTriangles* self, bool can_cache):
     self.can_cache = can_cache
+
+def land_triangles_shader(LandTriangles* self, str id, vertex, fragment):
+    platform_triangles_shader(self, id, vertex, fragment)
+
+def land_triangles_set_light_direction(LandVector light):
+    platform_triangles_set_light_direction(light)
+
+def land_triangles_get_max_z(LandTriangles *self) -> LandFloat:
+    float maxz = INT_MIN
+    for int i in range(0, self.n):
+        float x, y, z
+        platform_triangles_get_xyz(self, i + 0, &x, &y, &z)
+        if z > maxz: maxz = z
+    return maxz
+       

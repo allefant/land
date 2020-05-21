@@ -277,7 +277,7 @@ def land_csg_polygon_flip(LandCSGPolygon *self):
     csg_plane_flip(&self.plane)
 
 # Given a list of polygons, return a *new* list containing *clones* of the
-# polygon in the new list. Nothing will be shared (except the polygon's
+# polygons in the new list. Nothing will be shared (except the polygon's
 # "shared" pointers).
 static def clone_polygons(LandCSG *csg, LandArray *polygons) -> LandArray *:
     LandArray *clone = land_array_copy(polygons)
@@ -401,6 +401,16 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
         LandCSGPolygon *p0 = land_array_get_nth(polygons, 0)
         self.plane = p0.plane
 
+        if True:
+            # We use the first polygon as the BSP plane so we already
+            # know it is neither in front nor back (but without this
+            # often would end up there)
+            # A simple hack but it prevents a few infinite recursion
+            # crashes and/or missing polygons.
+            LandCSGPolygon *plast = land_array_pop(polygons)
+            land_array_replace_nth(polygons, 0, plast)
+            land_array_add(self.polygons, p0)
+
     LandArray *front = land_array_new()
     LandArray *back = land_array_new()
 
@@ -414,7 +424,10 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
         if fc == original:
             #printf("csg error: all polygons front\n")
             #return
-            pass
+            # to avoid infinite recursion and crash move a random (the last) one 
+            LandCSGPolygon* hack = land_array_pop(front)
+            land_array_add(self.polygons, hack)
+            
         if not self.front:
             self.front = csg_node_new(csg, None)
         csg_node_build(csg, self.front, front)
@@ -426,7 +439,10 @@ static def csg_node_build(LandCSG *csg, LandCSGNode *self, LandArray *polygons):
         if bc == original:
             #printf("csg error: all polygons back\n")
             #return
-            pass
+            # to avoid infinite recursion and crash move a random (the last) one 
+            LandCSGPolygon* hack = land_array_pop(back)
+            land_array_add(self.polygons, hack)
+
         if not self.back:
             self.back = csg_node_new(csg, None)
         csg_node_build(csg, self.back, back)
@@ -655,3 +671,11 @@ def land_csg_polygon_paint(LandCSGPolygon *self, float r, g, b, a):
 def land_csg_paint_all(LandCSG *self, float r, g, b, a):
     for LandCSGPolygon *p in LandArray *self.polygons:
         land_csg_polygon_paint(p, r, g, b, a)
+
+# Note: The added CSG is destroyed in the project and the passed pointer
+# will be invalid when this function returns.
+def land_csg_merge(LandCSG *self, LandCSG *add):
+    for LandCSGPolygon *p in LandArray *add.polygons:
+        land_array_add(self.polygons, p)
+    land_array_clear(add.polygons)
+    land_csg_destroy(add)

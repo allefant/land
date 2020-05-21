@@ -113,3 +113,4 @@ def platform_font_destroy(LandFont *super):
     LandFontPlatform *self = (void *)super
     al_destroy_font(self.a5)
     land_free(self)
+

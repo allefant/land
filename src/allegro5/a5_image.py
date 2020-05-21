@@ -257,10 +257,26 @@ def platform_image_crop(LandImage *super, int x, y, w, h):
     al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP |
         ALLEGRO_STATE_BLENDER)
     ALLEGRO_BITMAP *cropped = al_create_bitmap(w, h)
-    al_set_target_bitmap(cropped)
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+    #al_set_target_bitmap(cropped)
+    #al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
     if self->a5:
-        al_draw_bitmap(self->a5, -x, -y, 0)
+        # FIXME: this fails with GL ES
+        #al_draw_bitmap(self->a5, -x, -y, 0)
+
+        ALLEGRO_LOCKED_REGION *rfrom = al_lock_bitmap_region(self->a5, x, y, w, h,
+            ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READONLY)
+        ALLEGRO_LOCKED_REGION *rto = al_lock_bitmap(cropped, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
+            ALLEGRO_LOCK_WRITEONLY)
+
+        for int i in range(h):
+            uint8_t *pfrom = rfrom.data, *pto = rto.data
+            pfrom += rfrom.pitch * i
+            pto += rto.pitch * i
+            memcpy(pto, pfrom, 4 * w)
+
+        al_unlock_bitmap(self->a5)
+        al_unlock_bitmap(cropped)
+
         al_destroy_bitmap(self->a5)
     self->a5 = cropped
     al_restore_state(&state)

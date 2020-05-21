@@ -74,6 +74,14 @@ def platform_sound_play(LandSound *s, float volume, pan, frequency,
             &self.last_playing):
         self.last_failed = True
 
+def platform_sound_change(LandSound *s, float volume, pan, frequency):
+    LandSoundPlatform *self = (void *)s
+    ALLEGRO_SAMPLE_INSTANCE* inst = al_lock_sample_id(&self.last_playing)
+    al_set_sample_instance_gain(inst, volume)
+    al_set_sample_instance_pan(inst, pan)
+    al_set_sample_instance_speed(inst, frequency)
+    al_unlock_sample_id(&self.last_playing)
+
 def platform_sound_stop(LandSound *s):
     LandSoundPlatform *self = (void *)s
     if self.last_failed:
