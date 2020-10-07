@@ -65,3 +65,6 @@ def land_widget_scrolling_text_interface_initialize():
     land_widget_scrolling_text_interface->id |= LAND_WIDGET_ID_SCROLLING_TEXT
     land_widget_scrolling_text_interface->size = land_widget_scrolling_text_size
 
+def land_widget_scrolling_text_get_text_widget(LandWidget *widget) -> LandWidget*:
+    return land_widget_scrolling_get_child(widget)
+    

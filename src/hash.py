@@ -18,16 +18,30 @@ class LandHash:
 class LandHashIterator:
     int i, j
 
+class LandHashKeysIterator:
+    int i, j
+
 import array
 
 static import hash, mem
 
-static def get_data(LandHash *self, LandHashIterator *i, void **data) -> bool:
+def _get_data(LandHash *self, LandHashIterator *i, void **data) -> bool:
     if not self.entries: return False
     while i->i < self.size:
         if self.entries[i->i]:
             if i->j < self.entries[i->i][0].n:
                 if data: *data = self.entries[i->i][i->j].data
+                return True
+            i->j = 0
+        i->i++
+    return False
+
+def _get_key(LandHash *self, LandHashKeysIterator *i, void **data) -> bool:
+    if not self.entries: return False
+    while i->i < self.size:
+        if self.entries[i->i]:
+            if i->j < self.entries[i->i][0].n:
+                if data: *data = self.entries[i->i][i->j].thekey
                 return True
             i->j = 0
         i->i++
@@ -42,11 +56,26 @@ def LandHashIterator_first(LandHash *self) -> LandHashIterator:
 
 def LandHashIterator_item(LandHash *self, LandHashIterator *i) -> void *:
     void *data = None
-    get_data(self, i, &data)
+    _get_data(self, i, &data)
     return data
 
 def LandHashIterator_next(LandHash *self, LandHashIterator *i) -> bool:
-    if get_data(self, i, None):
+    if _get_data(self, i, None):
+        i->j++
+        return True
+    return False
+
+def LandHashKeysIterator_first(LandHash *self) -> LandHashKeysIterator:
+    LandHashKeysIterator i = {0, 0}
+    return i
+
+def LandHashKeysIterator_item(LandHash *self, LandHashKeysIterator *i) -> void *:
+    void *data = None
+    _get_key(self, i, &data)
+    return data
+
+def LandHashKeysIterator_next(LandHash *self, LandHashKeysIterator *i) -> bool:
+    if _get_key(self, i, None):
         i->j++
         return True
     return False

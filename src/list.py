@@ -156,6 +156,12 @@ def land_remove_list_data(LandList **list, void *data):
 
         item = next
 
+def land_list_add(LandList *l, void *data):
+    auto item = land_listitem_new(data)
+    land_list_insert_item(l, item)
+
+#def land_list_remove(LandList *l, int i)
+
 global *** "ifdef" LAND_MEMLOG
 
 macro land_list_new() land_list_new_memlog(__FILE__, __LINE__)

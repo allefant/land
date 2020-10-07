@@ -1,4 +1,5 @@
 import global stdlib, stdio, allegro5/allegro5
+import util
 class LandArray:
     int count
     int size
@@ -104,6 +105,19 @@ def land_array_remove(LandArray *self, int i) -> void*:
     if i == land_array_count(self): return last
     return land_array_replace_nth(self, i, last)
 
+def land_array_shift_remove(LandArray *self, int i) -> void*:
+    """
+    Return item at position i and then shift all the other items in
+    the array by one.
+    """
+    void *x = land_array_get(self, i)
+    self.count--
+    # [ A B C D E F ] now remove i = 2
+    # move (D E F) to the C position
+    # [ A B D E F ]
+    memmove(self.data + i, self.data + i + 1, sizeof(*self.data) * (self.count - i))
+    return x
+
 def land_array_add_data(LandArray **array, void *data):
     """
     *deprecated*
@@ -132,6 +146,16 @@ def land_array_find(LandArray *self, void *data) -> int:
     """
     for int i = 0 while i < self.count with i++:
         if self.data[i] == data: return i
+    return -1
+
+def land_array_find_string(LandArray *self, char const * string) -> int:
+    """
+    Searches a string array for the given string. If it is contained return the
+    first index i so that land_array_get_nth(array, i) equals the string.
+    Otherwise -1 is returned.
+    """
+    for int i = 0 while i < self.count with i++:
+        if land_equals(string, self.data[i]): return i
     return -1
 
 def land_array_get_nth(LandArray const *array, int i) -> void *:
