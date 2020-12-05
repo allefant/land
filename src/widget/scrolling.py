@@ -24,7 +24,7 @@ class LandWidgetScrolling:
     # 1 = scrolling [default]
     # 2 = unlimited
     unsigned int scrollwheel
-    bool fixed_width
+    bool fixed_width, fixed_height
 
 macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
@@ -332,6 +332,10 @@ def _scrolling_layout(LandWidget *self):
         sx = 0
         sw = vw
 
+    if scrolling.fixed_height:
+        sy = 0
+        sh = vh
+
     #printf("scroll x/y/w/h: %.1f/%.1f/%.1f/%.1f\n", sx, sy, sw, sh)
 
     float su = 0, sd = 0, sl = 0, sr = 0, sr2 = 0, sd2 = 0
@@ -347,6 +351,9 @@ def _scrolling_layout(LandWidget *self):
 
     if scrolling.fixed_width:
         sr2 = 0
+
+    if scrolling.fixed_height:
+        sd2 = 0
 
     int w = r - l
     int h = b - t
@@ -375,6 +382,13 @@ def _scrolling_layout(LandWidget *self):
             #printf("fixed width, adjusting child to container width %d\n", w)
             #land_widget_debug(child, 4)
             hor_h = 0
+
+    if scrolling.fixed_height:
+        LandWidget *child = land_widget_scrolling_get_child(self)
+        if child:
+            land_widget_move(child, 0, t - child.box.y)
+            land_widget_resize(child, 0, h - child.box.h)
+            ver_w = 0
 
     land_widget_set_size(container, w, h)
     land_widget_set_size(horizontal, w, hor_h)
@@ -451,7 +465,15 @@ def land_widget_scrolling_interface_initialize():
 def land_widget_scrolling_set_fixed_width(LandWidget *widget, bool yes):
     """
     If this is set there will not be a horizontal scrollbar, instead
-    the width of the child will always be to fit the width exactly.
+    the width of the child will always be set to fit the width exactly.
     """
     LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
     self.fixed_width = True
+
+def land_widget_scrolling_set_fixed_height(LandWidget *widget, bool yes):
+    """
+    If this is set there will not be a vertical scrollbar, instead
+    the height of the child will always be set to fit the height exactly.
+    """
+    LandWidgetScrolling *self = LAND_WIDGET_SCROLLING(widget)
+    self.fixed_height = True
