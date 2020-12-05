@@ -303,6 +303,14 @@ def land_image_auto_crop(LandImage *self):
 macro LandImageFit 1
     
 def land_image_resize(LandImage *self, int new_w, new_h, int flags):
+    """
+    Resizes the image to the given dimensions. If the new aspect ratio
+    is different by default the contents will get distorted.
+
+    flags:
+    LandImageFit - Never enlarge the original and if the aspect ratio
+                   changes center the picture.
+    """
     float old_w = self.width - self.l - self.r
     float old_h = self.height - self.t - self.b
     if new_w == 0: new_w = old_w
