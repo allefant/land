@@ -163,6 +163,7 @@ def csg_cylinder(int slices, void *shared) -> LandCSG *:
     return csg_cylinder_open(slices, 1, False, shared)
 
 def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
+        bool smooth,
         void *shared) -> LandCSG *:
     """
     Make a cut cone along the z-axis with radius 1.0 at the botton
@@ -193,10 +194,15 @@ def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
 
             LandFloat rbot = 1 * (1 - pbot) + top_radius * pbot
             LandFloat rtop = 1 * (1 - ptop) + top_radius * ptop
-            
-            # FIXME: wrong normals for a cone (different from cylinder)
-            LandVector side0 = land_vector(c0, -s0, 0)
-            LandVector side1 = land_vector(c1, -s1, 0)
+
+            LandVector side0, side1
+            if smooth:
+                # FIXME: wrong normals for a cone (different from cylinder)
+                side0 = land_vector(c0, -s0, 0)
+                side1 = land_vector(c1, -s1, 0)
+            else:
+                side0 = land_vector(c0, -s0, 0)
+                side1 = land_vector(c0, -s0, 0)
             LandVector v0d = land_vector(c0 * rbot, -s0 * rbot, zbot)
             LandVector v1d = land_vector(c1 * rbot, -s1 * rbot, zbot)
             LandVector v0u = land_vector(c0 * rtop, -s0 * rtop, ztop)
@@ -231,10 +237,10 @@ def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
 
 def csg_cut_cone_open(int slices, bool opened, float top_radius,
         void *shared) -> LandCSG *:
-    return csg_cut_cone_open_disced(slices, 1, opened, top_radius, shared)
+    return csg_cut_cone_open_disced(slices, 1, opened, top_radius, True, shared)
 
 def csg_cylinder_open(int slices, discs, bool opened, void *shared) -> LandCSG *:
-    return csg_cut_cone_open_disced(slices, discs, opened, 1.0, shared)
+    return csg_cut_cone_open_disced(slices, discs, opened, 1.0, True, shared)
 
 def csg_cone(int slices, void *shared) -> LandCSG *:
     """
@@ -776,4 +782,44 @@ z 1   __
                 _dome_point_bottom(bv, 0, 0, z1)
                 land_array_add(polygons, land_csg_polygon_new(bv, shared))
 
+    return land_csg_new_from_polygons(polygons)
+
+def _mid_vertex(LandCSGVertex *av, *bv) -> LandCSGVertex:
+    LandCSGVertex m
+    m.pos = land_vector_mul(land_vector_add(av.pos, bv.pos), 0.5)
+    m.normal = land_vector_mul(land_vector_add(av.normal, bv.normal), 0.5)
+    return m
+
+def _add_tri_norm(LandArray *polygons, LandCSGVertex *av, *bv, *cv, void* shared):
+    LandArray *vertices = land_array_new()
+    land_array_add(vertices, land_csg_vertex_new(av.pos, av.normal))
+    land_array_add(vertices, land_csg_vertex_new(bv.pos, bv.normal))
+    land_array_add(vertices, land_csg_vertex_new(cv.pos, cv.normal))
+    land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+
+def _split_triangle(LandArray *polygons, LandCSGVertex *av, *bv, *cv, void* shared):
+    LandCSGVertex am = _mid_vertex(av, bv)
+    LandCSGVertex bm = _mid_vertex(bv, cv)
+    LandCSGVertex cm = _mid_vertex(cv, av)
+
+    _add_tri_norm(polygons, av, &am, &cm, shared)
+    _add_tri_norm(polygons, bv, &bm, &am, shared)
+    _add_tri_norm(polygons, cv, &cm, &bm, shared)
+    _add_tri_norm(polygons, &am, &bm, &cm, shared)
+
+def land_csg_subdivide(LandCSG* csg, void *shared) -> LandCSG*:
+    """
+    Create a new model where each triangle is split into  4 new ones.
+    """
+    LandArray *polygons = land_array_new()
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        LandCSGVertex *last[3]
+        int count = 0
+        for LandCSGVertex *v in LandArray* p.vertices:
+            last[count++] = v
+            if count == 3:
+                _split_triangle(polygons, last[0], last[1], last[2], shared)
+                count--
+                last[1] = last[2]
+        
     return land_csg_new_from_polygons(polygons)

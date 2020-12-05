@@ -56,3 +56,10 @@ def land_csg_aabb_combine(LandCSGAABB a, b) -> LandCSGAABB:
     if b.z1 < c.z1: c.z1 = b.z1
     if b.z2 > c.z2: c.z2 = b.z2
     return c
+
+def land_csg_aabb_radius(LandCSGAABB a) -> double:
+    double x = max(fabs(a.x1), fabs(a.x2))
+    double y = max(fabs(a.y1), fabs(a.y2))
+    double z = max(fabs(a.z1), fabs(a.z2))
+    double xy = max(x, y)
+    return max(xy, z)
