@@ -323,7 +323,7 @@ def land_lowercase_copy(str s) -> char*:
 
 def land_shorten(char **s, int start, end):
     """
-    Shorten a string so it starts at stat and ends before end.
+    Shorten a string so it starts at start and ends before end.
 
     land_shorten("abcd", 1, 3) -> "bc"
     land_shorten("abcd", 1, -1) -> "bc"
@@ -331,6 +331,14 @@ def land_shorten(char **s, int start, end):
     char *replace = land_substring(*s, start, strlen(*s) - end)
     land_free(*s)
     *s = replace
+
+def land_replace_string(char **s, str replace):
+    """
+    Free the target string if it is not None and then replace it with
+    a copy of the given replacement.
+    """
+    if *s: land_free(*s)
+    *s = land_strdup(replace)
 
 def land_cut(char **s, int start, end):
     """
