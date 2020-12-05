@@ -17,19 +17,25 @@ def platform_color_name(char const *name) -> LandColor:
         c.a = 1
         return c
 
+    # if there's spaces ignore them
     int i = 0
     while name[i]:
         if name[i] == ' ':
+            # "light blue" [i = 5]
             char name2[strlen(name)]
-            strncpy(name2, name, i)
+            strncpy(name2, name, i) # "light"
             int j = i
-            i++
+            i++ # "light" [i = 6, J = 5]
             while name[i]:
-                if name[i] == ' ': continue
-                name2[j++] = name[i]
-                i++
+                if name[i] == ' ':
+                    i++
+                    continue
+                name2[j++] = name[i++]
             name2[j] = 0
-            return platform_color_name(name2)
+
+            al_color_name_to_rgb(name2, &c.r, &c.g, &c.b)
+            c.a = 1
+            return c
         i++
     
     al_color_name_to_rgb(name, &c.r, &c.g, &c.b)
