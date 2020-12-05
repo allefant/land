@@ -754,6 +754,11 @@ def land_display_transform_4x4(Land4x4Matrix *matrix):
     _land_active_display->matrix = *matrix
     _land_active_display->matrix_modified = True
 
+def land_display_compose_transform(Land4x4Matrix matrix):
+    _land_active_display->matrix = land_4x4_matrix_mul(
+        _land_active_display->matrix, matrix)
+    _land_active_display->matrix_modified = True
+
 def land_render_state(int state, value):
     platform_render_state(state, value)
 
