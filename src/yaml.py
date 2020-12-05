@@ -68,6 +68,27 @@ def land_yaml_get_entry(LandYamlEntry *self, char const *name) -> LandYamlEntry 
 def land_yaml_get_entry_scalar(LandYamlEntry *self, char const *name) -> char const *:
     return land_yaml_get_if_scalar(land_yaml_get_entry(self, name))
 
+def land_yaml_set_entry_scalar(LandYaml* yaml, LandYamlEntry *entry, str key, val):
+    auto already = land_yaml_get_entry(entry, key)
+    if already:
+        if already.scalar: land_free(already.scalar)
+        already.scalar = val ? land_strdup(val) : None # None will not be saved
+    else:
+        land_alloc(already)
+        already.type = YamlScalar
+        already.scalar = val ? land_strdup(val) : None
+        land_yaml_open(yaml, entry)
+        land_yaml_add_scalar(yaml, key)
+        land_yaml_add_scalar(yaml, val)
+
+def land_yaml_add_entry_mapping(LandYaml* yaml, LandYamlEntry *entry, str key):
+    auto already = land_yaml_get_entry(entry, key)
+    if already: return
+    land_yaml_open(yaml, entry)
+    land_yaml_add_scalar(yaml, key)
+    land_yaml_add_mapping(yaml)
+    land_yaml_done(yaml)
+
 def land_yaml_get_entry_int(LandYamlEntry *self,
         char const *name) -> int:
     return land_yaml_get_scalar_int(land_yaml_get_entry(self, name))
@@ -123,6 +144,14 @@ static def _add_entry(LandYaml *yaml, LandYamlEntry *entry):
         yaml.parent = entry
         yaml.expect_key = True
 
+def land_yaml_open(LandYaml *yaml, LandYamlEntry *entry):
+    """
+    Used to modify a LandYaml after it has been loaded - call on a
+    mapping or sequence then add a value or a key/value pair.
+    """
+    yaml.parent = entry
+    yaml.expect_key = True if entry.type == YamlMapping else False
+
 def land_yaml_add_mapping(LandYaml *yaml):
     """
 After calling this, use land_yaml_add_scalar to add a key, and then
@@ -167,7 +196,7 @@ a mapping.
         LandYamlEntry *entry
         land_alloc(entry)
         entry.type = YamlScalar
-        entry.scalar = land_strdup(v)
+        entry.scalar = v ? land_strdup(v) : None
         _add_entry(yaml, entry)
 
 def land_yaml_add_scalar_v(LandYaml *yaml, char const *v, va_list args):
