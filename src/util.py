@@ -389,7 +389,49 @@ def land_filelist(char const *dir,
     2 - If it is a directory, recurse into it.
     3 - Like 1 and 2 combined.
     """
-    return platform_filelist(dir, filter, flags, data)
+    char* dir2 = land_path_with_prefix(dir)
+    LandArray* array = platform_filelist(dir2, filter, flags, data)
+    land_free(dir2)
+    return array
+
+def _filter(char const *name, bool is_dir, void *data) -> int:
+    char const *pattern = data
+    if is_dir:
+        return 2
+    if land_fnmatch(pattern, name):
+        return 1
+    return 0
+
+def land_for_each_file(str pattern, void (*cb)(str path, void* data), void* data) -> int:
+    LandBuffer* dirbuf = land_buffer_new()
+    int j = 0
+    for int i = 0 while pattern[i] with i++:
+        if pattern[i] == '/':
+            land_buffer_add(dirbuf, pattern + j, i - j)
+            j = i
+        if pattern[i] == '?' or pattern[i] == '*':
+            break
+    char *dirpath = land_buffer_finish(dirbuf)
+
+    int count = 0
+    LandArray* filenames = land_filelist(dirpath, _filter, LAND_RELATIVE_PATH, (void *)pattern)
+    if filenames:
+        count = filenames->count
+
+    land_free(dirpath)
+
+    if not filenames: return 0
+
+    land_array_sort_alphabetical(filenames)
+
+    int i
+    for i = 0 while i < filenames->count with i++:
+        char *filename = land_array_get_nth(filenames, i)
+        cb(filename, data)
+        land_free(filename)
+
+    land_array_destroy(filenames)
+    return count
 
 def land_split_path_name_ext(char const *filename) -> LandArray*:
     """
