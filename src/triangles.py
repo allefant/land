@@ -127,6 +127,9 @@ def land_triangles_shader(LandTriangles* self, str id, vertex, fragment):
 def land_triangles_set_light_direction(LandVector light):
     platform_triangles_set_light_direction(light)
 
+def land_triangles_set_light(float light):
+    platform_triangles_set_light(light)
+
 def land_triangles_get_max_z(LandTriangles *self) -> LandFloat:
     float maxz = INT_MIN
     for int i in range(0, self.n):
@@ -134,4 +137,11 @@ def land_triangles_get_max_z(LandTriangles *self) -> LandFloat:
         platform_triangles_get_xyz(self, i + 0, &x, &y, &z)
         if z > maxz: maxz = z
     return maxz
-       
+
+def land_triangles_get_max_y(LandTriangles *self) -> LandFloat:
+    float maxy = INT_MIN
+    for int i in range(0, self.n):
+        float x, y, z
+        platform_triangles_get_xyz(self, i + 0, &x, &y, &z)
+        if y > maxy: maxy = y
+    return maxy

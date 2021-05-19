@@ -1,9 +1,10 @@
 import land.csg.csg
 static import land.util
 static import land.mem
+static import land.random
 import csg_octree
 
-static def sphere_point(LandArray *vertices, LandFloat i, j):
+def _sphere_point(LandArray *vertices, LandFloat i, j):
     LandFloat theta = 2 * pi * i
     LandFloat phi = pi * j
     LandVector normal = land_vector(
@@ -11,7 +12,27 @@ static def sphere_point(LandArray *vertices, LandFloat i, j):
       cos(phi),
       sin(theta) * sin(phi))
     LandVector pos = normal
+    land_array_add(vertices, land_csg_vertex_new(pos, normal))
 
+# def _spherez_point(LandArray *vertices, LandFloat i, j):
+    # LandFloat theta = 2 * pi * i
+    # LandFloat phi = pi * j
+    # LandVector normal = land_vector(
+      # cos(theta) * sin(phi),
+      # sin(theta) * sin(phi),
+      # cos(phi))
+    # LandVector pos = normal
+    # land_array_add(vertices, land_csg_vertex_new(pos, normal))
+
+def _hemi_point(LandArray *vertices, LandFloat i, j):
+    LandFloat theta = 2 * pi * i
+    LandFloat phi = pi * j / 2
+    LandVector normal = land_vector(
+      cos(theta) * sin(phi),
+      sin(theta) * sin(phi),
+      cos(phi))
+    LandVector pos = normal
+    pos.z = pos.z * 2 - 1
     land_array_add(vertices, land_csg_vertex_new(pos, normal))
 
 def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
@@ -20,10 +41,14 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
     It fits within a cube from -1/-1/-1 to 1/1/1.
 
     rings determines how many parts the latitude is divided into, a
-    value of 3 means just south pole, equator and north pole.
+    value of 3 means just south pole, equator and north pole. 3 is the
+    minimum value and will result in a bicone/bipyramid.
 
-    slices determins how many parts the longitude is divided into,
-    a value of 3 means 0-meridian, +120° and -120°.
+    slices determines how many parts the longitude is divided into,
+    a value of 3 means 0-meridian, +120° and -120°. 3 is the minimum
+    value and will result in a three sided bipyramid.
+
+    Note: In all cases normals will be spherical.
     """
     if slices < 3:
         return None
@@ -42,22 +67,22 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
             # D=i/j+1 C=-
             #
             LandArray *vertices = land_array_new()
-            sphere_point(vertices, 1.0 * i / slices, 1.0 * j /
+            _sphere_point(vertices, 1.0 * i / slices, 1.0 * j /
                 (rings - 1))
             if j > 0: # not southpole
-                sphere_point(vertices, 1.0 * (i + 1) / slices,
+                _sphere_point(vertices, 1.0 * (i + 1) / slices,
                     1.0 * j / (rings - 1))
             if j < rings - 2:
-                sphere_point(vertices, 1.0 * (i + 1) / slices,
+                _sphere_point(vertices, 1.0 * (i + 1) / slices,
                     1.0 * (j + 1) / (rings - 1))
-            sphere_point(vertices, 1.0 * i / slices,
+            _sphere_point(vertices, 1.0 * i / slices,
                     1.0 * (j + 1) / (rings - 1))
 
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
             
     return land_csg_new_from_polygons(polygons)
 
-def _sphere_point(LandVector a, b) -> LandVector:
+def _sphere_surface_point_between(LandVector a, b) -> LandVector:
     LandVector half = land_vector_mul(land_vector_add(a, b), 0.5)
     return land_vector_normalize(half)
 
@@ -81,9 +106,9 @@ a                   b
         land_array_add(vertices, land_csg_vertex_new(c, c))
         land_array_add(polygons, land_csg_polygon_new(vertices, shared))
     else:
-        LandVector ab2 = _sphere_point(a, b)
-        LandVector bc2 = _sphere_point(b, c)
-        LandVector ca2 = _sphere_point(c, a)
+        LandVector ab2 = _sphere_surface_point_between(a, b)
+        LandVector bc2 = _sphere_surface_point_between(b, c)
+        LandVector ca2 = _sphere_surface_point_between(c, a)
         _sphere_tri(polygons, a, ab2, ca2, divisions - 1, shared)
         _sphere_tri(polygons, b, bc2, ab2, divisions - 1, shared)
         _sphere_tri(polygons, c, ca2, bc2, divisions - 1, shared)
@@ -305,18 +330,34 @@ static def add_quad(LandArray *polygons, LandVector a, b, c, d, void *shared):
     LandArray *vertices = quad_vertices(a, b, c, d)
     land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
-static def triangle_vertices(LandVector a, b, c) -> LandArray*:
+def _triangle_vertices_with_normal(LandVector a, b, c, n) -> LandArray*:
     LandArray *vertices = land_array_new()
+    land_array_add(vertices, land_csg_vertex_new(a, n))
+    land_array_add(vertices, land_csg_vertex_new(b, n))
+    land_array_add(vertices, land_csg_vertex_new(c, n))
+    return vertices
+
+def _triangle_vertices(LandVector a, b, c) -> LandArray*:
     LandVector ab = land_vector_sub(b, a)
     LandVector bc = land_vector_sub(c, b)
     LandVector normal = land_vector_normalize(land_vector_cross(ab, bc))
-    land_array_add(vertices, land_csg_vertex_new(a, normal))
-    land_array_add(vertices, land_csg_vertex_new(b, normal))
-    land_array_add(vertices, land_csg_vertex_new(c, normal))
-    return vertices
+    return _triangle_vertices_with_normal(a, b, c, normal)
+
+def _add_circle_triangles(LandArray *polygons, void* shared, LandVector c, int slices, LandFloat radius, bool up):
+    for int i in range(slices):
+        int j = i + 1 if up else i - 1
+        LandFloat angle0 = i * 2 * pi / slices
+        LandFloat angle1 = j * 2 * pi / slices
+        LandFloat c0 = cos(angle0), s0 = sin(angle0)
+        LandFloat c1 = cos(angle1), s1 = sin(angle1)
+        LandVector p0 = land_vector(c0 * radius, -s0 * radius, c.z)
+        LandVector p1 = land_vector(c1 * radius, -s1 * radius, c.z)
+        LandVector n = land_vector(0, 0, 1 if up else - 1)
+        auto v = _triangle_vertices_with_normal(c, p1, p0, n)
+        land_array_add(polygons, land_csg_polygon_new(v, shared))
 
 static def add_tri(LandArray *polygons, LandVector a, b, c, void *shared):
-    LandArray *vertices = triangle_vertices(a, b, c)
+    LandArray *vertices = _triangle_vertices(a, b, c)
     land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
 static def add_tri_flip(LandArray *polygons, LandVector a, b, c,
@@ -674,12 +715,9 @@ def land_csg_recalculate_smooth_normals(LandCSG* csg):
     land_octree_del(csg.octree)
     csg.octree = None
 
-# land_csg_subdivide
-# ideas:
-# - verson which just splits each edge in half
-# - version which only splits edges longer than some treshold
-# - version which uses some kind of spline interpolation to split into
-#   something more rounded...
+def land_csg_recalculate_face_normals(LandCSG* csg):
+    for LandCSGPolygon *p in LandArray *csg->polygons:
+        land_csg_polygon_recalculate_normal(p)
 
 def land_csg_voxelize(LandCSG* csg, double radius) -> LandCSG*:
     """
@@ -784,6 +822,41 @@ z 1   __
 
     return land_csg_new_from_polygons(polygons)
 
+def land_csg_hemi(bool open, int slices, rings, void *shared) -> LandCSG *:
+    """
+    Make a hemi-sphere with radius 1.0.
+    It fits within a cube from -1/-1/-1 to 1/1/1. The pole is at 0/0/1
+    and the base is around 0/0/-1.
+
+    rings determines how many parts the latitude is divided into, a
+    value of 2 means just equator and north pole. 2 is the
+    minimum value and will result in a pyramid.
+
+    slices determines how many parts the longitude is divided into,
+    a value of 3 means 0-meridian, +120° and -120°. 3 is the minimum
+    value and will result in a three sided rounded pyramidoid.
+
+    Note: In all cases normals will be spherical.
+    """
+    if slices < 3:
+        return None
+    if rings < 2:
+        return None
+    LandArray *polygons = land_array_new()
+    for int i in range(slices): # longitude
+        for int j in range(rings - 1): # latitude
+            LandArray *vertices = land_array_new()
+            if j > 0: # not northpole
+                _hemi_point(vertices, 1.0 * (i + 1) / slices, 1.0 * j / (rings - 1))
+            _hemi_point(vertices, 1.0 * i / slices, 1.0 * j / (rings - 1))
+            _hemi_point(vertices, 1.0 * i / slices, 1.0 * (j + 1) / (rings - 1))
+            _hemi_point(vertices, 1.0 * (i + 1) / slices, 1.0 * (j + 1) / (rings - 1))
+
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+    if not open:
+        _add_circle_triangles(polygons, shared, land_vector(0, 0, -1), slices, 1.0, False)
+    return land_csg_new_from_polygons(polygons)
+
 def _mid_vertex(LandCSGVertex *av, *bv) -> LandCSGVertex:
     LandCSGVertex m
     m.pos = land_vector_mul(land_vector_add(av.pos, bv.pos), 0.5)
@@ -807,6 +880,13 @@ def _split_triangle(LandArray *polygons, LandCSGVertex *av, *bv, *cv, void* shar
     _add_tri_norm(polygons, cv, &cm, &bm, shared)
     _add_tri_norm(polygons, &am, &bm, &cm, shared)
 
+# land_csg_subdivide
+# ideas:
+# - verson which just splits each edge in half
+# - version which only splits edges longer than some treshold
+# - version which uses some kind of spline interpolation to split into
+#   something more rounded...
+
 def land_csg_subdivide(LandCSG* csg, void *shared) -> LandCSG*:
     """
     Create a new model where each triangle is split into  4 new ones.
@@ -823,3 +903,125 @@ def land_csg_subdivide(LandCSG* csg, void *shared) -> LandCSG*:
                 last[1] = last[2]
         
     return land_csg_new_from_polygons(polygons)
+
+def land_csg_shrinkwrap(LandCSG* csg, void *shared, int subdiv) -> LandCSG*:
+    """
+    Create a a sphere whose vertices are moved towards the intersection
+    of the given object with 0/0/0 but have a maximum distance they can
+    stretch from their neighbors.
+    """
+    LandVector center = land_csg_get_center(csg)
+    LandFloat radius = land_csg_get_max_distance(csg, center) * 1.1
+
+    auto ico = land_csg_icosphere(subdiv, shared)
+    land_csg_transform(ico, land_4x4_matrix_scale(radius, radius, radius))
+    land_csg_transform(ico, land_4x4_matrix_translate(center.x, center.y, center.z))
+
+    for LandCSGPolygon *p in LandArray *ico.polygons:
+        for LandCSGVertex *v in LandArray *p->vertices:
+            LandVector ray = land_vector_sub(center, v.pos)
+            LandFloat d = land_vector_norm(ray)
+            ray = land_vector_div(ray, d)
+          
+            LandVector r0 = v.pos
+            LandFloat mind = d
+
+            for LandCSGPolygon *p2 in LandArray *csg.polygons:
+                int i = 0
+                LandVector tri[3]
+                for LandCSGVertex *v2 in LandArray *p2->vertices:
+                    if i < 3:
+                        tri[i] = v2.pos
+                        i++
+                    else:
+                        tri[1] = tri[2]
+                        tri[2] = v2.pos
+                    if i == 3:
+                        LandFloat t = ray_triangle_intersection(r0, ray, tri[0], tri[1], tri[2])
+                        if t > 0 and t < mind:
+                            mind = t
+            
+            land_vector_iadd(&v.pos, land_vector_mul(ray, mind))
+
+    return ico
+
+def line_triangle_intersection(LandVector l0, l1, t0, t1, t2, *out) -> bool:
+    LandVector d = land_vector_sub(l1, l0)
+    LandFloat l = land_vector_norm(d)
+    d = land_vector_div(d, l)
+    LandFloat t = ray_triangle_intersection(l0, d, t0, t1, t2)
+    if t > 0 and t < 1:
+        *out = land_vector_add(l0, land_vector_mul(d, t))
+        return True
+    return False
+
+
+        # v.y * w.z - w.y * v.z,
+        # v.z * w.x - w.z * v.x,
+        # v.x * w.y - w.x * v.y}
+
+def ray_triangle_intersection_version1(LandVector r0, rd, t0, t1, t2) -> LandFloat:
+    # example r0=0/0/0, rd=1/0/0, t0=1/1/0, t1 = 1/-1/-1, t2 = 1/-1,1
+    LandVector t01 = land_vector_sub(t1, t0) # 0/-2/-1
+    LandVector t02 = land_vector_sub(t2, t0) # 0/-2,1
+    LandVector x = land_vector_cross(rd, t02) # 0/-1/-2
+    LandFloat det = land_vector_dot(t01, x) # 4
+    if det < 0.000001: return 0
+    LandVector t0r0 = land_vector_sub(r0, t0) # -1/-1/0
+    LandFloat u = land_vector_dot(t0r0, x) # 1
+    LandVector x2 = land_vector_cross(t0r0, t01) # 1/-1/2
+    LandFloat v = land_vector_dot(rd, x2) # 1
+    if u < 0.0 or v < 0.0 or u + v > det: return 0
+    LandFloat t = land_vector_dot(t02, x2) / det # 4/4
+    return t
+
+def ray_triangle_intersection(LandVector r0, rd, t0, t1, t2) -> LandFloat:
+    # example r0=0/0/0, rd=1/0/0, t0=1/1/0, t1 = 1/-1/-1, t2 = 1/-1,1
+    LandVector t01 = land_vector_sub(t1, t0) # 0/-2/-1
+    LandVector t02 = land_vector_sub(t2, t0) # 0/-2,1
+    LandVector n = land_vector_cross(t01, t02) # -4/0/0
+    LandFloat det = -land_vector_dot(rd, n) # 4
+    if det < 0.000001: return 0 # 0 return means no collision
+    LandVector t0r0 = land_vector_sub(r0, t0) # -1/-1/0
+    LandVector rx = land_vector_cross(t0r0, rd) # 0/0/1
+    LandFloat u = land_vector_dot(t02, rx) # 1
+    LandFloat v = -land_vector_dot(t01, rx) # 1
+    if u < 0.0 or v < 0.0 or u + v > det: return 0
+    LandFloat t = land_vector_dot(t0r0, n) # 4
+    return t / det
+
+def land_csg_merge_triangles(LandCSG* csg):
+    land_csg_aabb_update(&csg.bbox, csg.polygons)
+    LandOctree* ot = land_octree_new_from_aabb(&csg.bbox, 0.1)
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        for LandCSGVertex *v in LandArray* p.vertices:
+            land_octree_insert(ot, v.pos.x, v.pos.y, v.pos.z, p)
+
+    # for each vertex
+        # get polygons sharing that vertex
+            # find shared edges
+            # if both polygons with the shared edge are coplanar and
+            # have the same material and the result is still convex,
+            # combine them
+
+    # optional: re-triangulate at the end
+
+def land_csg_get_center(LandCSG *csg) -> LandVector:
+    LandVector o = land_vector(0, 0, 0)
+    int n = 0
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        for LandCSGVertex *v in LandArray *p->vertices:
+            land_vector_iadd(&o, v.pos)
+            n += 1
+    land_vector_idiv(&o, n)
+    return o
+
+def land_csg_get_max_distance(LandCSG *csg, LandVector point) -> LandFloat:
+    LandFloat maxd = 0
+    for LandCSGPolygon *p in LandArray *csg.polygons:
+        for LandCSGVertex *v in LandArray *p->vertices:
+            LandFloat d = land_vector_norm(land_vector_sub(point, v.pos))
+            if d > maxd:
+                maxd = d
+
+    return maxd
