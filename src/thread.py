@@ -35,8 +35,15 @@ def land_thread_new_waitable_lock() -> LandLock*:
     return platform_thread_new_waitable_lock()
 
 def land_thread_wait_lock(LandLock *self):
+    """
+    Wait for a lock to be triggered. This sleeps forever until another
+    thread calls land_thread_trigger_lock on the lock.
+    """
     platform_thread_wait_lock(self)
 
 def land_thread_trigger_lock(LandLock *self):
+    """
+    Notifies all threads waiting on the lock to be triggered and wakes
+    up exactly one of them.
+    """
     platform_thread_trigger_lock(self)
-

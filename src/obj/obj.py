@@ -16,6 +16,10 @@ class LandObjObject:
     LandObjVertex *triangle_vertices
     LandObjMaterial *mat
 
+class LandObjMarker:
+    char *name
+    Land4x4Matrix matrix
+
 class LandObjFile:
     char *filename
 
@@ -33,6 +37,8 @@ class LandObjFile:
 
     LandHash *materials # LandObjMaterial
     LandObjMaterial *mat
+
+    LandArray *markers # LandObjMarker
 
     bool error
 
@@ -126,6 +132,20 @@ def _read_vertex(LandObjFile *self, str row):
             break
         s = ep
 
+def _read_marker(LandObjFile *self, char *row):
+    float_t px, py, pz, rx, ry, rz, ux, uy, uz, bx, by, bz
+    char name[100]
+    sscanf(row, "m %s %f %f %f %f %f %f %f %f %f %f %f %f",
+        name, &px, &py, &pz, &rx, &ry, &rz, &ux, &uy, &uz, &bx, &by, &bz)
+    LandObjMarker *m; land_alloc(m)
+    m.name = land_strdup(name)
+    LandVector p = land_vector(px, py, pz)
+    LandVector r = land_vector(rx, ry, rz)
+    LandVector u = land_vector(bx, by, bz)
+    LandVector b = land_vector(-ux, -uy, -uz)
+    m.matrix = land_4x4_matrix_from_vectors(&p, &r, &u, &b)
+    land_array_add(self.markers, m)
+
 def _handle_row(LandObjFile *self, char *row):
     char name[1024]
     if row[0] == '#': return
@@ -158,6 +178,9 @@ def _handle_row(LandObjFile *self, char *row):
         self.obj.mat = m
         if not self.obj.name:
             self.obj.name = land_strdup(name)
+
+    if land_starts_with(row, "m "):
+        _read_marker(self, row)
 
 def _handle_mtl_row(LandObjFile *self, char *row):
     char name[1024]
@@ -197,6 +220,8 @@ def _read_mtl(LandObjFile *self, char const *filename):
 def land_objfile_new_from_filename(char const *filename) -> LandObjFile *:
     LandObjFile *self; land_alloc(self)
 
+    self.markers = land_array_new()
+
     # 0 elements are reserved to mean missing
     _add_v(self, 0, 0, 0)
     _add_vn(self, 0, 0, 0)
@@ -213,47 +238,57 @@ def land_objfile_new_from_filename(char const *filename) -> LandObjFile *:
     if land_ends_with(self.filename, ".b"):
         int i = 0
         int o = 1
-        a = land_array_new()
         while i < fb.n:
             uint8_t b = land_buffer_get_byte(fb, i)
-            LandBuffer *l = land_buffer_new()
             if b == 'V':
                 float x = land_buffer_get_float(fb, i + 1)
                 float y = land_buffer_get_float(fb, i + 5)
                 float z = land_buffer_get_float(fb, i + 9)
                 i += 13
-                land_buffer_addf(l, "v %f %f %f", x, y, z)
+                _add_v(self, x, y, z)
             elif b == 'N':
                 float x = land_buffer_get_float(fb, i + 1)
                 float y = land_buffer_get_float(fb, i + 5)
                 float z = land_buffer_get_float(fb, i + 9)
                 i += 13
-                land_buffer_addf(l, "vn %f %f %f", x, y, z)
+                _add_vn(self, x, y, z)
             elif b == 'T':
                 float x = land_buffer_get_float(fb, i + 1)
                 float y = land_buffer_get_float(fb, i + 5)
                 i += 9
-                land_buffer_addf(l, "vt %f %f", x, y)
+                _add_vt(self, x, y)
             elif b == 'F':
                 int a = o
                 int b = o + 1
                 int c = o + 2
                 o += 3
                 i += 1
-                land_buffer_addf(l, "f %d/%d/%d %d/%d/%d %d/%d/%d",
-                    a, a, a, b, b, b, c, c, c)
+
+                LandObjVertex va, vb, vc
+                va.xyz = a
+                va.uv = a
+                va.normal = a
+                vb.xyz = b
+                vb.uv = b
+                vb.normal = b
+                vc.xyz = c
+                vc.uv = c
+                vc.normal = c
+                _add_f(self, va)
+                _add_f(self, vb)
+                _add_f(self, vc)
             else:
                 int j = land_buffer_find(fb, i, "\n")
-                land_buffer_add(l, fb.buffer + i, j - i)
+                fb.buffer[j] = 0
+                _handle_row(self, fb.buffer + i)
                 i = j + 1
-            land_array_add(a, l)
     else:
         a = land_buffer_split(fb, "\n")
-    for LandBuffer *b in LandArray *a:
-        char *row = land_buffer_finish(b)
-        land_strip(&row)
-        _handle_row(self, row)
-    land_array_destroy(a)
+        for LandBuffer *b in LandArray *a:
+            char *row = land_buffer_finish(b)
+            land_strip(&row)
+            _handle_row(self, row)
+        land_array_destroy(a)
     #print("Vertices: %d", self.vn)
     return self
 
@@ -306,3 +341,6 @@ def land_obj_triangles(LandObjFile *self) -> LandArray*:
             land_set_vertex_normal(t, nx, ny, nz)
         land_array_add(a, t)
     return a
+
+def land_obj_markers(LandObjFile *self) -> LandArray*:
+    return self.markers

@@ -269,3 +269,7 @@ def land_callbacks(VoidFunction *init, VoidFunction *tick,
 global int land_argc
 global char **land_argv
 global LandRunner *shortcut_runner
+
+# allocate a string with custom information
+def land_get(str what) -> char*:
+    return platform_get(what)

@@ -2,12 +2,9 @@ import common
 import land.image
 import global math
 
-def land_image_blur(LandImage *image, double blur_size):
-    int w = land_image_width(image)
-    int h = land_image_height(image)
+def land_image_blur_rgba(uint8_t *rgba, int w, h, double blur_size) -> uint8_t*:
+    
     float *cache = land_malloc(w * h * sizeof(float) * 4)
-    uint8_t *rgba = land_malloc(w * h * 4)
-    land_image_get_rgba_data(image, rgba)
 
     double sigma = blur_size
     int fs = sigma * 6 + 1
@@ -47,5 +44,13 @@ def land_image_blur(LandImage *image, double blur_size):
                 rgba[x * 4 + w * y * 4 + c] = s / a * 255
 
     land_free(cache)
+    return rgba
+
+def land_image_blur(LandImage *image, double blur_size):
+    int w = land_image_width(image)
+    int h = land_image_height(image)
+    uint8_t *rgba = land_malloc(w * h * 4)
+    land_image_get_rgba_data(image, rgba)
+    land_image_blur_rgba(rgba, w, h, blur_size)
     land_image_set_rgba_data(image, rgba)
     land_free(rgba)

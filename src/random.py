@@ -212,8 +212,9 @@ def land_random_f(LandRandom *r, double rmin, rmax) -> double:
 def land_shuffle(int *a, int n):
     for int i in range(n):
         a[i] = i
-    for int i in range(n - 1):
-        int j = land_rand(i, n - 1)
+    # n=6: 0 1 2 3 4 5
+    for int i in range(n - 1): # 0 1 2 3 4
+        int j = land_rand(i, n - 1) # [0..5], [1..5], [2..5], [3..5], [4..5]
         int t = a[i]
         a[i] = a[j]
         a[j] = t

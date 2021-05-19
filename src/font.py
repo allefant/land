@@ -231,6 +231,12 @@ def land_text_pos(float x, float y):
     land_font_state.x_pos = x
     land_font_state.y_pos = y
 
+def land_text_set_x(float x):
+    land_font_state.x_pos = x
+
+def land_text_set_y(float y):
+    land_font_state.y_pos = y
+
 def land_text_set_width(float w):
     land_font_state.adjust_width = w
 
@@ -394,6 +400,17 @@ def land_printv(char const *text, va_list args):
     vsnprintf(s, n + 1, text, args)
 
     land_print_string(s, 1, 0)
+
+def land_writev(char const *text, va_list args):
+    va_list args2
+    va_copy(args2, args)
+    int n = vsnprintf(None, 0, text, args2)
+    va_end(args2)
+    if n < 0: n = 1023
+    char s[n + 1]
+    vsnprintf(s, n + 1, text, args)
+
+    land_print_string(s, 0, 0)
 
 static def _wordwrap_helper(char const *text, int w, h,
     void (*cb)(int a, int b, void *data), void *data) -> int:

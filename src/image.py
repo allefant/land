@@ -211,8 +211,7 @@ def land_image_memory_new(int w, int h) -> LandImage *:
     The image will always be a simple memory rectangle of pixels, with no
     driver specific optimizations.
     """
-    assert(0)
-    return None
+    return land_image_new_flags(w, h, LAND_IMAGE_MEMORY)
 
 def land_image_new_flags(int w, h, flags) -> LandImage *:
     """

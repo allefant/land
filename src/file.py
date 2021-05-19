@@ -136,6 +136,12 @@ def land_file_get16be(LandFile *self) -> uint16_t:
 def land_file_is_dir(char const *name) -> bool:
     return platform_is_dir(name)
 
+def land_data_file_exists(char const *name) -> bool:
+    char* path2 = land_path_with_prefix(name)
+    bool e = platform_file_exists(path2)
+    land_free(path2)
+    return e
+
 def land_file_exists(char const *name) -> bool:
     return platform_file_exists(name)
 
@@ -147,6 +153,9 @@ def land_get_save_file(char const *appname, char const *name) -> char *:
     return platform_get_save_file(appname, name)
 
 def land_get_current_directory() -> char *:
+    """
+    Free after use.
+    """
     return platform_get_current_directory()
 
 def land_get_data_path() -> char *:
@@ -215,6 +224,17 @@ def land_replace_filename(char const *path, char const *name) -> char *:
     if n > 0: strcat(result, "/")
     strcat(result, name)
     return result
+
+def land_replace_folder(str path, folder) -> char *:
+    char *slash = strrchr(path, '/')
+    char *r
+    if slash:
+        r = land_strdup(slash + 1)
+    else:
+        r = land_strdup(path)
+    land_prepend(&r, "/")
+    land_prepend(&r, folder)
+    return r
 
 def land_file_remove(char const *path) -> bool:
     return platform_remove_file(path)

@@ -6,6 +6,7 @@ static import allegro5/a5_sound
 class LandSound:
     char *filename
     char *name
+    bool loaded
 
 class LandStream:
     int samples

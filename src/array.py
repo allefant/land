@@ -291,6 +291,24 @@ def land_array_swap(LandArray *self, int a, b):
     self.data[a] = self->data[b]
     self.data[b] = temp
 
+def land_array_move(LandArray *self, int ifrom, ito):
+    """
+    0 1 2 3 4 5 6
+    A B C D E F G
+    from: 2 to: 5
+
+    0 1 2 3 4 5 6
+    A B D E F C G
+    """
+    int i = ifrom
+    while i != ito:
+        if i < ito:
+            land_array_swap(self, i, i + 1)
+            i += 1
+        else:
+            land_array_swap(self, i, i - 1)
+            i -= 1
+
 def land_array_move_behind(LandArray *self, int a, b):
     """
     Move item at position a so it is behind b. If b is 0 then a is moved to

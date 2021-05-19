@@ -28,6 +28,10 @@ def land_color_rgba(float r, g, b, a) -> LandColor:
     LandColor c = {r, g, b, a}
     return c
 
+def land_rgb(float r, g, b) -> LandColor:
+    LandColor c = {r, g, b, 1}
+    return c
+
 def srgba_gamma_to_linear(double x) -> double:
     double const a = 0.055
     if x < 0.04045: return x / 12.92

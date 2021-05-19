@@ -27,10 +27,10 @@ enum LandKeyboardKeys:
     LandKeyLeftWin = 30
     LandKeyRightWin = 31 # 32=space
     LandKeyUnknown2 = 33 # 33=U'+0, ..., 38=U'+6, 39=quote
-    LandKeyLeftShift = '('
-    LandKeyRightShift = ')'
+    LandKeyLeftShift = '(' # 40
+    LandKeyRightShift = ')' # 41
     LandKeyScrollLock = '*' # 42
-    LandKeyNumLock = '+' # 44=, 45=- 46=. 47=/
+    LandKeyNumLock = '+' # 43, 44='=', 45=- 46=. 47=/
     LandKeyNumber = '0' # 48=0, ..., 57=9, 58=:, 59=;
     LandKeyLeftAlt= '<' # 61== */
     LandKeyRightAlt= '>'
@@ -51,6 +51,7 @@ enum LandKeyboardKeys:
     LandKeysCount = 228
 
     LandKeyF5 = LandKeyFunction + 5
+    LandKeyShift = LandKeysCount + 1
 
 static int key_state[LandKeysCount]
 static int key_pressed[LandKeysCount]
@@ -71,6 +72,8 @@ def land_keyboard_init():
     pass
 
 def land_key(int k) -> int:
+    if k == LandKeyShift:
+        return key_state[LandKeyLeftShift] | key_state[LandKeyRightShift]
     return key_state[k]
 
 def land_key_pressed(int k) -> int:

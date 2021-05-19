@@ -121,3 +121,6 @@ def land_queue_count(LandQueue *self) -> int:
 
 def land_queue_clear(LandQueue *self):
     land_array_clear(&self.array)
+
+def land_queue_is_empty(LandQueue *self) -> bool:
+    return land_array_is_empty(&self.array)
