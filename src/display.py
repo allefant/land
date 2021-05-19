@@ -216,6 +216,10 @@ def land_display_del(LandDisplay *self):
 # how = 8: stretch (non-square pixels, not recommended)
 # how = how + 256: do the inverse instead
 def land_scale_to_fit_into(float w, h, l, t, r, b, int how) -> double:
+    """
+    If w/h is the dimensions you want to use and l/t/r/b is the actual
+    pixel region available, this will apply an appropriate transformation.
+    """
     float dw = r - l
     float dh = b - t
     float sx, sy
@@ -389,6 +393,9 @@ def land_premul(float r, g, b, a):
 def land_color_set(LandColor c):
     land_color(c.r, c.g, c.b, c.a)
 
+def land_color_set_named(str name):
+    land_color_set(land_color_name(name))
+
 def land_color_get -> LandColor:
     LandColor c
     land_get_color(&c.r, &c.g, &c.b, &c.a)
@@ -421,6 +428,13 @@ def land_clip(float x, float y, float x_, float y_):
     d->clip_x2 = x_
     d->clip_y2 = y_
     platform_display_clip()
+
+def land_clip_transformed(float x, y, x_, y_):
+    LandFloat rx = x, ry = y, rz = 0
+    LandFloat rx2 = x_, ry2 = y_, rz2 = 0
+    land_transform(&rx, &ry, &rz)
+    land_transform(&rx2, &ry2, &rz2)
+    land_clip(rx, ry, rx2, ry2)
 
 def land_clip_intersect(float x, float y, float x_, float y_):
     LandDisplay *d = _land_active_display
@@ -757,6 +771,11 @@ def land_display_transform_4x4(Land4x4Matrix *matrix):
 def land_display_compose_transform(Land4x4Matrix matrix):
     _land_active_display->matrix = land_4x4_matrix_mul(
         _land_active_display->matrix, matrix)
+    _land_active_display->matrix_modified = True
+
+def land_display_precompose_transform(Land4x4Matrix matrix):
+    _land_active_display->matrix = land_4x4_matrix_mul(
+        matrix, _land_active_display->matrix)
     _land_active_display->matrix_modified = True
 
 def land_render_state(int state, value):
