@@ -54,6 +54,7 @@ def land_yaml_get_scalar_int(LandYamlEntry *self) -> int:
     return strtol(self.scalar, None, 0)
 
 def land_yaml_get_scalar_double(LandYamlEntry *self) -> double:
+    if not self: return 0.0
     return strtod(self.scalar, None)
 
 def land_yaml_get_scalar_nth(LandArray *s, int i) -> char const *:
