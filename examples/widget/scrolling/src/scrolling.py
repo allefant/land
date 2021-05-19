@@ -4,18 +4,6 @@ LandWidget *desktop
 LandWidgetTheme *theme
 LandWidgetTheme *classic, *green
 
-static def print(char const *str, ...):
-    va_list args
-    va_start(args, str)
-    char t[1024]
-    vsnprintf(t, sizeof t, str, args)
-    va_end(args)
-
-    #float x = land_text_x_pos()
-    #float y = land_text_y_pos()
-    land_color(0, 0, 0, 1)
-    land_print(t)
-
 static def debug(LandWidget *w):
     print("* %p [%s(%d): %s%s%s%s] %dx%d", w, w->vt->name, w->reference,
         w->no_layout ? "N" : "",

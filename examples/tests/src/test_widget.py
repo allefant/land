@@ -1,51 +1,43 @@
 import global land.land
-
-static macro _test(name):
-    _test_before(***name)
-    _test_******name()
-    _test_after()
+import test_util
 
 def test_widget:
     land_mainloop_prepare()
     land_find_data_prefix("data/")
     land_font_load("DejaVuSans.ttf", 12)
     land_widget_theme_new("classic.cfg")
-    
-    _test(minimum)
-    _test(border)
-    _test(border_rec)
-    _test(hbox)
-    _test(vbox)
-    _test(text1)
-    _test(text2)
-    _test(scroll1)
-    _test(scroll2)
-    _test(scroll3)
-    _test(scroll4)
-    _test(scroll5)
-    _test(scroll6)
-    _test(scroll7)
-    _test(scroll8)
-    _test(scroll9)
-    _test(scroll10)
-    _test(scroll11)
-    _test(scrollbar1)
-    _test(scrollbar2)
 
-str test_name
-bool test_failed
+    test_before(_before)
+    test_after(_done)
+    
+    test(minimum)
+    test(border)
+    test(border_rec)
+    test(hbox)
+    test(vbox)
+    test(text1)
+    test(text2)
+    test(scroll1)
+    test(scroll2)
+    test(scroll3)
+    test(scroll4)
+    test(scroll5)
+    test(scroll6)
+    test(scroll7)
+    test(scroll8)
+    test(scroll9)
+    test(scroll10)
+    test(scroll11)
+    test(scrollbar1)
+    test(scrollbar2)
+
 LandWidget *widget
 
-def _test_before(str name):
-    test_name = name
-    test_failed = False
+def _before:
     widget = None
 
-def _test_after:
-    _done()
-
 def _done:
-    char *name = land_strdup(test_name)
+    char *name = land_strdup(test_current())
     land_concatenate(&name, ".png")
     land_file_remove(name)
     if widget:
@@ -55,33 +47,26 @@ def _done:
         land_unset_image_display()
         land_image_save(image, name)
         
-    if test_failed:
-        printf("%-20s %sFAIL%s\n", test_name, land_color_bash("red"),
-            land_color_bash(""))
-    else:
-        printf("%-20s %sPASS%s\n", test_name, land_color_bash("green"),
-            land_color_bash(""))
-
 def _assert_size(LandWidget *wid, int x, y, w, h):
     if wid.box.x != x or wid.box.y != y or wid.box.w != w or wid.box.h != h:
         printf("FAIL\n")
         printf("expected size: %d %d %d %d\n", x, y, w, h)
         printf("but found:     %d %d %d %d\n", wid.box.x, wid.box.y, wid.box.w, wid.box.h)
-        test_failed = True
+        test_failed()
 
 def _assert_min_size(LandWidget *wid, int w, h):
     if wid.box.min_width != w or wid.box.min_height != h:
         printf("FAIL\n")
         printf("expected minimum: %d %d\n", w, h)
         printf("but found:        %d %d\n", wid.box.min_width, wid.box.min_height)
-        test_failed = True
+        test_failed()
 
 def _assert_hidden(LandWidget *wid, bool hidden):
     if wid.hidden != hidden:
         printf("FAIL\n")
         printf("expected:  %s\n", hidden ? "hidden" : "not hidden")
         printf("but found: %s\n", wid.hidden ? "hidden" : "not hidden")
-        test_failed = True
+        test_failed()
 
 def _assert_scroll(LandWidget *wid, int x, y):
     float ex, ey
@@ -90,7 +75,7 @@ def _assert_scroll(LandWidget *wid, int x, y):
         printf("FAIL\n")
         printf("expected scroll: %d %d\n", x, y)
         printf("but found:       %.1f %.1f\n", ex, ey)
-        test_failed = True
+        test_failed()
 
 str sample_text = """''
 One Ring to rule them all, One Ring to find them,
