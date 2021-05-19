@@ -31,7 +31,8 @@ static class LandTrianglesShader:
     int light_tag
     ALLEGRO_SHADER *a5
 
-LandVector _light
+LandVector _light_direction
+float _light
 int _light_tag
 LandHash *_shader_cache # LandTrianglesShader
 
@@ -149,8 +150,9 @@ def platform_triangles_draw(LandTriangles *t, bool more):
         al_use_shader(platform.shader.a5)
     if platform.shader.light_tag != _light_tag:
         platform.shader.light_tag = _light_tag
-        float f2[3] = {_light.x, _light.y, _light.z}
+        float f2[3] = {_light_direction.x, _light_direction.y, _light_direction.z}
         al_set_shader_float_vector("light_direction", 3, f2, 1)
+        al_set_shader_float("light", _light)
 
     if pim:
         al_set_shader_sampler("al_tex", pim.a5, 0)
@@ -210,5 +212,9 @@ def platform_triangles_set_light_direction(LandVector light):
     #m.v[11] = 0
     #_light = land_vector_matmul(light, &m)
     #_light = land_vector_normalize(_light)
+    _light_direction = light
+    _light_tag++
+
+def platform_triangles_set_light(float light):
     _light = light
     _light_tag++

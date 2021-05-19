@@ -49,3 +49,14 @@ def platform_popup(str title, str text):
         title, text, None, ALLEGRO_MESSAGEBOX_ERROR)
     *** "endif"
   
+def platform_get(str what) -> char*:
+    if land_equals(what, "opengl"):
+        char *s = land_strdup("")
+        if al_get_opengl_variant() == ALLEGRO_DESKTOP_OPENGL:
+            land_append(&s, "OpenGL")
+        if al_get_opengl_variant() == ALLEGRO_OPENGL_ES:
+            land_append(&s, "OpenGL ES")
+        uint32_t v = al_get_opengl_version()
+        land_append(&s," %d.%d.%d", v >> 24, (v >> 16) & 255, (v >> 8) & 255)
+        return s
+    return None

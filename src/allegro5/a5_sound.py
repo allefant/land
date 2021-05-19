@@ -34,6 +34,8 @@ def platform_sound_load(char const *filename) -> LandSound *:
     land_alloc(self)
     self.a5 = al_load_sample(filename)
     self.super.filename = land_strdup(filename)
+    if self.a5:
+        self.super.loaded = True
     return (void *)self
 
 def platform_sound_new(int samples, float frequency, int bits,
@@ -68,6 +70,7 @@ def platform_sound_seconds(LandSound *super) -> double:
 def platform_sound_play(LandSound *s, float volume, pan, frequency,
     bool loop):
     LandSoundPlatform *self = (void *)s
+    if not self.a5: return
     self.last_failed = False
     if not al_play_sample(self.a5, volume, pan, frequency,
             loop ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE,
