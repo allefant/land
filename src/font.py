@@ -366,6 +366,10 @@ def land_print_right(char const *text, ...):
     VPRINT
     land_print_string(s, 1, LandAlignRight)
 
+def land_print_bottom(char const *text, ...):
+    VPRINT
+    land_print_string(s, 1, LandAlignBottom)
+
 def land_print_center(char const *text, ...):
     VPRINT
     land_print_string(s, 1, LandAlignCenter)
