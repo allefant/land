@@ -167,6 +167,11 @@ def land_path_with_prefix(char const *name) -> char *:
     the given path.
     """
     if name and name[0] == '/': return land_strdup(name)
+    # FIXME: need a proper way to recognize an absolute path
+    # something like C:\ or D:\
+    if name:
+        if strlen(name) > 3 and name[1] == ':':
+            return land_strdup(name)
     int n = strlen(name)
     if prefix:
         n += strlen(prefix)
