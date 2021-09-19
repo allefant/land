@@ -23,6 +23,7 @@ class LandNoise:
     int w, h
     int count
     int levels
+    int first_level
     LandRandom *seed
     bool use_external_seed
     float randomness
@@ -52,6 +53,7 @@ def land_noise_new(LandNoiseType t, int seed) -> LandNoise*:
 
     self.count = 1
     self.levels = 1
+    self.first_level = 1
     self.lerp = LandPerlinLerpCosine
 
     self.z_scale = 1
@@ -85,6 +87,9 @@ def land_noise_set_count(LandNoise *self, int n):
 
 def land_noise_set_levels(LandNoise *self, int n):
     self.levels = n
+
+def land_noise_set_first_level(LandNoise *self, int n):
+    self.first_level = n
 
 def land_noise_set_amplitude(LandNoise *self, float amplitude):
     self.amplitude = amplitude
@@ -220,8 +225,8 @@ def land_noise_prepare(LandNoise *self):
         land_array_add(self.noise, noise)
     if self.t == LandNoisePerlin:
         int n = self.levels
-        int w = 2
-        int h = 2
+        int w = 1 << self.first_level
+        int h = 1 << self.first_level
         # if n is 0, there is no noise at all
         # if n is 1, we do a 2x2 Perlin - a 1x1 Perlin usually is
         # mostly just 0.

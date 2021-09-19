@@ -16,6 +16,7 @@ class Dialog:
     Value *lerp
     Value *count
     Value *levels
+    Value *first_level
     Value *amplitude
     Value *power_modifier
     Value *randomness
@@ -83,6 +84,7 @@ def dialog_hide_show(Dialog *self):
     
     value_show_if(self.noise.v == 1, self.lerp)
     value_show_if(self.noise.v == 1 or self.noise.v == 3, self.levels)
+    value_show_if(self.noise.v == 1 or self.noise.v == 3, self.first_level)
 
 def _get_preset_name(Dialog *self) -> char*:
     char name[100]
@@ -230,6 +232,7 @@ def dialog_new -> Dialog*:
     self.count = value_new(vbox, "count", 1, 0, 32, 1, None)
     self.randomness = value_new(vbox, "randomness", 1, 0, 16, 1, None)
     self.levels = value_new(vbox, "levels", 4, 0, 10, 1, None)
+    self.first_level = value_new(vbox, "first", 1, 0, 10, 1, None)
     self.amplitude = value_new(vbox, "amplitude", 10, -16, 16, 1, None)
     self.power_modifier = value_new(vbox, "power modifier", 0, -16, 16, 1, None)
 
