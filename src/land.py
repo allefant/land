@@ -270,6 +270,10 @@ global int land_argc
 global char **land_argv
 global LandRunner *shortcut_runner
 
+def land_argument_equals(int n, str key) -> bool:
+    if n >= land_argc: return False
+    return land_equals(land_argv[n], key)
+
 # allocate a string with custom information
 def land_get(str what) -> char*:
     return platform_get(what)
