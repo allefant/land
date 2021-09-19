@@ -505,6 +505,24 @@ def csg_grid(int x, y, void *shared) -> LandCSG *:
             
     return land_csg_new_from_polygons(polygons)
 
+def csg_regular_polygon(int n, void *shared) -> LandCSG*:
+    """
+    origin is 0/0/0, points are at distance 1 and z = 0, first point
+    is at 1/0/0.
+    """
+    LandArray *polygons = land_array_new()
+    LandArray *vertices = land_array_new()
+    LandVector normal = land_vector(0, 0, 1)
+    for int i in range(n):
+        LandFloat a = 2 * pi * i / n
+        LandFloat xp = 1.0 * cos(a)
+        LandFloat yp = 1.0 * sin(a)
+        LandVector pos = land_vector(xp, yp, 0)
+        land_array_add(vertices, land_csg_vertex_new(pos, normal))
+
+    land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+    return land_csg_new_from_polygons(polygons)
+
 def csg_prism(int n, void *shared) -> LandCSG *:
     """
     n is the shape - 3 for triangle, 4 for square, 5 for pentagon...

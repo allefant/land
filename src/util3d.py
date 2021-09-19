@@ -494,11 +494,11 @@ def land_4x4_matrix_mul(Land4x4Matrix a, Land4x4Matrix b) -> Land4x4Matrix:
     a = land_4x4_matrix_scale(10, 1, 1)
     b = land_4x4_matrix_translate(10, 0, 0)
 
-    # This means first b then a, so v is first translated to 11, then
+    # This means first b then a, so v is first translated to 1+10=11, then
     # scaled to 110.
     land_vector_matmul(v, land_4x4_matrix_mul(a, b))
 
-    # This means v is first scaled to 10, then translated to 20.
+    # This means v is first scaled to 1*10=10, then translated to 20.
     land_vector_matmul(v, land_4x4_matrix_mul(b, a))
 
     In words, result[row,column] = a[row,...] * b[...,column].
