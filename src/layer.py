@@ -46,10 +46,10 @@ def land_layer_draw(LandLayer *self, LandView *view):
     v.scroll_y *= self.scrolling_y / self->scale_y
     v.scale_x *= self.scale_x;
     v.scale_y *= self.scale_y;
-    v.x += self.view_x
-    v.y += self.view_y
-    v.w += self.view_w
-    v.h += self.view_h
+    v.x += self.view_x * v.scale_x
+    v.y += self.view_y * v.scale_y
+    v.w += self.view_w * v.scale_x
+    v.h += self.view_h * v.scale_y
     v.r *= self.r
     v.g *= self.g
     v.b *= self.b

@@ -127,8 +127,9 @@ def land_grid_cell_to_pixel_isometric(LandGrid *self, LandView *view,
 
     float mx = cell_x * iso->cell_w2 - cell_y * iso->cell_w1
     float my = cell_x * iso->cell_h2 + cell_y * iso->cell_h1
-    mx = view->x + mx - view->scroll_x
-    my = view->y + my - view->scroll_y
+    if view:
+        mx = view->x + mx - view->scroll_x
+        my = view->y + my - view->scroll_y
     *view_x = mx
     *view_y = my
 
@@ -164,7 +165,7 @@ def land_grid_pixel_to_cell_isometric_wrap(LandGrid *self, LandView *view,
     *partial_y = y - floorf(y / self.y_cells) * self->y_cells
 
 # Returns the grid position in cells below the specified view position in
-# pixels. The view position must be valid. 
+# pixels. The view position must be valid and un-scaled.
 static def view_to_cell(LandGrid *self, float view_x, float view_y,
     int *cell_x, int *cell_y):
     LandGridIsometric *iso = (void *)self
@@ -198,7 +199,7 @@ static def cell_to_view(LandGrid *self, float cell_x, cell_y, *view_x, *view_y):
     *view_x = cell_x * iso->cell_w2 - cell_y * iso->cell_w1
     *view_y = cell_x * iso->cell_h2 + cell_y * iso->cell_h1
 
-# Given a pixel position relative to the grid origin, this returns an integer
+# Given a scroll position, this returns an integer
 # cell position of the cell below that position, and a pixel offset how much
 # to offset tiles so they match.
 #
@@ -218,7 +219,7 @@ static def cell_to_view(LandGrid *self, float cell_x, cell_y, *view_x, *view_y):
 #  ________\/_____|
 #        (1)
 #
-static def find_offset(LandGrid *self, float view_x, float view_y,
+static def find_offset(LandGrid *self, float view_x, view_y,
     int *cell_x, int *cell_y, float *pixel_x, float *pixel_y) -> int:
     LandGridIsometric *iso = (void *)self
     float h1 = iso->cell_h1
@@ -289,8 +290,8 @@ static def find_offset_wrap(LandGrid *self, float view_x, float view_y,
 # 
 def land_grid_isometric_placeholder(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
     int x_, y_
-    int w = self.cell_w / 2
-    int h = self.cell_h / 2
+    int w = self.cell_w / 2 * view.scale_x
+    int h = self.cell_h / 2 * view.scale_y
     land_color(1, 0, 0, 1)
     x_ = x + w
     y_ = y + h
@@ -313,10 +314,10 @@ def land_grid_isometric_placeholder(LandGrid *self, LandView *view, int cell_x, 
 
 def land_grid_draw_isometric(LandGrid *self, LandView *view):
     LandGridIsometric *iso = (void *)self
-    float w1 = iso->cell_w1
-    float h1 = iso->cell_h1
-    float w2 = iso->cell_w2
-    float h2 = iso->cell_h2
+    float w1 = iso->cell_w1 * view.scale_x
+    float h1 = iso->cell_h1 * view.scale_y
+    float w2 = iso->cell_w2 * view.scale_x
+    float h2 = iso->cell_h2 * view.scale_y
 
     int cell_x, cell_y
     float pixel_x, pixel_y
@@ -324,10 +325,12 @@ def land_grid_draw_isometric(LandGrid *self, LandView *view):
     float view_x = view->scroll_x
     float view_y = view->scroll_y
 
-    if not find_offset(self, view_x, view_y, &cell_x, &cell_y, &pixel_x,
-            &pixel_y):
+    if not find_offset(self, view_x, view_y,
+            &cell_x, &cell_y, &pixel_x, &pixel_y):
         return
 
+    pixel_x *= view->scale_x
+    pixel_y *= view->scale_y
     pixel_x += view->x
     pixel_y += view->y
 

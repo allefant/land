@@ -4,7 +4,6 @@ class LandView:
     # position of upper left corner inside the map, independent of scaling.
     float scroll_x, scroll_y
     float scale_x, scale_y
-    # (origin of view relative to origin of map) 
     int x, y, w, h # screen area
     float r, g, b, a # give a tint to the view
 
@@ -57,8 +56,8 @@ def land_view_scroll_center(LandView *self, float x, y):
     """
     Given two absolute map coordinates, make them the center of the view.
     """
-    self.scroll_x = x - self->w / 2
-    self.scroll_y = y - self->h / 2
+    self.scroll_x = x - self->w / 2 / self.scale_x
+    self.scroll_y = y - self->h / 2 / self.scale_y
 
 def land_view_scroll_center_on_screen(LandView *self, float x, y):
     """
