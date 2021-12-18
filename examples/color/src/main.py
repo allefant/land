@@ -1,4 +1,5 @@
 import global land.land
+import palette
 
 static LandImage *zpics[3][12]
 static enum Mode:
@@ -29,6 +30,7 @@ LandArray *colors # Color
 LandFloat mindist
 Color *maximum_grid_color
 LandFloat maximum_grid_distance
+int selected
 
 def hex(Color *c, char *out):
     sprintf(out, "#%02x%02x%02x",
@@ -196,7 +198,10 @@ class ThreadData:
     LandFloat maximum_grid_distance
 
 ThreadData _data[8]
+LandLock *_lock
 def find_grid_distances:
+    if not _lock:
+        _lock = land_thread_new_lock()
     for int i in range(8):
         ThreadData *d = _data + i
         d.xoffset = i * 8
@@ -229,51 +234,23 @@ def find_grid_distances_thread(void *v):
 
     data.maximum_grid_distance = maximum_distance
     data.maximum_grid_color = color_new(maximum.r, maximum.g, maximum.b)
+
+    land_thread_lock(_lock)
     int m = -1
+    bool finished = True
     for int i in range(8):
-        if not _data[i].maximum_grid_color: return
+        if not _data[i].maximum_grid_color:
+            finished = False
+            break
         if m < 0 or _data[i].maximum_grid_distance > _data[m].maximum_grid_distance:
             m = i
 
-    maximum_grid_distance = _data[m].maximum_grid_distance
-    maximum_grid_color = _data[m].maximum_grid_color
-
-str custom = """
-#400000#800000#452209#5c4305#808000#2a3517#003200#004040#172727#0c0c38#000080#250041#400040#000000
-#5e4747#8b0000#8b4513#7f725a#daa520#006400#008000#008080#2f4f4f#005f7f#191970#4b0082#630a42#343434
-#a52a2a#b22222#cd853f#b8860b#bdb76b#556b2f#228b22#3cb371#008b8b#4682b4#0000cd#663399#800080#696969
-#dc143c#a0522d#ff8c00#d2b48c#f5deb3#6b8e23#2e8b57#20b2aa#5f9ea0#708090#483d8b#9400d3#8b008b#808080
-#cd5c5c#ff0000#f4a460#ffd700#f0e68c#9acd32#8fbc8f#66cdaa#00ced1#778899#0000ff#6c5f6c#c71585#a9a9a9
-#bc8f8f#d2691e#ffa500#ffdead#eee8aa#32cd32#48d1cc#87ceeb#1e90ff#6a5acd#8a2be2#ff1493#c0c0c0
-#f08080#ff4500#deb887#ffe4b5#ffefd5#7fff00#90ee90#40e0d0#add8e6#6495ed#4169e1#9932cc#ff00ff#d3d3d3
-#fa8072#ff6347#ffdab9#faebd7#ffff00#adff2f#00ff00#00fa9a#b0e0e6#00bfff#7b68ee#ba55d3#db7093#dcdcdc
-#ffb6c1#ff7f50#ffe4c4#ffebcd#fff8dc#f5f5dc#00ff7f#00ffff#afeeee#b0c4de#9370db#ee82ee#da70d6#f5f5f5
-#ffc0cb#e9967a#faf0e6#fdf5e6#fffacd#fafad2#98fb98#7fffd4#e0ffff#87cefa#e6e6fa#dda0dd#ff69b4#fffafa
-#ffe4e1#ffa07a#fff5ee#fffaf0#ffffe0#fffff0#f0fff0#f5fffa#f0ffff#f0f8ff#f8f8ff#d8bfd8#fff0f5#ffffff
-#9585a5
-"""
-
-
-
-str custom2 = """
-#400000#8b4513#452209#5c4305#808000#008000#003200#004040#172727#0c0c38
-#250041#400040#630a42#000000#800000#ff0000#a0522d#7f725a#6b8e23#228b22
-#2a3517#2f4f4f#708090#483d8b#005f7f#000080#800080#5e4747#343434#8b0000
-#d2691e
-#e9967a#daa520#bdb76b#32cd32#006400#008080#778899#4169e1#191970#8b008b
-#c71585#696969#a52a2a#ff4500#d2b48c#ffd700#f0e68c#9acd32#556b2f#008b8b
-#b0c4de#4682b4#4b0082#9400d3#ff1493#808080#b22222#b8860b#deb887#f5deb3
-#eee8aa#00fa9a#2e8b57#20b2aa#add8e6#1e90ff#0000cd#6c5f6c#ff00ff#a9a9a9
-#dc143c#cd853f#ffdab9#ffe4b5#f5f5dc#00ff00#3cb371#00ced1#b0e0e6#5f9ea0
-#0000ff#9932cc#db7093#c0c0c0#cd5c5c#ff7f50#ffdead#ffebcd#fafad2#00ff7f
-#8fbc8f#48d1cc#e6e6fa#6495ed#663399#ba55d3#bc8f8f#d3d3d3#ff6347#ff8c00
-#ffe4c4#ffefd5#fff8dc#7cfc00#66cdaa#40e0d0#f0f8ff#00bfff#8a2be2#da70d6
-#ff69b4#dcdcdc#f08080#f4a460#faebd7#fdf5e6#fffacd#7fff00#90ee90#afeeee
-#f8f8ff#87ceeb#6a5acd#ee82ee#ffb6c1#f5f5f5#fa8072#ffa07a#faf0e6#ffff00
-#ffffe0#98fb98#f0fff0#00ffff#e0ffff#87cefa#7b68ee#dda0dd#ffc0cb#fffafa
-#ffe4e1#ffa500#fff5ee#fffaf0#fffff0#adff2f#f5fffa#7fffd4#f0ffff#9370db
-#d8bfd8#fff0f5#ffffff
-"""
+    if finished:
+        maximum_grid_distance = _data[m].maximum_grid_distance
+        maximum_grid_color = _data[m].maximum_grid_color
+        printf("max distance: %.3f: #%02x%02x%02x\n", maximum_grid_distance,
+            (int)(maximum_grid_color.rgb.r * 255), (int)(maximum_grid_color.rgb.g * 255), (int)(maximum_grid_color.rgb.b * 255))
+    land_thread_unlock(_lock)
 
 def print_colors:
     int i = 1
@@ -282,17 +259,15 @@ def print_colors:
             (int)(c.rgb.g * 255), (int)(c.rgb.b * 255))
         i++
 
-def arrange_custom:
+def arrange_fruits:
     arrange_prepare()
-    str p = custom
-    while *p:
-        if *p == '#':
-            LandColor c = land_color_name(p)
-            p += 7
-            auto c2 = color_add(c.r, c.g, c.b)
-            c2.fixed = True
-        else:
-            p++
+    int i = 0
+    while fruits_palette[i]:
+        LandColor c = land_color_name(fruits_palette[i])
+        auto c2 = color_add(c.r, c.g, c.b)
+        c2.fixed = True
+        i++
+    print("added %d colors", i)
 
 def find_neighbors:
     double close = 0.3
@@ -327,10 +302,7 @@ def find_neighbors:
         land_array_sort(col.close, comp_delta)
 
     if min_a:
-        char ha[100], hb[100]
-        hex(min_a, ha)
-        hex(min_b, hb)
-        printf("Closest pair: %.2f: %s <-> %s\n", min_close, ha, hb)
+        printf("Closest pair: %.3f: %s <-> %s\n", min_close, color_name(min_a), color_name(min_b))
 
 static def comp_delta(void const *a, void const *b) -> int:
     Neighbor * const *ap = a
@@ -366,7 +338,41 @@ def clip(double x) -> double:
     if x > 1: return 1
     return x
 
+def select_color(float mx, my) -> int:
+    int x = mx / 60
+    if x < 0: x = 0
+    if x > 19: x = 19
+    int y = my / 60
+    if y < 0: y = 0
+    if y > 14: y = 14
+    int i = y * 20 + x
+    if i >= 0 and i < len(colors):
+        return i
+    return -1
+
+char _cns[10][100]
+int _cnsi
+def color_name(Color *c) -> str:
+    char h[8], h2[8]
+    land_color_to_html(c.rgb, h)
+    str name = "-"
+    for int i = 0 while fruits_palette[i] with i++:
+        LandColor lc = land_color_name(fruits_palette[i])
+        land_color_to_html(lc, h2)
+        if land_equals(h, h2):
+            name = fruits_palette[i]
+    int i = _cnsi++
+    _cnsi %= 10
+    sprintf(_cns[i], "%s (%s)", h, name)
+    return _cns[i]
+
 static def tick:
+    land_scale_to_fit(1200, 900, 256)
+    LandFloat mx = land_mouse_x()
+    LandFloat my = land_mouse_y()
+    LandFloat mz = 0
+    land_transform(&mx, &my, &mz)
+
     if land_key_pressed(LandKeyEscape):
         land_quit()
     if land_closebutton():
@@ -375,8 +381,8 @@ static def tick:
     if land_key_pressed('1'): arrange_cube()
     if land_key_pressed('2'): arrange_center()
     if land_key_pressed('3'): arrange_random()
-    if land_key_pressed('4'): arrange_custom()
-    
+    if land_key_pressed('4'): arrange_fruits()
+
     if land_key_pressed('s'): print_colors()
     if land_key_pressed('d'): find_grid_distances()
     if land_key_pressed('a'):
@@ -385,6 +391,21 @@ static def tick:
             printf("adding #%02x%02x%02x\n",
                 (int)(rgb.r * 255), (int)(rgb.g * 255), (int)(rgb.b * 255))
                 
+            color_add(rgb.r, rgb.g, rgb.b)
+    if land_key_pressed('m'):
+        int j = select_color(mx, my)
+        if j > 0 and j != selected:
+            Color* c1 = land_array_get(colors, selected)
+            Color* c2 = land_array_get(colors, j)
+            double l1, a1, b1, l2, a2, b2
+            land_color_to_oklab(c1.rgb, &l1, &a1, &b1)
+            land_color_to_oklab(c2.rgb, &l2, &a2, &b2)
+            float l3 = (l1 + l2) / 2
+            float a3 = (a1 + a2) / 2
+            float b3 = (b1 + b2) / 2
+            LandColor rgb = land_color_oklab(l3, a3, b3)
+            printf("adding #%02x%02x%02x\n",
+                (int)(rgb.r * 255), (int)(rgb.g * 255), (int)(rgb.b * 255))
             color_add(rgb.r, rgb.g, rgb.b)
 
     if land_key_pressed(LandKeyFunction + 1): mode = XYY
@@ -408,6 +429,20 @@ static def tick:
         mode = CUBE
     if land_key_pressed(LandKeyFunction + 6):
         mode = CUBE2
+
+    if mode == LIST:
+        if land_mouse_button_clicked(LandButtonLeft):
+            int i = select_color(mx, my)
+            if i >= 0:
+                selected = i
+                Color* c = land_array_get(colors, i)
+                print("%s", color_name(c))
+                int n = land_array_count(c.close)
+                if n > 6: n = 6
+                for int i in range(n):
+                    Neighbor *ne = land_array_get_nth(c.close, i)
+                    Color *o = ne.c
+                    print("%d: %s: %.3f", i, color_name(o), land_color_distance_ciede2000(c.rgb, o.rgb))
 
     if mode == CLOUD:
         int id = 0
@@ -529,7 +564,19 @@ static def draw_color(Color *c, float x, y):
         land_color(o.rgb.r, o.rgb.g, o.rgb.b, 1)
         land_filled_circle(ox - 5, oy - 5, ox + 5, oy + 5)
 
+def _show_selected:
+    int i = selected
+    int x = (i % 20) * 60
+    int y = (i // 20) * 60
+    land_color(0, 0, 0, 1)
+    land_thickness(1)
+    land_rectangle(x + 2, y + 2, x + 62, y + 62)
+    land_color(1, 1, 1, 1)
+    land_thickness(2)
+    land_rectangle(x, y, x + 60, y + 60)
+
 static def draw:
+    land_scale_to_fit(1200, 900, 0)
 
     if mode == LIST:
         land_clear(0.5, 0.5, 0.5, 1)
@@ -540,11 +587,12 @@ static def draw:
                 int y = yi * 60
                 if i >= land_array_count(colors):
                     break
-                Color *c = land_array_get_nth(colors, i++)
+                Color *c = land_array_get_nth(colors, i)
                 draw_color(c, x + 30, y + 30)
-        return
+                i++
+        _show_selected()
 
-    if mode == CLOUD:
+    elif mode == CLOUD:
         land_clear(0.5, 0.5, 0.5, 1)
         for  Color *c in colors:
             land_color(c.rgb.r, c.rgb.g, c.rgb.b, 1)
@@ -552,9 +600,8 @@ static def draw:
             float y = c.y
             land_filled_circle(x - 30, y - 30, x + 30, y + 30)
             land_filled_circle(1200 + x - 30, y - 30, 1200 + x + 30, y + 30)
-        return
 
-    if mode == CUBE or mode == CUBE2:
+    elif mode == CUBE or mode == CUBE2:
         land_clear(0.5, 0.5, 0.5, 1)
         land_color(0.8, 0.8, 0.8, 1)
 
@@ -608,9 +655,8 @@ static def draw:
         if maximum_grid_color:
             land_print("Maximum distance: %f", maximum_grid_distance)
             draw_color(maximum_grid_color, 30, land_text_y() + 60)
-        return
 
-    if mode == XYY or mode == CIELAB:
+    elif mode == XYY or mode == CIELAB:
 
         land_clear(0, 0, 0, 1)
         
@@ -677,6 +723,10 @@ static def draw:
                         land_color(1, 1, 0, 1)
                         marker(x_ + get_ai(-0.22), y_ + get_bi(0.94))
 
+    land_text_pos(0, 900 - 12)
+    land_color(1, 1, 1, 1)
+    land_print("F3=list F4=cloud F5=cube F6=cube2 1=565 2=gray 3=random 4=fruits")
+
 static def comp_z(void const *a, void const *b) -> int:
     Color const * const *as = a
     Color const * const *bs = b
@@ -688,7 +738,7 @@ static def comp_z(void const *a, void const *b) -> int:
 
 static def _main:
     land_init()
-    land_set_display_parameters(1200, 900, LAND_WINDOWED)
+    land_set_display_parameters(2400, 64+1800, LAND_WINDOWED)
     land_callbacks(init, tick, draw, None)
     land_mainloop()
 

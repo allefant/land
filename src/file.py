@@ -161,17 +161,22 @@ def land_get_current_directory() -> char *:
 def land_get_data_path() -> char *:
     return platform_get_data_path()
 
+def land_is_absolute(str path) -> bool:
+    if path and path[0] == '/': return True
+    # FIXME: need a proper way to recognize an absolute path
+    # something like C:\ or D:\
+    if path:
+        if strlen(path) > 3 and path[1] == ':':
+            return True
+    return False
+
 def land_path_with_prefix(char const *name) -> char *:
     """
     Returns a new string with has the global data prefix prefixed to
     the given path.
     """
-    if name and name[0] == '/': return land_strdup(name)
-    # FIXME: need a proper way to recognize an absolute path
-    # something like C:\ or D:\
-    if name:
-        if strlen(name) > 3 and name[1] == ':':
-            return land_strdup(name)
+    if land_is_absolute(name):
+        return land_strdup(name)
     int n = strlen(name)
     if prefix:
         n += strlen(prefix)
@@ -183,6 +188,17 @@ def land_path_with_prefix(char const *name) -> char *:
     else:
         strcpy(r, name)
     return r
+
+def land_path_with_absolute_prefix(char const *name) -> char *:
+    char *x = land_get_current_directory()
+    char *path = land_path_with_prefix(name)
+    if not land_is_absolute(name):
+        land_append(&x, "/")
+        land_append(&x, path)
+        land_free(path)
+        return x
+    land_free(x)
+    return path
 
 def land_set_prefix(char const *path):
     if not path:

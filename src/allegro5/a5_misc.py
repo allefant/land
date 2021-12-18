@@ -10,12 +10,9 @@ def platform_color_hsv(float hue, sat, val) -> LandColor:
 
 def platform_color_name(char const *name) -> LandColor:
     LandColor c
-    if land_equals(name, "sequoia"):
-        c.r = 0x90 / 255.0
-        c.g = 0x50 / 255.0
-        c.b = 0x60 / 255.0
-        c.a = 1
-        return c
+    if land_equals(name, "sequoia"): return land_color_name("#905060")
+    if land_equals(name, "banana"): return land_color_name("#ffeb00")
+    if land_equals(name, "citron"): return land_color_name("#d9f51f")
 
     # if there's spaces ignore them
     int i = 0

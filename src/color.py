@@ -61,6 +61,44 @@ def land_color_to_xyz(LandColor c, double *x, *y, *z):
     *y = r * 0.2126 + g * 0.7152 + b * 0.0722
     *z = r * 0.0193 + g * 0.1192 + b * 0.9505
 
+def land_color_oklab(double l, a, b) -> LandColor:
+    LandColor c
+
+    float l_ = l + 0.3963377774f * a + 0.2158037573f * b
+    float m_ = l - 0.1055613458f * a - 0.0638541728f * b
+    float s_ = l - 0.0894841775f * a - 1.2914855480f * b
+
+    float l3 = l_*l_*l_
+    float m3 = m_*m_*m_
+    float s3 = s_*s_*s_
+
+    float r3 = +4.0767416621f * l3 - 3.3077115913f * m3 + 0.2309699292f * s3
+    float g3 = -1.2684380046f * l3 + 2.6097574011f * m3 - 0.3413193965f * s3
+    float b3 = -0.0041960863f * l3 - 0.7034186147f * m3 + 1.7076147010f * s3
+
+    c.r = srgba_linear_to_gamma(r3)
+    c.g = srgba_linear_to_gamma(g3)
+    c.b = srgba_linear_to_gamma(b3)
+    c.a = 1
+    return c
+
+def land_color_to_oklab(LandColor c, double *l, *a, *b):
+    double lr = srgba_gamma_to_linear(c.r)
+    double lg = srgba_gamma_to_linear(c.g)
+    double lb = srgba_gamma_to_linear(c.b)
+
+    float ol = 0.4122214708f * lr + 0.5363325363f * lg + 0.0514459929f * lb
+    float om = 0.2119034982f * lr + 0.6806995451f * lg + 0.1073969566f * lb
+    float os = 0.0883024619f * lr + 0.2817188376f * lg + 0.6299787005f * lb
+
+    float l_ = cbrtf(ol)
+    float m_ = cbrtf(om)
+    float s_ = cbrtf(os)
+    
+    *l = 0.2104542553f*l_ + 0.7936177850f*m_ - 0.0040720468f*s_
+    *a = 1.9779984951f*l_ - 2.4285922050f*m_ + 0.4505937099f*s_
+    *b = 0.0259040371f*l_ + 0.7827717662f*m_ - 0.8086757660f*s_
+
 static def cielab_f(double x) -> double:
     if x > delta3:
         return pow(x, 1.0 / 3)
@@ -250,7 +288,9 @@ static int hexval(char c):
     return 0
 
 def land_color_name(char const *name) -> LandColor:
-    if name and name[0] == '#':
+    if not name:
+        return land_color_rgba(0, 0, 0, 0)
+    if name[0] == '#':
         LandColor c
         c.r = (hexval(name[1]) * 16 + hexval(name[2])) / 255.0
         c.g = (hexval(name[3]) * 16 + hexval(name[4])) / 255.0
@@ -295,8 +335,10 @@ def land_color_mix(LandColor c, LandColor mix, float p) -> LandColor:
     return c
 
 def land_color_to_html(LandColor c, char html[8]):
-    sprintf(html, "#%02x%02x%02x", (int)(c.r * 255), (int)(c.g * 255),
-        (int)(c.b * 255))
+    int r = land_constraini(c.r * 255, 0, 255)
+    int g = land_constraini(c.g * 255, 0, 255)
+    int b = land_constraini(c.b * 255, 0, 255)
+    sprintf(html, "#%02x%02x%02x", r, g, b)
 
 def land_color_int(int i) -> LandColor:
     int r = i & 255

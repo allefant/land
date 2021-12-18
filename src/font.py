@@ -313,6 +313,9 @@ def land_print_string(char const *s, int newline, int alignment):
     else:
         lfs.x_pos = lfs.x + lfs.w
 
+def land_print_space(int x):
+   land_font_state.x_pos += x
+
 def land_font_set_print_override(PrintFunc print_override):
     land_font_state.print_override = print_override
 
@@ -356,7 +359,7 @@ macro VPRINT:
     char s[n + 1]
     va_start(args, text)
     vsnprintf(s, n + 1, text, args)
-    va_end(args)
+    va_end(args) 
 
 def land_print(char const *text, ...):
     VPRINT

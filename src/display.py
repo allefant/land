@@ -628,12 +628,28 @@ def land_display_unselect():
         _land_active_display = NULL
 
 def land_screenshot(char const *filename):
+    char *name = None
+    if not filename:
+        char *name = land_strdup("/tmp/screenshot_")
+        time_t t
+        time(&t)
+        struct tm *tm = localtime(&t)
+        land_append(&name, "%04d_%02d_%02d_%02d_%02d_%02d.jpg",
+            tm.tm_year + 1900,
+            tm.tm_mon + 1,
+            tm.tm_mday,
+            tm.tm_hour,
+            tm.tm_min,
+            tm.tm_sec)
+        filename = name
     int w = land_display_width()
     int h = land_display_height()
     LandImage *screenshot = land_image_new(w, h)
     land_image_grab(screenshot, 0, 0)
     land_image_save(screenshot, filename)
     land_image_destroy(screenshot)
+    if name:
+        land_free(name)
 
 def land_screenshot_autoname(char const *name):
     LandBuffer *b = land_buffer_new()

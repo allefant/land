@@ -69,6 +69,11 @@ int _clicks[5] # how often was the button pressed down
 int _releases[5] # how often was the button released
 static float tx[11], ty[11], tb[11], otb[11]
 
+enum LandMouseButtons:
+    LandButtonLeft
+    LandButtonRight
+    LandButtonMiddle
+
 def land_mouse_init():
     land_show_mouse_cursor()
 

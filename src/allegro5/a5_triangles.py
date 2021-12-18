@@ -146,16 +146,17 @@ def platform_triangles_draw(LandTriangles *t, bool more):
     LandImagePlatform *pim = (void *)t.image
     platform_check_blending_and_transform()
 
-    if not more:
-        al_use_shader(platform.shader.a5)
-    if platform.shader.light_tag != _light_tag:
-        platform.shader.light_tag = _light_tag
-        float f2[3] = {_light_direction.x, _light_direction.y, _light_direction.z}
-        al_set_shader_float_vector("light_direction", 3, f2, 1)
-        al_set_shader_float("light", _light)
+    if platform.shader:
+        if not more:
+            al_use_shader(platform.shader.a5)
+        if platform.shader.light_tag != _light_tag:
+            platform.shader.light_tag = _light_tag
+            float f2[3] = {_light_direction.x, _light_direction.y, _light_direction.z}
+            al_set_shader_float_vector("light_direction", 3, f2, 1)
+            al_set_shader_float("light", _light)
 
-    if pim:
-        al_set_shader_sampler("al_tex", pim.a5, 0)
+        if pim:
+            al_set_shader_sampler("al_tex", pim.a5, 0)
     
     if platform.vb:
         al_draw_vertex_buffer(platform.vb, pim ? pim.a5 : None,

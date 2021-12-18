@@ -4,7 +4,7 @@ import hash
 import array
 
 static class LandAtlasSprite:
-    int x, y, w, h, ox, oy
+    int x, y, w, h, ox, oy, ow, oh
     LandAtlasSheet *sheet
 
 static class LandAtlasSheet:
@@ -48,7 +48,7 @@ static def atlas_find_sheet(LandAtlas *self, char const *name) -> LandAtlasSheet
 def land_atlas_load_all(LandAtlas *self):
     char *text = land_read_text(self.filename)
     LandArray *a = land_split_lines(text)
-
+    land_log_message("%s: %d pictures\n", self.filename, land_array_count(a))
     for char *row in LandArray *a:
         char *path = row
         char *colon = strchr(path, ':')
@@ -70,8 +70,10 @@ def land_atlas_load_all(LandAtlas *self):
             atlas_sheet.image = land_image_load(sheet_path)
             land_free(sheet_path)
         s.sheet = atlas_sheet
-        sscanf(space + 1, " %d %d %d %d %d %d\n",
-            &s.x, &s.y, &s.w, &s.h, &s.ox, &s.oy)
+        if sscanf(space + 1, " %d %d %d %d %d %d %d %d\n", &s.x, &s.y, &s.w, &s.h, &s.ox, &s.oy, &s.ow, &s.oh) != 8:
+            sscanf(space + 1, " %d %d %d %d %d %d\n", &s.x, &s.y, &s.w, &s.h, &s.ox, &s.oy)
+            s.ow = 0
+            s.oh = 0
         land_hash_insert(self.sprites, path, s)
     
     land_free(text)
@@ -86,5 +88,12 @@ def land_atlas_image_create(LandAtlas *self, char const *filename) -> LandImage*
     LandImage *image = land_image_sub(sprite.sheet.image, sprite.x, sprite.y,
         sprite.w, sprite.h)
     land_image_offset(image, -sprite.ox, -sprite.oy)
+    image.flags |= LAND_LOADED # TODO: in theory we could load the sheet on-demand
     return image
-    
+
+def land_atlas_image_original_size(LandAtlas *self, char const *filename, int *w, *h) -> bool:
+    LandAtlasSprite *sprite = atlas_load_picture(self, filename)
+    if not sprite: return False
+    *w = sprite.ow
+    *h = sprite.oh
+    return True

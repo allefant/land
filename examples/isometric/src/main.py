@@ -9,7 +9,8 @@ LandGridIsometric *iso
 int gridselection = 1
 
 static def draw(LandGrid *self, LandView *view, int cell_x, cell_y, float x, y):
-    land_image_draw(tile, x - iso->cell_w1, y)
+    land_image_draw_scaled(tile, x - iso->cell_w1 * view.scale_x,
+        y, view.scale_x, view.scale_y)
     land_color(0, 0, 0, 1)
     land_text_pos(x, y + 4)
     if cell_x == 0 and cell_y == 0:
@@ -49,6 +50,14 @@ static def game_init(LandRunner *self):
 
 static def game_tick(LandRunner *self):
     int kx = 0, ky = 0
+    while not land_keybuffer_empty():
+        int k, u
+        land_keybuffer_next(&k, &u)
+        if u == '+':
+            land_view_scale(view, 1.1, 1.1)
+        if u == '-':
+            land_view_scale(view, 1/1.1, 1/1.1)
+        
     if land_key(LandKeyEscape):
         land_quit()
     if land_key(LandKeyLeft):

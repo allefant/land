@@ -129,6 +129,9 @@ def land_hash_clear(LandHash *self):
 
             land_free(entry)
 
+    self.count = 0
+    self.size = 0
+
     if self.entries:
         land_free(self.entries)
         self.entries = None

@@ -54,7 +54,7 @@ def platform_image_load(char const *filename, bool mem) -> LandImage *:
     _platform_load(super)
     return super
 
-static def _platform_load(LandImage *super):
+def _platform_load(LandImage *super):
     super->name = land_strdup(super.filename)
     ALLEGRO_STATE state
     if super.flags & LAND_IMAGE_MEMORY:
@@ -65,7 +65,10 @@ static def _platform_load(LandImage *super):
     # right now apk file interface is always active
     land_log_message("open %s", super.filename)
     *** "endif"
-    ALLEGRO_BITMAP *bmp = al_load_bitmap(super.filename)
+    int flags = 0
+    if super.flags & LAND_NO_PREMUL:
+        flags |= ALLEGRO_NO_PREMULTIPLIED_ALPHA
+    ALLEGRO_BITMAP *bmp = al_load_bitmap_flags(super.filename, flags)
     if bmp:
         LandImagePlatform *self = (void *)super
         if super.flags & LAND_LOADING:
@@ -111,6 +114,8 @@ def platform_image_sub(LandImage *parent, float x, y, w, h) -> LandImage *:
 def platform_image_save(LandImage *super, char const *filename):
     LandImagePlatform *self = (void *)super
     al_save_bitmap(filename, self->a5)
+    land_log_message("Saved %dx%d bitmap to %s\n", super.width,
+        super.height, filename)
 
 def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     float y, float sx, float sy,

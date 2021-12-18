@@ -12,6 +12,7 @@ macro LAND_IMAGE_CENTER 64 # center on load
 macro LAND_IMAGE_DEPTH 128 # image has depth buffer
 macro LAND_LOADING 256 # async loading in progress
 macro LAND_LOADING_COMPLETE 512 # async loading complete
+macro LAND_NO_PREMUL 1024
 
 static macro LOG_COLOR_STATS 0
 
@@ -62,21 +63,22 @@ LandArray *_loader_queue
 def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
     _cb = cb
 
-static def _load(char const *filename, bool mem) -> LandImage *:
-
-    LandImage *self 
+def _load_prep(str filename) -> LandImage*:
     char *path = land_path_with_prefix(filename)
     land_log_message("land_image_load %s..\n", path)
-    self = platform_image_load(path, mem)
+    LandImage *self = land_display_new_image()
+    self.filename = land_strdup(path)
     land_free(path)
-
     bitmap_count++
+    return self
 
+def _load(char const *filename, bool mem) -> LandImage *:
+    auto self = _load_prep(filename)
     _load2(self)
-
     return self
 
 def _load2(LandImage *self):
+    platform_image_load_on_demand(self)
 
     if self.flags & LAND_LOADED:
         int w = land_image_width(self)
@@ -115,6 +117,12 @@ def land_image_was_loaded(LandImage *self) -> bool:
 
 def land_image_load_memory(char const *filename) -> LandImage *:
     return _load(filename, True)
+
+def land_image_load_no_premul(str filename) -> LandImage*:
+    auto image = _load_prep(filename)
+    image.flags |= LAND_NO_PREMUL
+    _load2(image)
+    return image
 
 def land_image_new_deferred(char const *filename) -> LandImage *:
     LandImage *self = land_image_new(0, 0)
