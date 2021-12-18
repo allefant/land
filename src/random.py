@@ -218,3 +218,15 @@ def land_shuffle(int *a, int n):
         int t = a[i]
         a[i] = a[j]
         a[j] = t
+
+def land_select_random(int *weights, int n) -> int:
+    int total = 0
+    for int i in range(n):
+        total += weights[i]
+    int r = land_rand(0, total - 1)
+    int x = 0
+    for int i in range(n):
+        x += weights[i]
+        if r < x:
+            return i
+    return 0
