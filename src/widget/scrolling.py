@@ -359,14 +359,14 @@ def _scrolling_layout(LandWidget *self):
     int h = b - t
     if sl + sr == 0 and su + sd == 0:
         # no scrollbars needed
-        if scrolling.autohide & 2: hor_h = 0
-        if scrolling.autohide & 1: ver_w = 0
+        if scrolling.autohide & 1: hor_h = 0
+        if scrolling.autohide & 2: ver_w = 0
     elif su + sd > 0 and sl + sr2 == 0:
         # only vertical bar needed
-        if scrolling.autohide & 2: hor_h = 0
+        if scrolling.autohide & 1: hor_h = 0
     elif sl + sr > 0 and su + sd2 == 0:
         # only horizontal bar needed
-        if scrolling.autohide & 1: ver_w = 0
+        if scrolling.autohide & 2: ver_w = 0
     else:
         # both bars needed
         pass
