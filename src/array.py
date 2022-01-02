@@ -10,6 +10,18 @@ class LandArrayIterator:
 
 static import mem
 
+*** "ifdef" LAND_MEMLOG
+
+*** "undef" land_array_new
+*** "undef" land_array_destroy
+*** "undef" land_array_add
+*** "undef" land_array_clear
+*** "undef" land_array_merge
+*** "undef" land_array_concat
+*** "undef" land_array_copy
+
+*** "endif"
+
 def LandArrayIterator_first(LandArray *a) -> LandArrayIterator:
     LandArrayIterator i = {0}
     return i
@@ -343,14 +355,6 @@ def land_array_reverse(LandArray *self):
         land_array_swap(self, i, self.count - 1 - i)
 
 *** "ifdef" LAND_MEMLOG
-
-*** "undef" land_array_new
-*** "undef" land_array_destroy
-*** "undef" land_array_add
-*** "undef" land_array_clear
-*** "undef" land_array_merge
-*** "undef" land_array_concat
-*** "undef" land_array_copy
 
 def land_array_new_memlog(char const *f, int l) -> LandArray *:
     LandArray *array = land_array_new()

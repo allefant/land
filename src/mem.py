@@ -1,4 +1,5 @@
 import global stdlib, string, stdbool
+import config
 
 macro land_alloc(self) self = land_calloc(sizeof *self)
 
@@ -39,7 +40,7 @@ static int _size = 0
 static int _maxnum = 0
 static int _maxsize = 0
 
-static not def done():
+static def done():
     # This function is called from atexit, so don't rely on Land still being
     # installed, e.g. logging facility.
     int n
@@ -73,7 +74,7 @@ static not def done():
             fprintf(lf, "]\n")
     fclose(lf);
 
-static not def install():
+static def install():
     installed++
     if installed == 1:
         installing = True

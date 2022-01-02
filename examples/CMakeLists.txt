@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.20)
 
 cmake_policy(SET CMP0072 NEW) # use new OpenGL dependency search
 cmake_policy(SET CMP0009 NEW) # don't follow symlinks

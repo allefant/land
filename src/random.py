@@ -1,4 +1,5 @@
 import global stdint
+import global stdbool
 static import land.mem
 
 #
@@ -208,6 +209,9 @@ def land_random_f(LandRandom *r, double rmin, rmax) -> double:
     if rmin >= rmax: return rmin
     return rmin + (
         (double)genrand_int32(r) / MAX_NUMBER) * (rmax - rmin)
+
+def land_probability(double p) -> bool:
+    return land_rnd(0, 1) < p
 
 def land_shuffle(int *a, int n):
     for int i in range(n):

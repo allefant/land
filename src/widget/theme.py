@@ -260,6 +260,8 @@ def land_widget_theme_element_new(
     LandWidgetThemeElement *self
     land_alloc(self)
 
+    land_log_message("element %s\n", name)
+
     self.name = land_strdup(name)
     self.a = 1
     self.minw = 4
@@ -273,6 +275,7 @@ def land_widget_theme_element_new(
     LandArray *argv = land_buffer_split(argbuf, " ")
     land_buffer_del(argbuf)
     int argc = land_array_count(argv)
+    land_log_message("%s has %d tokens\n", argline, argc)
     
     LandImage *img = NULL
     if argc:
@@ -387,6 +390,7 @@ def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
     self.suffix = land_strdup(land_ini_get_string(config, "agup.cfg", "suffix", ""))
 
     int n = land_ini_get_number_of_entries(config, "agup.cfg/elements")
+    land_log_message("theme has %d elements\n", n)
     for int i = 0 while i < n with i++:
         char const *v = land_ini_get_nth_entry(config,
             "agup.cfg/elements", i)

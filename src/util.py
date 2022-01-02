@@ -7,9 +7,8 @@ import global ctype
 import global stdio
 import land/array
 import land/buffer
+import land/common
 static import allegro5/a5_file
-
-typedef char const *str
 
 macro LAND_PI ALLEGRO_PI
 macro LandPi ALLEGRO_PI
@@ -189,6 +188,9 @@ def land_string_copy(char *target, char const *source, int size) -> char *:
 
     Returns target.
     """
+    if target == source:
+        # strcpy will fail if the areas overlap (or are identical)
+        return target
     strncpy(target, source, size - 1)
     target[size - 1] = 0
     return target

@@ -1,7 +1,7 @@
 static import global stdio, stdlib, string
 static import mem
 static import file
-import array, util
+import array, util, common
 
 static import global zlib if !defined(LAND_NO_COMPRESS)
 
@@ -46,18 +46,11 @@ def land_buffer_read_from_file_memlog(char const *filename, char const *f, int l
     land_memory_add(self, "buffer", 1, f, l)
     return self
 
-def land_buffer_split_memlog(LandBuffer const *self, char delim, char const *f, int line) -> LandArray *:
-    LandArray *a = land_array_new_memlog(f, line)
-    int start = 0
-    for int i = 0 while i < self.n with i++:
-        if self.buffer[i] == delim:
-            LandBuffer *l = land_buffer_new_memlog(f, line)
-            land_buffer_add(l, self.buffer + start, i - start)
-            land_array_add_memlog(a, l, f, line)
-            start = i + 1
-    LandBuffer *l = land_buffer_new_memlog(f, line)
-    land_buffer_add(l, self.buffer + start, self->n - start)
-    land_array_add_memlog(a, l, f, line)
+def land_buffer_split_memlog(LandBuffer const *self, char const *delim, char const *f, int l) -> LandArray *:
+    auto a = land_buffer_split(self, delim)
+    land_memory_add(a, "array", 1, f, l)
+    for LandBuffer *b in a:
+        land_memory_add(b, "buffer", 1, f, l)
     return a
 
 *** "endif"

@@ -1,4 +1,5 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.20)
+cmake_policy(SET CMP0042 NEW) # new rpath behavior on macos
 INCLUDE (CheckIncludeFiles)
 
 project(land) 
@@ -15,6 +16,8 @@ set(PROFILE 0 CACHE BOOL "Whether to build the profile library.")
 set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
 
 set(EXAMPLES_ON 1 CACHE BOOL "Build the examples.")
+
+set(ALLEGRO_MONOLITH 1 CACHE BOOL "Use monolith library.")
 
 #_______________________________________________________________________
 # Step: Find all .py source files.
@@ -82,6 +85,7 @@ if (MEMLOG)
 endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
+string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Darwin MACOS)
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Darwin OSX)
 
 string(REGEX MATCH ".*emcc" EMSCRIPTEN ${CMAKE_C_COMPILER})
@@ -93,6 +97,9 @@ if (WINDOWS)
 
     include_directories(/home/elias/prog/allegro/install_x86_64-w64-mingw32/include)
     include_directories(/home/elias/prog/allegro/allegro_deps/include)
+elseif (MACOS)
+    message("Macos version")
+    set(CFLAGS "${CFLAGS} -DMACOS -DGL_SILENCE_DEPRECATION")
 else ()
     message("Linux version")
     set(CFLAGS "${CFLAGS} -DLINUX")
@@ -162,7 +169,31 @@ if (SHARED)
                 zlib
                 opengl32
                 )
-        else (WINDOWS)
+        elseif (OSX)
+            find_library(OPENGL OpenGL)
+            if (ALLEGRO_MONOLITH)
+                target_link_libraries(${libname}-debug
+                    allegro_monolith-debug
+                    z
+                    ${OPENGL}
+                    )
+            else ()
+                target_link_libraries(${libname}-debug
+                    allegro
+                    allegro_main
+                    allegro_font
+                    allegro_primitives
+                    allegro_audio
+                    allegro_acodec
+                    allegro_color
+                    allegro_ttf
+                    allegro_image
+                    allegro_dialog
+                    z
+                    ${OPENGL}
+                    )
+            endif()
+        else ()
             target_link_libraries(${libname}-debug
                 allegro_monolith-debug
                 )
@@ -188,7 +219,36 @@ if (SHARED)
                 zlib
                 opengl32
                 )
-        else (WINDOWS)
+        elseif (OSX)
+            find_library(OPENGL OpenGL)
+            find_library(ALLEGRO allegro)
+            find_library(ALLEGRO_MAIN allegro_main)
+            find_library(ALLEGRO_FONT allegro_font)
+            find_library(ALLEGRO_PRIMITIVES allegro_primitives)
+            find_library(ALLEGRO_AUDIO allegro_audio)
+            find_library(ALLEGRO_ACODEC allegro_acodec)
+            find_library(ALLEGRO_COLOR allegro_color)
+            find_library(ALLEGRO_TTF allegro_ttf)
+            find_library(ALLEGRO_IMAGE allegro_image)
+            find_library(ALLEGRO_DIALOG allegro_dialog)
+            target_include_directories(${libname}
+                PUBLIC "/usr/local/include"                          
+            )
+            target_link_libraries(${libname}
+                ${ALLEGRO}
+                ${ALLEGRO_MAIN}
+                ${ALLEGRO_FONT}
+                ${ALLEGRO_PRIMITIVES}
+                ${ALLEGRO_AUDIO}
+                ${ALLEGRO_ACODEC}
+                ${ALLEGRO_COLOR}
+                ${ALLEGRO_TTF}
+                ${ALLEGRO_IMAGE}
+                ${ALLEGRO_DIALOG}
+                z
+                ${OPENGL}
+                )
+        else ()
             target_link_libraries(${libname}
                 allegro_monolith
                 )
