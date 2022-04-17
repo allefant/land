@@ -449,12 +449,12 @@ def land_widget_theme_find_element(
     if not element->selected:
         char name[1024]
         # First, try to find "widget.selected"
-        strncpy(name, widget->vt->name, sizeof name)
+        strncpy(name, widget->vt->name, sizeof name - 1)
         strncat(name, ".selected", sizeof name - strlen(name) - 1)
         element->selected = find_element(theme->elements, name)
         # If it doesn't exist, try "base.selected"
         if not element->selected:
-            strncpy(name, element->name, sizeof name)
+            strncpy(name, element->name, sizeof name - 1)
             strncat(name, ".selected", sizeof name - strlen(name) - 1)
             element->selected = find_element(theme->elements, name)
         # If that doesn't exist as well, use the same as non-selected.
@@ -464,7 +464,7 @@ def land_widget_theme_find_element(
     if not element->disabled:
         char name[1024]
         # First, try to find "widget.disabled"
-        strncpy(name, widget->vt->name, sizeof name)
+        strncpy(name, widget->vt->name, sizeof name - 1)
         strncat(name, ".disabled", sizeof name - strlen(name) - 1)
         element->disabled = find_element(theme->elements, name)
         if not element->disabled:

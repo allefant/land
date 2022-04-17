@@ -66,6 +66,11 @@ def assert_int(int actual, expected, str explanation):
     if _test_failed:
         print("%s is %i but should be %i", explanation, actual, expected)
 
+def assert_float(float actual, expected, int places, str explanation):
+    _test_failed = fabs(expected - actual) > 1.0 / pow(10, places)
+    if _test_failed:
+        print("%s is %f but should be %f", explanation, actual, expected)
+
 def assert_string(str value, str expected):
     if not land_equals(value, expected): _test_failed = True
     

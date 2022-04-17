@@ -8,38 +8,22 @@ import test_yaml
 import test_util
 import test_camera
 import test_csg
+import test_random
+import test_util2d
 
-def _test_shuffle:
-    for int i in range(100):
-        int a[25]
-        land_shuffle(a, 25)
-        int found = 0
-        for int j in range(25):
-            for int k in range(25):
-                if a[k] == j:
-                    found++
-                    break
-        if found != 25:
-            test_failed()
-            break
-        #    if a[j] == 0: printf("%s", land_color_bash("red"))
-        #    if a[j] == 12: printf("%s", land_color_bash("green"))
-        #    if a[j] == 24: printf("%s", land_color_bash("blue"))
-        #    printf("%2d ", a[j])
-        #    printf("%s", land_color_bash("end"))
-        #printf("\n")
-
+# argument is either * to run all tests or name of a single test to run
 def main(int argc, char** argv) -> int:
     land_argc = argc
     land_argv = argv
     land_init()
 
     test_camera()
-    test(shuffle)
+    test_random()
     test_yml()
     test_collision()
     test_widget()
     test_string()
     test_csg()
+    test_util2d()
 
     return 0

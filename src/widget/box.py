@@ -27,3 +27,8 @@ def land_widget_box_interface_initialize():
 
     land_widget_box_interface->id = LAND_WIDGET_ID_BASE
     land_widget_box_interface->draw = land_widget_box_draw
+
+def land_widget_space_new(LandWidget *parent) -> LandWidget*:
+    LandWidget *self = land_widget_base_new(parent, 0, 0, 0, 0)
+    land_widget_layout_set_expanding(self, 1, 1)
+    return self

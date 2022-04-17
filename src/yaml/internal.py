@@ -57,9 +57,12 @@ def land_yaml_load(char const *filename) -> LandYaml *:
 
     land_file_destroy(f)
     land_buffer_destroy(value)
+    yaml.current = yaml.root
     return yaml
 
 def _yaml_write(YamlParser *p, char const *s):
+    if not s:
+        s = "null"
     int n = strlen(s)
     if not p.cannot_break:
         if p.line_length + n > 80:

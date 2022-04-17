@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.15)
 
 cmake_policy(SET CMP0072 NEW) # use new OpenGL dependency search
 cmake_policy(SET CMP0009 NEW) # don't follow symlinks
@@ -143,6 +143,13 @@ foreach(exsrc ${examples})
     endif (STATIC)
 
     if (SHARED)
+
+        set(libraries)
+        if (exname STREQUAL "perlin")
+            list(APPEND libraries "fftw3")
+        endif()
+        message(STATUS "libraries: ${exname} ${libraries}")
+        
         set(AD -debug)
         if (DEBUG)
             add_executable(${exname}-debug ${example_cfiles})
@@ -151,11 +158,10 @@ foreach(exsrc ${examples})
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${DFLAGS}"
                 )
-            target_link_libraries(${exname}-debug
-                ${libname}-debug
-                m
-                GL
-                )
+            list(APPEND libraries ${libname}-debug)
+            list(APPEND libraries "m")
+            list(APPEND libraries "GL")
+            target_link_libraries(${exname}-debug ${libraries})
         endif (DEBUG)
         if (RELEASE)
             add_executable(${exname} ${example_cfiles})
@@ -163,9 +169,8 @@ foreach(exsrc ${examples})
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
-            target_link_libraries(${exname}
-                ${libname}
-                )
+            list(APPEND libraries ${libname})
+            target_link_libraries(${exname} ${libraries})
         endif (RELEASE)
     endif (SHARED)
     list(APPEND example_exes ${exe})

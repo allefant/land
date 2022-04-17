@@ -475,7 +475,6 @@ The return value can most conveniently be freed like this:
 def land_split(char const *text, str c) -> LandArray *:
     """
     Returns an array of strings which you should destroy with
-
     land_array_destroy_with_strings
     """
     LandArray *split = land_array_new()

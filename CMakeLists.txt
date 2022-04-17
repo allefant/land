@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 3.20)
-cmake_policy(SET CMP0042 NEW) # new rpath behavior on macos
+cmake_minimum_required(VERSION 3.18)
+#cmake_policy(SET CMP0042 NEW) # new rpath behavior on macos
 INCLUDE (CheckIncludeFiles)
 
 project(land) 
@@ -194,10 +194,27 @@ if (SHARED)
                     )
             endif()
         else ()
-            target_link_libraries(${libname}-debug
-                allegro_monolith-debug
-                )
-        endif (WINDOWS)
+            if (ALLEGRO_MONOLITH)
+                target_link_libraries(${libname}-debug
+                    allegro_monolith-debug
+                    ${OPENGL}
+                    )
+            else ()
+                target_link_libraries(${libname}-debug
+                    allegro
+                    allegro_main
+                    allegro_font
+                    allegro_primitives
+                    allegro_audio
+                    allegro_acodec
+                    allegro_color
+                    allegro_ttf
+                    allegro_image
+                    allegro_dialog
+                    ${OPENGL}
+                    )
+            endif()
+        endif ()
     endif (DEBUG)
     if (RELEASE)
         add_library(${libname} SHARED ${cfiles})
@@ -219,7 +236,7 @@ if (SHARED)
                 zlib
                 opengl32
                 )
-        elseif (OSX)
+        else ()
             find_library(OPENGL OpenGL)
             find_library(ALLEGRO allegro)
             find_library(ALLEGRO_MAIN allegro_main)
@@ -248,11 +265,7 @@ if (SHARED)
                 z
                 ${OPENGL}
                 )
-        else ()
-            target_link_libraries(${libname}
-                allegro_monolith
-                )
-        endif (WINDOWS)
+        endif ()
     endif (RELEASE)
 endif (SHARED)
 

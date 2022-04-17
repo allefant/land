@@ -177,12 +177,13 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
 
     #land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
 
-def land_widget_book_pagename(LandWidget *widget, char const *name):
+def land_widget_book_pagename(LandWidget *widget, char const *name) -> LandWidget*:
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
     LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(
         container->children->first->next->data)
     LandWidget *button = hbox->children->last->data
     land_widget_button_set_text(button, name)
+    return button
 
 def land_widget_book_new(LandWidget *parent, int x, y, w, h) -> LandWidget *:
     LandWidgetBook *self

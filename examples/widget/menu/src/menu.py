@@ -103,7 +103,7 @@ static def game_init(LandRunner *self):
 
     LandWidget *editmenu = land_widget_menu_new(desktop, 0, 0, 10, 10)
     land_widget_menuitem_new(editmenu, "Copy", on_copy)
-    land_widget_menuitem_new(editmenu, "Pase", on_paste)
+    land_widget_menuitem_new(editmenu, "Paste", on_paste)
 
     land_widget_menubutton_new(menubar, "File", filemenu, 0, 0, 1, 1)
     land_widget_hide(filemenu)

@@ -1,14 +1,21 @@
 import main
 import noise
 
+class LandVoronoiNode:
+    int x, y
+
 class LandVoronoi:
     int *map
     float *distance
+    int *neighbor
     int n
-    LandNoiseI2 *xy
+    LandVoronoiNode *xy
     int w
     int h
     float max_distance
+    float randomness
+    int modulo
+    LandRandom *seed
 
 static def wrap_distance(float x1, x2, wrap) -> float:
     """
@@ -17,32 +24,54 @@ static def wrap_distance(float x1, x2, wrap) -> float:
     |x2              x1   |x2
     """
     float d = fabs(x2 - x1)
-    float d2 = fabs(x1 + wrap - x2)
-    if d2 < d: d = d2
-    d2 = fabs(x2 + wrap - x1)
-    if d2 < d: d = d2
+    if d > wrap / 2:
+        d = wrap - d
     return d
 
-static def get_closest(LandVoronoi *self, int x, y) -> int:
-    int mi = -1
-    int md = INT_MAX
-    for int i in range(self.n):
-        int dx = wrap_distance(self.xy[i].x, x, self.w)
-        int dy = wrap_distance(self.xy[i].y, y, self.h)
-        if dx * dx + dy * dy < md:
-            mi = i
-            md = dx * dx + dy * dy
-    return mi
+def _get_distance(LandVoronoi *self, int x, y, i) -> LandFloat:
+    LandFloat dx = wrap_distance(self.xy[i].x, x, self.w)
+    LandFloat dy = wrap_distance(self.xy[i].y, y, self.h)
+    LandFloat d = sqrt(dx * dx + dy * dy)
+    return d
 
-def land_voronoi_new(LandRandom *seed, int w, h, n) -> LandVoronoi *:
+def _get_closest_two(LandVoronoi *self, int x, y, *c1, *c2):
+    int mi = -1
+    int mj = -1
+    LandFloat md = 1e20
+    LandFloat md2 = 1e20
+    for int i in range(self.n):
+        LandFloat d = _get_distance(self, x, y, i)
+        if d < md:
+            mi = i
+            md = d
+
+    for int i in range(self.n):
+        LandFloat d = _get_distance(self, x, y, i)
+        if d < md2:
+            if self.modulo:
+                if i % self.modulo != mi % self.modulo:
+                    mj = i
+                    md2 = d
+            else:
+                if i != mi:
+                    mj = i
+                    md2 = d
+    *c1 = mi
+    *c2 = mj
+
+def land_voronoi_new(LandRandom *seed, int w, h, n, modulo, float randomness) -> LandVoronoi *:
     LandVoronoi *self; land_alloc(self)
     self.w = w
     self.h = h
     self.map = land_calloc(w * h * sizeof *self.map)
     self.distance = land_calloc(w * h * sizeof *self.distance)
+    self.neighbor = land_calloc(w * h * sizeof *self.neighbor)
     self.n = n
     self.xy = land_calloc(n * sizeof *self.xy)
     self.max_distance = 0
+    self.modulo = modulo
+    self.randomness = randomness
+    self.seed = seed
 
     for int i in range(n):
         int x = land_random(seed, 0, w - 1)
@@ -52,17 +81,23 @@ def land_voronoi_new(LandRandom *seed, int w, h, n) -> LandVoronoi *:
 
     for int y in range(h):
         for int x in range(w):
-            int i = get_closest(self, x, y)
+            int i, j
+            _get_closest_two(self, x, y, &i, &j)
             self.map[x + w * y] = i
+            self.neighbor[x + w * y] = j
 
     return self
 
-def land_voronoi_create(LandRandom *seed, int w, h, n, float randomness) -> LandVoronoi*:
-    auto self = land_voronoi_new(seed, w, h, n)
+def land_voronoi_create(LandRandom *seed, int w, h, n, modulo, float randomness, distance) -> LandVoronoi*:
+    auto self = land_voronoi_new(seed, w, h, n, modulo, randomness)
 
-    land_voronoi_distort_with_perlin(self, seed, randomness)
+    #if randomness > 0:
+    #    land_voronoi_distort_with_perlin(self, seed, randomness)
 
-    land_voronoi_calculate_distance(self)
+    if distance > 0:
+        land_voronoi_calculate_border_distance(self, distance)
+    else:
+        land_voronoi_calculate_distance(self)
 
     return self
 
@@ -72,12 +107,25 @@ def land_voronoi_calculate_distance(LandVoronoi *self):
     for int y in range(h):
         for int x in range(w):
             int i = self.map[x + self.w * y]
-            int dx = wrap_distance(self.xy[i].x, x, self.w)
-            int dy = wrap_distance(self.xy[i].y, y, self.h)
-            float d = sqrt(dx * dx + dy * dy)
+            float d = _get_distance(self, x, y, i)
             self.distance[x + self.w * y] = d
             if d > self.max_distance:
                 self.max_distance = d
+
+def land_voronoi_calculate_border_distance(LandVoronoi *self, float distance):
+    if self.n < 2: return
+    self.max_distance = distance
+    int w = self.w
+    int h = self.h
+    for int y in range(h):
+        for int x in range(w):
+            int i = self.map[x + self.w * y]
+            int j = self.neighbor[x + self.w * y]
+            float d1 = _get_distance(self, x, y, i)
+            float d2 = _get_distance(self, x, y, j)
+            float d = d2 - d1
+            if d > distance: d = distance
+            self.distance[x + self.w * y] = d
 
 def land_voronoi_distort_with_perlin(LandVoronoi *self, LandRandom *seed, float randomness):
     int w = self.w
@@ -110,3 +158,9 @@ def land_voronoi_destroy(LandVoronoi *self):
 def land_voronoi_at(LandVoronoi *self, int x, y) -> float:
     float value = self.distance[x + self.w * y] / self.max_distance
     return value * 2 - 1 # change range from 0..1 to -1..1
+
+def land_voronoi_owner(LandVoronoi *self, int x, y) -> int:
+    return self.map[x + self.w * y]
+
+def land_voronoi_neighbor(LandVoronoi *self, int x, y) -> int:
+    return self.neighbor[x + self.w * y]

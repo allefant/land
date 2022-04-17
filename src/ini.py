@@ -15,6 +15,7 @@ class LandIniSection:
 class LandIniFile:
     char *filename
     LandIniSection *sections
+    bool loaded
 
 static def _get(LandIniSection *s, char const *key) -> void *:
     LandIniEntry *e = land_hash_get(s.lookup, key)
@@ -128,6 +129,7 @@ def land_ini_read(char const *filename) -> LandIniFile *:
     ini->sections = _new()
     LandFile *f = land_file_new(filename, "rb")
     if not f: return ini
+    ini.loaded = True
     int done = 0
     while not done:
         int c = land_file_getc(f)

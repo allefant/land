@@ -10,7 +10,8 @@ class LandWidgetMenuButton:
     LandWidgetButton super
     LandWidget *menu # Menu we are part of, if any. Usually parent. 
     LandWidget *submenu # submenu to show 
-    bool below # If yes, open menu below, else to the right. 
+    bool below # If yes, open menu below, else to the right.
+    bool on_hover # If yes, open on hover, else on click
 
 # A button inside a menu. 
 class LandWidgetMenuItem:
@@ -35,6 +36,8 @@ def land_widget_menubar_new(LandWidget *parent, float x, float y,
     Create a new menubar. That is, a menu which is layout horizontally instead
     of vertically. By default, a menubar will expand horizontally, and shrink
     vertically.
+
+    Use land_widget_menubutton_new to add buttons.
     """
     LandWidget *base = land_widget_menu_new(parent, x, y, w, h)
     base->vt = land_widget_menubar_interface
@@ -133,6 +136,11 @@ def land_widget_menubutton_new(LandWidget *parent, char const *name,
     LandWidget *submenu, float x, float y, float w, float h) -> LandWidget *:
     """
     Create a submenu, i.e. a button in a menu to open another menu when clicked.
+
+    Use land_widget_menubar_new for the parent.
+
+    Use land_widget_menu_new for submenu (but parent the menu to the
+    desktop or other widgets the actual menu shold pop up in).
     """
     land_widget_menubutton_interface_initialize()
     LandWidgetMenuButton *self
@@ -140,6 +148,7 @@ def land_widget_menubutton_new(LandWidget *parent, char const *name,
     land_widget_reference(submenu)
     self.submenu = submenu
     self.menu = parent
+    self.on_hover = True
     if ((parent->vt->id & LAND_WIDGET_ID_MENUBAR) == LAND_WIDGET_ID_MENUBAR):
         self.below = 1
     LandWidget *base = (void *)self
@@ -149,6 +158,10 @@ def land_widget_menubutton_new(LandWidget *parent, char const *name,
     base->vt = land_widget_menubutton_interface
     land_widget_theme_initialize(base)
     return base
+
+def land_widget_menubutton_on_hover(LandWidget *self, bool on_hover):
+    LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self)
+    menubutton.on_hover = on_hover
 
 def land_widget_menubutton_destroy(LandWidget *self):
     LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self)
@@ -328,7 +341,9 @@ def land_widget_menu_mouse_leave(LandWidget *self):
 def land_widget_menubutton_mouse_enter(LandWidget *self):
     # Auto-open menus 
     # TODO: maybe make this a theme option, and a configurable delay
-    menubutton_clicked(self)
+    LandWidgetMenuButton *menubutton = LAND_WIDGET_MENUBUTTON(self)
+    if menubutton.on_hover:
+        menubutton_clicked(self)
 
 def land_widget_menubutton_mouse_leave(LandWidget *self):
     pass
@@ -341,6 +356,10 @@ def land_widget_menubar_mouse_leave(LandWidget *self):
     # land_widget_retain_mouse_focus(self)
     
     return
+
+def land_widget_menubutton_mouse_tick(LandWidget *base):
+    if land_mouse_button_clicked(0):
+        menubutton_clicked(base)
 
 def land_widget_menu_mouse_tick(LandWidget *self):
     LandWidgetContainer *container = LAND_WIDGET_CONTAINER(self)
@@ -381,6 +400,7 @@ def land_widget_menubutton_interface_initialize():
     land_widget_menubutton_interface->id |= LAND_WIDGET_ID_MENUBUTTON
     land_widget_menubutton_interface->mouse_enter = land_widget_menubutton_mouse_enter
     land_widget_menubutton_interface->mouse_leave = land_widget_menubutton_mouse_leave
+    land_widget_menubutton_interface->mouse_tick = land_widget_menubutton_mouse_tick
     land_widget_menubutton_interface->destroy = land_widget_menubutton_destroy
     
     land_widget_menuitem_interface = land_widget_copy_interface(

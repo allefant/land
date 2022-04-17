@@ -131,13 +131,15 @@ def rivers(LandNoise *noise, float water_height, snow_height) -> LandNoise*:
             if v < snow_height: continue
             r.add[rx + w * ry]++
             int l = 0
-            while True:
-                while _move(&r, &rx, &ry):
+            for int t2 in range(w + h):
+                for int t in range(w + h):
+                    if not _move(&r, &rx, &ry): break
                     rx = (rx + w) % w
                     ry = (ry + h) % h
                     r.add[rx + w * ry]++
                     l += 1
                 r.end[rx + w * ry] += l
+
                 v = land_noise_at(noise, rx, ry)
                 if v <= water_height:
                     break

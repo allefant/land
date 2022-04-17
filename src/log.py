@@ -111,7 +111,7 @@ def land_log_message(char const *format, ...):
 
     FILE * logfile = fopen(logname, "a")
     if logfile:
-        fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06d ",
+        fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
             tm.tm_year + 1900,
             tm.tm_mon + 1,
             tm.tm_mday,

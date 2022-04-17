@@ -11,6 +11,14 @@ class LandParameters:
     int skip # how many render frames to skip (saves battery)
     LandRunner *start
 
+class LandTiming:
+    double t
+    char *name
+
+class LandTimings:
+    double t
+    LandArray *timings # [LandTiming]
+
 static import allegro5/a5_main
 
 static bool land_active
@@ -155,6 +163,39 @@ def land_get_flips -> int:
 def land_get_time() -> double:
     """Get the time in seconds since Land has started."""
     return platform_get_time()
+
+def land_timing_new -> LandTimings*:
+    LandTimings *self
+    land_alloc(self)
+    self.timings = land_array_new()
+    self.t = land_get_time()
+    return self
+
+def land_timing_add(LandTimings *self, str name):
+    LandTiming *t
+    land_alloc(t)
+    t.t = land_get_time()
+    t.name = land_strdup(name)
+    land_array_add(self.timings, t)
+
+def land_timing_print(LandTimings *self):
+    double t0 = self.t
+    double tp = self.t
+    print("Timings")
+    for LandTiming *t in LandArray *self.timings:
+        print("%6.3f (+%6.3f) %s", t.t - t0, t.t - tp, t.name)
+        tp = t.t
+
+def land_timing_total(LandTimings *self) -> double:
+    if land_array_count(self.timings) == 0: return 0.0
+    LandTiming *t = land_array_get(self.timings, -1)
+    return t.t - self.t
+
+def land_timing_destroy(LandTimings *self):
+    for LandTiming *t in LandArray *self.timings:
+        land_free(t.name)
+    land_array_destroy_with_free(self.timings)
+    land_free(self)
 
 def land_pause:
     """Stop time. The tick function of the current runner will not be

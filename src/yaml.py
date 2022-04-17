@@ -20,10 +20,15 @@ class LandYaml:
     char *filename
     LandYamlEntry *root
 
+    # while writing
     char *key
     LandYamlEntry *parent
     LandArray *parents
     bool expect_key
+
+    # while reading
+    int reading
+    LandYamlEntry *current
 
 def land_yaml_get_mapping(LandYamlEntry *self) -> LandHash *:
     assert(self.type == YamlMapping)
@@ -116,6 +121,15 @@ def land_yaml_get_nth_scalar(LandYamlEntry *self, int i) -> char const *:
 def land_yaml_get_entry_sequence(LandYamlEntry *self, char const *name) -> LandArray*:
     return land_yaml_get_sequence(land_yaml_get_entry(self, name))
 
+def land_yaml_read_entry_mapping(LandYaml *self, str name) -> bool:
+    auto entry = land_yaml_get_entry(self.current, name)
+    if entry and entry.type == YamlMapping:
+        land_array_add(self.parents, self.current)
+        self.current = entry
+        self.reading++
+        return True
+    return False
+
 def land_yaml_new(char const *filename) -> LandYaml *:
     LandYaml *yaml
     land_alloc(yaml)
@@ -153,23 +167,30 @@ def land_yaml_open(LandYaml *yaml, LandYamlEntry *entry):
     yaml.parent = entry
     yaml.expect_key = True if entry.type == YamlMapping else False
 
+def land_yaml_mapping_new -> LandYamlEntry*:
+    LandYamlEntry *entry
+    land_alloc(entry)
+    entry.type = YamlMapping
+    entry.mapping = land_hash_new()
+    entry.sequence = land_array_new()
+    return entry
+
 def land_yaml_add_mapping(LandYaml *yaml):
     """
 After calling this, use land_yaml_add_scalar to add a key, and then
 land_yaml_add_* to add a value. Repeat to add the 2nd and more map entries.
 Use land_yaml_done when done.
     """
-    LandYamlEntry *entry
-    land_alloc(entry)
-    entry.type = YamlMapping
-    entry.mapping = land_hash_new()
-    entry.sequence = land_array_new()
-    _add_entry(yaml, entry)
+    _add_entry(yaml, land_yaml_mapping_new())
 
 def land_yaml_done(LandYaml *yaml):
     """
 Call this when done with a mapping or sequence.
 """
+    if yaml.reading > 0:
+        yaml.current = land_array_pop(yaml.parents)
+        yaml.reading--
+        return
     yaml.expect_key = False
     yaml.parent = land_array_pop(yaml.parents)
     if yaml.parent and yaml.parent->type == YamlMapping: yaml.expect_key = True
@@ -213,6 +234,13 @@ def land_yaml_add_scalar_v(LandYaml *yaml, char const *v, va_list args):
 def land_yaml_add_scalar_f(LandYaml *yaml, char const *v, ...):
     va_list args
     va_start(args, v)
+    land_yaml_add_scalar_v(yaml, v, args)
+    va_end(args)
+
+def land_yaml_put(LandYaml *yaml, str name, str v, ...):
+    va_list args
+    va_start(args, v)
+    land_yaml_add_scalar(yaml, name)
     land_yaml_add_scalar_v(yaml, v, args)
     va_end(args)
 

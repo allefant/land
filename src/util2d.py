@@ -180,3 +180,116 @@ def land_line_circle_collision2d(LandFloat lx1, ly1, lx2, ly2,
     if cx * cx + cy * cy <= cr * cr: return True
     
     return False
+
+class LandRectangle:
+    LandFloat x, y, w, h
+
+def land_rotated_rectangle_aabb(float cx, cy, angle, w, h) -> LandRectangle:
+    float ax = cos(angle)
+    float ay = sin(angle)
+    float bx = cos(angle + pi / 2)
+    float by = sin(angle + pi / 2)
+    float wx = ax * w / 2
+    float wy = ay * w / 2
+    float hx = bx * h / 2
+    float hy = by * h / 2
+
+    float x[] = {cx - wx - hx, cx + wx - hx, cx + wx + hx, cx - wx + hx}
+    float y[] = {cy - wy - hy, cy + wy - hy, cy + wy + hy, cy - wy + hy}
+
+    float x0 = x[0]
+    float y0 = y[0]
+    float x1 = x[0]
+    float y1 = y[0]
+    for int i in range(1, 4):
+        if x[i] < x0: x0 = x[i]
+        if y[i] < y0: y0 = y[i]
+        if x[i] > x1: x1 = x[i]
+        if y[i] > y1: y1 = y[i]
+    LandRectangle r = {x0, y0, x1 - x0, y1 - y0}
+    return r
+
+def land_point_in_rect(LandFloat px, py, cx, cy, angle, w, h) -> bool:
+    """
+    The point is at px/py. The rectangle is centered around cx/cy,
+    rotated by angle and has size w/h.
+    angle 0 means w goes to +x and h to +y.
+    """
+    float ax = cos(angle)
+    float ay = sin(angle)
+    float bx = cos(angle + pi / 2)
+    float by = sin(angle + pi / 2)
+    float wx = ax * w / 2
+    float wy = ay * w / 2
+    float hx = bx * h / 2
+    float hy = by * h / 2
+
+    if land_cross2d(px - (cx - wx - hx), py - (cy - wy - hy), ax, ay) > 0: return False
+    if land_cross2d(px - (cx + wx - hx), py - (cy + wy - hy), bx, by) > 0: return False
+    if land_cross2d(px - (cx + wx + hx), py - (cy + wy + hy), -ax, -ay) > 0: return False
+    if land_cross2d(px - (cx - wx + hx), py - (cy - wy + hy), -bx, -by) > 0: return False
+
+    return True
+
+def land_point_rectangle_distance(LandFloat px, py, cx, cy, angle, w, h) -> LandFloat:
+    """
+    The point is at px/py. The rectangle is centered around cx/cy,
+    rotated by angle and has size w/h.
+    angle 0 means w goes to +x and h to +y.
+
+    Returns the distance of point px/py to the rectangle outline. A
+    value >0 means the point is outside, <0 means the point is inside.
+
+    0___________w___________1
+    |                       |
+    |                       |
+    |           . cx,cy     h
+    |                       |
+    3_______________________2
+    """
+    LandFloat ax = cos(angle)
+    LandFloat ay = sin(angle)
+    LandFloat bx = cos(angle + pi / 2)
+    LandFloat by = sin(angle + pi / 2)
+    LandFloat wx = ax * w / 2
+    LandFloat wy = ay * w / 2
+    LandFloat hx = bx * h / 2
+    LandFloat hy = by * h / 2
+    LandFloat vx0 = px - (cx - wx - hx)
+    LandFloat vy0 = py - (cy - wy - hy)
+    LandFloat vx1 = px - (cx + wx - hx)
+    LandFloat vy1 = py - (cy + wy - hy)
+    LandFloat vx2 = px - (cx + wx + hx)
+    LandFloat vy2 = py - (cy + wy + hy)
+    LandFloat vx3 = px - (cx - wx + hx)
+    LandFloat vy3 = py - (cy - wy + hy)
+
+    LandFloat d0 = land_cross2d(vx0, vy0, ax, ay)
+    LandFloat d1 = land_cross2d(vx1, vy1, bx, by)
+    LandFloat d2 = land_cross2d(vx2, vy2, -ax, -ay)
+    LandFloat d3 = land_cross2d(vx3, vy3, -bx, -by)
+
+    if d0 > 0:
+        if d1 > 0:
+            return sqrt(vx1 * vx1 + vy1 * vy1)
+        if d3 > 0:
+            return sqrt(vx0 * vx0 + vy0 * vy0)
+        return d0
+    if d1 > 0:
+        if d2 > 0:
+            return sqrt(vx2 * vx2 + vy2 * vy2)
+        return d1
+    if d2 > 0:
+        if d3 > 0:
+            return sqrt(vx3 * vx3 + vy3 * vy3)
+        return d2
+    if d3 > 0:
+        return d3
+
+    # all are negative, find the one closest to the outline
+    LandFloat d = d0
+    if d1 > d: d = d1
+    if d2 > d: d = d2
+    if d3 > d: d = d3
+    return d
+
