@@ -200,8 +200,11 @@ def _value_set(Value *value, int v, str v_string):
     if value.name: land_widget_button_replace_text(value.name, value.names[value.v])
     if value.color: land_widget_button_replace_text(value.color, color_picker_find_name(v))
     if value.edit:
-        if value.is_string: land_widget_edit_set_text(value.edit, value.v_string)
-        else: land_widget_edit_set_text(value.edit, land_array_get(value.choices, value.v))
+        if value.is_string:
+            land_widget_edit_set_text(value.edit, value.v_string)
+        else:
+            if value.v < land_array_count(value.choices):
+                land_widget_edit_set_text(value.edit, land_array_get(value.choices, value.v))
 
 def value_set(Value *value, int v): _value_set(value, v, None)
 def value_set_string(Value *value, str v): _value_set(value, 0, v)
@@ -319,6 +322,9 @@ def assign_presets(Dialog *dialog):
     LandArray* preset_files = land_filelist(path, _ini_filter, 0, None)
     dialog.presets = land_array_new()
     land_free(path)
+    
+    if preset_files == None:
+        preset_files = land_array_new()
 
     for char *ini in preset_files:
         char *name = land_strdup(ini)

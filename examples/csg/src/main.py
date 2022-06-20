@@ -1,7 +1,7 @@
 import global stdlib
 import global string
 import global land.land
-import global land.csg.csg_test
+#import global land.csg.csg_test
 import global land.csg.csg_shapes
 import global land.util3d
 
@@ -140,13 +140,9 @@ static def init(LandRunner *self):
         land_csg_destroy(cubeA);
         land_csg_destroy(cubeB);
 
-        csg_test()
-        
         land_quit()
         return
-    
-    csg_test()
-
+  
     land_font_load("../../data/galaxy.ttf", 12)
 
     theme = land_widget_theme_new("../../data/classic.cfg")

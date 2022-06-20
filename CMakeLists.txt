@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-#cmake_policy(SET CMP0042 NEW) # new rpath behavior on macos
+cmake_policy(SET CMP0042 NEW) # new rpath behavior on macos
 INCLUDE (CheckIncludeFiles)
 
 project(land) 
@@ -18,6 +18,7 @@ set(MEMLOG 0 CACHE BOOL "Whether to use the builtin memory logger.")
 set(EXAMPLES_ON 1 CACHE BOOL "Build the examples.")
 
 set(ALLEGRO_MONOLITH 1 CACHE BOOL "Use monolith library.")
+set(ALLEGRO_DEBUG 0 CACHE BOOL "Use debug library.")
 
 #_______________________________________________________________________
 # Step: Find all .py source files.
@@ -169,52 +170,42 @@ if (SHARED)
                 zlib
                 opengl32
                 )
-        elseif (OSX)
+        else()
+            set(AS "")
+            if (ALLEGRO_DEBUG)
+                set(AS "_debug")
+            endif()
             find_library(OPENGL OpenGL)
-            if (ALLEGRO_MONOLITH)
-                target_link_libraries(${libname}-debug
-                    allegro_monolith-debug
-                    z
-                    ${OPENGL}
-                    )
-            else ()
-                target_link_libraries(${libname}-debug
-                    allegro
-                    allegro_main
-                    allegro_font
-                    allegro_primitives
-                    allegro_audio
-                    allegro_acodec
-                    allegro_color
-                    allegro_ttf
-                    allegro_image
-                    allegro_dialog
-                    z
-                    ${OPENGL}
-                    )
-            endif()
-        else ()
-            if (ALLEGRO_MONOLITH)
-                target_link_libraries(${libname}-debug
-                    allegro_monolith-debug
-                    ${OPENGL}
-                    )
-            else ()
-                target_link_libraries(${libname}-debug
-                    allegro
-                    allegro_main
-                    allegro_font
-                    allegro_primitives
-                    allegro_audio
-                    allegro_acodec
-                    allegro_color
-                    allegro_ttf
-                    allegro_image
-                    allegro_dialog
-                    ${OPENGL}
-                    )
-            endif()
-        endif ()
+            find_library(ALLEGRO "allegro${AS}")
+            find_library(ALLEGRO_MAIN allegro_main${AS})
+            find_library(ALLEGRO_FONT allegro_font ${AS})
+            find_library(ALLEGRO_PRIMITIVES allegro_primitives ${AS})
+            find_library(ALLEGRO_AUDIO allegro_audio ${AS})
+            find_library(ALLEGRO_ACODEC allegro_acodec ${AS})
+            find_library(ALLEGRO_COLOR allegro_color ${AS})
+            find_library(ALLEGRO_TTF allegro_ttf ${AS})
+            find_library(ALLEGRO_IMAGE allegro_image ${AS})
+            find_library(ALLEGRO_DIALOG allegro_dialog ${AS})
+            message("AS ${AS}")
+            message("ALLEGRO ${ALLEGRO}")
+            target_include_directories(${libname}-debug
+                PUBLIC "/usr/local/include"
+            )
+            target_link_libraries(${libname}-debug
+                ${ALLEGRO}
+                ${ALLEGRO_MAIN}
+                ${ALLEGRO_FONT}
+                ${ALLEGRO_PRIMITIVES}
+                ${ALLEGRO_AUDIO}
+                ${ALLEGRO_ACODEC}
+                ${ALLEGRO_COLOR}
+                ${ALLEGRO_TTF}
+                ${ALLEGRO_IMAGE}
+                ${ALLEGRO_DIALOG}
+                z
+                ${OPENGL}
+                )
+        endif()
     endif (DEBUG)
     if (RELEASE)
         add_library(${libname} SHARED ${cfiles})
@@ -249,7 +240,7 @@ if (SHARED)
             find_library(ALLEGRO_IMAGE allegro_image)
             find_library(ALLEGRO_DIALOG allegro_dialog)
             target_include_directories(${libname}
-                PUBLIC "/usr/local/include"                          
+                PUBLIC "/usr/local/include"
             )
             target_link_libraries(${libname}
                 ${ALLEGRO}

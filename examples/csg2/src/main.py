@@ -1,7 +1,7 @@
 import global stdlib
 import global string
 import global land.land
-import global land.csg.csg_test
+#import global land.csg.csg_test
 import global land.csg.csg_shapes
 import global land.util3d
 
