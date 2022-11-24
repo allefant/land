@@ -198,7 +198,10 @@ def land_camera_get_pitch(LandCamera *self) -> LandFloat:
         \|/________Y
         X
     """
-    return -atan2(self.y.z, self.z.z)
+    # self.z is the "back" vector
+    # self.z.z is how much up it goes, from -1 to 0 to 1 - if it is 0
+    # we are at a horizontal level and pitch is 0 (sin(0) == 0°)
+    return atan2(self.z.z, self.y.z)
 
 def land_camera_get_roll(LandCamera *self) -> LandFloat:
     """
@@ -210,9 +213,7 @@ def land_camera_get_roll(LandCamera *self) -> LandFloat:
        |/___.____Z
       Y
     """
-    #LandFloat xz = sqrt(self.x.x * self.x.x + self.x.z * self.x.z)
-    #return asin(self.x.z / xz)
-    return -atan2(self.z.x, self.z.z)
+    return atan2(self.x.z, self.y.z)
 
 def land_camera_get_yaw(LandCamera *self) -> LandFloat:
     """
@@ -273,6 +274,18 @@ def land_camera_look_into(LandCamera *self, float dx, dy):
     self.y = land_vector(dx / -d, dy / -d, 0)
     self.z = land_vector(0, 0, 1)
     self.x = land_vector_cross(self.y, self.z)
+
+def land_camera_look_to(LandCamera *self, float x, y, z):
+    float dx = x - self.p.x
+    float dy = y - self.p.y
+    float dz = z - self.p.z
+    double d = sqrt(dx * dx + dy * dy + dz * dz)
+    if d < 0.0001:
+        return
+    self.y = land_vector(dx / -d, dy / -d, dz / -d)
+    self.z = land_vector(0, 0, 1)
+    self.x = land_vector_normalize(land_vector_cross(self.y, self.z))
+    self.z = land_vector_cross(self.x, self.y)
 
 def land_camera_warp(LandCamera *self, float x, y, z):
     self.p.x = x
