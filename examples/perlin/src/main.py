@@ -774,7 +774,7 @@ def _add_split(LandHash *sets, str key, int size, char *v):
         land_hash_insert(sets, key, b)
     land_buffer_add(b, v, size)
 
-def main_export(int (*split_cb)(float x, float y, float z), bool debug):
+def main_export_mesh(int (*split_cb)(float x, float y, float z), bool debug):
     export_f = land_file_new("perlin.mesh", "wb")
     main_generate(True, True, debug, True)
     land_file_destroy(export_f)
@@ -813,6 +813,12 @@ def main_export(int (*split_cb)(float x, float y, float z), bool debug):
             land_file_write(f, b.buffer, b.n)
             land_file_put32le(f, 0) # no markers
         land_file_destroy(f)
+
+def main_export_map:
+
+    main_generate_noise_info(global_dialog, True)
+
+    land_image_save(image, "perlin.png")
 
 class Camera:
     LandVector p, x, y, z

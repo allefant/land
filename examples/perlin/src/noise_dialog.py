@@ -464,6 +464,7 @@ def dialog_new(int width, height) -> Dialog*:
     _dialog_button_new(self, outer, "Load Preset (L)", click_load)
     _dialog_button_new(self, outer, "Save Preset", click_save)
     land_widget_button_new(outer, "Export Mesh", click_export, 0, 0, 10, 10)
+    land_widget_button_new(outer, "Export Map", click_export_map, 0, 0, 10, 10)
 
     return self
 
@@ -507,4 +508,7 @@ def _split_cb(float x, y, z) -> int:
     return f
 
 def click_export(LandWidget *self):
-    main_export(_split_cb, False)
+    main_export_mesh(_split_cb, False)
+
+def click_export_map(LandWidget *self):
+    main_export_map()
