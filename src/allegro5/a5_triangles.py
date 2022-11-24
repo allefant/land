@@ -22,6 +22,10 @@ class LandVertexAllegro:
     float u, v
     float r, g, b, a
 
+class LandVertexNoTexture:
+    float x, y, z
+    float r, g, b, a
+
 static class LandTrianglesPlatform:
     ALLEGRO_VERTEX_DECL *decl
     ALLEGRO_VERTEX_BUFFER *vb
@@ -70,13 +74,25 @@ def platform_update_vertex_allegro(LandTriangles *t, int i, float x, y, z, tu, t
     v.b = b
     v.a = a
 
+def platform_update_vertex_no_texture(LandTriangles *t, int i, float x, y, z, r, g, b, a):
+    LandVertexNoTexture *v = land_triangles_get_vertex(t, i)
+    v.x = x
+    v.y = y
+    v.z = z
+    v.r = r
+    v.g = g
+    v.b = b
+    v.a = a
+
 def platform_update_vertex(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
     if t.has_normals and t.has_texture:
         platform_update_vertex_with_normals(t, i, x, y, z, tu, tv, r, g, b, a)
-    elif t.has_normals:
+    elif t.has_normals and not t.has_texture:
         platform_update_vertex_with_normals_no_texture(t, i, x, y, z, r, g, b, a)
-    else:
+    elif t.has_texture:
         platform_update_vertex_allegro(t, i, x, y, z, tu, tv, r, g, b, a)
+    else:
+        platform_update_vertex_no_texture(t, i, x, y, z, r, g, b, a)
 
 def platform_set_vertex_normal(LandTriangles *t, float x, y, z):
     if t.has_normals and t.has_texture:
@@ -111,7 +127,7 @@ def platform_triangles_init(LandTriangles *self):
         }
         self.size = 52
         platform.decl = al_create_vertex_decl(elem, self.size)
-    elif self.has_normals:
+    elif self.has_normals and not self.has_texture:
         ALLEGRO_VERTEX_ELEMENT elem[] = {
             {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
             {ALLEGRO_PRIM_USER_ATTR + 0, ALLEGRO_PRIM_FLOAT_3, 12},
@@ -121,7 +137,7 @@ def platform_triangles_init(LandTriangles *self):
         }
         self.size = 44
         platform.decl = al_create_vertex_decl(elem, self.size)
-    else:
+    elif self.has_texture:
         ALLEGRO_VERTEX_ELEMENT elem[] = {
             {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
             {ALLEGRO_PRIM_TEX_COORD_PIXEL, ALLEGRO_PRIM_FLOAT_2, 12},
@@ -129,6 +145,14 @@ def platform_triangles_init(LandTriangles *self):
             {0, 0, 0}
         }
         self.size = 36
+        platform.decl = al_create_vertex_decl(elem, self.size)
+    else:
+        ALLEGRO_VERTEX_ELEMENT elem[] = {
+            {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
+            {ALLEGRO_PRIM_COLOR_ATTR, 0, 12},
+            {0, 0, 0}
+        }
+        self.size = 28
         platform.decl = al_create_vertex_decl(elem, self.size)
 
 def platform_triangles_deinit(LandTriangles *self):
@@ -138,7 +162,7 @@ def platform_triangles_deinit(LandTriangles *self):
         al_destroy_vertex_buffer(platform.vb)
     land_free(platform)
 
-def platform_triangles_draw(LandTriangles *t, bool more):
+def platform_triangles_prepare_draw(LandTriangles *t, bool more):
     LandTrianglesPlatform* platform = t.platform
     if t.can_cache and not platform.vb:
         platform.vb = al_create_vertex_buffer(platform.decl,
@@ -148,16 +172,22 @@ def platform_triangles_draw(LandTriangles *t, bool more):
 
     if platform.shader:
         if not more:
-            al_use_shader(platform.shader.a5)
+            if not al_use_shader(platform.shader.a5):
+                print("could not use shader")
         if platform.shader.light_tag != _light_tag:
             platform.shader.light_tag = _light_tag
             float f2[3] = {_light_direction.x, _light_direction.y, _light_direction.z}
-            al_set_shader_float_vector("light_direction", 3, f2, 1)
-            al_set_shader_float("light", _light)
+            if not al_set_shader_float_vector("light_direction", 3, f2, 1):
+                print("could not set light direction")
+            if not al_set_shader_float("light", _light):
+                print("could not set light")
 
         if pim:
             al_set_shader_sampler("al_tex", pim.a5, 0)
-    
+
+def platform_triangles_perform_draw(LandTriangles *t):
+    LandTrianglesPlatform* platform = t.platform
+    LandImagePlatform *pim = (void *)t.image
     if platform.vb:
         al_draw_vertex_buffer(platform.vb, pim ? pim.a5 : None,
             0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
@@ -165,6 +195,21 @@ def platform_triangles_draw(LandTriangles *t, bool more):
         al_draw_prim(t.buf->buffer, platform.decl, pim ? pim.a5 : None,
             0, t.n, ALLEGRO_PRIM_TRIANGLE_LIST)
     platform_uncheck_blending()
+
+def platform_triangles_draw(LandTriangles *t, bool more):
+    platform_triangles_prepare_draw(t, more)
+    platform_triangles_perform_draw(t)
+
+def platform_set_shader_vector(str name, int n, float *f):
+    if not al_set_shader_float_vector(name, 1, f, n):
+        print("could not set %s", name)
+
+
+def platform_set_shader_int(str name, int i):
+    if not al_set_shader_int(name, i):
+        print("could not set %s", name)
+
+
 
 def platform_triangles_get_xyz(LandTriangles* t, int i, float *x, *y, *z):
     LandVertexAllegro *v = land_triangles_get_vertex(t, i)

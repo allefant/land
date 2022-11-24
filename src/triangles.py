@@ -36,6 +36,12 @@ def land_triangles_new_with_normals_no_texture -> LandTriangles*:
     platform_triangles_init(self)
     return self
 
+def land_triangles_new_no_texture -> LandTriangles*:
+    LandTriangles *self; land_alloc(self)
+    self.can_cache = True
+    platform_triangles_init(self)
+    return self
+
 def land_triangles_add_csg(LandTriangles* self, LandCSG *csg):
     """
     Note: All polygons contained in the CSG must be triangles.
@@ -61,6 +67,8 @@ def land_triangles_destroy_with_image(LandTriangles *self):
 
 def land_triangles_clear(LandTriangles *self):
     self.n = 0
+    if self.buf:
+        land_buffer_clear(self.buf)
 
 def land_triangles_refresh(LandTriangles* self):
     platform_triangles_refresh(self)
@@ -104,6 +112,14 @@ def land_triangles_draw(LandTriangles *self):
 def land_triangles_draw_more(LandTriangles *self, bool more):
     if not self.n: return
     platform_triangles_draw(self, more)
+
+def land_triangles_prepare_draw(LandTriangles *self, bool more):
+    if not self.n: return
+    platform_triangles_prepare_draw(self, more)
+
+def land_triangles_perform_draw(LandTriangles *self):
+    if not self.n: return
+    platform_triangles_perform_draw(self)
 
 def land_triangles_get_vertex(LandTriangles* self, int i) -> void*:
     char* pointer = self.buf.buffer
