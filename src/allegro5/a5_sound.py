@@ -3,6 +3,7 @@ import global allegro5.allegro, allegro5.allegro_acodec
 import land/sound, land/mem
 static import global allegro5.allegro_audio
 static import land.array
+static import land.log
 
 static class LandSoundPlatform:
     LandSound super
@@ -177,19 +178,28 @@ def platform_stream_music(LandStream *super, char const *filename,
     LandStreamPlatform *self = (void *)super
     al_destroy_audio_stream(self.a5)
     self.a5 = al_load_audio_stream(filename,
-        super->fragments, super->samples);
+        super->fragments, super->samples)
+    if not self.a5:
+        land_log_message("Could not load %s\n", filename)
+        return
     al_attach_audio_stream_to_mixer(self.a5, al_get_default_mixer())
     if looping:
         al_set_audio_stream_playmode(self.a5, ALLEGRO_PLAYMODE_LOOP)
 
 def platform_stream_volume(LandStream *super, float volume):
     LandStreamPlatform *self = (void *)super
+    if not self.a5:
+        return
     al_set_audio_stream_gain(self.a5, volume)
 
 def platform_stream_is_playing(LandStream *super) -> bool:
     LandStreamPlatform *self = (void *)super
+    if not self.a5:
+        return False
     return al_get_audio_stream_playing(self.a5)
 
 def platform_stream_set_playing(LandStream *super, bool onoff):
     LandStreamPlatform *self = (void *)super
+    if not self.a5:
+        return
     al_set_audio_stream_playing(self.a5, onoff)
