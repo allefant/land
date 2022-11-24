@@ -9,6 +9,7 @@ class LandArrayIterator:
     int i
 
 static import mem
+static import land.random
 
 *** "ifdef" LAND_MEMLOG
 
@@ -353,6 +354,15 @@ def land_array_reverse(LandArray *self):
 
     for int i in range(self.count / 2):
         land_array_swap(self, i, self.count - 1 - i)
+
+def land_array_shuffle(LandArray *self):
+    int n = land_array_count(self)
+    LandArray *copy = land_array_copy(self)
+    int *a = land_malloc(n * sizeof(int))
+    land_shuffle(a, n)
+    for int i in range(n):
+        land_array_replace_nth(self, i, land_array_get(copy, a[i]))
+
 
 *** "ifdef" LAND_MEMLOG
 
