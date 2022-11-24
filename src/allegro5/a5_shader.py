@@ -37,9 +37,13 @@ def platform_shader_new(
 
     return &self.super
 
+def platform_shader_use(LandShader *self_):
+    LandShaderPlatform *self = (void *)self_
+    if not al_use_shader(self.a5):
+        land_log_message("Shader use error: %s\n", self_.name)
+
 def platform_shader_destroy(LandShader *super):
     land_free(super.name)
     LandShaderPlatform* self = (void *)super
     al_destroy_shader(self.a5)
     land_free(self)
-

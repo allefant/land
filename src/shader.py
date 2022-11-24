@@ -52,6 +52,9 @@ def land_shader_new(char const *name,
     self = platform_shader_new(name, vertex_glsl, fragment_glsl)
     return self
 
+def land_shader_use(LandShader *shader):
+    platform_shader_use(shader)
+
 def land_shader_destroy(LandShader *self):
     platform_shader_destroy(self)
    
