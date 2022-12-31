@@ -1,4 +1,5 @@
 import array, image
+static import main
 
 class LandAnimation:
     float fps
@@ -28,7 +29,8 @@ def land_animation_destroy(LandAnimation *self):
     land_free(self)
 
 def land_animation_get_frame(LandAnimation *self, int i) -> LandImage *:
-    return land_array_get_nth(self.frames, i)
+    if not self.frames: return None
+    return land_array_get_or_none(self.frames, i)
 
 def land_animation_length(LandAnimation *self) -> int:
     if self.frames:
@@ -52,6 +54,14 @@ def land_animation_load_cb(char const *pattern,
         land_log_message("Could not locate: %s\n", pattern);
         return None
     return land_animation_new(pics)
+
+def land_animation_load(str pattern) -> LandAnimation*:
+    return land_animation_load_cb(pattern, None, None)
+
+def land_animation_center(LandAnimation *self):
+    if not self.frames: return
+    for LandImage* frame in LandArray* self.frames:
+        land_image_center(frame)
 
 def land_animation_draw_frame(LandAnimation *self, int i,
     float x, y):
@@ -91,3 +101,14 @@ def land_animation_load_on_demand(LandAnimation* self):
 def land_animation_load_async(LandAnimation* self):
     for LandImage* image in LandArray* self.frames:
         land_image_load_async(image)
+
+def land_animation_draw(LandAnimation* self, float x, y, int f):
+    int n = land_animation_length(self)
+    f %= n
+    land_animation_draw_frame(self, f, x, y)
+
+def land_animation_draw_scaled(LandAnimation* self, float x, y, sx, sy, int f):
+    int n = land_animation_length(self)
+    f %= n
+    LandImage *frame = land_animation_get_frame(self, f)
+    land_image_draw_scaled(frame, x, y, sx, sy)

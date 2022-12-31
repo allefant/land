@@ -676,6 +676,10 @@ def land_image_offset(LandImage *self, int x, int y):
     self.x = x
     self.y = y
 
+def land_image_shift(LandImage *self, float x, y):
+    self.x += x
+    self.y += y
+
 def land_image_memory_draw(LandImage *self, float x, float y):
     assert(0)
 

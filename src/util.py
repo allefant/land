@@ -156,6 +156,9 @@ def land_utf8_copy(char *target, int size, char const *source):
     target[i] = 0
 
 def land_fnmatch(char const *pattern, char const *name) -> bool:
+    """
+    Match ? and * in the pattern.
+    """
     int i = 0, j = 0
     while True:
         switch pattern[i]:
@@ -163,6 +166,22 @@ def land_fnmatch(char const *pattern, char const *name) -> bool:
                 # at end of pattern we must be at end of name
                 return name[j] == 0
             case '?':
+                # match an optional block ?(...)
+                if pattern[i + 1] == '(':
+                    int n = 0
+                    while pattern[i + 2 + n] != ')':
+                        if pattern[i + 2 + n] == 0:
+                            return False # unclosed parenthesis
+                        n++
+                    char pattern2[strlen(pattern) + 1]
+                    strncpy(pattern2, pattern + i + 2, n)
+                    pattern2[n] = 0
+                    strcat(pattern2 + n, pattern + i + 3 + n)
+                    # if it matches with the optional pattern it matches
+                    if land_fnmatch(pattern2, name + j):
+                        return True
+                    # else match without it
+                    return land_fnmatch(pattern + i + 3 + n, name + j)
                 # nothing to match the question mark against
                 if name[j] == 0: return False
                 break
@@ -211,6 +230,10 @@ def land_starts_with(char const *s, *start) -> bool:
     return strncmp(s, start, n) == 0
 
 def land_concatenate(char **s, char const *cat):
+    """
+    Extends the string pointed to by s, appending cat.
+    """
+    if not *s: *s = land_strdup("")
     int sn = strlen(*s)
     int n = sn + strlen(cat) + 1
     char *re = land_realloc(*s, n)
@@ -231,6 +254,13 @@ def land_appendv(char **s, str format, va_list args):
 def land_append(char **s, str format, ...):
     va_list args
     va_start(args, format)
+    land_appendv(s, format, args)
+    va_end(args)
+
+def land_overwrite(char **s, str format, ...):
+    va_list args
+    va_start(args, format)
+    (*s)[0] = 0
     land_appendv(s, format, args)
     va_end(args)
 
@@ -330,7 +360,7 @@ def land_shorten(char **s, int start, end):
     land_shorten("abcd", 1, 3) -> "bc"
     land_shorten("abcd", 1, -1) -> "bc"
     """
-    char *replace = land_substring(*s, start, strlen(*s) - end)
+    char *replace = land_substring(*s, start, end)
     land_free(*s)
     *s = replace
 

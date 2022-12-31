@@ -13,6 +13,9 @@ class LandFile:
 
 static char *prefix
 
+def land_prefix -> str:
+    return prefix
+
 def land_file_new(char const *path, char const *mode) -> LandFile *:
     char *path2
     if mode[0] == 'r':
@@ -31,11 +34,19 @@ def land_file_new(char const *path, char const *mode) -> LandFile *:
     return self
 
 def land_file_destroy(LandFile *self):
+    """
+    Closes the file, don't use anymore after calling this.
+
+    Note: the file on disk is not destroyed
+    """
     platform_fclose(self.f)
     land_free(self.path)
     land_free(self)
 
 def land_file_read(LandFile *self, char *buffer, int bytes) -> int:
+    """
+    Read up to bytes bytes, returns the actual number of bytes read.
+    """
     return platform_fread(self.f, buffer, bytes)
 
 def land_file_write(LandFile *self, char const *buffer, int bytes) -> int:
@@ -158,6 +169,32 @@ def land_get_current_directory() -> char *:
     """
     return platform_get_current_directory()
 
+def land_make_directory(str path):
+    platform_make_directory(path)
+
+def land_file_copy(str src, dst) -> bool:
+    """
+    Copies file at src to dst, creating any needed destination folders.
+    """
+    int i = land_find_from_back(dst, "/")
+    if i >= 0:
+        char *folder = land_substring(dst, 0, i)
+        land_make_directory(folder)
+        land_free(folder)
+    auto srcf = land_file_new(src, "rb")
+    if not srcf: return False
+    auto dstf = land_file_new(dst, "wb")
+    if not dstf: return False
+    int s = 1024 * 1024
+    char buf[s]
+    while True:
+        int n = land_file_read(srcf, buf, s)
+        if n == 0: break
+        land_file_write(dstf, buf, n)
+    land_file_destroy(srcf)
+    land_file_destroy(dstf)
+    return True
+
 def land_get_data_path() -> char *:
     return platform_get_data_path()
 
@@ -188,6 +225,11 @@ def land_path_with_prefix(char const *name) -> char *:
     else:
         strcpy(r, name)
     return r
+
+def land_path_without_prefix(str path) -> char*:
+    if land_starts_with(path, prefix):
+        return land_substring(path, strlen(prefix), strlen(path))
+    return land_strdup(path)
 
 def land_path_with_absolute_prefix(char const *name) -> char *:
     char *x = land_get_current_directory()

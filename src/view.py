@@ -74,10 +74,12 @@ def land_view_ensure_visible(LandView *self, float x, y, bx, by):
     Given an absolute map position, scroll the view so it is not within bx/by
     pixels to the view's border.
     """
+    float sx = self.scale_x
+    float sy = self.scale_y
     if x - self.scroll_x < bx: self->scroll_x = x - bx
-    if x - self.scroll_x > self->w - bx: self->scroll_x = x - self->w + bx
+    if x - self.scroll_x > self->w / sx - bx: self->scroll_x = x - self->w / sx + bx
     if y - self.scroll_y < by: self->scroll_y = y - by
-    if y - self.scroll_y > self->h - by: self->scroll_y = y - self->h + by
+    if y - self.scroll_y > self->h / sy - by: self->scroll_y = y - self->h / sy + by
 
 def land_view_ensure_visible_on_screen(LandView *self, float x, y, bx, by):
     """

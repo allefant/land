@@ -162,6 +162,14 @@ def land_mouse_z() -> int:
     """Return the mouse wheel coordinate for the current tick."""
     return mz
 
+def land_mouse_transformed(float *x, *y):
+    LandFloat x1 = mx
+    LandFloat y1 = my
+    LandFloat z1 = 0
+    land_transform(&x1, &y1, &z1)
+    *x = x1
+    *y = y1
+
 # deprecated, will lose short clicks
 def land_mouse_b() -> int:
     """deprecated"""
@@ -199,9 +207,15 @@ def land_mouse_delta_button(int i) -> int:
     return (buttons[i] & 1) ^ (obuttons[i] & 1)
 
 def land_mouse_button_clicked(int i) -> int:
+    """
+    Triggers on down, button may not be released again yet.
+    """
     return _clicks[i]
     
 def land_mouse_button_released(int i) -> int:
+    """
+    Triggers on button release.
+    """
     return _releases[i]
 
 def land_mouse_set_pos(int x, int y):

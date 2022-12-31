@@ -179,7 +179,7 @@ def land_rnd(double rmin, rmax) -> double:
 
 # both rmin and rmax are inclusive
 # note: not threadsafe, will crash in genrand_int32
-def land_rand(int rmin, int rmax) -> int:
+def land_rand(int64_t rmin, rmax) -> int:
     return land_random(&default_state, rmin, rmax)
 
 def land_random_new(int seed) -> LandRandom *:
@@ -191,7 +191,7 @@ def land_random_new(int seed) -> LandRandom *:
 def land_random_del(LandRandom *self):
     land_free(self)
 
-def land_random(LandRandom *r, int rmin, rmax) -> int:
+def land_random(LandRandom *r, int64_t rmin, rmax) -> int:
     """
     rmax is inclusive, so there are (rmax - rmin + 1) total values
     """

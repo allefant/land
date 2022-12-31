@@ -447,6 +447,8 @@ def land_widget_container_child_i(LandWidget *super, int i) -> LandWidget *:
     """
     LandWidgetContainer *self = (LandWidgetContainer *)super
     int j = 0
+    if not self.children:
+        return None
     for LandWidget *w in LandList *self.children:
         if i == j: return w
         j++
@@ -461,6 +463,8 @@ def land_widget_get_sibling(LandWidget *widget, int d) -> LandWidget *:
     """
     LandWidgetContainer *self = (LandWidgetContainer *)widget.parent
     LandWidget* prev = None
+    if not self.children:
+        return None
     for LandWidget *w in LandList *self.children:
         if w == widget and d == -1: return prev
         if prev == widget and d == 1: return w

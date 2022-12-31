@@ -23,6 +23,7 @@ def platform_fclose(void *f):
     al_fclose(f)
 
 def platform_fread(void *f, char *buffer, int bytes) -> int:
+    if not f: return 0
     return al_fread(f, buffer, bytes)
 
 def platform_fwrite(void *f, char const *buffer, int bytes) -> int:
@@ -79,6 +80,9 @@ static def add_files(char const *rel, LandArray **array, ALLEGRO_FS_ENTRY *entry
                 *** "endif"
             elif flags & LAND_RELATIVE_PATH:
                 fpath = rel2
+                if land_prefix():
+                    if land_starts_with(fpath, land_prefix()):
+                        fpath += strlen(land_prefix())
             else:
                 fpath = name
             int f = 3
@@ -135,6 +139,11 @@ def platform_get_app_settings_file(char const *appname) -> char *:
 
 def platform_get_app_data_file(char const *appname, char const *filename) -> char *:
     return _get_app_file(appname, ALLEGRO_USER_DATA_PATH, filename)
+
+def platform_make_directory(str path):
+    if not al_filename_exists(path):
+        land_log_message("Creating new path %s.\n", path)
+        al_make_directory(path)
 
 def platform_get_current_directory() -> char *:
     char *d = al_get_current_directory()
