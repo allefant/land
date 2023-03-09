@@ -43,6 +43,9 @@ def land_widget_layout_set_maximum_size(LandWidget *self, int w, h):
     self.box.max_width = w
     self.box.max_height = h
 
+def land_widget_layout_set_minimum_width(LandWidget*self, int w):
+    self.box.min_width = w
+
 def land_widget_layout_set_minimum_height(LandWidget*self, int h):
     self.box.min_height = h
 

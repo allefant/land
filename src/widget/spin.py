@@ -88,6 +88,7 @@ def land_widget_spin_initialize(LandWidget *base,
     buttondown->rate = 0.1
     buttondown->spin = base
     buttondown->dir = -1
+    land_widget_theme_set_minimum_width_for_text(LAND_WIDGET(buttondown), "V")
 
     land_widget_layout_set_shrinking(LAND_WIDGET(buttonup), 1, 0)
     land_widget_layout_set_shrinking(LAND_WIDGET(buttondown), 1, 0)
@@ -130,6 +131,11 @@ def land_widget_spin_set_value(LandWidget *base, float val):
         strcpy(format, "%.0f")
     snprintf(text, sizeof text, format, val)
     land_widget_edit_set_text(edit, text)
+
+def land_widget_spin_set_min_max(LandWidget *base, float minv, maxv):
+    LandWidgetSpin *spin = LAND_WIDGET_SPIN(base)
+    spin.min = minv
+    spin.max = maxv
 
 def land_widget_spin_set_minimum_text(LandWidget *base, char const *text):
     LandListItem *item = LAND_WIDGET_CONTAINER(base)->children->first

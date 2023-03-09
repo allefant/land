@@ -103,9 +103,12 @@ def land_widget_handle_update(LandWidget *super, int set):
     float n, i
     n = self.maxval - self->minval
     i = self.value - self->minval
+    land_widget_theme_set_minimum_width_for_text(super, "-")
+    super.box.w = super.box.min_width
     minpos = super->parent->box.x + super->parent->element->il
     maxpos = super->parent->box.x + super->parent->box.w - super->parent->element->ir
     maxpos -= super->box.w
+    super->box.h = land_widget_inner_height(super->parent)
 
     if set:
         self.value = self->minval + (super->box.x - minpos) * n /\

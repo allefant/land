@@ -510,6 +510,13 @@ def land_widget_move(LandWidget *self, float dx, dy):
     self.box.y += dy
     land_call_method(self, move, (self, dx, dy))
 
+def land_widget_keep_in_parent(LandWidget *self):
+    LandWidget *parent = self.parent
+    float r = self.box.x + self.box.w
+    float pr = parent.box.x + parent.box.w
+    if r > pr:
+        land_widget_move(self, pr - r, 0)
+
 def land_widget_move_to(LandWidget *self, float x, y):
     land_widget_move(self, x - self.box.x, y - self.box.y)
 
@@ -696,6 +703,9 @@ def land_widget_get_inner_size(LandWidget *self, float *w, *h):
         *h -= self.element->it
         *w -= self.element->ir
         *h -= self.element->ib
+
+def land_widget_inner_height(LandWidget *self) -> float:
+    return self->box.h - self.element->it - self.element->ib
 
 def land_widget_base_interface_initialize():
     if land_widget_base_interface: return

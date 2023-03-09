@@ -103,11 +103,12 @@ static def menubutton_clicked(LandWidget *base):
         land_widget_move(self.submenu,
             base->box.x - self.submenu->box.x,
             base->box.y + base->box.h - self.submenu->box.y)
-
     else:
         land_widget_move(self.submenu,
             base->box.x + base->box.w - self.submenu->box.x,
             base->box.y - self.submenu->box.y)
+
+    land_widget_keep_in_parent(self.submenu)
 
     if (self.menu and
         (self.menu->vt->id & LAND_WIDGET_ID_MENU) == LAND_WIDGET_ID_MENU):

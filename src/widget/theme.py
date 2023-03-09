@@ -517,6 +517,16 @@ def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     int h = land_text_height() # not line height (or we would cut off over/under parts)
     land_widget_theme_set_minimum_size_for_contents(self, w, h)
 
+def land_widget_theme_set_minimum_width_for_text(LandWidget *self, str text):
+    LandWidgetThemeElement *element = land_widget_theme_element(self)
+    if not element: return
+    land_font_set(element->font)
+    int w = land_text_get_width(text)
+    self.inner_w = w
+    w += element->il + element->ir
+    if w < element.minw: w = element.minw
+    land_widget_layout_set_minimum_width(self, w)
+
 def land_widget_theme_set_minimum_size_for_image(LandWidget *self,
     LandImage *image):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
