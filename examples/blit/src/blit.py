@@ -26,8 +26,9 @@ def tick(LandRunner *self):
         land_quit()
 
 def draw(LandRunner *self):
+    land_clear(0, 0, 0, 1)
     land_image_draw(image1, 0, 0)
     land_image_draw(image2, 100, 0)
 
-land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_WINDOWED,
+land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_WINDOWED | LAND_RESIZE,
     init, NULL, tick, draw, NULL, NULL)

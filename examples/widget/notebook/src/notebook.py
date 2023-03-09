@@ -20,10 +20,11 @@ static def colored(LandWidget *self):
         self->box.y + self->box.h)
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 12)
+    land_find_data_prefix("data/")
+    land_font_load("data/galaxy.ttf", 12)
 
-    classic = land_widget_theme_new("../../data/classic.cfg")
-    green = land_widget_theme_new("../../data/green.cfg")
+    classic = land_widget_theme_new("/data/classic.cfg")
+    green = land_widget_theme_new("data/green.cfg")
     theme = green
     land_widget_theme_set_default(theme)
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)

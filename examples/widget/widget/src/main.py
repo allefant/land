@@ -36,10 +36,11 @@ static def my_draw(LandWidget *self):
 #    land_widget_layout_set_expanding(entry, 1, 1)
 
 static def init(LandRunner *self):
-    my_font = land_font_load("../../data/galaxy.ttf", 10)
+    land_find_data_prefix("data/")
+    my_font = land_font_load("galaxy.ttf", 10)
     land_font_set(my_font)
 
-    theme = land_widget_theme_new("../../data/classic.cfg")
+    theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
 
     desktop = land_widget_container_new(NULL, 0, 0, 640, 480)

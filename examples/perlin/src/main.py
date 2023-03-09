@@ -1,5 +1,6 @@
 import global land.land
 import noise_dialog
+import presets
 import rivers
 import global complex, fftw3
 
@@ -7,7 +8,8 @@ typedef unsigned char byte
 
 LandImage *image
 LandVector *normals
-Dialog *global_dialog
+global Presets *global_presets
+global Dialog *global_dialog
 global LandWidget *color_picker
 LandVector light
 LandTriangles *triangles
@@ -391,7 +393,9 @@ def init(LandRunner *self):
     LandWidgetTheme* theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
 
-    global_dialog = dialog_new(dialog_size, s)
+    global_dialog = dialog_new(dialog_size, h, True)
+    global_presets = presets_new()
+    presets_update(global_presets, global_dialog)
 
     light = land_vector_normalize(land_vector(1, 1, -1))
 
@@ -601,6 +605,8 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
     if image:
         w = land_image_width(image)
         h = land_image_height(image)
+    
+    if not global_dialog.noise: return
 
     LandArray* compounds = noise_dialog_get_compound_components(global_dialog)
     int n = land_array_count(compounds)
@@ -637,8 +643,8 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
         # load each of the presets, create a full map with each
         int ci = 0
         for str name in compounds:
-            Dialog *component = dialog_new(100, 100)
-            value_set(component.preset, get_preset_id(component, name))
+            Dialog *component = dialog_new(100, 100, False)
+            dialog_set_name(component, name)
             dialog_load(component)
             component.width->v = global_dialog.width->v
             component.height->v = global_dialog.height->v
@@ -954,11 +960,14 @@ def main_reset:
 def draw(LandRunner *self):
     auto dialog = global_dialog
 
+    if land_was_resized():
+        land_widget_move_to(dialog.view, land_display_width() - dialog.size, 0)
+
+    land_unclip()
     land_clear(0, 0, 0, 1)
     land_clear_depth(1)
 
-    if land_was_resized():
-        land_widget_move_to(dialog.view, land_display_width() - dialog.size, 0)
+    if not image: return
     
     int w = land_image_width(image)
     int h = land_image_height(image)
@@ -998,11 +1007,12 @@ def draw(LandRunner *self):
     else:
         land_widget_draw(dialog.view)
 
-    land_text_pos(0, 0)
-    land_color(1, 0, 0, 1)
-    land_print("%.2f", dialog.dt)
+        land_text_pos(0, 0)
+        land_color(1, 0, 0, 1)
+        land_print("%.2f", dialog.dt)
 
 def begin():
+    land_debug(1)
     land_init()
     land_set_display_parameters(640, 480, LAND_OPENGL | LAND_WINDOWED | LAND_RESIZE | LAND_DEPTH)
     LandRunner* runner = land_runner_new("game", init, None, tick, draw, None, None)

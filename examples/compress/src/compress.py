@@ -9,6 +9,8 @@ def print(char const *str, ...):
 
 def main() -> int:
     land_init()
+    
+    land_find_data_prefix("data/")
 
     print("Buffer 1")
     char const *str = "Land All New Design"
@@ -42,8 +44,8 @@ def main() -> int:
 
     print("")
     print("Buffer 2")
-    LandBuffer *orig = land_buffer_read_from_file("../../data/GPL-2")
-    b = land_buffer_read_from_file("../../data/GPL-2")
+    LandBuffer *orig = land_buffer_read_from_file("data/GPL-2")
+    b = land_buffer_read_from_file("data/GPL-2")
     print("Uncompressed length: %d", b->n)
     land_buffer_compress(b)
     print("Compressed length: %d (%.1f%%)", b->n, 100.0 * b->n / orig->n)
@@ -53,7 +55,7 @@ def main() -> int:
 
     print("")
     print("Buffer 3")
-    b = land_buffer_read_from_file("../../data/GPL-2.gz")
+    b = land_buffer_read_from_file("data/GPL-2.gz")
     land_buffer_decompress(b)
     print("Difference: %d", land_buffer_compare(orig, b))
 

@@ -114,11 +114,12 @@ def panel_5():
     land_widget_layout_set_grid_position(box5, 1, 1)
 
 def init(LandRunner *self):
-    font = land_font_load("../../data/galaxy.ttf", 12)
-    theme[0] = land_widget_theme_new("../../data/classic.cfg")
-    theme[1] = land_widget_theme_new("../../data/green.cfg")
-    theme[2] = land_widget_theme_new("../../data/blue/agup.cfg")
-    theme[3] = land_widget_theme_new("../../data/wesnoth_ui/widget.ini")
+    land_find_data_prefix("data/")
+    font = land_font_load("data/galaxy.ttf", 12)
+    theme[0] = land_widget_theme_new("data/classic.cfg")
+    theme[1] = land_widget_theme_new("data/green.cfg")
+    theme[2] = land_widget_theme_new("data/blue/agup.cfg")
+    theme[3] = land_widget_theme_new("data/wesnoth_ui/widget.ini")
     land_widget_theme_set_default(theme[selected])
     desktop = land_widget_board_new(NULL, 20, 20, 600, 440)
 

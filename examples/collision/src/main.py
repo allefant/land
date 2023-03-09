@@ -10,7 +10,8 @@ class Game:
 Game game
 
 static def game_init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 10)
+    land_find_data_prefix("data/")
+    land_font_load("data/galaxy.ttf", 10)
 
     game.img1 = land_image_new(40, 40)
     land_image_center(game.img1)
@@ -104,5 +105,5 @@ static def game_draw(LandRunner *self):
 static def game_exit(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL,
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE,
     game_init, NULL, game_tick, game_draw, NULL, game_exit)

@@ -48,11 +48,14 @@ static def slider(LandWidget *self):
     redraw(self)
 
 static def init(LandRunner *self):
-    af = land_font_load("../../data/galaxy.ttf", 20)
+    land_find_data_prefix("data/")
+    af = land_font_load("galaxy.ttf", 20)
 
-    land_font_load("../../data/galaxy.ttf", 12)
+    int dpi = land_display_dpi()
+    int pixels = 10 * dpi / 72
+    land_font_load("galaxy.ttf", pixels)
 
-    theme = land_widget_theme_new("../../data/classic.cfg")
+    theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
@@ -85,6 +88,9 @@ static def tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
+    if land_was_resized():
+        pass
+
     land_widget_tick(desktop)
 
 static def draw(LandRunner *self):
@@ -98,6 +104,6 @@ static def done(LandRunner *self):
     land_widget_unreference(desktop)
     land_font_destroy(land_font_current())
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL, init, NULL, tick,
+land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE, init, NULL, tick,
         draw, NULL, done)
 

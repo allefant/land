@@ -7,9 +7,9 @@ LandImage *cache
 float angle = 0
 
 def init(LandRunner *self):
+    land_clear(1, 0.9, 0.8, 1)
+    land_flip()
     cache = land_image_new(1024, 1024)
-    #cache = land_image_new(640, 480);
-    #bitmap = land_image_load("../../data/test.png")
 
 def tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape):
@@ -46,6 +46,7 @@ def paint(int x, y, w, h, xp, yp, tw, th):
             land_plot(x + i - xp + 0.5, y + j - yp + 0.5)
 
 def draw(LandRunner *self):
+    land_clear(1, 0.9, 0.8, 1)
     float w = land_display_width()
     float h = land_display_height()
     float s
@@ -66,7 +67,7 @@ def draw(LandRunner *self):
         s * (1.1 + 0.1 * sin(land_get_time())),
         s * (1.1 + 0.1 * sin(land_get_time())),
         land_get_time() * (1 + 4 * fabs(sin(land_get_time() * 0.2))))
-    #land_clear(1, 0.9, 0.8, 1)
+    
     #land_image_draw(cache, 0, 0)
 
     # if not cached:

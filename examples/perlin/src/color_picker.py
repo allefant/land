@@ -1,5 +1,6 @@
 import land.land
 import land.widget
+import stdint
 
 str colors = """
 maroon/2
@@ -167,6 +168,14 @@ def _draw(LandWidget *w):
     LandColor c = land_color_name(cname)
     land_color_set(c)
     land_filled_rectangle(l, t, r, b)
+    
+    if w.selected:
+        land_color(1, 1, 1, 1)
+        land_line(l, t, r, b - 1)
+        land_line(l, b - 1, r, t)
+        land_color(0, 0, 0, 1)
+        land_line(l, t + 1, r, b)
+        land_line(l, b, r, t + 1)
 
 def _init_names:
     if not color_names:
@@ -181,9 +190,8 @@ def _init_names:
             land_hash_insert(color_names, key, land_strdup(c))
         land_array_destroy_with_strings(a)
 
-def color_picker_new(void (*clicked)(LandWidget *w)) -> LandWidget*:
-    
-    LandWidget* view = land_widget_panel_new(None, 0, 0, 72 * 14, 72 * 11)
+def color_picker_new(uint32_t selected, void (*clicked)(LandWidget *w)) -> LandWidget*:
+    LandWidget* view = land_widget_panel_new(None, 0, 0, 0, 0)
     LandWidget* vbox = land_widget_vbox_new(view, 0, 0, 0, 0)
     land_widget_vbox_set_columns(vbox, 14)
     if not _interface:
@@ -193,9 +201,14 @@ def color_picker_new(void (*clicked)(LandWidget *w)) -> LandWidget*:
     for char* c in a:
         if not c or not c[0]: continue
         LandWidget* button = land_widget_button_new(vbox, c, clicked, 0, 0, 72, 72)
+        
         button.vt = _interface
+        LandColor color = land_color_name(c)
+        if land_color_to_int(color) == selected:
+            button.selected = True
         land_widget_set_property(button, "color", land_strdup(c), None)
         land_widget_theme_set_minimum_size_for_contents(button, 72, 72)
+        land_widget_layout_set_shrinking(button, True, True)
     land_array_destroy_with_strings(a)
     return view
 

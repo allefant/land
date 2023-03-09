@@ -16,12 +16,17 @@ static def game_tick(LandRunner *self):
 static def game_draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
 
-    land_color(0, 0, 1, 1)
     float w = land_display_width()
     float h = land_display_height()
     float x = w / 2
     float y = h / 2
     float r = 100 * fabs(sin(game->t))
+
+    land_color(0, 0.25, 0, 1)
+    land_line(x, 0, x, h)
+    land_line(0, y, w, y)
+    
+    land_color(0, 0, 1, 1)
     land_filled_circle(x - r, y - r, x + r, y + r)
 
     land_color(1, 1, 0, 1)

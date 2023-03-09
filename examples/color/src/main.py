@@ -79,7 +79,8 @@ static def init:
 
     test_ciede2000()
 
-    land_font_load("../../data/Muli-Regular.ttf", 14)
+    land_find_data_prefix("data/")
+    land_font_load("data/Muli-Regular.ttf", 14)
 
     if True:
         double x, y, z

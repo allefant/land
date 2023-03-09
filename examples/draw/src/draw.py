@@ -47,6 +47,7 @@ static def draw_star(float middle_x, middle_y, int n, float r,
 
 
 static def game_draw(LandRunner *self):
+    land_scale_to_fit(640, 480, 0)
 
     land_clear(0, 0, 0, 1)
 
@@ -116,11 +117,9 @@ static def game_draw(LandRunner *self):
        
         t++
 
-    land_flip()
-
 def begin():
     land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
+    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE)
     LandRunner *game_runner = land_runner_new("game", NULL, NULL, game_tick, game_draw, NULL, NULL)
     land_runner_register(game_runner)
     land_set_initial_runner(game_runner)

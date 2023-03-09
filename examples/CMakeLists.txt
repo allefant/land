@@ -149,9 +149,8 @@ foreach(exsrc ${examples})
             find_library(FFTW3 fftw3)
             list(APPEND libraries ${FFTW3})
         endif()
-        message(STATUS "libraries: ${exname} ${libraries}")
+        message(STATUS "exe: ${exname} lib: ${libraries}")
         
-        set(AD -debug)
         if (DEBUG)
             add_executable(${exname}-debug ${example_cfiles})
             
@@ -163,16 +162,15 @@ foreach(exsrc ${examples})
             list(APPEND libraries "m")
             #list(APPEND libraries "GL")
             target_link_libraries(${exname}-debug ${libraries})
-        endif (DEBUG)
-        if (RELEASE)
-            add_executable(${exname} ${example_cfiles})
-            set_target_properties(${exname}
+        else (DEBUG)
+            add_executable(${exname}-release ${example_cfiles})
+            set_target_properties(${exname}-release
                 PROPERTIES
                 COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${RFLAGS}"
                 )
             list(APPEND libraries ${libname})
-            target_link_libraries(${exname} ${libraries})
-        endif (RELEASE)
+            target_link_libraries(${exname}-release ${libraries})
+        endif (DEBUG)
     endif (SHARED)
     list(APPEND example_exes ${exe})
 

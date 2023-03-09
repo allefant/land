@@ -3,7 +3,8 @@ import global land.land
 def main() -> int:
     land_init()
 
-    LandProtobuf *p = land_protobuf_load("../../data/config.protobuf")
+    land_find_data_prefix("data/")
+    LandProtobuf *p = land_protobuf_load("data/config.protobuf")
 
     int id
     uint64_t size
