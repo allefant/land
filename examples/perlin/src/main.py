@@ -644,7 +644,7 @@ def main_generate(bool want_color, bool want_triangles, bool debug, bool export)
         int ci = 0
         for str name in compounds:
             Dialog *component = dialog_new(100, 100, False)
-            dialog_set_name(component, name)
+            preset_fill_in(global_presets, component, name)
             dialog_load(component)
             component.width->v = global_dialog.width->v
             component.height->v = global_dialog.height->v

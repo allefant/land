@@ -148,6 +148,31 @@ if (STATIC)
 endif (STATIC)
 
 if (SHARED)
+
+    set(AS "")
+    if (ALLEGRO_DEBUG)
+        set(AS "-debug")
+    endif()
+    find_library(OPENGL OpenGL)
+    if (ALLEGRO_MONOLITH)
+        message("finding allegro_monolith${AS}")
+        find_library(ALLEGRO "allegro_monolith${AS}")
+        message("ALLEGRO ${ALLEGRO}")
+    else ()
+        message("finding allegro${AS}")
+        find_library(ALLEGRO "allegro${AS}")
+        find_library(ALLEGRO_MAIN allegro_main${AS})
+        find_library(ALLEGRO_FONT allegro_font${AS})
+        find_library(ALLEGRO_PRIMITIVES allegro_primitives${AS})
+        find_library(ALLEGRO_AUDIO allegro_audio${AS})
+        find_library(ALLEGRO_ACODEC allegro_acodec${AS})
+        find_library(ALLEGRO_COLOR allegro_color${AS})
+        find_library(ALLEGRO_TTF allegro_ttf${AS})
+        find_library(ALLEGRO_IMAGE allegro_image${AS})
+        find_library(ALLEGRO_DIALOG allegro_dialog${AS})
+        message("ALLEGRO ${ALLEGRO}")
+    endif()
+            
     if (DEBUG)
         add_library(${libname}-debug SHARED ${cfiles})
         set_target_properties(${libname}-debug
@@ -170,35 +195,13 @@ if (SHARED)
                 opengl32
                 )
         else()
-            set(AS "")
-            if (ALLEGRO_DEBUG)
-                set(AS "-debug")
-            endif()
-            find_library(OPENGL OpenGL)
-            if (ALLEGRO_MONOLITH)
-                message("finding allegro_monolith${AS}")
-                find_library(ALLEGRO "allegro_monolith${AS}")
-                message("ALLEGRO ${ALLEGRO}")
-            else ()
-                message("finding allegro${AS}")
-                find_library(ALLEGRO "allegro${AS}")
-                find_library(ALLEGRO_MAIN allegro_main${AS})
-                find_library(ALLEGRO_FONT allegro_font${AS})
-                find_library(ALLEGRO_PRIMITIVES allegro_primitives${AS})
-                find_library(ALLEGRO_AUDIO allegro_audio${AS})
-                find_library(ALLEGRO_ACODEC allegro_acodec${AS})
-                find_library(ALLEGRO_COLOR allegro_color${AS})
-                find_library(ALLEGRO_TTF allegro_ttf${AS})
-                find_library(ALLEGRO_IMAGE allegro_image${AS})
-                find_library(ALLEGRO_DIALOG allegro_dialog${AS})
-                message("ALLEGRO ${ALLEGRO}")
-            endif()
+            
             target_include_directories(${libname}-debug
                 PUBLIC "/usr/local/include"
             )
             target_link_libraries(${libname}-debug
                 ${ALLEGRO}
-                ${ALLEGRO_MAIN}
+                #${ALLEGRO_MAIN}
                 ${ALLEGRO_FONT}
                 ${ALLEGRO_PRIMITIVES}
                 ${ALLEGRO_AUDIO}
@@ -233,16 +236,6 @@ if (SHARED)
                 )
         else ()
             find_library(OPENGL OpenGL)
-            find_library(ALLEGRO allegro)
-            find_library(ALLEGRO_MAIN allegro_main)
-            find_library(ALLEGRO_FONT allegro_font)
-            find_library(ALLEGRO_PRIMITIVES allegro_primitives)
-            find_library(ALLEGRO_AUDIO allegro_audio)
-            find_library(ALLEGRO_ACODEC allegro_acodec)
-            find_library(ALLEGRO_COLOR allegro_color)
-            find_library(ALLEGRO_TTF allegro_ttf)
-            find_library(ALLEGRO_IMAGE allegro_image)
-            find_library(ALLEGRO_DIALOG allegro_dialog)
             target_include_directories(${libname}
                 PUBLIC "/usr/local/include"
             )
@@ -266,4 +259,5 @@ endif (SHARED)
 
 if (EXAMPLES_ON)
     add_subdirectory(examples EXCLUDE_FROM_ALL)
+    #add_subdirectory(examples)
 endif()

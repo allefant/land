@@ -1,5 +1,5 @@
 import land.triangles
-import a5_image
+import a5_image, a5_main
 static import global allegro5.allegro5
 static import global allegro5.allegro_primitives
 static import global assert, math
@@ -113,6 +113,7 @@ def platform_display_set():
         super->w = al_get_display_width(self->a5)
         super->h = al_get_display_height(self->a5)
         land_resize_event(super->w, super->h)
+        platform_trigger_redraw()
         return
     if super->flags & LAND_FULLSCREEN:
         f |= ALLEGRO_FULLSCREEN_WINDOW

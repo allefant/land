@@ -43,15 +43,20 @@ static def land_exit():
     land_log_message("land_exit\n")
 
 def land_halt:
+    if _land_halted: return
     platform_halt()
     _land_halted = True
 
 def land_resume:
+    if not _land_halted: return
     platform_resume()
     _land_halted = False
 
 def land_was_halted -> bool:
     return _land_halted
+
+def land_debug(int level):
+    platform_debug(level)
 
 def land_init():
     """Initialize Land. This must be called before anything else."""

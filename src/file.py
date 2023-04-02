@@ -185,7 +185,7 @@ def land_file_copy(str src, dst) -> bool:
     if not srcf: return False
     auto dstf = land_file_new(dst, "wb")
     if not dstf: return False
-    int s = 1024 * 1024
+    int s = 1024 # macos only has like 8KB of stack
     char buf[s]
     while True:
         int n = land_file_read(srcf, buf, s)

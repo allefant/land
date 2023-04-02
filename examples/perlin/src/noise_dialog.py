@@ -120,15 +120,12 @@ def noise_dialog_get_compound_components(Dialog *self) -> LandArray *:
     self.compound_components = land_split(text, ",")
     return self.compound_components
 
-def dialog_set_name(Dialog *self, str name):
-    value_set_string(self.preset, name)
-
 def get_preset_name(Dialog *self) -> str:
-    return self.preset.v_string
+    return value_get_choice_string(self.preset)
 
 def get_preset_ini_path(Dialog *self) -> char*:
     char name[100]
-    sprintf(name, "preset_%s.ini", self.preset.v_string)
+    sprintf(name, "preset_%s.ini", get_preset_name(self))
     char *path = land_get_save_file("perlin", name)
     return path
 
@@ -151,8 +148,8 @@ def dialog_load(Dialog *self):
 
 def dialog_save(Dialog *self):
     char *name = get_preset_ini_path(self)
-    str id = self.preset.v_string
-    if land_equals(id, "unnamed"):
+    str pid = get_preset_name(self)
+    if land_equals(pid, "unnamed"):
         message("Cannot save unnamed preset!", land_color_rgba(1, 0, 0, 1))
         return
     LandIniFile* ini = land_ini_new(name)
@@ -201,7 +198,9 @@ def update_pick(LandWidget *w):
 
 def _value_set(Value *value, int v, str v_string):
     value.v = v
-    value.v_string = None
+    if value.v_string:
+        land_free(value.v_string)
+        value.v_string = None
     if v_string:
         value.v_string = land_strdup(v_string)
     if value.spin: land_widget_spin_set_value(value.spin, value.v)
@@ -217,6 +216,12 @@ def _value_set(Value *value, int v, str v_string):
 
 def value_set(Value *value, int v): _value_set(value, v, None)
 def value_set_string(Value *value, str v): _value_set(value, 0, v)
+def value_set_choice(Value *value, str v):
+    int i = land_array_find_string(value.choices, v)
+    if i >= 0:
+        _value_set(value, i, None)
+def value_get_choice_string(Value *value) -> str:
+    return land_array_get(value.choices, value.v)
 
 def on_menu_selection(LandWidget *self):
     Value *value = land_widget_get_property(self.parent, "value")
@@ -264,7 +269,7 @@ def value_new(Dialog *dialog, LandWidget *parent, char const *name, int val,
     
     return self
 
-def value_new_text(Dialog *dialog, LandWidget* parent, str name, LandArray *choices) -> Value *:
+def value_new_choices(Dialog *dialog, LandWidget* parent, str name, LandArray *choices) -> Value *:
     Value *self = value_new_internal(dialog, name)
     if dialog.create_ui:
         self.label = land_widget_text_new(parent, name, 0, 0, 0, 0, 0)
@@ -288,6 +293,7 @@ def value_update_choices(Value *self, LandArray *choices, str name):
         land_widget_spin_set_min_max(self.spin, 0, land_array_count(choices) - 1)
     if self.edit:
         land_widget_edit_set_text(self.edit, name)
+    value_set_choice(self, name)
 
 def value_new_menu(Dialog *dialog, LandWidget *parent, *desktop, char const *name, int val,
         minval, maxval, step, str* names) -> Value *:
@@ -363,7 +369,7 @@ def dialog_new(int width, height, bool create_ui) -> Dialog*:
         land_widget_vbox_set_columns(vbox, 3)
         land_widget_layout_set_shrinking(vbox, 0, 1)
 
-    self.preset = value_new_text(self, vbox, "preset", None)
+    self.preset = value_new_choices(self, vbox, "preset", None)
     self.noise = value_new_menu(self, vbox, self.view, "noise", 7, 0, 7, 1, noises)
     self.width = value_new(self, vbox, "width", 8, 0, 16, 1, None)
     self.height = value_new(self, vbox, "height", 8, 0, 16, 1, None)

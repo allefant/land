@@ -35,9 +35,11 @@ def platform_get_time() -> double:
     return al_current_time()
 
 def platform_halt:
+    al_stop_timer(timer)
     platform_sound_halt()
 
 def platform_resume:
+    al_start_timer(timer)
     platform_sound_resume()
 
 def platform_init():
@@ -242,7 +244,7 @@ def platform_mainloop(LandParameters *parameters):
     al_register_event_source(queue, al_get_display_event_source(d->a5))
 
     al_register_event_source(queue, al_get_timer_event_source(timer))
-    al_start_timer(timer);
+    al_start_timer(timer)
 
     # Make sure querying mouse coordinates already works before any event.
     ALLEGRO_MOUSE_STATE s
@@ -259,13 +261,16 @@ def platform_mainloop(LandParameters *parameters):
         platform_frame()
     *** "endif"
 
+def platform_trigger_redraw:
+    if not _land_halted:
+        land_draw()
+    redraw = False
+
 def platform_frame:
     if not _land_quit:
         if redraw and (_land_synchronized or
                 al_event_queue_is_empty(queue)):
-            if not _land_halted:
-                land_draw()
-            redraw = False
+            platform_trigger_redraw()
 
         while True:
             ALLEGRO_EVENT event
@@ -281,9 +286,7 @@ def platform_frame:
                     land_closebutton_event()
                     break
                 case ALLEGRO_EVENT_TIMER:
-                    if _land_was_halted and _land_halted:
-                        al_stop_timer(timer)
-                    else:
+                    if not _land_halted:
                         land_tick()
                         _land_frames++
                         redraw = True
@@ -350,7 +353,6 @@ def platform_frame:
                 case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
                     land_resume()
                     al_acknowledge_drawing_resume(d->a5)
-                    al_start_timer(timer)
                     break
                 case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
                     al_reconfigure_joysticks()
@@ -377,6 +379,9 @@ def platform_frame:
             continue
             *** "endif"
             break
+
+def platform_debug(int level):
+    al_set_config_value(al_get_system_config(), "trace", "level", "debug")
 
 def platform_wait(double seconds):
     al_rest(seconds)

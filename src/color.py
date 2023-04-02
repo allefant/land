@@ -1,6 +1,7 @@
 class LandColor:
    float r, g, b, a
 
+import global stdint
 static import land/allegro5/a5_misc
 static import global ctype
 static import global string
@@ -347,7 +348,7 @@ def land_color_int(int i) -> LandColor:
     int a = (i >> 24) & 255
     return land_color_rgba(r / 255.0, g / 255.0, b / 255.0, a / 255.0)
 
-def land_color_to_int(LandColor c) -> int:
+def land_color_to_int(LandColor c) -> uint32_t:
     int r = c.r * 255
     int g = c.g * 255
     int b = c.b * 255
