@@ -40,7 +40,7 @@ def platform_color_name(char const *name) -> LandColor:
     return c
 
 def platform_popup(str title, str text):
-    *** "if" defined(ANDROID) or defined(MACOS)
+    *** "if" defined(ANDROID) or defined(NO_NATIVE_DIALOG)
     *** "else"
     al_show_native_message_box(al_get_current_display(), title,
         title, text, None, ALLEGRO_MESSAGEBOX_ERROR)

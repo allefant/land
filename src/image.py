@@ -337,6 +337,7 @@ def land_image_resize(LandImage *self, int new_w, new_h, int flags):
         yo = new_h * 0.5 - old_h * ys * 0.5
     LandImage *resized = land_image_new(new_w, new_h)
     land_set_image_display(resized)
+    land_blend(LAND_BLEND_SOLID)
     land_image_draw_scaled(self, xo - self.l * xs, yo - self.t * ys, xs, ys)
     land_unset_image_display()
     platform_image_merge(self, resized)
