@@ -75,7 +75,10 @@ static def letter(char glyph, str code):
     int vs = 0
     int vn = 0
     land_color(0, 0, 0, 0)
-    land_filled_rectangle(x + 1, y + 1, x + 11, y + 10)
+    land_unclip()
+    land_blend(LAND_BLEND_SOLID)
+    land_filled_rectangle(x + 1, y + 1, x + 11, y + 11)
+    land_clip(x + 1, y + 1, x + 11, y + 11)
     land_color(1, 1, 1, 1)
     for int i in range(n):
         char c = code[i]
@@ -88,7 +91,10 @@ static def letter(char glyph, str code):
         else:
             if vn:
                 if vs: vc = -vc
-                v[vi] = vc
+                if vi < 2:
+                    v[vi] = vc
+                else:
+                    print("ERROR: can only have two parameters")
                 vi++
             vc = vs = vn = 0
 
@@ -136,10 +142,10 @@ static def initial_font:
     letter('Z', "8 0 l -8 8 l 8 0 l")
     letter('a', "1 2 m 6 0 l 0 6 l -6 0 l 0 -3 l 6 0 l")
     letter('b', "1 0 m 0 8 l 3 0 l 3 -3 l -3 -3 l -3 0 l")
-    letter('c', "7 8 m -6 -3 l 6 -3 l")
+    letter('c', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 0 l")
     letter('d', "7 0 m 0 8 l -3 0 l -3 -3 l 3 -3 l 3 0 l")
-    letter('e', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 3 l -6 0 l")
-    letter('f', "3 0 m 0 8 l -2 -4 m 4 0 l -2 -4 m 4 0 l 0 4 l")
+    letter('e', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 0 l 0 3 l -4 0 l")
+    letter('f', "3 0 m 0 8 l -2 -4 m 4 0 l -2 -4 m 4 0 l")
     letter('g', "1 2 m 6 0 l 0 6 l -6 0 l 0 -2 m 6 0 l -6 0 m 0 -4 l")
     letter('h', "1 0 m 0 8 l 0 -6 m 6 0 l 0 6 l")
     letter('i', "1 4 m 3 0 l 0 4 l 3 0 l -3 -6 m 0 0 l")
@@ -166,7 +172,7 @@ static def initial_font:
     letter('-', "1 4 m 6 0 l")
     letter('+', "1 4 m 6 0 l -3 -3 m 0 6 l")
     letter('0', "8 0 l 0 8 l -8 0 l 0 -8 l")
-    letter('1', "4 0 m 0 8 l -4 0 m 8 0 l")
+    letter('1', "2 0 m 2 0 l 0 8 l -4 0 m 8 0 l")
     letter('2', "8 0 l 0 4 l -8 4 l 8 0 l")
     letter('3', "8 0 l 0 4 l -8 0 l 8 0 m 0 4 l -8 0 l")
     letter('4', "0 4 l 8 0 l 0 -4 m 0 8 l")
@@ -174,8 +180,9 @@ static def initial_font:
     letter('6', "8 0 m -8 0 l 0 8 l 8 0 l 0 -4 l -8 0 l")
     letter('7', "8 0 l -4 8 l")
     letter('8', "2 4 m -2 2 l 2 2 l 4 0 l 2 -2 l -2 -2 l 2 -2 l -2 -2 l -4 0 l -2 2 l 2 2 l 4 0 l")
-    letter('9', "8 0 l 0 8 l -8 0 l 0 -8 m 0 4 l 9 0 l")
+    letter('9', "8 0 l 0 8 l -8 0 l 0 -8 m 0 4 l 8 0 l")
     land_unset_image_display()
+
     int r[] = {0, 127}
     LandFont *f = land_font_from_image(i, 1, r)
     land_font_state.font = initial = f
