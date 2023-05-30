@@ -18,6 +18,7 @@ set(EXAMPLES_ON 1 CACHE BOOL "Build the examples.")
 
 set(ALLEGRO_MONOLITH 1 CACHE BOOL "Use monolith library.")
 set(ALLEGRO_DEBUG 0 CACHE BOOL "Use debug library.")
+set(NO_NATIVE_DIALOG 1 CACHE BOOL "Don't use native dialogs.")
 
 #_______________________________________________________________________
 # Step: Find all .py source files.
@@ -82,6 +83,10 @@ endif()
 if (MEMLOG)
     set(CFLAGS "${CFLAGS} -DLAND_MEMLOG") #-fmudflap
     #set(LFLAGS "${LFLAGS} -fmudflap")
+endif ()
+
+if (NO_NATIVE_DIALOG)
+    set(CFLAGS "${CFLAGS} -DNO_NATIVE_DIALOG")
 endif ()
 
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Windows WINDOWS)
@@ -153,7 +158,7 @@ if (SHARED)
     if (ALLEGRO_DEBUG)
         set(AS "-debug")
     endif()
-    find_library(OPENGL OpenGL)
+    find_library(OPENGL OpenGL GL)
     if (ALLEGRO_MONOLITH)
         message("finding allegro_monolith${AS}")
         find_library(ALLEGRO "allegro_monolith${AS}")

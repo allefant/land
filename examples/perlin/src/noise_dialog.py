@@ -356,8 +356,9 @@ def dialog_new(int width, height, bool create_ui) -> Dialog*:
     if self.values: land_array_destroy(self.values)
     self.values = land_array_new()
 
-    self.view = land_widget_board_new(self.view, w - width, 0, width, height)
-    land_widget_reference(self.view)
+    if self.create_ui:
+        self.view = land_widget_board_new(self.view, w - width, 0, width, height)
+        land_widget_reference(self.view)
 
     LandWidget* vbox = None
     LandWidget* outer = None
@@ -491,7 +492,7 @@ def dialog_new(int width, height, bool create_ui) -> Dialog*:
     return self
 
 def dialog_destroy(Dialog *self):
-    land_widget_unreference(self.view)
+    if self.view: land_widget_unreference(self.view)
     land_free(self)
 
 def _dialog_button_new(Dialog *dialog, LandWidget *parent, str name,

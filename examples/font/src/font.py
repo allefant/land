@@ -9,14 +9,14 @@ LandFont *muli
 LandImage *gradient
 
 static def game_init(LandRunner *self):
-    big = land_font_load("../../data/galaxy.ttf", 60)
-    small = land_font_load("../../data/galaxy.ttf", 30)
-    tiny = land_font_load("../../data/galaxy.ttf", 12)
-    truecolor = land_font_load("../../data/truecolor.tga", 0)
-    paletted = land_font_load("../../data/paletted.tga", 0)
-    muli = land_font_load("../../data/Muli-Regular.ttf", 14)
-    # builtin = land_allegro_font()
-    
+    land_find_data_prefix("data/")
+    big = land_font_load("galaxy.ttf", 60)
+    small = land_font_load("DejaVuSans.ttf", 30)
+    tiny = land_font_load("galaxy.ttf", 12)
+    truecolor = land_font_load("truecolor.tga", 0)
+    paletted = land_font_load("paletted.tga", 0)
+    muli = land_font_load("Muli-Regular.ttf", 14)
+  
     gradient = land_image_new(4, 4)
     unsigned char rgba[4 * 4 * 4] = {
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
@@ -43,7 +43,7 @@ static def game_draw(LandRunner *self):
     land_font_set(muli)
     land_color(0, 0, 0, 1)
     land_text_pos(w / 2, land_font_height(muli))
-    char const *s1 = "Tulip Rose Lily Daffodil Iris Orchid Narcissus Violet"
+    char const *s1 = "Carnation Violet Daffodil Daisy Lily Rose Poppy Aster Tulip Iris Orchid "
     int n = strlen(s1) + 1
     char s2[n]
     land_print_center(s1)

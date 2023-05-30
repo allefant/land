@@ -8,6 +8,7 @@ typedef unsigned char byte
 
 LandImage *image
 LandVector *normals
+LandFont *font
 global Presets *global_presets
 global Dialog *global_dialog
 global LandWidget *color_picker
@@ -384,12 +385,10 @@ def init(LandRunner *self):
     int pixels = 12 * dpi / 72
     int w, h
     land_display_desktop_size(&w, &h)
-    int s = h * 0.75
     int dialog_size = 250 * dpi / 72
-    land_display_resize(s + dialog_size, s)
 
     land_find_data_prefix("data/")
-    land_font_load("DejaVuSans.ttf", pixels)
+    font = land_font_load("DejaVuSans.ttf", pixels)
     LandWidgetTheme* theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
 
@@ -873,7 +872,7 @@ def tick(LandRunner *self):
 
     if color_picker:
         land_widget_tick(color_picker)
-    else:
+    elif dialog:
         dialog_hide_show(dialog)
         land_widget_tick(dialog.view)
 
@@ -885,10 +884,11 @@ def tick(LandRunner *self):
     bool text_input = had_text_input
     bool mouse_in_ui = False
     had_text_input = False
-    if land_widget_container_get_keyboard_focus(dialog.view):
-        had_text_input = text_input = True
-    if land_mouse_x() >= land_display_width() - dialog.size:
-        mouse_in_ui = True
+    if dialog:
+        if land_widget_container_get_keyboard_focus(dialog.view):
+            had_text_input = text_input = True
+        if land_mouse_x() >= land_display_width() - dialog.size:
+            mouse_in_ui = True
 
     if not text_input:
         float dx = 0
@@ -913,7 +913,7 @@ def tick(LandRunner *self):
             main_reset()
 
         if land_key_pressed('l'):
-            dialog_load(dialog)
+            if dialog: dialog_load(dialog)
             recreate()
 
         if land_key(LandKeyLeft):
@@ -959,16 +959,33 @@ def main_reset:
 
 def draw(LandRunner *self):
     auto dialog = global_dialog
+    int dw = land_display_width()
+    int dh = land_display_height()
 
-    if land_was_resized():
+    if land_was_resized() and dialog:
         land_widget_move_to(dialog.view, land_display_width() - dialog.size, 0)
 
     land_unclip()
     land_clear(0, 0, 0, 1)
     land_clear_depth(1)
 
-    if not image: return
-    
+    if image:
+        draw_image()
+
+    land_render_state(LAND_DEPTH_TEST, False)
+    land_projection(land_4x4_matrix_orthographic(0, dh, 1, dw, 0, -1))
+    if color_picker:
+        land_widget_draw(color_picker)
+    elif dialog:
+        land_widget_draw(dialog.view)
+
+        land_text_pos(0, 0)
+        land_color(1, 0, 0, 1)
+        land_print("%.2f", dialog.dt)
+
+def draw_image:
+    auto dialog = global_dialog
+
     int w = land_image_width(image)
     int h = land_image_height(image)
     int dw = land_display_width()
@@ -1000,21 +1017,18 @@ def draw(LandRunner *self):
     else:
         land_image_draw_scaled(image, (vw - w * size / ps) / 2, (vh - h * size / ps) / 2, size / ps, size / ps)
 
-    land_render_state(LAND_DEPTH_TEST, False)
-    land_projection(land_4x4_matrix_orthographic(0, dh, 1, dw, 0, -1))
-    if color_picker:
-        land_widget_draw(color_picker)
-    else:
-        land_widget_draw(dialog.view)
-
-        land_text_pos(0, 0)
-        land_color(1, 0, 0, 1)
-        land_print("%.2f", dialog.dt)
-
 def begin():
     land_debug(1)
     land_init()
-    land_set_display_parameters(640, 480, LAND_OPENGL | LAND_WINDOWED | LAND_RESIZE | LAND_DEPTH)
+
+    int dpi = land_display_dpi()
+    if dpi == 0: dpi = 72
+    int w, h
+    land_display_desktop_size(&w, &h)
+    int s = h * 0.75
+    int dialog_size = 250 * dpi / 72
+
+    land_set_display_parameters(s + dialog_size, s, LAND_OPENGL | LAND_WINDOWED | LAND_RESIZE | LAND_DEPTH)
     LandRunner* runner = land_runner_new("game", init, None, tick, draw, None, None)
     land_runner_register(runner)
     land_set_initial_runner(runner)
