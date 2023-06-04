@@ -23,7 +23,6 @@ def land_atlas_new(char const *filename) -> LandAtlas*:
     self.sheets = land_array_new()
     self.sprites = land_hash_new()
     self.filename = land_strdup(filename)
-
     land_atlas_load_all(self)
     return self
 
@@ -84,11 +83,12 @@ static def atlas_load_picture(LandAtlas *self, char const *filename) -> LandAtla
     
 def land_atlas_image_create(LandAtlas *self, char const *filename) -> LandImage*:
     LandAtlasSprite *sprite = atlas_load_picture(self, filename)
-    if not sprite: return None
+    if not sprite:
+        land_log_message("Could not find picture %s in atlas %s\n", filename, self.filename)
+        return None
     LandImage *image = land_image_sub(sprite.sheet.image, sprite.x, sprite.y,
         sprite.w, sprite.h)
     land_image_offset(image, -sprite.ox, -sprite.oy)
-    image.flags |= LAND_LOADED # TODO: in theory we could load the sheet on-demand
     return image
 
 def land_atlas_image_original_size(LandAtlas *self, char const *filename, int *w, *h) -> bool:
