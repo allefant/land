@@ -14,15 +14,15 @@ def _sphere_point(LandArray *vertices, LandFloat i, j):
     LandVector pos = normal
     land_array_add(vertices, land_csg_vertex_new(pos, normal))
 
-# def _spherez_point(LandArray *vertices, LandFloat i, j):
-    # LandFloat theta = 2 * pi * i
-    # LandFloat phi = pi * j
-    # LandVector normal = land_vector(
-      # cos(theta) * sin(phi),
-      # sin(theta) * sin(phi),
-      # cos(phi))
-    # LandVector pos = normal
-    # land_array_add(vertices, land_csg_vertex_new(pos, normal))
+def _sphere_point_spaced(LandArray *vertices, LandFloat i, j):
+    LandFloat theta = 2 * pi * i
+    LandFloat phi = acos(1 - j * 2)
+    LandVector normal = land_vector(
+      cos(theta) * sin(phi),
+      cos(phi),
+      sin(theta) * sin(phi))
+    LandVector pos = normal
+    land_array_add(vertices, land_csg_vertex_new(pos, normal))
 
 def _hemi_point(LandArray *vertices, LandFloat i, j):
     LandFloat theta = 2 * pi * i
@@ -76,6 +76,35 @@ def csg_sphere(int slices, rings, void *shared) -> LandCSG *:
                 _sphere_point(vertices, 1.0 * (i + 1) / slices,
                     1.0 * (j + 1) / (rings - 1))
             _sphere_point(vertices, 1.0 * i / slices,
+                    1.0 * (j + 1) / (rings - 1))
+
+            land_array_add(polygons, land_csg_polygon_new(vertices, shared))
+            
+    return land_csg_new_from_polygons(polygons)
+
+def csg_sphere_z_spaced(int slices, rings, void *shared) -> LandCSG *:
+    """
+    Like csg_sphere but the y coordinates of the rings are evenly
+    spaced along the y axis. This means that each such ring has the
+    same area.
+    """
+    if slices < 3:
+        return None
+    if rings < 3:
+        return None
+    LandArray *polygons = land_array_new()
+    for int i in range(slices): # longitude
+        for int j in range(rings - 1): # latitude
+            LandArray *vertices = land_array_new()
+            _sphere_point_spaced(vertices, 1.0 * i / slices, 1.0 * j /
+                (rings - 1))
+            if j > 0: # not southpole
+                _sphere_point_spaced(vertices, 1.0 * (i + 1) / slices,
+                    1.0 * j / (rings - 1))
+            if j < rings - 2:
+                _sphere_point_spaced(vertices, 1.0 * (i + 1) / slices,
+                    1.0 * (j + 1) / (rings - 1))
+            _sphere_point_spaced(vertices, 1.0 * i / slices,
                     1.0 * (j + 1) / (rings - 1))
 
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
@@ -185,11 +214,10 @@ def land_csg_icosphere(int divisions, void *shared) -> LandCSG *:
     return land_csg_new_from_polygons(polygons)
 
 def csg_cylinder(int slices, void *shared) -> LandCSG *:
-    return csg_cylinder_open(slices, 1, False, shared)
+    return csg_cylinder_open(slices, 1, False, False, shared)
 
-def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
-        bool smooth,
-        void *shared) -> LandCSG *:
+def csg_cut_cone_open_disced(int slices, discs, bool opened_top, opened_bottom,
+        float top_radius, bool smooth, void *shared) -> LandCSG *:
     """
     Make a cut cone along the z-axis with radius 1.0 at the botton
     and radius top_radius at the top at height 2.0.
@@ -236,7 +264,7 @@ def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
             LandArray *vertices
 
             # bottom disc
-            if not opened and j == 0:
+            if not opened_bottom and j == 0:
                 vertices = land_array_new()
                 land_array_add(vertices, land_csg_vertex_new(down, down))
                 land_array_add(vertices, land_csg_vertex_new(v0d, down))
@@ -251,7 +279,7 @@ def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
             land_array_add(polygons, land_csg_polygon_new(vertices, shared))
 
             # top disc
-            if not opened and j == discs - 1:
+            if not opened_top and j == discs - 1:
                 vertices = land_array_new()
                 land_array_add(vertices, land_csg_vertex_new(up, up))
                 land_array_add(vertices, land_csg_vertex_new(v1u, up))
@@ -260,12 +288,12 @@ def csg_cut_cone_open_disced(int slices, discs, bool opened, float top_radius,
 
     return land_csg_new_from_polygons(polygons)
 
-def csg_cut_cone_open(int slices, bool opened, float top_radius,
+def csg_cut_cone_open(int slices, bool opened_top, opened_bottom, float top_radius,
         void *shared) -> LandCSG *:
-    return csg_cut_cone_open_disced(slices, 1, opened, top_radius, True, shared)
+    return csg_cut_cone_open_disced(slices, 1, opened_top, opened_bottom, top_radius, True, shared)
 
-def csg_cylinder_open(int slices, discs, bool opened, void *shared) -> LandCSG *:
-    return csg_cut_cone_open_disced(slices, discs, opened, 1.0, True, shared)
+def csg_cylinder_open(int slices, discs, bool opened_top, opened_bottom, void *shared) -> LandCSG *:
+    return csg_cut_cone_open_disced(slices, discs, opened_top, opened_bottom, 1.0, True, shared)
 
 def csg_cone(int slices, void *shared) -> LandCSG *:
     """
