@@ -14,6 +14,7 @@ class LandFontState:
     float adjust_width
     LandFont *font
     float x, y, w, h
+    float multi_w, multi_h
     bool off
     float wordwrap_width, wordwrap_height
     bool in_paragraph
@@ -315,6 +316,9 @@ def land_print_string(char const *s, int newline, int alignment):
 
     if newline:
         lfs.y_pos = lfs.y + lfs.h
+        if lfs.w > lfs.multi_w:
+            lfs.multi_w = lfs.w
+        lfs.multi_h += lfs.h
         if lfs.in_paragraph:
             lfs.x_pos = lfs.paragraph_x
     else:
@@ -332,6 +336,22 @@ def land_text_get_width(char const *str) -> float:
     platform_font_print(land_font_state, str, 0)
     land_font_state.off = onoff
     return land_font_state.w
+
+def land_text_get_multiline_size(char const *s, float *w, *h):
+    int onoff = land_font_state.off
+    land_font_state.off = 1
+    float x_pos = land_font_state.x_pos
+    float y_pos = land_font_state.y_pos
+
+    auto a = land_text_splitlines(s)
+    land_print_lines(a, 0)
+    land_array_destroy_with_strings(a)
+
+    land_font_state.off = onoff
+    *w = land_font_state.multi_w
+    *h = land_font_state.multi_h
+    land_font_state.x_pos = x_pos
+    land_font_state.y_pos = y_pos
 
 # Get the position at which the nth character is drawn. 
 def land_text_get_char_offset(char const *str, int nth) -> int:
@@ -598,6 +618,8 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     int n = land_array_count(lines)
     if first < 0: first = 0
     if last > n - 1: last = n - 1
+    land_font_state.multi_w = 0
+    land_font_state.multi_h = 0
     if alignment & LandAlignMiddle:
         alignment ^= LandAlignMiddle
         land_font_state.y_pos -= n * fh / 2
@@ -632,4 +654,10 @@ def land_print_multiline(char const *text, ...):
     VPRINT
     auto a = land_text_splitlines(s)
     land_print_lines(a, 0)
+    land_array_destroy_with_strings(a)
+
+def land_print_multiline_centered(char const *text, ...):
+    VPRINT
+    auto a = land_text_splitlines(s)
+    land_print_lines(a, LandAlignCenter)
     land_array_destroy_with_strings(a)
