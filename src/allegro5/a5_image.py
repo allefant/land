@@ -99,9 +99,10 @@ def platform_image_load_on_demand(LandImage *super):
 
 def platform_image_sub(LandImage *parent, float x, y, w, h) -> LandImage *:
     LandImage *super = land_display_new_image()
-    super->flags |= LAND_SUBIMAGE
-    super->filename = parent->filename
-    super->name = parent->name
+    super.flags |= LAND_SUBIMAGE
+    super.flags |= parent.flags & LAND_LOADED
+    super.filename = parent->filename
+    super.name = parent->name
 
     LandImagePlatform *self = (void *)super
     LandImagePlatform *parentself = (void *)parent
