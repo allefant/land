@@ -530,3 +530,6 @@ def land_split_lines(char const *text) -> LandArray *:
 
 def land_null_or_empty(str text) -> bool:
     return not text or not text[0]
+
+def land_to_int(str text) -> int:
+    return strtol(text, None, 0)
