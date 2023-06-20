@@ -12,7 +12,10 @@ def _ini_filter(str name, bool is_dir, void *data) -> int:
     if land_fnmatch("preset_*.ini", name): return 1
     return 0
 
-def presets_update(Presets *self, Dialog *dialog):
+def presets_update(Presets *self, Dialog *dialog, bool jump_to_end):
+    """
+    Read all the preset files on disk.
+    """
     char *path = land_get_save_file("perlin", "")
     LandArray* preset_files = land_filelist(path, _ini_filter, 0, None)
     if self.presets:
@@ -34,11 +37,14 @@ def presets_update(Presets *self, Dialog *dialog):
             land_array_replace_or_resize(self.presets, v, name)
         land_free(path2)
 
+    if jump_to_end:
+        dialog.preset->v = land_array_count(self.presets)
+
     land_array_add(self.presets, land_strdup("unnamed"))
 
     land_array_destroy_with_strings(preset_files)
 
-    str name = land_array_get(self.presets, 0)
+    str name = land_array_get(self.presets, dialog.preset->v)
     preset_fill_in(self, dialog, name)
 
 def preset_fill_in(Presets *self, Dialog *dialog, str name):

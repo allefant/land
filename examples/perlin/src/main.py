@@ -52,8 +52,13 @@ class Game:
 Game _game
 Game *game = &_game
 
-def message(str text, LandColor c):
-    land_widget_button_set_color(global_dialog.message, c)
+def message(str color, str f, ...):
+    char *text = None
+    va_list args
+    va_start(args, f)
+    land_appendv(&text, f, args)
+    va_end(args)
+    land_widget_button_set_color(global_dialog.message, land_color_name(color))
     land_widget_button_set_text(global_dialog.message, text)
 
 def _export_dupl_add(float *v):
@@ -394,7 +399,7 @@ def init(LandRunner *self):
 
     global_dialog = dialog_new(dialog_size, h, True)
     global_presets = presets_new()
-    presets_update(global_presets, global_dialog)
+    presets_update(global_presets, global_dialog, True)
 
     light = land_vector_normalize(land_vector(1, 1, -1))
 

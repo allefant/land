@@ -123,14 +123,22 @@ def noise_dialog_get_compound_components(Dialog *self) -> LandArray *:
 def get_preset_name(Dialog *self) -> str:
     return value_get_choice_string(self.preset)
 
-def get_preset_ini_path(Dialog *self) -> char*:
+def get_preset_ini_path(Dialog *self, bool use_edit_text) -> char*:
     char name[100]
-    sprintf(name, "preset_%s.ini", get_preset_name(self))
+    str preset =  get_preset_name(self)
+    if use_edit_text:
+        str preset2 = value_get_choice_edit_text(self.preset)
+        if not land_equals(preset, preset2) and not land_equals(preset, "unnamed"):
+            print("this is preset %s but attempted to save as %s", preset, preset2)
+            message("red", "Cannot rename %s", preset)
+            return None
+        preset = preset2
+    sprintf(name, "preset_%s.ini", preset)
     char *path = land_get_save_file("perlin", name)
     return path
 
 def dialog_load(Dialog *self):
-    char *name = get_preset_ini_path(self)
+    char *name = get_preset_ini_path(self, False)
     print("name %s", name)
     LandIniFile* ini = land_ini_read(name)
     if ini.loaded:
@@ -147,10 +155,12 @@ def dialog_load(Dialog *self):
     land_free(name)
 
 def dialog_save(Dialog *self):
-    char *name = get_preset_ini_path(self)
-    str pid = get_preset_name(self)
+    char *name = get_preset_ini_path(self, True)
+    if not name:
+        return
+    str pid = value_get_choice_edit_text(self.preset)
     if land_equals(pid, "unnamed"):
-        message("Cannot save unnamed preset!", land_color_rgba(1, 0, 0, 1))
+        message("red", "Cannot save unnamed preset!")
         return
     LandIniFile* ini = land_ini_new(name)
     for Value *value in LandArray* self.values:
@@ -162,7 +172,16 @@ def dialog_save(Dialog *self):
     print("saved %s", ini->filename)
     land_ini_destroy(ini)
     land_free(name)
-    
+    message("green", "Saved %s", pid)
+
+def dialog_delete(Dialog *self):
+    char *name = get_preset_ini_path(self, False)
+    if not name:
+        return
+    str pid = value_get_choice_edit_text(self.preset)
+    land_file_remove(name)
+    message("green", "Deleted %s", pid)
+
 def value_show_if(bool shown, Value *show):
     if not shown:
         if show.label: land_widget_hide(show.label)
@@ -222,6 +241,8 @@ def value_set_choice(Value *value, str v):
         _value_set(value, i, None)
 def value_get_choice_string(Value *value) -> str:
     return land_array_get(value.choices, value.v)
+def value_get_choice_edit_text(Value *value) -> str:
+    return land_widget_edit_get_text(value.edit)
 
 def on_menu_selection(LandWidget *self):
     Value *value = land_widget_get_property(self.parent, "value")
@@ -482,7 +503,10 @@ def dialog_new(int width, height, bool create_ui) -> Dialog*:
         land_widget_button_new(outer, "Debug (D)", click_debug, 0, 0, 10, 10)
         _dialog_button_new(self, outer, "Reset (R)", click_reset)
         _dialog_button_new(self, outer, "Load Preset (L)", click_load)
-        _dialog_button_new(self, outer, "Save Preset", click_save)
+        if True:
+            LandWidget *hbox = land_widget_hbox_new(outer, 0, 0, 10, 10)
+            _dialog_button_new(self, hbox, "Save Preset", click_save)
+            _dialog_button_new(self, hbox, "Delete Preset", click_delete)
         land_widget_button_new(outer, "Export Mesh", click_export, 0, 0, 10, 10)
         land_widget_button_new(outer, "Export Map", click_export_map, 0, 0, 10, 10)
     
@@ -525,7 +549,12 @@ def click_load(LandWidget *self):
 def click_save(LandWidget *self):
     Dialog *dialog = land_widget_get_property(self, "dialog")
     dialog_save(dialog)
-    presets_update(global_presets, dialog)
+    presets_update(global_presets, dialog, False)
+
+def click_delete(LandWidget *self):
+    Dialog *dialog = land_widget_get_property(self, "dialog")
+    dialog_delete(dialog)
+    presets_update(global_presets, dialog, False)
 
 def _split_cb(float x, y, z) -> int:
     int f = floor(x / 128)

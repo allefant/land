@@ -37,7 +37,8 @@ def land_file_destroy(LandFile *self):
     """
     Closes the file, don't use anymore after calling this.
 
-    Note: the file on disk is not destroyed
+    Note: the file on disk is not destroyed, you can use
+    land_file_remove for that
     """
     platform_fclose(self.f)
     land_free(self.path)
