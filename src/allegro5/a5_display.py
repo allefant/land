@@ -135,6 +135,8 @@ def platform_display_set():
     if super->flags & LAND_ANTIALIAS:
         al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR)
 
+    f |= ALLEGRO_DRAG_AND_DROP
+
     ALLEGRO_MONITOR_INFO info;
     al_get_monitor_info(0, &info);
     land_log_message("Monitor resolution: %d %d %d %d\n", info.x1, info.y1, info.x2, info.y2);
@@ -247,6 +249,16 @@ def platform_arc(float x, y, x_, y_, a, a_):
     #float ry = (y_ - y) * 0.5
     check_blending_and_transform()
     al_draw_arc(cx, cy, rx, a, (a_ - a), self->c, self->super.thickness)
+    uncheck_blending()
+
+def platform_filled_pieslice(float x, y, x_, y_, a, a_):
+    SELF
+    float cx = (x + x_) * 0.5
+    float cy = (y + y_) * 0.5
+    float rx = (x_ - x) * 0.5
+    #float ry = (y_ - y) * 0.5
+    check_blending_and_transform()
+    al_draw_filled_pieslice(cx, cy, rx, a, (a_ - a), self->c)
     uncheck_blending()
 
 def platform_ribbon(int n, float *xy):

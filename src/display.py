@@ -514,6 +514,20 @@ def land_circle(float x, y, x_, y_):
 def land_arc(float x, y, x_, y_, a, a_):
     platform_arc(x, y, x_, y_, a, a_)
 
+def land_filled_pieslice(float x, y, x_, y_, a, a_):
+    platform_filled_pieslice(x, y, x_, y_, a, a_)
+
+def land_filled_rounded_rectangle(float x, y, x_, y_, r):
+    land_filled_rectangle(x + r, y + r, x_ - r, y_ - r)
+    land_filled_rectangle(x + r, y, x_ - r, y + r)
+    land_filled_rectangle(x + r, y_ - r, x_ - r, y_)
+    land_filled_rectangle(x, y + r, x + r, y_ - r)
+    land_filled_rectangle(x_ - r, y + r, x_, y_ - r)
+    land_filled_pieslice(x, y, x + r * 2, y + r * 2, pi, pi + pi / 2)
+    land_filled_pieslice(x_ - r * 2, y, x_, y + r * 2, pi + pi / 2, 2 * pi)
+    land_filled_pieslice(x_ - r * 2, y_ - r * 2, x_, y_, 0, pi / 2)
+    land_filled_pieslice(x, y_ - r * 2, x + r * 2, y_, pi / 2, pi)
+
 def land_line(float x, y, x_, y_):
     platform_line(x, y, x_, y_)
 
