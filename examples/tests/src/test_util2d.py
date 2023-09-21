@@ -5,6 +5,7 @@ import global land.util2d
 def test_util2d:
     test(point_in_rect)
     test(point_rounded_rectangle_distance)
+    test(point_segment_distance)
 
 def _test_point_in_rect:
     for int t in range(4):
@@ -66,3 +67,29 @@ def _test_point_rounded_rectangle_distance:
 .......0.......
 """
     assert_equals(result, expected)
+
+def _assert_distance(LandFloat x, y, ax, ay, bx, by, expected, str text):
+    assert_float(land_point_segment_distance(x, y, ax, ay, bx, by), expected, 5, text)
+
+def _test_point_segment_distance:
+    _assert_distance(0, 0, 0, 0, 1, 0, 0, "to A")
+    _assert_distance(1, 0, 0, 0, 1, 0, 0, "to B")
+    _assert_distance(0.5, 0, 0, 0, 1, 0, 0, "to center")
+    _assert_distance(-1, 0, 0, 0, 1, 0, 1, "left")
+    _assert_distance(2, 0, 0, 0, 1, 0, 1, "right")
+    _assert_distance(0, 1, 0, 0, 1, 0, 1, "up")
+    _assert_distance(1, 1, 0, 0, 1, 0, 1, "up")
+    _assert_distance(0, -1, 0, 0, 1, 0, 1, "down")
+    _assert_distance(1, -1, 0, 0, 1, 0, 1, "down")
+
+    _assert_distance(0, 0, 1, 0, 0, 0, 0, "to A")
+    _assert_distance(1, 0, 1, 0, 0, 0, 0, "to B")
+    _assert_distance(0.5, 0, 1, 0, 0, 0, 0, "to center")
+    _assert_distance(-1, 0, 1, 0, 0, 0, 1, "left")
+    _assert_distance(2, 0, 1, 0, 0, 0, 1, "right")
+    _assert_distance(0, 1, 1, 0, 0, 0, 1, "up")
+    _assert_distance(1, 1, 1, 0, 0, 0, 1, "up")
+    _assert_distance(0, -1, 1, 0, 0, 0, 1, "down")
+    _assert_distance(1, -1, 1, 0, 0, 0, 1, "down")
+
+    _assert_distance(100.0, 50.0, 110.0, 50.0, 90.0, 50.0, 0, "line")

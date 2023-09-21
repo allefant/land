@@ -49,6 +49,9 @@ foreach(exsrc ${examples})
                 -h "c/${out}.h"
                 -n "${out}"
                 -p _LAND
+                -m c
+                -m ../c
+                -m dep/include/land
             DEPENDS ${py})
         list(APPEND example_cfiles "c/${out}.c")
     endforeach(py)

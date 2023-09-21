@@ -27,9 +27,12 @@ def main(int argc, char** argv) -> int:
     #test_widget()
     #test_string()
     #test_csg()
-    #test_util2d()
-    test_file()
+    test_util2d()
+    #test_file()
 
-    print("%d/%d failed", tests_failed, tests_count)
+    if tests_failed:
+        print("%d/%d failed", tests_failed, tests_count)
+    else:
+        print("all %d succeeded", tests_count)
 
     return tests_failed == 0 ? 0 : 1
