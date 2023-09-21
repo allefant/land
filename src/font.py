@@ -1,11 +1,13 @@
 import global assert
 import array, display, hash
+import land.color
 
 class LandFont:
     int size
     double xscaling
     double yscaling
     int flags
+    char *filename
 
 typedef void (PrintFunc)(char const *s, int alignment)
 
@@ -21,6 +23,9 @@ class LandFontState:
     float paragraph_x
     float paragraph_wrap
     PrintFunc *print_override
+    bool background
+    float background_radius
+    LandColor background_color
 
 enum:
     LandAlignRight = 1
@@ -182,6 +187,14 @@ static def initial_font:
     letter('7', "8 0 l -4 8 l")
     letter('8', "2 4 m -2 2 l 2 2 l 4 0 l 2 -2 l -2 -2 l 2 -2 l -2 -2 l -4 0 l -2 2 l 2 2 l 4 0 l")
     letter('9', "8 0 l 0 8 l -8 0 l 0 -8 m 0 4 l 8 0 l")
+    letter('(', "6 0 m -2 1 l -2 2 l 0 2 l 2 2 l 2 1 l")
+    letter(')', "2 8 m 2 -1 l 2 -2 l 0 -2 l -2 -2 l -2 -1 l")
+    letter('[', "6 0 m -2 0 l 0 8 l 2 0 l")
+    letter(']', "4 0 m 2 0 l 0 8 l -2 0 l")
+    letter('<', "6 0 m -4 4 l 4 4 l")
+    letter('>', "2 0 m 4 4 l -4 4 l")
+    letter('{', "6 0 m -2 0 l 0 3 l -2 1 l 2 1 l 0 3 l 2 0 l")
+    letter('}', "4 0 m 2 0 l 0 3 l 2 1 l -2 1 l 0 3 l -2 0 l")
     land_unset_image_display()
 
     int r[] = {0, 127}
@@ -214,12 +227,24 @@ def land_font_load(char const *filename, float size) -> LandFont *:
     """
     char *path = land_path_with_prefix(filename)
     LandFont *self = platform_font_load(path, size)
-    land_free(path)
+    self.filename = path
     if self.flags & LAND_LOADED:
         land_font_state.font = self
     return self
 
+def land_font_check_loaded(LandFont *self):
+    if self.flags & LAND_LOADED:
+        return
+    land_exception("Could not load font %s. Aborting.", self.filename)
+
+def land_font_load_or_abort(str filename, float size) -> LandFont *:
+    auto font = land_font_load(filename, size)
+    land_font_check_loaded(font)
+    return font
+
 def land_font_destroy(LandFont *self):
+    if self.filename:
+        land_free(self.filename)
     platform_font_destroy(self)
     
 def land_font_new() -> LandFont *:
@@ -295,6 +320,14 @@ def land_paragraph_start(float wrap_width):
     land_font_state.paragraph_x = land_font_state.x_pos
     land_font_state.paragraph_wrap = wrap_width
 
+def land_text_background(LandColor color, float radius):
+    land_font_state.background = True
+    land_font_state.background_color = color
+    land_font_state.background_radius = radius
+
+def land_text_background_off:
+    land_font_state.background = False
+
 def land_paragraph_end:
     land_font_state.in_paragraph = False
 
@@ -305,6 +338,21 @@ def land_print_string(char const *s, int newline, int alignment):
         if lfs.x_pos + w > lfs.paragraph_x + lfs.paragraph_wrap:
             lfs.x_pos = lfs.paragraph_x
             lfs.y_pos += lfs.h
+
+    if lfs.background:
+        float ew, eh
+        land_text_get_extents(s, &ew, &eh)
+        float r = lfs.background_radius
+        LandColor backup = land_color_get()
+        land_color_set(lfs.background_color)
+        float xo = 0, yo = 0
+        if alignment & LandAlignMiddle:
+            yo = eh / 2
+        if alignment & LandAlignCenter:
+            xo = ew / 2
+        land_filled_rounded_rectangle(lfs.x_pos - xo - r, lfs.y_pos - r - yo,
+            lfs.x_pos - xo + ew + r, lfs.y_pos - yo + eh + r, r)
+        land_color_set(backup)
 
     if lfs.print_override:
         PrintFunc *backup = lfs.print_override
@@ -336,6 +384,14 @@ def land_text_get_width(char const *str) -> float:
     platform_font_print(land_font_state, str, 0)
     land_font_state.off = onoff
     return land_font_state.w
+
+def land_text_get_extents(char const *str, float *w, *h):
+    int onoff = land_font_state.off
+    land_font_state.off = 1
+    platform_font_print(land_font_state, str, 0)
+    land_font_state.off = onoff
+    *w = land_font_state.w
+    *h = land_font_state.h
 
 def land_text_get_multiline_size(char const *s, float *w, *h):
     int onoff = land_font_state.off
@@ -624,17 +680,38 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
         alignment ^= LandAlignMiddle
         land_font_state.y_pos -= n * fh / 2
     land_font_state.y_pos += fh * first
+    bool restore_background = land_font_state.background
+    if land_font_state.background:
+        land_font_state.background = False
+        float ew, eh
+        land_wordwrap_extents(&ew, &eh)
+        float r = land_font_state.background_radius
+        float x = land_font_state.x_pos
+        float y = land_font_state.y_pos
+        LandColor backup = land_color_get()
+        land_color_set(land_font_state.background_color)
+        float xo = 0, yo = 0
+        if alignment & LandAlignMiddle:
+            yo = eh / 2
+        if alignment & LandAlignCenter:
+            xo = ew / 2
+        land_filled_rounded_rectangle(x - xo - r, y - r - yo,
+            x - xo + ew + r, y - yo + eh + r, r)
+        land_color_set(backup)
+
     for int i = first while i <= last with i++:
         char *s = land_array_get_nth(lines, i)
         char ckey[] = {i % 256, i / 256, 0}
         if colors:
             char *c = land_hash_get(colors, ckey)
-
             if c:
                 land_color_set(land_color_name(c))
             else:
                 land_color_set(original)
         land_print_string(s, 1, alignment)
+
+    land_font_state.background = restore_background
+
     land_color_set(original)
 
 def land_set_line_color(LandHash *colors, int i, str col):
