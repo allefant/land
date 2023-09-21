@@ -429,3 +429,9 @@ static def bash_mode(char const *x, char const *mode) -> char const *:
         
 def land_premul_alpha(LandColor c, float a) -> LandColor:
     return land_color_premul(c.r, c.g, c.b, a)
+
+def land_color_copy_to_bytes(LandColor c, uint8_t *rgba):
+    rgba[0] = land_constrainf(c.r, 0, 1) * 255
+    rgba[1] = land_constrainf(c.g, 0, 1) * 255
+    rgba[2] = land_constrainf(c.b, 0, 1) * 255
+    rgba[3] = land_constrainf(c.a, 0, 1) * 255
