@@ -174,6 +174,7 @@ static macro MAX_NUMBER 4294967295U
 def land_seed(int seed):
     init_genrand(&default_state, seed)
 
+# rmin is inclusive, rmax is exclusive
 def land_rnd(double rmin, rmax) -> double:
     return land_random_f(&default_state, rmin, rmax)
 

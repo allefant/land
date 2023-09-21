@@ -36,6 +36,18 @@ enum LandKeyboardKeys:
     LandKeyRightAlt= '>'
     LandKeyMenu = '?'
     LandKeyFunction = '@' # 65=F+1, 76=F+12
+    LandKeyF1 = LandKeyFunction + 1
+    LandKeyF2 = LandKeyFunction + 2
+    LandKeyF3 = LandKeyFunction + 3
+    LandKeyF4 = LandKeyFunction + 4
+    LandKeyF5 = LandKeyFunction + 5
+    LandKeyF6 = LandKeyFunction + 6
+    LandKeyF7 = LandKeyFunction + 7
+    LandKeyF8 = LandKeyFunction + 8
+    LandKeyF9 = LandKeyFunction + 9
+    LandKeyF10 = LandKeyFunction + 10
+    LandKeyF11 = LandKeyFunction + 11
+    LandKeyF12 = LandKeyFunction + 12
     LandKeyPad = 'M' # 77=P+0, 86=P+9
     LandKeyLeft = 'W'
     LandKeyRight = 'X'
@@ -50,7 +62,6 @@ enum LandKeyboardKeys:
     LandKeyUnknown3 = 127 # 127=U''+0, ..., 227=U''+100
     LandKeysCount = 228
 
-    LandKeyF5 = LandKeyFunction + 5
     LandKeyShift = LandKeysCount + 1
 
 static int key_state[LandKeysCount]
@@ -100,6 +111,11 @@ def land_keybuffer_next(int *k, int *u):
         *k = keybuffer_keycode[keybuffer_first]
         *u = keybuffer_unicode[keybuffer_first]
         keybuffer_first++
+
+def land_keybuffer_get -> int:
+    int k = 0, u = 0
+    land_keybuffer_next(&k, &u)
+    return k
 
 def land_key_name(int k) -> char const *:
     return platform_key_name(k)

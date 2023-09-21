@@ -45,6 +45,13 @@ def platform_resume:
 def platform_init():
     land_log_message("Compiled against Allegro %s.\n",
         ALLEGRO_VERSION_STR)
+    uint32_t version = al_get_allegro_version()
+    int major = version >> 24
+    int minor = (version >> 16) & 255
+    int revision = (version >> 8) & 255
+    int release = version & 255
+    land_log_message("Linked against Allegro %d.%d.%d%s.\n",
+        major, minor, revision, " (GIT)" if release == 0 else "");
 
     if not al_init():
         land_log_message("Allegro initialization failed.\n")
@@ -373,8 +380,12 @@ def platform_frame:
                         event.joystick.button)
                     land_joystick_button_up_event(b)
                     break
-                    
-                
+                case ALLEGRO_EVENT_DROP:
+                    land_drop_event(event.drop.text, event.drop.x, event.drop.y,
+                        event.drop.row, event.drop.is_file, event.drop.is_complete)
+                    if event.drop.text:
+                        al_free(event.drop.text)
+
             *** "ifdef" __EMSCRIPTEN__
             continue
             *** "endif"

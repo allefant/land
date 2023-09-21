@@ -58,7 +58,7 @@ tick     0          1          2          3          4
 3: 10 (to go with it)
 4: 00 
 """
-import global stdbool
+import common
 static import exception, land/allegro5/a5_main
 static import global assert
 
@@ -68,6 +68,8 @@ static int buttons[5], obuttons[5]
 int _clicks[5] # how often was the button pressed down
 int _releases[5] # how often was the button released
 static float tx[11], ty[11], tb[11], otb[11]
+char *_drop_text
+bool _drag_and_drop, _drop_file
 
 enum LandMouseButtons:
     LandButtonLeft
@@ -102,6 +104,8 @@ def land_mouse_tick():
 
     for int i in range(11):
         otb[i] = tb[i]
+
+    _drag_and_drop = False
 
 def land_mouse_move_event(int x, int y, int z):
     mx = x
@@ -230,3 +234,17 @@ def land_hide_mouse_cursor() -> bool:
 def land_show_mouse_cursor() -> bool:
     platform_show_mouse_cursor()
     return true
+
+def land_drop_event(str text, int x, y, row, bool is_file, is_complete):
+    if _drop_text:
+        land_free(_drop_text)
+        _drop_text = None
+    if text:
+        _drop_text = land_strdup(text)
+    _drop_file = is_file
+    _drag_and_drop = True
+
+def land_dropped_file() -> str:
+    if _drag_and_drop and _drop_file:
+        return _drop_text
+    return None
