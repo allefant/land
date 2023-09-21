@@ -145,6 +145,13 @@ def land_set_display_parameters(int w, int h, int flags):
     parameters->h = h
     parameters->flags = flags
 
+def land_set_display_percentage_aspect(float percentage, aspect, int flags):
+    int w, h
+    land_display_desktop_size(&w, &h)
+    w *= percentage
+    h = w / aspect
+    land_set_display_parameters(w, h, flags)
+
 def land_set_initial_runner(LandRunner *runner):
     """Set the initial runner."""
     parameters->start = runner
