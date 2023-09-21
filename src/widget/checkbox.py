@@ -40,6 +40,7 @@ def land_widget_checkbox_initialize(LandWidget *base,
     char const *checkbox_unselected,
     char const *text,
     bool *b,
+    void (*cb)(LandWidget *),
     int x, int y, int w, int h):
 
     LandWidgetCheckBox *self = (void *)base
@@ -75,6 +76,9 @@ def land_widget_checkbox_initialize(LandWidget *base,
     else:
         land_widget_button_replace_text(checkbox, checkbox_unselected)
 
+    if cb:
+        self.changed = cb
+
 def land_widget_checkbox_new(LandWidget *parent,
     char const *checkbox_selected,
     char const *checkbox_unselected,
@@ -84,7 +88,7 @@ def land_widget_checkbox_new(LandWidget *parent,
     LandWidgetCheckBox *self; land_alloc(self)
 
     land_widget_checkbox_initialize((LandWidget *)self,
-        parent, checkbox_selected, checkbox_unselected, text, None,
+        parent, checkbox_selected, checkbox_unselected, text, None, None,
         x, y, w, h)
 
     return (LandWidget *)self
@@ -99,7 +103,21 @@ def land_widget_checkbox_new_boolean(LandWidget *parent,
     LandWidgetCheckBox *self; land_alloc(self)
 
     land_widget_checkbox_initialize((LandWidget *)self,
-        parent, checkbox_selected, checkbox_unselected, text, b, x, y, w, h)
+        parent, checkbox_selected, checkbox_unselected, text, b, None, x, y, w, h)
+
+    return (LandWidget *)self
+
+def land_widget_checkbox_new_callback(LandWidget *parent,
+    char const *checkbox_selected,
+    char const *checkbox_unselected,
+    char const *text,
+    void (*cb)(LandWidget *),
+    int x, int y, int w, int h) -> LandWidget *:
+    
+    LandWidgetCheckBox *self; land_alloc(self)
+
+    land_widget_checkbox_initialize((LandWidget *)self,
+        parent, checkbox_selected, checkbox_unselected, text, None, cb, x, y, w, h)
 
     return (LandWidget *)self
 

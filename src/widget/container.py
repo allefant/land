@@ -4,7 +4,7 @@ static import land/land
 class LandWidgetContainer:
     """
     A container is a widget with children. It is not useful all by itself, but
-    it the base class of some useful widgets, or can be used to derive your own
+    is the base class of some useful widgets, or can be used to derive your own
     special containers.
     """
     LandWidget super

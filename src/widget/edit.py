@@ -63,11 +63,13 @@ def land_widget_edit_draw(LandWidget *base):
             if pos < 0.5:
                 int cx = land_text_get_char_offset(self.text, self->cursor)
                 cx -= self.scroll
+                int extra = land_text_get_width(" ")
 
                 if cx < 0:
                     self.scroll += cx
-                if cx > base.box.w:
-                    self.scroll += cx - base.box.w
+                int end = base.box.w - extra
+                if cx > end:
+                    self.scroll += cx - end
 
                 land_line(x + cx + 0.5, y, x + cx + 0.5, base->box.y + base->box.h -
                     base->element->ib)
@@ -173,7 +175,9 @@ def land_widget_edit_set_text(LandWidget *base, char const *text):
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(base)
     land_free(edit->text)
     edit->text = land_strdup(text)
-    land_widget_theme_set_minimum_size_for_text(base, text)
+    # cannot do that always, an edit widget can hold a long text and
+    # scroll
+    #land_widget_theme_set_minimum_size_for_text(base, text)
     if edit->cursor > land_utf8_count(text):
         edit->cursor = land_utf8_count(text)
 

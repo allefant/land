@@ -1,5 +1,14 @@
 import container, land/list
 
+# internal book layout
+#
+# vbox (book)
+#   hbox (pages)
+#   hbox (tabbar)
+#
+# There is two children, "pages" contains all the pages, all but one
+# are always hidden. "tabbar" contains all the tab buttons.
+
 class LandWidgetBook:
     """
     A book widget is a container, which shows only one of its children at a
@@ -131,6 +140,13 @@ def land_widget_book_remove_page(LandWidget *widget, LandWidget *rem):
 
     land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
 
+def land_widget_book_clear(LandWidget *widget):
+    while True:
+        auto page = land_widget_book_get_nth_page(widget, 0)
+        if not page:
+            break
+        land_widget_book_remove_page(widget, page)
+
 static def clicked(LandWidget *button):
     # The page corresponding to the button is the one with the same index. This
     # should probably be changed by having a direct link to the page. for now,
@@ -177,11 +193,13 @@ def land_widget_book_add(LandWidget *widget, LandWidget *add):
 
     #land_widget_book_show_page(widget, land_widget_book_get_current_page(widget))
 
+def land_widget_book_get_last_tab(LandWidget *widget) -> LandWidget*:
+    auto w = land_widget_book_get_tabbar(widget)
+    LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(w)
+    return hbox->children->last->data
+
 def land_widget_book_pagename(LandWidget *widget, char const *name) -> LandWidget*:
-    LandWidgetContainer *container = LAND_WIDGET_CONTAINER(widget)
-    LandWidgetContainer *hbox = LAND_WIDGET_CONTAINER(
-        container->children->first->next->data)
-    LandWidget *button = hbox->children->last->data
+    auto button = land_widget_book_get_last_tab(widget)
     land_widget_button_set_text(button, name)
     return button
 
@@ -292,6 +310,8 @@ def land_widget_book_get_nth_page(LandWidget *self, int n) -> LandWidget *:
     LandWidgetContainer *book = LAND_WIDGET_CONTAINER(self)
     LandWidgetContainer *panel = LAND_WIDGET_CONTAINER(
         book->children->first->data)
+    if not panel.children:
+        return None
 
     LandListItem *panelitem = panel->children->first
 
@@ -306,6 +326,20 @@ def land_widget_book_get_nth_page(LandWidget *self, int n) -> LandWidget *:
 
     return None
 
+def land_widget_book_get_nth_tab(LandWidget *self, int n) -> LandWidget*:
+    auto tabbar = land_widget_book_get_tabbar(self)
+    return land_widget_container_child_i(tabbar, n)
+
 def land_widget_book_show_nth(LandWidget *self, int n):
     LandWidget *page = land_widget_book_get_nth_page(self, n)
     if page: land_widget_book_show_page(self, page)
+
+def land_widget_book_show(LandWidget *self, str name):
+    int i = 0
+    while True:
+        auto tab = land_widget_book_get_nth_tab(self, i)
+        if not tab:
+            return
+        if land_equals(land_widget_button_get_text(tab), name):
+            land_widget_book_show_nth(self, i)
+        i++
