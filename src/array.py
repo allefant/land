@@ -131,6 +131,11 @@ def land_array_shift_remove(LandArray *self, int i) -> void*:
     memmove(self.data + i, self.data + i + 1, sizeof(*self.data) * (self.count - i))
     return x
 
+def land_array_remove_data(LandArray *self, void *data) -> void*:
+    int i = land_array_find(self, data)
+    if i == -1: return None
+    return land_array_shift_remove(self, i)
+
 def land_array_add_data(LandArray **array, void *data):
     """
     *deprecated*
