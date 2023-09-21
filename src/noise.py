@@ -11,6 +11,13 @@ enum LandNoiseType:
     LandNoiseWaves
     LandNoiseValue
 
+enum LandNoiseShape:
+    LandNoiseShapeNone
+    LandNoiseShapeDistance
+    LandNoiseShapeSquared
+    LandNoiseShapeCos
+    LandNoiseShapeDiamond
+
 class LandNoiseI2:
     int x, y
 
@@ -25,6 +32,7 @@ class LandNoise:
     int levels
     int first_level
     int modulo
+    int passes
     LandRandom *seed
     bool use_external_seed
     float randomness
@@ -39,6 +47,8 @@ class LandNoise:
     float minval, maxval
     bool wrap
     void *user
+    LandNoiseShape shape
+    float shape_amount
 
     float z_scale, z_offset, z_ease
     float (*transfer_cb)(float x)
@@ -104,6 +114,9 @@ def land_noise_set_amplitude(LandNoise *self, float amplitude):
 def land_noise_set_distance(LandNoise *self, float distance):
     self.distance = distance
 
+def land_noise_set_passes(LandNoise *self, int passes):
+    self.passes = passes
+
 def land_noise_set_power_modifier(LandNoise *self, float power_modifier):
     self.power_modifier = power_modifier
 
@@ -113,6 +126,11 @@ def land_noise_set_randomness(LandNoise *self, float randomness):
 def land_noise_set_minmax(LandNoise *self, float minval, maxval):
     self.minval = minval
     self.maxval = maxval
+
+def land_noise_set_value(LandNoise *self, int x, y, float val):
+    if self.cache:
+        if x >= 0 and y >=  0 and x < self.w and y < self.h:
+            self.cache[x + y *self.w] = val
 
 def land_noise_set_warp(LandNoise *self, LandNoise *warp, float x, y, sx, sy):
     self.warp = True
@@ -131,6 +149,10 @@ def land_noise_set_blur(LandNoise *self, LandNoise *blur, LandFloat size):
 
 def land_noise_set_wrap(LandNoise *self, bool wrap):
     self.wrap = wrap
+
+def land_noise_set_shape(LandNoise *self, LandNoiseShape shape, float amount):
+    self.shape = shape
+    self.shape_amount = amount
 
 def land_noise_smoothen(LandNoise *self):
 
@@ -207,6 +229,22 @@ def _white(LandNoise *self) -> LandFloat*:
 
     return noise
 
+def land_noise_replace_heightmap(LandNoise *self, LandFloat *cache):
+    """
+    Convert the noise to a fixed value noise - but keep the coloring
+    info.
+    """
+    if not self.cache:
+        self.cache = land_malloc(self.w * self.h * sizeof *self.cache)
+    memcpy(self.cache, cache, self.w * self.h * sizeof *cache)
+    self.t = LandNoiseValue
+    self.z_scale = 1
+    self.z_offset = 0
+    self.z_ease = 0
+    self.warp = False
+    self.blur = False
+    self.transfer_cb = None
+
 def land_noise_prepare(LandNoise *self):
     if self.warp:
         land_noise_prepare(land_array_get_nth(self.noise, 0))
@@ -255,7 +293,7 @@ def land_noise_prepare(LandNoise *self):
         
     if self.t == LandNoiseVoronoi:
         void *noise = land_voronoi_create(self.seed, self.w, self.h,
-            self.count, self.modulo, self.randomness, self.distance)
+            self.count, self.wrap, self.randomness, 0, self.distance)
         land_array_add(self.noise, noise)
     if self.t == LandNoiseWaves:
         void *noise = _waves_create(self, self.w, self.h)
@@ -301,6 +339,25 @@ def land_noise_prepare(LandNoise *self):
             for int y in range(self.h):
                 for int x in range(self.w):
                     self.cache[x + self.w * y] = self.value_cb(self, x, y, self.user)
+
+    if self.shape:
+        for int y in range(self.h):
+            for int x in range(self.w):
+                float p = self.cache[x + self.w * y]
+                float dx = (x * 2.0 - self.w) / self.w
+                float dy = (y * 2.0 - self.h) / self.h
+                float d = 1
+                if self.shape == LandNoiseShapeDistance:
+                    d -= 2 * sqrt(dx * dx + dy * dy)
+                elif self.shape == LandNoiseShapeSquared:
+                    d -= 2 * (dx * dx + dy * dy)
+                elif self.shape == LandNoiseShapeDiamond:
+                    d -= max(fabs(dx), fabs(dy))
+                elif self.shape == LandNoiseShapeCos:
+                    d -= 2 * sin(sqrt(dx * dx + dy * dy) * pi / 2)
+                float v = d * self.shape_amount + p * (1 - self.shape_amount)
+                if v < 0: v = -1
+                self.cache[x + self.w * y] = v
 
 def _multires_cache(LandNoise *self):
     self.cache = land_malloc(self.w * self.h * sizeof *self.cache)
