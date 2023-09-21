@@ -257,6 +257,14 @@ def land_append(char **s, str format, ...):
     land_appendv(s, format, args)
     va_end(args)
 
+def land_format(str format, ...) -> char*:
+    va_list args
+    va_start(args, format)
+    char *s = None
+    land_appendv(&s, format, args)
+    va_end(args)
+    return s
+
 def land_overwrite(char **s, str format, ...):
     va_list args
     va_start(args, format)
@@ -533,3 +541,20 @@ def land_null_or_empty(str text) -> bool:
 
 def land_to_int(str text) -> int:
     return strtol(text, None, 0)
+
+def land_join(str delimiter, LandArray *strings) -> char*:
+    """
+    Allocate a new strings, containing all the strings in the array
+    concatenated by delimiter.
+    """
+    char *result = None
+    int n = land_array_count(strings)
+    for int i in range(n):
+        str x = land_array_get(strings, i)
+        land_append(&result, "%s", x)
+        if i < n - 1:
+            land_append(&result, "%s", delimiter)
+    return result
+
+def land_get_seconds -> uint64_t:
+    return time(None)
