@@ -293,3 +293,26 @@ def land_point_rectangle_distance(LandFloat px, py, cx, cy, angle, w, h) -> Land
     if d3 > d: d = d3
     return d
 
+def land_point_segment_distance(LandFloat px, py, ax, ay, bx, by) -> LandFloat:
+    """
+    Get the distance of point px/py to a line segment from ax/ay to bx/by.
+    If the point is next to the line segment this is the distance to the
+    line. If the point is before A or behind B it's the circle distance
+    to A or B.
+                   P
+                  /
+        A----____/
+                 ----____
+                         ----B
+    """
+    LandFloat lx = bx - ax
+    LandFloat ly = by - ay
+    LandFloat x = px - ax
+    LandFloat y = py - ay
+    LandFloat d = land_dot2d(lx, ly, x, y)
+    if d < 0: # before A
+        return sqrt(x *x + y * y)
+    LandFloat ll = lx * lx + ly * ly
+    if d  > ll:
+        return sqrt(pow(px - bx, 2) + pow(py - by, 2))
+    return fabs(land_cross2d(lx, ly, x, y)) / sqrt(ll)
