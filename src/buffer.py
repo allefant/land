@@ -139,6 +139,9 @@ def land_buffer_add_uint32_t(LandBuffer *self, uint32_t i):
     land_buffer_add_char(self, (i >> 16) & 255)
     land_buffer_add_char(self, (i >> 24) & 255)
 
+def land_buffer_get_uint32_by_index(LandBuffer *self, int pos) -> uint32_t:
+    return land_buffer_get_uint32_t(self, pos * sizeof(uint32_t))
+
 def land_buffer_get_uint32_t(LandBuffer *self, int pos) -> uint32_t:
     uint8_t *uc = (uint8_t *)self->buffer + pos
     uint32_t u = *(uc++)
@@ -164,6 +167,21 @@ def land_buffer_get_float(LandBuffer *self, int pos) -> float:
 def land_buffer_add_float(LandBuffer *self, float f):
     uint32_t *i = (void *)&f
     land_buffer_add_uint32_t(self, *i)
+
+def land_buffer_get_land_float(LandBuffer *self, int pos) -> LandFloat:
+    LandFloat *uc = (LandFloat *)(self->buffer + pos)
+    return *uc
+
+def land_buffer_get_land_float_by_index(LandBuffer *self, int i) -> LandFloat:
+    LandFloat *uc = ((LandFloat *)(self->buffer)) + i
+    return *uc
+
+def land_buffer_len_land_float(LandBuffer *self) -> int:
+    return self.n / sizeof(LandFloat)
+
+def land_buffer_add_land_float(LandBuffer *self, LandFloat f):
+    char *b = (void *)&f
+    land_buffer_add(self, b, sizeof(f))
 
 def land_buffer_add_char(LandBuffer *self, char c):
     land_buffer_add(self, &c, 1)
