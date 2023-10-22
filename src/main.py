@@ -5,6 +5,7 @@ static import global sys/time
 static import land
 
 class LandParameters:
+    int x, y
     int w, h
     int fps
     int flags
@@ -91,6 +92,7 @@ def land_tick():
     land_mouse_tick()
     land_keyboard_tick()
     land_joystick_tick()
+    land_check_error_repeat()
     x_clicked = False
     _land_was_halted = _land_halted
     _flip_tick_i--
@@ -143,7 +145,7 @@ def land_set_display_parameters(int w, int h, int flags):
     """
     parameters->w = w
     parameters->h = h
-    parameters->flags = flags
+    parameters->flags |= flags
 
 def land_set_display_percentage_aspect(float percentage, aspect, int flags):
     int w, h
@@ -151,6 +153,11 @@ def land_set_display_percentage_aspect(float percentage, aspect, int flags):
     w *= percentage
     h = w / aspect
     land_set_display_parameters(w, h, flags)
+
+def land_display_initial_position(int x, y):
+    parameters.x = x
+    parameters.y = y
+    parameters.flags |= LAND_POSITIONED
 
 def land_set_initial_runner(LandRunner *runner):
     """Set the initial runner."""
@@ -245,6 +252,8 @@ def land_mainloop():
 
     land_mainloop_prepare()
 
+    if parameters.flags | LAND_POSITIONED:
+        platform_display_initial_position(parameters.x, parameters.y)
     LandDisplay *display = land_display_new(parameters->w,
         parameters->h, parameters->flags)
 

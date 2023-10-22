@@ -183,7 +183,7 @@ static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
 
     land_clip_push()
     land_clip_intersect(x, y, x + w, y + h)
-    
+
     if pat->flags & CENTER_H:
         blit_column(pat, 0, bw, x + w / 2 - bw / 2, y, bw, h, 0)
 
@@ -483,6 +483,9 @@ def land_widget_theme_draw(LandWidget *self):
     if self.no_decoration: return
     if element->transparent: return
 
+    if land_completely_clipped():
+        print("warning: widget clipped %s", land_widget_info_string(self))
+
     draw_bitmap(element, self.box.x, self->box.y, self->box.w, self->box.h,
         self.only_border)
 
@@ -600,3 +603,19 @@ def land_widget_theme_change_font(LandWidgetTheme *theme):
         if element.disabled:
             element.disabled.font = land_font_current()
 
+def land_widget_debug_theme(LandWidget *w, int indentation):
+    LandWidgetThemeElement *e = w.element
+
+    for int i in range(indentation):
+        printf("  ");
+    if e.transparent:
+        print("%s transparent", e.name)
+    else:
+        print("%s %dx%d", e.name, land_image_width(e.bmp), land_image_height(e.bmp))
+
+    if land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
+        LandWidgetContainer *c = LAND_WIDGET_CONTAINER(w)
+        if c.children:
+            for LandWidget *child in LandList *c.children:
+                land_widget_debug_theme(child, indentation + 1)
+    

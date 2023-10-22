@@ -82,7 +82,27 @@ def land_log_message_nostamp (char const *format, ...):
 
 
     va_end(va_args)
-    
+
+def land_log_timestamp(void *f):
+    struct timeval tv
+    *** "ifdef" WINDOWS
+    tv.tv_usec = 0
+    *** "else"
+    gettimeofday(&tv, NULL)
+    *** "endif"
+    time_t t
+    struct tm tm
+    time(&t)
+    tm = *gmtime(&t)
+
+    fprintf((FILE*)f, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
+        tm.tm_year + 1900,
+        tm.tm_mon + 1,
+        tm.tm_mday,
+        tm.tm_hour,
+        tm.tm_min,
+        tm.tm_sec,
+        tv.tv_usec)
 
 def land_log_message(char const *format, ...):
     if _nolog: return
@@ -97,28 +117,10 @@ def land_log_message(char const *format, ...):
     vsprintf(s, format, va_args)
     __android_log_print(ANDROID_LOG_INFO, "land", "%s", s)
     *** "else"
-    
-    struct timeval tv
-    *** "ifdef" WINDOWS
-    tv.tv_usec = 0
-    *** "else"
-    gettimeofday(&tv, NULL)
-    *** "endif"
-    time_t t
-    struct tm tm
-    time(&t)
-    tm = *gmtime(&t)
 
     FILE * logfile = fopen(logname, "a")
     if logfile:
-        fprintf(logfile, "%04d/%02d/%02d %02d:%02d:%02d.%06ld ",
-            tm.tm_year + 1900,
-            tm.tm_mon + 1,
-            tm.tm_mday,
-            tm.tm_hour,
-            tm.tm_min,
-            tm.tm_sec,
-            tv.tv_usec)
+        land_log_timestamp(logfile)
         vfprintf(logfile, format, va_args)
         fclose(logfile)
     else:

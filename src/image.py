@@ -350,6 +350,8 @@ def land_image_new_from(LandImage *copy, int x, int y, int w, int h) -> LandImag
     land_log_message("land_image_new_from %s..", copy->name)
 
     LandImage *self = land_image_new(w, h)
+    self.name = land_strdup("from ")
+    if copy.filename: land_append(&self.name, copy.filename)
     land_set_image_display(self)
 
     # blending changes only for image display which is destroyed a line later

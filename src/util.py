@@ -8,6 +8,8 @@ import global stdio
 import land/array
 import land/buffer
 import land/common
+import land.color
+import land.main
 static import allegro5/a5_file
 
 macro LAND_PI ALLEGRO_PI
@@ -20,6 +22,47 @@ def print(char const *s, ...):
     vprintf(s, args)
     va_end(args)
     printf("\n")
+
+char *_last_error
+int _repeat_count
+int _error_tick
+def _fancy_print_error(str error, ...):
+    va_list args
+    va_start(args, error)
+    land_log_timestamp(stdout)
+    printf("%s", land_color_bash("red"))
+    vprintf(error, args)
+    va_end(args)
+    printf("%s\n", land_color_bash("end"))
+
+def error(str f, ...):
+    va_list args
+    va_start(args, f)
+    char *new_error = None
+    land_appendv(&new_error, f, args)
+    if _last_error:
+        if land_equals(new_error, _last_error):
+            _repeat_count++
+        else:
+            if _repeat_count:
+                _fancy_print_error("last error repeated %d times", _repeat_count)
+            _repeat_count = 0
+            _error_tick = land_get_ticks()
+    va_end(args)
+    if _last_error:
+        land_free(_last_error)
+    _last_error = new_error
+    if _repeat_count == 0:
+        _fancy_print_error("%s", new_error)
+
+def land_check_error_repeat:
+    if _repeat_count > 0:
+        if land_get_ticks() - _error_tick >= land_get_fps():
+            _fancy_print_error("last error repeated %d times", _repeat_count)
+            land_free(_last_error)
+            _last_error = None
+            _repeat_count = 0
+            _error_tick = land_get_ticks()
 
 def land_read_text(char const *filename) -> char *:
     LandBuffer* bytebuffer = land_buffer_read_from_file(filename)
@@ -221,6 +264,12 @@ def land_equals(char const *s, *s2) -> bool:
         return False
     return strcmp(s, s2) == 0
 
+def land_zero(void *ptr, int n):
+    memset(ptr, 0, n)
+
+def land_copy_bytes(void *to, void *fro, int n):
+    memmove(to, fro, n)
+
 def land_ends_with(char const *s, *end) -> bool:
     size_t n = strlen(end)
     return strncmp(s + strlen(s) - n, end, n) == 0
@@ -388,6 +437,11 @@ def land_cut(char **s, int start, end):
     land_concatenate(&replace, *s + end)
     land_free(*s)
     *s = replace
+
+def land_cut_at(char **s, str find):
+    int pos = land_find(*s, find)
+    if pos == -1: return
+    land_shorten(s, 0, pos)
 
 def land_substring(char const *s, int a, b) -> char *:
     """
@@ -558,3 +612,6 @@ def land_join(str delimiter, LandArray *strings) -> char*:
 
 def land_get_seconds -> uint64_t:
     return time(None)
+
+def land_string_to_float(str f) -> LandFloat:
+    return strtod(f, None)

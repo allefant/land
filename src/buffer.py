@@ -1,13 +1,13 @@
 static import global stdio, stdlib, string
 static import mem
 static import file
-import array, util, common
+import array, util, common, exception
 
 static import global zlib if !defined(LAND_NO_COMPRESS)
 
 class LandBuffer:
-    int size # reserved memory
-    int n # number of bytes in the buffer
+    uint64_t size # reserved memory
+    uint64_t n # number of bytes in the buffer
     char *buffer
 
 class LandBufferAsFile:
@@ -89,13 +89,15 @@ def land_buffer_grow(LandBuffer *self, int n):
         while self.size < self.n:
             self.size *= 2
         self.buffer = land_realloc(self.buffer, self.size)
+        if not self.buffer:
+            land_exception("could not allocate %lu bytes\n", self.size)
 
 def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
     land_buffer_grow(self, n)
     memmove(self.buffer + pos + n, self.buffer + pos, self.n - n - pos)
     memcpy(self.buffer + pos, buffer, n)
 
-def land_buffer_move(LandBuffer *self, int from_pos, int to_pos, int n):
+def land_buffer_move(LandBuffer *self, int64_t from_pos, int64_t to_pos, int64_t n):
     if from_pos < 0: from_pos += self.n
     if to_pos < 0: to_pos += self.n
     memmove(self.buffer + to_pos, self.buffer + from_pos, n)
@@ -179,6 +181,9 @@ def land_buffer_get_land_float_by_index(LandBuffer *self, int i) -> LandFloat:
 def land_buffer_len_land_float(LandBuffer *self) -> int:
     return self.n / sizeof(LandFloat)
 
+def land_buffer_len_uint32(LandBuffer *self) -> int:
+    return self.n / sizeof(uint32_t)
+
 def land_buffer_add_land_float(LandBuffer *self, LandFloat f):
     char *b = (void *)&f
     land_buffer_add(self, b, sizeof(f))
@@ -221,7 +226,7 @@ def land_buffer_finish(LandBuffer *self) -> char *:
     return s
 
 def land_buffer_println(LandBuffer *self):
-    printf("%.*s\n", self.n, self.buffer)
+    printf("%.*s\n", (int)self.n, self.buffer)
 
 def land_buffer_empty(LandBuffer *self) -> bool:
     return self.n == 0
@@ -234,7 +239,7 @@ def land_buffer_split(LandBuffer const *self, str delim) -> LandArray *:
     """
     LandArray *a = land_array_new()
     int start = 0
-    for int i in range(self.n):
+    for uint64_t i in range(self.n):
         bool matches = True
         int j = 0
         while delim[j]:
@@ -293,7 +298,7 @@ def land_buffer_strip(LandBuffer *self, char const *what):
     land_buffer_strip_left(self, what)
 
 def land_buffer_is(LandBuffer *self, char const *what) -> bool:
-    int n = strlen(what)
+    uint64_t n = strlen(what)
     if n != self.n:
         return False
     return memcmp(self.buffer, what, self.n) == 0
@@ -316,7 +321,7 @@ def land_buffer_rfind(LandBuffer *self, char c) -> int:
 def land_buffer_find(LandBuffer const *self, int offset,
         char const *what) -> int:
     int n = strlen(what)
-    for int i in range(offset, self.n):
+    for uint64_t i in range(offset, self.n):
         for int j in range(n):
             if self.buffer[i + j] != what[j]:
                 goto mismatch
@@ -366,7 +371,7 @@ def land_buffer_write_to_file(LandBuffer *self, char const *filename) -> bool
     LandFile *pf = land_file_new(filename, "wb")
     if not pf:
         return False
-    int written = land_file_write(pf, self.buffer, self.n)
+    uint64_t written = land_file_write(pf, self.buffer, self.n)
     land_file_destroy(pf)
     return written == self.n
 

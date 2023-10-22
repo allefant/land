@@ -60,6 +60,7 @@ tick     0          1          2          3          4
 """
 import common
 static import exception, land/allegro5/a5_main
+static import display
 static import global assert
 
 static int mx, my, mz

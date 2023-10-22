@@ -90,6 +90,14 @@ def land_key(int k) -> int:
 def land_key_pressed(int k) -> int:
     return key_pressed[k]
 
+def land_shift_pressed(int c) -> int:
+    if c >= 'a'and c <= 'z':
+        return land_key_pressed(c) and not land_key(LandKeyShift)
+    if c >= 'A' and c <= 'Z':
+        int k = c - 'A' + 'a'
+        return land_key_pressed(k) and land_key(LandKeyShift)
+    return False
+
 def land_keyboard_tick():
     int i
     for i = 0 while i < LandKeysCount with i++:

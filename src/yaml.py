@@ -71,6 +71,9 @@ def land_yaml_get_scalar_nth_double(LandArray *s, int i) -> double:
 def land_yaml_get_entry(LandYamlEntry *self, char const *name) -> LandYamlEntry *:
     return land_hash_get(self.mapping, name)
 
+def land_yaml_has_entry(LandYamlEntry *self, str name) -> bool:
+    return land_hash_has(self.mapping, name)
+
 def land_yaml_get_entry_scalar(LandYamlEntry *self, char const *name) -> char const *:
     return land_yaml_get_if_scalar(land_yaml_get_entry(self, name))
 

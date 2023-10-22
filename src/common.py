@@ -4,6 +4,7 @@ import global stdarg
 typedef float float32_t
 typedef double LandFloat
 typedef char const *str
+typedef unsigned char byte
 
 def land_constrain(LandFloat *v, v_min, v_max) -> LandFloat:
     if *v < v_min: *v = v_min

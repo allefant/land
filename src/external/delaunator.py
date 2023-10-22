@@ -1,5 +1,6 @@
 import land.land
 
+global int DEBUG_NODE = -1
 LandFloat EPSILON = 0.00000000000000022204
 int EDGE_STACK[512]
 macro NoneInt INT_MAX
@@ -84,6 +85,8 @@ class Delaunator:
     LandFloat _cx, _cy
     int _hullStart
 
+    LandFloat bx1, by1, bx2, by2
+
 def delaunator_del(Delaunator *self):
     float_array_del(self.coords)
     float_array_del(self._dists)
@@ -96,15 +99,16 @@ def delaunator_del(Delaunator *self):
     int_array_del(self._ids)
     #int_array_del(self._triangles)
     #int_array_del(self._halfedges)
-    
 
-def delaunator_init(Delaunator *self, LandFloat *points, int n):
+def delaunator_init(Delaunator *self, LandFloat *points, int n,
+        LandFloat bx1, by1, bx2, by2):
+    self.bx1 = bx1
+    self.by1 = by1
+    self.bx2 = bx2
+    self.by2 = by2
     for int i in range(512):
         EDGE_STACK[i] = NoneInt
 
-    if n < 3:
-        print("Need at least 3 points")
-        return
     FloatArray *coords = float_array_new(n * 2)
 
     for int i in range(0, n):
@@ -122,6 +126,7 @@ def delaunator_constructor(Delaunator *self, FloatArray *coords):
 
     # arrays that will store the triangulation graph
     int maxTriangles = max(2 * n - 5, 0)
+    if maxTriangles < 0: maxTriangles = 0
     self._triangles = int_array_new(maxTriangles * 3)
     self._halfedges = int_array_new(maxTriangles * 3)
 
@@ -135,6 +140,14 @@ def delaunator_constructor(Delaunator *self, FloatArray *coords):
     # temporary arrays for sorting points
     self._ids =  int_array_new(n)
     self._dists = float_array_new(n)
+
+    if n < 3:
+        n = 3
+        print("Need at least 3 points")
+        self.triangles = int_array_new(n)
+        self.halfedges = int_array_new(n)
+        self.hull = int_array_new(n)
+        return
     delaunator_update(self, coords)
 
 def delaunator_update(Delaunator *self, FloatArray *coords):
@@ -650,46 +663,273 @@ def edges_around_point(Delaunator *self, int start, int *end) -> LandBuffer*:
     return result
 
 def for_each_triangle(Delaunator *self, void (*callback)(int a, int b, int c, void *user), void *user):
+    if self.coords.n // 2 < 3: return
     for int t in range(self.triangles.n // 3):
         int a, b, c
         points_of_triangle(self, t, &a, &b, &c)
         callback(a, b, c, user);
 
-def for_each_voronoi_edge(Delaunator *self, int center,
+def for_each_voronoi_edge(Delaunator *self,
         void (*callback)(LandFloat *xy, void *user), void *user):
     for int e in range(self.triangles.n):
         if e < self.halfedges.ints[e]:
             int t1 = triangle_of_edge(e)
             int t2 = triangle_of_edge(self.halfedges.ints[e])
             LandFloat xy[4]
-            triangle_center(self, t1, center, xy + 0)
-            triangle_center(self, t2, center, xy + 2)
+            triangle_center(self, t1, 0, xy + 0)
+            triangle_center(self, t2, 0, xy + 2)
             callback(xy, user);
 
-def land_delaunator_for_each_voronoi_cell(Delaunator *self, int center,
+# def _is_concave(LandFloat ax, ay, bx, by, cx, cy) -> bool:
+    # return land_cross2d(bx - ax, by - ay, cx - ax, cy - ay) < 0
+
+def _construct_two(Delaunator *self, LandFloat *xy0, LandFloat *xy1):
+    LandFloat *f = self.coords.floats
+    LandFloat x0 = f[0]
+    LandFloat y0 = f[1]
+    LandFloat x1 = f[2]
+    LandFloat y1 = f[3]
+    LandFloat dx = x1 - x0
+    LandFloat dy = y1 - y0
+    LandFloat ux = -dy
+    LandFloat uy = dx
+    xy0[0] = x0 - dx * 10000
+    xy0[1] = y0 - dy * 10000
+    xy0[2] = x0 + dx / 2 - ux * 10000
+    xy0[3] = y0 + dy / 2 - uy * 10000
+    xy0[4] = x0 + dx / 2 + ux * 10000
+    xy0[5] = y0 + dy / 2 + uy * 10000
+    xy1[0] = x1 + dx * 10000
+    xy1[1] = y1 + dy * 10000
+    xy1[2] = x1 - dx / 2 + ux * 10000
+    xy1[3] = y1 - dy / 2 + uy * 10000
+    xy1[4] = x1 - dx / 2 - ux * 10000
+    xy1[5] = y1 - dy / 2 - uy * 10000
+
+#macro _NO_CLIP
+
+def land_delaunator_for_each_voronoi_cell(Delaunator *self, #int center,
         void (*callback)(int i, LandFloat *xy, int *neighbors, int n,
-        bool is_edge, void *user), void *user):
-    int index[self.coords.n // 2] # point-id to half-edge-id
-    for int i in range(self.coords.n // 2):
-        index[i] = -1
+        void *user), void *user):
+    int n = self.coords.n // 2
+
+    if n == 2:
+        LandFloat xy0[3 * 2 * 2]
+        LandFloat xy0_[6 * 2 * 2]
+        LandFloat xy1[3 * 2 * 2]
+        LandFloat xy1_[6 * 2 * 2]
+        _construct_two(self, xy0, xy1)
+        int n0[] = {1, -1, -1}
+        int n1[] = {0, -1, -1}
+        int n0_[6]
+        int n1_[6]
+        int en0 = _clip(self, 0, xy0, n0, 3, xy0_, n0_)
+        int en1 = _clip(self, 1, xy1, n1, 3, xy1_, n1_)
+        callback(0, xy0_, n0_, en0, user)
+        callback(1, xy1_, n1_, en1, user)
+        return
+
+    # we find an incoming edge for each node (if incomplete, the left-most one)
+    int index_incoming[n] # point-id to half-edge-id
+    int index_outgoing[n]
+    for int i in range(n):
+        index_incoming[i] = -1
+        index_outgoing[i] = -1
     for int e in range(self.triangles.n):
         int e2 = next_halfedge(e)
-        # triangles[e] -> triangles[e2] is a triangle edge
         int endpoint = self.triangles.ints[e2]
-        if index[endpoint] == -1 or self.halfedges.ints[e] == -1:
-            index[endpoint] = e
-    for int p in range(self.coords.n // 2):
-        int incoming = index[p]
+        int endpoint_out = self.triangles.ints[e]
+        if index_incoming[endpoint] == -1 or self.halfedges.ints[e] == -1:
+            index_incoming[endpoint] = e
+        if index_outgoing[endpoint_out] == -1 or self.halfedges.ints[e] == -1:
+            index_outgoing[endpoint_out] = e
+
+    if False:
+        printf("          ")
+        for int e in range(self.triangles.n):
+            printf(" %2d", e)
+            if e % 3 == 2: printf(" | ")
+        print("")
+        printf("triangles:")
+        for int e in range(self.triangles.n):
+            printf(" %2d", self.triangles.ints[e])
+            if e % 3 == 2: printf(" | ")
+        print("")
+        printf("halfedges:")
+        for int e in range(self.halfedges.n):
+            int h = self.halfedges.ints[e]
+            if h == -1: printf(" --")
+            else: printf(" %2d", h)
+            if e % 3 == 2: printf(" | ")
+        print("")
+        for int i in range(n):
+            print("index %d inc=%d out=%d", i, index_incoming[i], index_outgoing[i])
+
+    for int p in range(n):
+        int incoming = index_incoming[p]
+        int outgoing = index_outgoing[p]
         if incoming == -1: continue
         int end = -1
         LandBuffer *edges = edges_around_point(self, incoming, &end)
-        LandFloat xy[2 * edges.n // 4]
-        int neighbors[edges.n // 4]
-        for int ei in range(edges.n // 4):
+        # we have all the incoming edges only, for points on the hull
+        # we will be missing the last edge (outgoing only)
+        int en = land_buffer_len_uint32(edges)
+        LandFloat xy[2 * (3 + en)]
+        int neighbors[3 + en]
+        for int ei in range(en):
             int e = land_buffer_get_uint32_by_index(edges, ei)
             int t = triangle_of_edge(e)
             neighbors[ei] = self.triangles.ints[e]
-            triangle_center(self, t, center, xy + ei * 2)
-        callback(p, xy, neighbors, edges.n // 4, end == -1, user);
+            triangle_center(self, t, 0, xy + ei * 2)
+
+        # for hull cells add some distant points
+        if end == -1:
+            int e1 = incoming
+            int e2 = next_halfedge(outgoing)
+            int p1 = self.triangles.ints[e1]
+            int p2 = self.triangles.ints[e2]
+            LandFloat *xyl = xy + en * 2
+            _add_normal(self, p, p2, 10000.0, xyl - 2, xyl)
+            _add_normal(self, p1, p, 10000.0, xy, xyl + 2)
+            neighbors[en + 0] = p2
+            neighbors[en + 1] = p1
+            en += 2
+
+        LandFloat xy2[2 * 2 * en]
+        int neighbors2[2 * en]
+        en = _clip(self, p, xy, neighbors, en, xy2, neighbors2)
+        callback(p, xy2, neighbors2, en, user)
         land_buffer_destroy(edges)
 
+def _add_normal(Delaunator *self, int p1, p2, LandFloat distance, *last, *add):
+    LandFloat *f = self.coords.floats
+    LandFloat ny = f[p2 * 2 + 0] - f[p1 * 2 + 0]
+    LandFloat nx = f[p2 * 2 + 1] - f[p1 * 2 + 1]
+    LandFloat n = sqrt(nx * nx + ny * ny)
+    nx /= n
+    ny /= n
+    add[0] = last[0] - nx * distance
+    add[1] = last[1] + ny * distance
+
+def _move(LandFloat *a, *b, t, *out):
+    out[0] = a[0] + t * (b[0] - a[0])
+    out[1] = a[1] + t * (b[1] - a[1])
+    
+def _check_top(Delaunator *self, LandFloat *xy) -> bool: return xy[1] < self.by1
+def _check_bot(Delaunator *self, LandFloat *xy) -> bool: return xy[1] > self.by2
+def _check_lef(Delaunator *self, LandFloat *xy) -> bool: return xy[0] < self.bx1
+def _check_rig(Delaunator *self, LandFloat *xy) -> bool: return xy[0] > self.bx2
+def _clip_top(Delaunator *self, LandFloat *a, *b, *out): _move(a, b, (self.by1 - a[1]) / (b[1] - a[1]), out)
+def _clip_bot(Delaunator *self, LandFloat *a, *b, *out): _move(a, b, (self.by2 - a[1]) / (b[1] - a[1]), out)
+def _clip_lef(Delaunator *self, LandFloat *a, *b, *out): _move(a, b, (self.bx1 - a[0]) / (b[0] - a[0]), out)
+def _clip_rig(Delaunator *self, LandFloat *a, *b, *out): _move(a, b, (self.bx2 - a[0]) / (b[0] - a[0]), out)
+
+def _too_close(int cell, LandFloat *a, *b) -> bool:
+    LandFloat dx = b[0] - a[0]
+    LandFloat dy = b[1] - a[1]
+    if cell == DEBUG_NODE:
+        print("distance: %f/%f to %f/%f -> %f", a[0], a[1], b[0], b[1], dx * dx + dy * dy)
+    if dx * dx + dy * dy < EPSILON:
+        return True
+    return False
+
+def _add_point(int cell, int i, LandFloat *xy, int *neighbors, LandFloat *point, int neighbor) -> int:
+    if i > 0:
+        if _too_close(cell, xy + i * 2 - 2, point):
+            if cell == DEBUG_NODE: print("cannot add close prev point")
+            return i
+        if i > 1:
+            if _too_close(cell, xy , point):
+                if cell == DEBUG_NODE: print("cannot add close initial point")
+                return i
+    xy[i * 2 + 0] = point[0]
+    xy[i * 2 + 1] = point[1]
+    neighbors[i] = neighbor
+    if cell == DEBUG_NODE:
+        print("insert point towards %d (%.1f/%.1f)",
+            neighbors[i], xy[i * 2 + 0], xy[i * 2 + 1])
+    return i + 1
+
+def _clip_side(Delaunator *self, int cell, LandFloat *xy, int *neighbors, int n,
+        LandFloat *xy2, int *neighbors2,
+        bool (*check_out)(Delaunator *self, LandFloat *xy),
+        void (*get_int)(Delaunator *self, LandFloat *a, LandFloat *b, LandFloat *out)) -> int:
+    if n < 3:
+        return 0
+    int o = 0
+    LandFloat p[2] = {xy[0], xy[1]}
+    bool fout = check_out(self, xy)
+    bool pout = fout
+    if cell == DEBUG_NODE:
+        printf("before clip:")
+        for int i in range(n):
+            printf(" %d", neighbors[i])
+        print("")
+    if not pout:
+        xy2[0] = p[0]
+        xy2[1] = p[1]
+        neighbors2[0] = neighbors[0]
+        o++
+    elif cell == DEBUG_NODE:
+        print("skipped %d (%.1f/%.1f)", neighbors[0], p[0], p[1])
+    for int i in range(1, n):
+        LandFloat a[2] = {xy[i * 2 + 0], xy[i * 2 + 1]}
+        bool out = check_out(self, a)
+        if out:
+            if pout:
+                # entire segment is out, just remove it
+                if cell == DEBUG_NODE:
+                    print("entire segment to %d is out (to %.1f/%.1f)",
+                        neighbors[i], a[0], a[1])
+            else:
+                # we are out but previous is not, insert intersection point
+                LandFloat ip[2]
+                get_int(self, p, a, ip)
+                o = _add_point(cell, o, xy2, neighbors2, ip, neighbors[i])
+        else:
+            if pout:
+                # previous was out, we are not, add intersection point
+                LandFloat ip[2]
+                get_int(self, p, a, ip)
+                o = _add_point(cell, o, xy2, neighbors2, ip, -1)
+            o = _add_point(cell, o, xy2, neighbors2, a, neighbors[i])
+        pout = out
+        p[0] = a[0]
+        p[1] = a[1]
+    if fout:
+        if not pout:
+            LandFloat ip[2]
+            get_int(self, p, xy, ip)
+            o = _add_point(cell, o, xy2, neighbors2, ip, neighbors[0])
+    else:
+        if pout:
+            LandFloat ip[2]
+            get_int(self, p, xy, ip)
+            o = _add_point(cell, o, xy2, neighbors2, ip, -1)
+    if cell == DEBUG_NODE:
+        printf("after clip:")
+        for int i in range(o):
+            printf(" %d", neighbors2[i])
+        print("")
+    return o
+
+def _clip(Delaunator *self, int p, LandFloat *xy, int *neighbors, int n,
+        LandFloat *xy_out, int *neighbors_out) -> int:
+    *** "ifdef" _NO_CLIP
+    for int i in range(n):
+        neighbors_out[i] = neighbors[i]
+        xy_out[i * 2 + 0] = xy[i * 2 + 0]
+        xy_out[i * 2 + 1] = xy[i * 2 + 1]
+    return n
+    *** "endif"
+    LandFloat xy2[n * 2 * 2]
+    int neighbors2[n * 2]
+    int n2 = _clip_side(self, p, xy, neighbors, n, xy2, neighbors2, _check_top, _clip_top)
+    LandFloat xy3[n2 * 2 * 2]
+    int neighbors3[n2 * 2]
+    int n3 = _clip_side(self, p, xy2, neighbors2, n2, xy3, neighbors3, _check_bot, _clip_bot)
+    LandFloat xy4[n3 * 2 * 2]
+    int neighbors4[n3 * 2]
+    int n4 = _clip_side(self, p, xy3, neighbors3, n3, xy4, neighbors4, _check_lef, _clip_lef)
+    int n5 = _clip_side(self, p, xy4, neighbors4, n4, xy_out, neighbors_out, _check_rig, _clip_rig)
+    return n5

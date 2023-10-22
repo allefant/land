@@ -30,6 +30,7 @@ static class LandTrianglesPlatform:
     ALLEGRO_VERTEX_DECL *decl
     ALLEGRO_VERTEX_BUFFER *vb
     LandTrianglesShader *shader
+    ALLEGRO_VERTEX_ELEMENT elem[10]
 
 static class LandTrianglesShader:
     int light_tag
@@ -40,7 +41,7 @@ float _light
 int _light_tag
 LandHash *_shader_cache # LandTrianglesShader
 
-def platform_update_vertex_with_normals(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
+def platform_update_vertex_with_normals(LandTriangles *t, uint64_t i, float x, y, z, tu, tv, r, g, b, a):
     LandVertexWithNormal *v = land_triangles_get_vertex(t, i)
     v.x = x
     v.y = y
@@ -52,7 +53,7 @@ def platform_update_vertex_with_normals(LandTriangles *t, int i, float x, y, z, 
     v.b = b
     v.a = a
 
-def platform_update_vertex_with_normals_no_texture(LandTriangles *t, int i, float x, y, z, r, g, b, a):
+def platform_update_vertex_with_normals_no_texture(LandTriangles *t, uint64_t i, float x, y, z, r, g, b, a):
     LandVertexWithNormalNoTexture *v = land_triangles_get_vertex(t, i)
     v.x = x
     v.y = y
@@ -62,7 +63,7 @@ def platform_update_vertex_with_normals_no_texture(LandTriangles *t, int i, floa
     v.b = b
     v.a = a
 
-def platform_update_vertex_allegro(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
+def platform_update_vertex_allegro(LandTriangles *t, uint64_t i, float x, y, z, tu, tv, r, g, b, a):
     LandVertexAllegro *v = land_triangles_get_vertex(t, i)
     v.x = x
     v.y = y
@@ -74,7 +75,7 @@ def platform_update_vertex_allegro(LandTriangles *t, int i, float x, y, z, tu, t
     v.b = b
     v.a = a
 
-def platform_update_vertex_no_texture(LandTriangles *t, int i, float x, y, z, r, g, b, a):
+def platform_update_vertex_no_texture(LandTriangles *t, uint64_t i, float x, y, z, r, g, b, a):
     LandVertexNoTexture *v = land_triangles_get_vertex(t, i)
     v.x = x
     v.y = y
@@ -84,7 +85,7 @@ def platform_update_vertex_no_texture(LandTriangles *t, int i, float x, y, z, r,
     v.b = b
     v.a = a
 
-def platform_update_vertex(LandTriangles *t, int i, float x, y, z, tu, tv, r, g, b, a):
+def platform_update_vertex(LandTriangles *t, uint64_t i, float x, y, z, tu, tv, r, g, b, a):
     if t.has_normals and t.has_texture:
         platform_update_vertex_with_normals(t, i, x, y, z, tu, tv, r, g, b, a)
     elif t.has_normals and not t.has_texture:
@@ -126,7 +127,7 @@ def platform_triangles_init(LandTriangles *self):
             {0, 0, 0}
         }
         self.size = 52
-        platform.decl = al_create_vertex_decl(elem, self.size)
+        land_copy_bytes(platform.elem, elem, sizeof(elem))
     elif self.has_normals and not self.has_texture:
         ALLEGRO_VERTEX_ELEMENT elem[] = {
             {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
@@ -136,7 +137,7 @@ def platform_triangles_init(LandTriangles *self):
             {0, 0, 0}
         }
         self.size = 44
-        platform.decl = al_create_vertex_decl(elem, self.size)
+        land_copy_bytes(platform.elem, elem, sizeof(elem))
     elif self.has_texture:
         ALLEGRO_VERTEX_ELEMENT elem[] = {
             {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
@@ -145,7 +146,7 @@ def platform_triangles_init(LandTriangles *self):
             {0, 0, 0}
         }
         self.size = 36
-        platform.decl = al_create_vertex_decl(elem, self.size)
+        land_copy_bytes(platform.elem, elem, sizeof(elem))
     else:
         ALLEGRO_VERTEX_ELEMENT elem[] = {
             {ALLEGRO_PRIM_POSITION, ALLEGRO_PRIM_FLOAT_3, 0},
@@ -153,7 +154,14 @@ def platform_triangles_init(LandTriangles *self):
             {0, 0, 0}
         }
         self.size = 28
-        platform.decl = al_create_vertex_decl(elem, self.size)
+        land_copy_bytes(platform.elem, elem, sizeof(elem))
+
+    if not self.cpu_only:
+        platform_triangles_upload(self)
+
+def platform_triangles_upload(LandTriangles *self):
+    LandTrianglesPlatform *platform = self.platform
+    platform.decl = al_create_vertex_decl(platform.elem, self.size)
 
 def platform_triangles_deinit(LandTriangles *self):
     LandTrianglesPlatform* platform = self.platform
@@ -167,6 +175,8 @@ def platform_triangles_prepare_draw(LandTriangles *t, bool more):
     if t.can_cache and not platform.vb:
         platform.vb = al_create_vertex_buffer(platform.decl,
             t.buf->buffer, t.n, 0)
+        if not platform.vb:
+            error("Could not create vertex buffer with %d vertices!", t.n)
     LandImagePlatform *pim = (void *)t.image
     platform_check_blending_and_transform()
 

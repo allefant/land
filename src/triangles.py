@@ -5,19 +5,28 @@ import allegro5.a5_triangles
 import land.csg.csg
 
 class LandTriangles:
-    int n # number of vertices (not triangles)
-    int size # size of a single vertex, in bytes
+    uint64_t n # number of vertices (not triangles)
+    uint64_t size # size of a single vertex, in bytes
     bool has_normals
     bool has_texture
     LandBuffer *buf
     LandImage *image
     void *platform
     bool can_cache
+    bool cpu_only
 
 def land_triangles_new -> LandTriangles*:
     LandTriangles *self; land_alloc(self)
     self.can_cache = True
     self.has_texture = True
+    platform_triangles_init(self)
+    return self
+
+def land_triangles_new_memory -> LandTriangles*:
+    LandTriangles *self; land_alloc(self)
+    self.can_cache = True
+    self.has_texture = True
+    self.cpu_only = True
     platform_triangles_init(self)
     return self
 
@@ -92,7 +101,7 @@ def land_set_vertex_normal(LandTriangles *self, float x, y, z):
 def land_set_vertex_index(LandTriangles *self, float i):
     platform_set_vertex_index(self, i)
 
-def land_duplicate_vertex(LandTriangles *self, int i):
+def land_duplicate_vertex(LandTriangles *self, int64_t i):
     """
     -1 .. duplicate most recent
     -2 .. duplicate the second most recent
@@ -102,8 +111,13 @@ def land_duplicate_vertex(LandTriangles *self, int i):
     land_buffer_grow(self.buf, self.size)
     land_buffer_move(self.buf, self.size * (-1 + i), -self.size, self.size)
 
-def land_update_vertex(LandTriangles *self, int i, float x, y, z, u, v, r, g, b, a):
+def land_update_vertex(LandTriangles *self, uint64_t i, float x, y, z, u, v, r, g, b, a):
     platform_update_vertex(self, i, x, y, z, u, v, r, g, b, a)
+
+def land_triangles_upload(LandTriangles *self):
+    if not self.cpu_only: return
+    platform_triangles_upload(self)
+    self.cpu_only = False
 
 def land_triangles_draw(LandTriangles *self):
     if not self.n: return
@@ -121,13 +135,13 @@ def land_triangles_perform_draw(LandTriangles *self):
     if not self.n: return
     platform_triangles_perform_draw(self)
 
-def land_triangles_get_vertex(LandTriangles* self, int i) -> void*:
+def land_triangles_get_vertex(LandTriangles* self, uint64_t i) -> void*:
     char* pointer = self.buf.buffer
     pointer += i * self.size
     return pointer
 
 def land_triangles_draw_debug(LandTriangles *self):
-    for int i in range(0, self.n, 3):
+    for uint64_t i in range(0, self.n, 3):
         float xy[6], z[1]
         platform_triangles_get_xyz(self, i + 0, xy + 0, xy + 1, z)
         platform_triangles_get_xyz(self, i + 1, xy + 2, xy + 3, z)
@@ -148,7 +162,7 @@ def land_triangles_set_light(float light):
 
 def land_triangles_get_max_z(LandTriangles *self) -> LandFloat:
     float maxz = INT_MIN
-    for int i in range(0, self.n):
+    for uint64_t i in range(0, self.n):
         float x, y, z
         platform_triangles_get_xyz(self, i + 0, &x, &y, &z)
         if z > maxz: maxz = z
@@ -156,7 +170,7 @@ def land_triangles_get_max_z(LandTriangles *self) -> LandFloat:
 
 def land_triangles_get_max_y(LandTriangles *self) -> LandFloat:
     float maxy = INT_MIN
-    for int i in range(0, self.n):
+    for uint64_t i in range(0, self.n):
         float x, y, z
         platform_triangles_get_xyz(self, i + 0, &x, &y, &z)
         if y > maxy: maxy = y

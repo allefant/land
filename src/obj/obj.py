@@ -236,7 +236,7 @@ def land_objfile_new_from_filename(char const *filename) -> LandObjFile *:
         return self
     LandArray *a
     if land_ends_with(self.filename, ".b"):
-        int i = 0
+        uint64_t i = 0
         int o = 1
         while i < fb.n:
             uint8_t b = land_buffer_get_byte(fb, i)

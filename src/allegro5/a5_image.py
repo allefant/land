@@ -125,15 +125,32 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
     LandDisplay *d = _land_active_display
     ALLEGRO_STATE state
 
+    if d.debug_frame:
+        printf("image %s %dx%d %.1f/%.1f",
+            super.filename if super.filename else super.name,
+            super.width, super.height,
+            x, y)
+        if sx != 1 or sy != 1: printf(" (scale %.1fx%.1f)", sx, sy)
+        if angle != 0: printf(" (rotate %.1f)", angle)
+        if r != 1 or g != 1 or b != 1 or alpha != 1:
+            printf(" (tint %.1f/%.1f/%.1f/%.1f)", r, g, b, alpha)
+
     if super.flags & LAND_LOADING:
+        if d.debug_frame:
+            print(" LOADING")
         return
 
     if super.flags & LAND_LOADING_COMPLETE:
         # attempt to draw an image that has completed loading asynchronously
         # - we may as well transfer it here during drawing
+        if d.debug_frame:
+            printf(" LOADING_COMPLETE")
         land_image_load_async(super)
 
-    if not self->a5: return
+    if not self->a5:
+        if d.debug_frame:
+            print("MISSING")
+        return
 
     land_a5_display_check_transform()
 
@@ -163,6 +180,16 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
 
     if restore:
         al_restore_state(&state)
+
+    if d.debug_frame:
+        float dx = x - (super.x - super.l)
+        float dy = y - (super.y - super.t)
+        float dw = super->width - super->l - super->r
+        float dh = super->height - super->t - super->b
+        if land_is_clipped_away(dx, dy, dx + dw, dy + dh):
+            print(" clipped")
+        else:
+            print(" drawn (%.1f/%.1f/%.1f/%.1f)", dx, dy, dw, dh)
 
 def platform_set_image_display(LandImage *super):
     SELF

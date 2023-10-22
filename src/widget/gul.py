@@ -136,7 +136,13 @@ static def update_lookup_grid(LandWidget *self):
             if c->box.flags & GUL_HIDDEN: continue
             for i = c->box.col while i <= c->box.col + c->box.extra_cols with i++:
                 for j = c->box.row while j <= c->box.row + c->box.extra_rows with j++:
-                    self.box.lookup_grid[i + j * self->box.cols] = c
+                    if i >= self.box.cols or j >= self.box.rows:
+                        error("ui layout error, %d/%d outside grid of %d/%d",
+                            i, j, self.box.cols, self.box.rows)
+                        print("widget: %s", land_widget_info_string(c))
+                        print("container: %s", land_widget_info_string(self))
+                    else:
+                        self.box.lookup_grid[i + j * self->box.cols] = c
 
 
 # Same as find_box_in_grid, but O(c) instead of O(n). 

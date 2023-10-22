@@ -245,6 +245,16 @@ def land_noise_replace_heightmap(LandNoise *self, LandFloat *cache):
     self.blur = False
     self.transfer_cb = None
 
+def land_noise_add_to_cache(LandNoise *self, LandNoise *add, LandFloat a, b):
+    for int y in range(self.h):
+        for int x in range(self.w):
+            self.cache[x + y * self.w] += a + b * land_noise_at(add, x, y)
+
+def land_noise_transform_cache(LandNoise *self, LandFloat a, b):
+    for int y in range(self.h):
+        for int x in range(self.w):
+            self.cache[x + y * self.w] = a + b * self.cache[x + y * self.w]
+
 def land_noise_prepare(LandNoise *self):
     if self.warp:
         land_noise_prepare(land_array_get_nth(self.noise, 0))
@@ -292,8 +302,10 @@ def land_noise_prepare(LandNoise *self):
                 self.cache[x + self.w * y] = v
         
     if self.t == LandNoiseVoronoi:
-        void *noise = land_voronoi_create(self.seed, self.w, self.h,
-            self.count, self.wrap, self.randomness, 0, self.distance)
+        void *noise = land_voronoi_new(self.seed, self.w, self.h,
+            self.count, self.wrap, 0)
+        land_voronoi_recalculate_map(noise, True)
+        land_voronoi_set_overlap(noise, self.distance)
         land_array_add(self.noise, noise)
     if self.t == LandNoiseWaves:
         void *noise = _waves_create(self, self.w, self.h)

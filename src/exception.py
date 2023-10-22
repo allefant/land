@@ -1,6 +1,6 @@
 static import global setjmp, stdio, stdarg, stdlib
 import land.common
-import land.allegro5.a5_misc
+static import land.allegro5.a5_misc
 
 static jmp_buf exception
 static char exception_string[1024]

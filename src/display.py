@@ -108,6 +108,7 @@ enum:
     LAND_DEPTH = 256
     LAND_LANDSCAPE = 512
     LAND_FRAMELESS = 1024
+    LAND_POSITIONED = 2048
 
 enum:
     LAND_BLEND_SOLID = 1
@@ -162,6 +163,8 @@ class LandDisplay:
     Land4x4Matrix matrix_stack[16]
     int matrix_stack_depth
     bool matrix_modified
+
+    bool debug_frame
 
 static import allegro5/a5_display
 static import allegro5/a5_image
@@ -444,10 +447,21 @@ def land_clip_intersect(float x, float y, float x_, float y_):
     d->clip_y2 = min(d->clip_y2, y_)
     platform_display_clip()
 
+def land_is_clipped_away(float x, float y, float x_, float y_) -> bool:
+    LandDisplay *d = _land_active_display
+    return x >= d.clip_x2 or y >= d.clip_y2 or x_ <= d.clip_x1 or y_ <= d.clip_y1
+
+def land_completely_clipped -> bool:
+    LandDisplay *d = _land_active_display
+    if d.clip_off: return False
+    if d.clip_x1 >= d.clip_x2 or d.clip_y1 >= d.clip_y2:
+        return True
+    return False
+
 def land_clip_push():
     LandDisplay *d = _land_active_display
     if d->clip_stack_depth > LAND_MAX_CLIP_DEPTH:
-        printf("error: exceeded clip depth\n")
+        error("exceeded clip depth")
         return
     int *clip = d->clip_stack + d->clip_stack_depth * 5
     clip[0] = d->clip_x1
@@ -497,6 +511,7 @@ def land_get_clip(float *cx1, float *cy1, float *cx2, float *cy2) -> int:
     return not d->clip_off
 
 def land_flip():
+    _land_active_display.debug_frame = False
     platform_display_flip()
 
 def land_rectangle(float x, y, x_, y_):
@@ -604,6 +619,9 @@ def land_display_resize(int w, h):
 
 def land_display_move(int x, y):
     platform_display_move(x, y)
+
+def land_display_position(int *x, *y):
+    platform_display_position(x, y)
 
 def land_display_desktop_size(int *w, *h):
     platform_display_desktop_size(w, h)
@@ -820,3 +838,6 @@ def land_display_set_default_shaders():
 
 def land_display_dpi -> int:
     return platform_get_dpi()
+
+def land_display_debug_frame:
+    _land_active_display.debug_frame = True

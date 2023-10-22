@@ -2,6 +2,7 @@ import main
 import noise
 import external.delaunator
 import land.util2d
+import land.bitset
 
 class LandVoronoiNode:
     int x, y
@@ -11,7 +12,7 @@ class LandVoronoiNode:
     int neighbors_count
     int *neighbors
     LandFloat *edges
-    bool is_edge # borders the outside, or with wrapping borders a wrapped cell
+    bool clipped # invalid node that was clipped
     int wrap_id # the cell id including wrapped cells, 0..n+en-1
     int id # the cell id from 0..n-1
 
@@ -24,10 +25,11 @@ class LandVoronoi:
     int w
     int h
     float max_distance
-    float randomness
+    int max_distance_i
+    #float randomness
     LandRandom *seed
     bool wrap
-    int center # 0=voronoi,1=centroid
+    #int center # 0=voronoi,1=centroid
 
     int voronoi_edges
     double voronoi_dist
@@ -36,35 +38,12 @@ class LandVoronoi:
     LandBuffer *delaunay
     LandBuffer *extra # maps extra cells >=n to their real cell 0..n-1
 
-    LandArray *polygons # LandVoronoiPolygon
-    float border
+    float overlap # how much the voronoi cells overlap
+    int clip_border
 
-class LandVoronoiPolygon:
-    LandBuffer *xy
+    LandBitSet *not_threadsafe_bitset
 
-# static def wrap_distance(float x1, x2, wrap) -> float:
-    # """
-    # |x1    x2             |x1
-    # |x1              x2   |x1
-    # |x2              x1   |x2
-    # """
-    # float d = fabs(x2 - x1)
-    # if d > wrap / 2:
-        # d = wrap - d
-    # return d
-
-# def _wrap_diff(float x1, x2, wrap) -> float:
-    # """
-    # |x1    x2             |x1
-    # |x1              x2   |x1
-    # |x2              x1   |x2
-    # """
-    # float d = x2 - x1
-    # if d > wrap / 2:
-        # d = wrap - d
-    # elif d < -wrap / 2:
-        # d = wrap + d
-    # return d
+    bool debug
 
 def _get_distance(LandVoronoi *self, int x, y, i) -> LandFloat:
     LandFloat dx = self.xy[i].x - x
@@ -73,20 +52,19 @@ def _get_distance(LandVoronoi *self, int x, y, i) -> LandFloat:
     return d
 
 def land_voronoi_new(LandRandom *seed, int w, h, n, bool wrap,
-        int center, float randomness) -> LandVoronoi *:
+        int clip_border) -> LandVoronoi *:
     LandVoronoi *self; land_alloc(self)
     self.w = w
     self.h = h
     self.wrap = wrap
-    self.center = center
     self.map = land_calloc(w * h * sizeof *self.map)
     self.distance = land_calloc(w * h * sizeof *self.distance)
     self.neighbor = land_calloc(w * h * sizeof *self.neighbor)
     self.n = n
     self.xy = land_calloc(n * sizeof *self.xy)
     self.max_distance = 0
-    self.randomness = randomness
     self.seed = seed
+    self.clip_border = clip_border
 
     for int i in range(n):
         int x = land_random(seed, 0, w - 1)
@@ -94,7 +72,6 @@ def land_voronoi_new(LandRandom *seed, int w, h, n, bool wrap,
         self.xy[i].x = x
         self.xy[i].y = y
 
-    voronoi_recalculate_map(self)
     return self
 
 # def _line_x(LandVoronoi *self, int c, x1, y1, x2, y2, n, xs, ys, float g):
@@ -179,84 +156,84 @@ def land_voronoi_new(LandRandom *seed, int w, h, n, bool wrap,
     # else:
         # _line_y(self, c, x1, y1, x2, y2, h, xs, ys, 1.0 * w / h)
 
-def _rot(int *x1, *y1, *x2, *y2, *x3, *y3)
-    int tx = *x1
-    int ty = *y1
-    *x1 = *x2
-    *y1 = *y2
-    *x2 = *x3
-    *y2 = *y3
-    *x3 = tx
-    *y3 = ty
+# def _rot(int *x1, *y1, *x2, *y2, *x3, *y3)
+    # int tx = *x1
+    # int ty = *y1
+    # *x1 = *x2
+    # *y1 = *y2
+    # *x2 = *x3
+    # *y2 = *y3
+    # *x3 = tx
+    # *y3 = ty
 
-def _swap(int *x1, *y1, *x2, *y2)
-    int tx = *x1
-    int ty = *y1
-    *x1 = *x2
-    *y1 = *y2
-    *x2 = tx
-    *y2 = ty
+# def _swap(int *x1, *y1, *x2, *y2)
+    # int tx = *x1
+    # int ty = *y1
+    # *x1 = *x2
+    # *y1 = *y2
+    # *x2 = tx
+    # *y2 = ty
 
-def _hline(LandVoronoi *self, int c, x1, y, x2):
-    for int x = x1 while x < x2 with x += 1:
-        if x >= 0 and y >= 0 and x < self.w and y < self.h:
-            self.map[x + self.w * y] = c
+# def _hline(LandVoronoi *self, int c, x1, y, x2):
+    # for int x = x1 while x < x2 with x += 1:
+        # if x >= 0 and y >= 0 and x < self.w and y < self.h:
+            # self.map[x + self.w * y] = c
 
-static class Leg:
-    float f
-    float g
-    int w, h
-    int step
-    int x
-    int y2
+# static class Leg:
+    # float f
+    # float g
+    # int w, h
+    # int step
+    # int x
+    # int y2
 
-def _leg(int x1, y1, x2, y2) -> Leg:
-    Leg l
-    l.f = 0.5
-    l.w = x2 - x1
-    l.h = y2 - y1
-    l.step = 1
-    if l.w < 0:
-        l.w = -l.w
-        l.step = -1
-    l.g = l.w if l.h == 0 else 1.0 * l.w / l.h
-    l.x = x1
-    l.y2 = y2
-    return l
+# def _leg(int x1, y1, x2, y2) -> Leg:
+    # Leg l
+    # l.f = 0.5
+    # l.w = x2 - x1
+    # l.h = y2 - y1
+    # l.step = 1
+    # if l.w < 0:
+        # l.w = -l.w
+        # l.step = -1
+    # l.g = l.w if l.h == 0 else 1.0 * l.w / l.h
+    # l.x = x1
+    # l.y2 = y2
+    # return l
 
-def _leg_step(Leg *leg):
-    leg.f += leg.g
-    LandFloat a = floor(leg.f)
-    leg.x += leg.step * (int)a
-    leg.f -= a
+# def _leg_step(Leg *leg):
+    # leg.f += leg.g
+    # LandFloat a = floor(leg.f)
+    # leg.x += leg.step * (int)a
+    # leg.f -= a
 
-def _triangle(LandVoronoi *self, int c, x1, y1, x2, y2, x3, y3):
-    if y1 < y2:
-        if y1 < y3: # 1 < 2,3
-            pass
-        else: # 3 < 1 < 2
-            _rot(&x1, &y1, &x3, &y3, &x2, &y2)
-    else:
-        if y2 < y3: # 2 < 1, 3 
-            _rot(&x1, &y1, &x2, &y2, &x3, &y3)
-        else: # 3 < 2 < 1
-            _rot(&x1, &y1, &x3, &y3, &x2, &y2)
+# def _triangle(LandVoronoi *self, int c, x1, y1, x2, y2, x3, y3):
+    # if y1 < y2:
+        # if y1 < y3: # 1 < 2,3
+            # pass
+        # else: # 3 < 1 < 2
+            # _rot(&x1, &y1, &x3, &y3, &x2, &y2)
+    # else:
+        # if y2 < y3: # 2 < 1, 3 
+            # _rot(&x1, &y1, &x2, &y2, &x3, &y3)
+        # else: # 3 < 2 < 1
+            # _rot(&x1, &y1, &x3, &y3, &x2, &y2)
     
-    int y = y1
-    if 1.0 * (x3 - x1) / (y3 - y1) < 1.0 * (x2 - x1) / (y2 - y1): _swap(&x2, &y2, &x3, &y3)
-    Leg left = _leg(x1, y1, x2, y2)
-    Leg right = _leg(x1, y1, x3, y3)
-    int h = max(y2 - y1, y3 - y1)
-    while h > 0:
-        _leg_step(&left)
-        _leg_step(&right)
-        _hline(self, c, left.x, y, right.x)
-        y += 1
-        if y >= left.y2:
-            left = _leg(x2, y2, x3, y3)
-        elif y >= right.y2:
-            right = _leg(x3, y3, x2, y2)
-        h -= 1
+    # int y = y1
+    # if 1.0 * (x3 - x1) / (y3 - y1) < 1.0 * (x2 - x1) / (y2 - y1): _swap(&x2, &y2, &x3, &y3)
+    # Leg left = _leg(x1, y1, x2, y2)
+    # Leg right = _leg(x1, y1, x3, y3)
+    # int h = max(y2 - y1, y3 - y1)
+    # while h > 0:
+        # _leg_step(&left)
+        # _leg_step(&right)
+        # _hline(self, c, left.x, y, right.x)
+        # y += 1
+        # if y >= left.y2:
+            # left = _leg(x2, y2, x3, y3)
+        # elif y >= right.y2:
+            # right = _leg(x3, y3, x2, y2)
+        # h -= 1
 
 # def _tri_callback(int a, b, c, void *user):
     # LandVoronoi *self = user
@@ -270,18 +247,39 @@ def _triangle(LandVoronoi *self, int c, x1, y1, x2, y2, x3, y3):
         # int y2 = xy[p[j] * 2 + 1]
         # _line(self, 1, x1, y1, x2, y2)
 
-def _cell_callback(int cell, LandFloat *xy, int *neighbors, int n,
-        bool is_edge, void *user):
+LandFloat _EPSILON = 0.00000000000000022204
+def _cell_callback(int cell, LandFloat *xy, int *neighbors, int n, void *user):
     LandVoronoi *self = user
-    int x0 = self.d->coords->floats[cell * 2 + 0]
-    int y0 = self.d->coords->floats[cell * 2 + 1]
-    LandVoronoiNode *node = None
-    
+    LandVoronoiNode *node
+
     node = self.xy + cell
+    if n < 3: n = 0
+
+    for int i in range(n):
+        int j = (i + 1) % n
+        int k = (j + 1) % n
+        LandFloat x1 = xy[i * 2 + 0]
+        LandFloat y1 = xy[i * 2 + 1]
+        LandFloat x2 = xy[j * 2 + 0]
+        LandFloat y2 = xy[j * 2 + 1]
+        LandFloat x3 = xy[k * 2 + 0]
+        LandFloat y3 = xy[k * 2 + 1]
+        LandFloat c = land_cross2d(x2 - x1, y2 - y1, x3 - x2, y3 - y2)
+        LandFloat d = land_dot2d(x2 - x1, y2 - y1, x3 - x2, y3 - y2)
+
+        if cell == DEBUG_NODE:
+            print("%d: %.2f,%.2f", i, x1, y1)
+            print("%d: %.8f %.8f (%.2f,%.2f x %.2f,%.2f)", i, c, d,
+                x2 - x1, y2 - y1, x3 - x2, y3 - y2)
+        if c < _EPSILON and d < -1 + _EPSILON:
+            print("degenerated %d", cell)
+            n = 0
+            break
+
+    node.clipped = n < 3
     node.neighbors_count = n
     node.neighbors = land_malloc(n * sizeof(int))
     node.edges = land_malloc(n * 2 * sizeof(LandFloat))
-    node.is_edge = is_edge
     node.wrap_id = cell
     if cell < self.n:
         node.id = cell
@@ -289,29 +287,48 @@ def _cell_callback(int cell, LandFloat *xy, int *neighbors, int n,
         node.id = land_buffer_get_uint32_by_index(self.extra, cell - self.n)
 
     for int i in range(n):
-        int j = (i + 1) % n
-        int x1 = xy[i * 2 + 0]
-        int y1 = xy[i * 2 + 1]
-        int x2 = xy[j * 2 + 0]
-        int y2 = xy[j * 2 + 1]
-        _triangle(self, cell, x0, y0, x1, y1, x2, y2)
-        #_line(self, 2, x1, y1, x2, y2)
-        if node:
-            int nid = neighbors[i]
-            if nid == -1: # cannot actually happen
-                print("cell %d: no neighbor %d", cell, nid)
-                continue
-            else:
-                node.neighbors[i] = nid
-                node.edges[i * 2 + 0] = x1
-                node.edges[i * 2 + 1] = y1
+        LandFloat x1 = xy[i * 2 + 0]
+        LandFloat y1 = xy[i * 2 + 1]
+        
+        int nid = neighbors[i]
+        if nid == -1: # special edge node we construct for edge cells
+            pass
+        node.neighbors[i] = nid
+        node.edges[i * 2 + 0] = x1
+        node.edges[i * 2 + 1] = y1
+
+# def _draw_fill(LandVoronoi *self, LandVoronoiNode *node):
+    # LandFloat *xy = node.edges
+    # int n = node.neighbors_count
+    # int x0 = node.x
+    # int y0 = node.y
+    # for int i in range(n):
+        # int j = (i + 1) % n
+        # int x1 = xy[i * 2 + 0]
+        # int y1 = xy[i * 2 + 1]
+        # int x2 = xy[j * 2 + 0]
+        # int y2 = xy[j * 2 + 1]
+        # _triangle(self, node.wrap_id, x0, y0, x1, y1, x2, y2)
+
+# def _draw_outline(LandVoronoi *self, LandVoronoiNode *node):
+    # LandFloat *xy = node.edges
+    # int n = node.neighbors_count
+    # for int i in range(node.neighbors_count):
+        # int j = (i + 1) % n
+        # int x1 = xy[i * 2 + 0]
+        # int y1 = xy[i * 2 + 1]
+        # int x2 = xy[j * 2 + 0]
+        # int y2 = xy[j * 2 + 1]
+        # _line(self, -1, x1, y1, x2, y2)
+        # _line(self, -1, x1, y1 - 1, x2, y2 - 1)
+        # _line(self, -1, x1 - 1, y1, x2 - 1, y2)
 
 def _edge_callback(LandFloat *xy, void *user):
     LandVoronoi *self = user
-    int x1 = xy[0]
-    int y1 = xy[1]
-    int x2 = xy[2]
-    int y2 = xy[3]
+    LandFloat x1 = xy[0]
+    LandFloat y1 = xy[1]
+    LandFloat x2 = xy[2]
+    LandFloat y2 = xy[3]
     self.voronoi_edges += 1
     self.voronoi_dist += sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
 
@@ -343,7 +360,7 @@ def _add_duplicates(LandVoronoi *self):
         if y > self.h - grid_y: _add_extra(self, i, x, y - self.h)
         if y < grid_y: _add_extra(self, i, x, y + self.h)
 
-def voronoi_recalculate_map(LandVoronoi *self):
+def land_voronoi_recalculate_map(LandVoronoi *self, bool update_map):
     if self.d: delaunator_del(self.d)
     if self.extra: land_buffer_destroy(self.extra)
     if self.delaunay: land_buffer_destroy(self.delaunay)
@@ -363,8 +380,13 @@ def voronoi_recalculate_map(LandVoronoi *self):
         self.xy = land_realloc(self.xy, (self.n + self.en) * sizeof *self.xy)
         for int i in range(self.en):
             LandVoronoiNode *node = self.xy + self.n + i
+            land_zero(node, sizeof *node)
             node.x = land_buffer_get_land_float_by_index(self.delaunay, (self.n + i) * 2 + 0)
             node.y = land_buffer_get_land_float_by_index(self.delaunay, (self.n + i) * 2 + 1)
+
+    if self.not_threadsafe_bitset:
+        land_bitset_del(self.not_threadsafe_bitset)
+    self.not_threadsafe_bitset = land_bitset_new(self.n + self.en)
 
     for int i in range(self.n + self.en):
         int j = i
@@ -374,7 +396,14 @@ def voronoi_recalculate_map(LandVoronoi *self):
 
     #print("extra %d", self.extra.n // 4)
     int n = self.delaunay.n // sizeof(LandFloat) // 2
-    delaunator_init(self.d, (void *)self.delaunay.buffer, n)
+    int b = self.clip_border
+    delaunator_init(self.d, (void *)self.delaunay.buffer, n,
+        -b, -b, self.w + b, self.h + b)
+
+    if update_map:
+        _update_map(self)
+
+def _update_map(LandVoronoi *self):
 
     for int y in range(self.h):
         for int x in range(self.w):
@@ -382,101 +411,187 @@ def voronoi_recalculate_map(LandVoronoi *self):
 
     self.voronoi_edges = 0
     self.voronoi_dist = 0.0
-    if n >= 3:
+    if self.n + self.en >= 2:
         #for_each_triangle(self.d, _tri_callback, self)
-        for_each_voronoi_edge(self.d, 1, _edge_callback, self)
+        if self.n + self.en >= 3: for_each_voronoi_edge(self.d, _edge_callback, self)
         if self.voronoi_edges:
             self.voronoi_dist /= self.voronoi_edges
-        land_delaunator_for_each_voronoi_cell(self.d, self.center, _cell_callback, self)
-        fixup_map(self)
-
-def fixup_map(LandVoronoi *self):
-    int dx[] = {-1,  0, 1, 0}
-    int dy[] = { 0, -1, 0, 1}
-    for int t in range(100):
-        int unassigned = 0
-        for int steps in range(4):
-            int oddx = steps % 2
-            int oddy = steps // 2
-            for int y in range(oddx, self.h, 2):
-                for int x in range(oddy, self.w, 2):
-                    int i = self.map[x + self.w * y]
-                    if i == -1:
-                        unassigned += 1
-                        for int d in range(4):
-                            if x + dx[d] < 0 or y + dy[d] < 0 or x + dx[d] >= self.w or y + dy[d] >= self.h:
-                                continue
-                            int j = self.map[x + dx[d] + self.w * (y + dy[d])]
-                            if j != -1:
-                                self.map[x + self.w * y] = j
-                                break
-        if unassigned == 0:
-            break
-
-def land_voronoi_create(LandRandom *seed, int w, h, n,
-        bool wrap, int center, float randomness, border) -> LandVoronoi*:
-    auto self = land_voronoi_new(seed, w, h, n, wrap, center, randomness)
-    self.border = border
-
-    #if randomness > 0:
-    #    land_voronoi_distort_with_perlin(self, seed, randomness)
-
-    if border > 0:
-        land_voronoi_calculate_border_distance(self, border)
+        land_delaunator_for_each_voronoi_cell(self.d, _cell_callback, self)
     else:
-        land_voronoi_calculate_distance(self)
+        return
 
-    return self
+    #for int i in range(n):
+    #    _draw_fill(self, self.xy + i)
 
-def _centroid(int i, LandFloat *xy, int *neighbors, int n,
-        bool is_edge, void *user):
+    #for int i in range(n):
+    #    _draw_outline(self, self.xy + i)
+
+    assign_map(self)
+    fixup_map_holes(self)
+
+def _point_in_cell(int x, y, LandVoronoiNode *cell) -> bool:
+    if cell.neighbors_count < 3 or cell.clipped: return False
+    for int i in range(cell.neighbors_count):
+        int j = (i + 1) % cell.neighbors_count
+        LandFloat x1 = cell.edges[i * 2 + 0]
+        LandFloat y1 = cell.edges[i * 2 + 1]
+        LandFloat x2 = cell.edges[j * 2 + 0]
+        LandFloat y2 = cell.edges[j * 2 + 1]
+        if land_cross2d(x2 - x1, y2 - y1, x - x1, y - y1) < 0:
+            return False
+    return True
+
+def land_voronoi_node_contains(LandVoronoi *v, int i, x, y) -> bool:
+    auto node = land_voronoi_node(v, i)
+    return _point_in_cell(x, y, node)
+
+def _find_cell(LandVoronoi *self, int x, y) -> LandVoronoiNode *:
+    for int i in range(self.n + self.en):
+        LandVoronoiNode *node = self.xy + i
+        if _point_in_cell(x, y, node):
+            return node
+    return None
+
+def _check_cells_around(LandVoronoi *self, LandVoronoiNode *initial, int x, y) -> LandVoronoiNode *:
+    if _point_in_cell(x, y, initial):
+        return initial
+    LandBitSet *bitset = self.not_threadsafe_bitset
+    land_bitset_clear(bitset)
+    land_bit_set(bitset, initial.wrap_id)
+    LandArray *stack = land_array_new()
+    land_array_add(stack, initial)
+    int pos = 0
+    LandVoronoiNode *found = None
+    while pos < land_array_count(stack):
+        LandVoronoiNode *check = land_array_get(stack, pos)
+        pos += 1
+        for int i in range(check.neighbors_count):
+            int nid = check.neighbors[i]
+            if nid == -1: continue
+            if land_bit_check_or_set(bitset, nid):
+                continue
+            auto node_i = land_voronoi_node(self, nid)
+            if _point_in_cell(x, y, node_i):
+                found = node_i
+                goto done
+            land_array_add(stack, node_i)
+    label done
+    land_array_destroy(stack)
+    return found
+
+def assign_map(LandVoronoi *self):
+    LandVoronoiNode *node = None
+    int holes = 0
+    int slow = 0
+    for int y in range(self.h):
+        LandVoronoiNode *row = node
+        for int x in range(self.w):
+            if node:
+                node = _check_cells_around(self, node, x, y)
+                if not node: slow += 1
+            else:
+                node = _find_cell(self, x, y)
+                slow += 1
+            if node:
+                self.map[x + self.w * y] = node.wrap_id
+                if x == 0: row = node
+            else:
+                holes += 1
+        node = row
+    print("%.3f%% slow checks (%d holes)",
+        100.0 * slow / self.w / self.h, holes)
+
+def fixup_map_holes(LandVoronoi *self):
+    # just uses 4 neighbors with no polygon check, sometimes we have
+    # pixels which fail the polygon check (due to floating point inaccuracy
+    # after clipping)
+    int holes = 0
+    int fixed = 0
+    for int grid in range(4):
+        for int gy in range(0, self.h, 2):
+            for int gx in range(0, self.w, 2):
+                int x = gx + grid % 2
+                int y = gy + grid // 2
+                if self.map[x + self.w * y] != -1:
+                    continue
+                int dxy[] = {-1, 0, 1, 0, -1}
+                for int d in range(4):
+                    int nx = x + dxy[d]
+                    int ny = y + dxy[d + 1]
+                    if nx < 0 or nx >= self.w: continue
+                    if ny < 0 or ny >= self.h: continue
+                    int i = self.map[nx + self.w * ny]
+                    if i == -1: continue
+                    self.map[x + self.w * y] = i
+                    fixed += 1
+                    goto label_fixed
+                holes += 1
+                label label_fixed
+    print("%s%d%s holes (%d fixed)", land_color_bash("red" if holes > 0 else "green"),
+        holes, land_color_bash("end"), fixed)
+
+def _centroid(int i, LandFloat *xy, int *neighbors, int n, void *user):
     LandVoronoi *self = user
-    if i < self.n:
+    # extra nodes are discarded and re-added so no need to care about them
+    if i < self.n and n >= 3:
         LandVoronoiNode *v = self.xy + i
-        float cx = 0
-        float cy = 0
+        LandFloat cx = 0
+        LandFloat cy = 0
         for int j in range(n):
             cx += xy[j * 2 + 0]
             cy += xy[j * 2 + 1]
         v.x = cx / n
         v.y = cy / n
 
-def land_voronoi_centroid(LandVoronoi *self, bool recalculate):
+def land_voronoi_centroid(LandVoronoi *self, bool recalculate_map):
     Delaunator *d = self.d
-    land_delaunator_for_each_voronoi_cell(d, 0, _centroid, self)
-
-    voronoi_recalculate_map(self)
-
-    if recalculate:
-        land_voronoi_calculate_distance(self)
+    land_delaunator_for_each_voronoi_cell(d, _centroid, self)
+    land_voronoi_recalculate_map(self, recalculate_map)
 
 def land_voronoi_calculate_distance(LandVoronoi *self):
+    if self.overlap > 0:
+        _calculate_border_distance(self, self.overlap)
+    else:
+        _calculate_distance(self)
+
+def _calculate_distance(LandVoronoi *self):
     int w = self.w
     int h = self.h
+    int mx, my
+    self.max_distance = 0
     for int y in range(h):
         for int x in range(w):
             int i = self.map[x + self.w * y]
-            float d = 0
+            LandFloat d = 0
             if i != -1:
                 d = _get_distance(self, x, y, i)
             self.distance[x + self.w * y] = d
             self.neighbor[x + self.w * y] = -1
             if d > self.max_distance:
                 self.max_distance = d
+                self.max_distance_i = i
+                mx = x
+                my = y
+    print("size: %d/%d", w, h)
+    print("max distance: %.1f for %d (at %d/%d)", self.max_distance, self.max_distance_i, mx, my)
 
 def _check_edge(LandVoronoi *self, int cell, neighbor,
-        float px, py, cx, cy, x, y, distance,
-        float *mind, int *mini):
+        LandFloat px, py, cx, cy, x, y, distance,
+        LandFloat *mind, int *mini):
+    if neighbor == -1:
+        return
     LandVoronoiNode *node = land_voronoi_node(self, cell)
     LandVoronoiNode *node2 = land_voronoi_node(self, neighbor)
+    if node.b == node2.b:
+        return
     
     LandFloat pd = land_point_segment_distance(x, y, px, py, cx, cy)
-    if node.b == node2.b: pd = distance
+    
     if pd < *mind:
         *mind = pd
         *mini = neighbor
 
-def land_voronoi_calculate_border_distance(LandVoronoi *self, float distance):
+def _calculate_border_distance(LandVoronoi *self, float distance):
     if self.n < 2: return
 
     self.max_distance = distance
@@ -484,16 +599,20 @@ def land_voronoi_calculate_border_distance(LandVoronoi *self, float distance):
     for int y in range(self.h):
         for int x in range(self.w):
             int cell = self.map[x + self.w * y]
+            if cell == -1:
+                # there shouldn't be holes but if there is one just
+                # ignore
+                continue
             LandVoronoiNode *node = land_voronoi_node(self, cell)
-            float d = distance
+            LandFloat d = distance
             int pn = node.neighbors_count
             int mini = -1
             for int i in range(pn):
                 int j = (i + 1) % pn
-                float x1 = node.edges[i * 2 + 0]
-                float y1 = node.edges[i * 2 + 1]
-                float x2 = node.edges[j * 2 + 0]
-                float y2 = node.edges[j * 2 + 1]
+                LandFloat x1 = node.edges[i * 2 + 0]
+                LandFloat y1 = node.edges[i * 2 + 1]
+                LandFloat x2 = node.edges[j * 2 + 0]
+                LandFloat y2 = node.edges[j * 2 + 1]
 
                 int neighbor = node.neighbors[j]
                 _check_edge(self, cell, neighbor, x1, y1, x2, y2, x, y,
@@ -501,28 +620,7 @@ def land_voronoi_calculate_border_distance(LandVoronoi *self, float distance):
 
             self.distance[x + self.w * y] = d
             self.neighbor[x + self.w * y] = mini
-            #if cell == 5 and mini == 19:
-            #    print("edge: %d/%d %.1f",
-            #        x, y, d)
 
-            # int mini = -1
-            # float mindd = 0
-            # LandVoronoiNode *xy = self.xy + cell
-            # for int ni in range(xy.neighbors_count):
-                # int n = xy.neighbors[ni]
-                # LandVoronoiNode *neighbor = self.xy + n
-                # float ndd = pow(neighbor.x - x, 2) + pow(neighbor.y - y, 2)
-                # if mini == -1 or ndd < mindd:
-                    # mindd = ndd
-                    # mini = n
-            # self.neighbor[x + self.w * y] = mini
-            # float cd = sqrt(pow(xy.x - x, 2) + pow(xy.y - y, 2))
-            # float d = fabs(sqrt(mindd) - cd) # crude heuristic, we really want the distance to the edge
-            # d = distance - d
-            # if d < 0: d = 0
-            # self.distance[x + self.w * y] = d
-            # if d > self.max_distance:
-                # self.max_distance = d
     #land_voronoi_cells_free(polys)
 
 def land_voronoi_distort_with_perlin(LandVoronoi *self, LandRandom *seed, float randomness):
@@ -561,20 +659,145 @@ def land_voronoi_destroy(LandVoronoi *self):
 
 def land_voronoi_at(LandVoronoi *self, int x, y) -> float:
     float value = self.distance[x + self.w * y] / self.max_distance
-    return value * 2 - 1 # change range from 0..1 to -1..1
+    return value * 2 - 1 # change range from 0..1 to -1..1    
+
+def land_voronoi_cell_callback_at(LandVoronoi *self, LandBitSet *bitset, int x, y, radius,
+        void (*cb)(int owner, int neighbor, float distance, void *user), void *user):
+    if not bitset:
+        bitset = self.not_threadsafe_bitset
+    land_bitset_clear(bitset)
+    if self.debug:
+        char *bits = land_bitset_string(bitset)
+        print(bits)
+        land_free(bits)
+    int owner = land_voronoi_owner(self, x, y)
+    if owner == -1:
+        # theoretically not possible as a voronoi diagram is infinite -
+        # in our case, just don't pass coordinates outside the clip rect
+        return
+    if radius == 0:
+        cb(owner, -1, 1, user)
+        return
+    _check_cell(self, bitset, owner, owner, x, y, radius, cb, user)
+    if self.debug:
+        char *bits = land_bitset_string(bitset)
+        print(bits)
+        land_free(bits)
+
+def _check_cell(LandVoronoi *self, LandBitSet *bitset, int start, cell, x, y, radius,
+        void (*cb)(int owner, int neighbor, float distance, void *user), void *user):
+    if land_bit_check_or_set(bitset, cell):
+        if self.debug:
+            print("[%d]", cell)
+        return
+    auto node = land_voronoi_node(self, cell)
+    if self.debug:
+        print("_check_cell %d", cell)
+    int pn = node.neighbors_count
+    float mind = radius
+    int minn = -1
+    for int i in range(pn):
+        int j = (i + 1) % pn
+        int neigh = node.neighbors[j]
+        if neigh == -1: continue
+        float x1 = node.edges[i * 2 + 0]
+        float y1 = node.edges[i * 2 + 1]
+        float x2 = node.edges[j * 2 + 0]
+        float y2 = node.edges[j * 2 + 1]
+        LandFloat pd = land_point_segment_distance(x, y, x1, y1, x2, y2)
+        if self.debug:
+            print("  edge %d: %.1f (<%d)", neigh, pd, radius)
+        if pd < radius:
+            if pd < mind:
+                mind = pd
+                minn = neigh
+            _check_cell(self, bitset, start, neigh, x, y, radius, cb, user)
+    if minn != -1:
+        if self.debug:
+            print("* %d->%d", cell, minn)
+        cb(cell, minn, -mind if cell == start else mind, user)
+    elif cell == start:
+        cb(cell, -1, 0.1, user)
 
 def land_voronoi_owner(LandVoronoi *self, int x, y) -> int:
+    if x < 0 or x >= self.w: return -1
+    if y < 0 or y >= self.h: return -1
     return self.map[x + self.w * y]
 
 def land_voronoi_neighbor(LandVoronoi *self, int x, y) -> int:
     return self.neighbor[x + self.w * y]
 
+def land_voronoi_is_neighbor(LandVoronoi *self, int i, j) -> bool:
+    auto i_node = land_voronoi_node(self, i)
+    auto j_node = land_voronoi_node(self, j)
+    if not i_node: return False
+    if not j_node: return False
+    for int ni in range(i_node.neighbors_count):
+        if i_node.neighbors[ni] == j:
+            for int nj in range(j_node.neighbors_count):
+                if j_node.neighbors[nj] == i:
+                    return True
+    return False
+
 def land_voronoi_node(LandVoronoi *self, int i) -> LandVoronoiNode*:
+    if i == -1: return None
     return self.xy + i
 
-def land_voronoi_set_distance(LandVoronoi *self, float border):
-    self.border = border
-    if border:
-        land_voronoi_calculate_border_distance(self, border)
-    else:
-        land_voronoi_calculate_distance(self)
+def land_voronoi_set_overlap(LandVoronoi *self, float overlap):
+    self.overlap = overlap
+    land_voronoi_calculate_distance(self)
+
+def _print_cell(LandVoronoi *self, int id):
+    auto node = land_voronoi_node(self, id)
+    printf("%d:", id)
+    if not node: return
+    LandFloat *f = node.edges
+    for int i in range(node.neighbors_count):
+        printf(" %.2f,%.2f", f[i * 2 + 0], f[i * 2 + 1])
+    print("")
+
+def land_voronoi_self_check(LandVoronoi *self):
+    for int y in range(self.h):
+        for int x in range(self.w):
+            int owner = land_voronoi_owner(self, x, y)
+            if owner == -1:
+                error("hole at %d/%d", x, y)
+                continue
+            int in_cell = 0
+            int all_cells[10]
+            bool found_map = False
+            for int i in range(self.n + self.en):
+                LandVoronoiNode *node = self.xy + i
+                if _point_in_cell(x + 0.5, y + 0.5, node):
+                    if in_cell < 10:
+                        all_cells[in_cell] = i
+                    in_cell += 1
+                    if owner == i:
+                        found_map = True
+            if in_cell == 1 and not found_map:
+                error("at %d/%d could not find map owner %d", x, y, owner)
+                for int i in range(in_cell):
+                    if i == 10: break
+                    _print_cell(self, all_cells[i])
+            if in_cell == 0:
+                auto on = land_voronoi_node(self, owner)
+                if _point_in_cell(x + 1.5, y, on): continue
+                if _point_in_cell(x - 0.5, y, on): continue
+                if _point_in_cell(x, y + 1.5, on): continue
+                if _point_in_cell(x, y - 0.5, on): continue
+                error("no cell for %d/%d", x, y)
+                error("owner is %d", owner)
+            if in_cell > 1:
+                bool all_neighbors = True
+                for int i in range(in_cell):
+                    if all_cells[i] == owner: continue
+                    if land_voronoi_is_neighbor(self, owner, all_cells[i]):
+                        continue
+                    all_neighbors = False
+                if not all_neighbors:
+                    error("multiple cells for %d/%d", x, y)
+                    error("owner is %d", owner)
+                    for int i in range(in_cell):
+                        if i == 10: break
+                        _print_cell(self, all_cells[i])
+            

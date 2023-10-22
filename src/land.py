@@ -198,8 +198,10 @@ import yaml
 import noise
 import image_op
 import camera
+import bitset
 
 import land/allegro5/a5_opengl
+import land/allegro5/a5_misc
 
 static str _version = "1.0.0"
 

@@ -11,6 +11,7 @@ import test_csg
 import test_random
 import test_util2d
 import test_file
+import test_misc
 
 # argument is either * to run all tests or name of a single test to run
 def main(int argc, char** argv) -> int:
@@ -27,8 +28,9 @@ def main(int argc, char** argv) -> int:
     #test_widget()
     #test_string()
     #test_csg()
-    test_util2d()
+    #test_util2d()
     #test_file()
+    test_misc()
 
     if tests_failed:
         print("%d/%d failed", tests_failed, tests_count)

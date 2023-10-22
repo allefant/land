@@ -202,6 +202,9 @@ def land_random(LandRandom *r, int64_t rmin, rmax) -> int:
     d -= rmin
     return rmin + genrand_int32(r) % d
 
+def land_random_create_seed(LandRandom *r) -> int:
+    return genrand_int32(r)
+
 def land_random_f(LandRandom *r, double rmin, rmax) -> double:
     """
     Random value in the half-open interval [min, max[, that is min is inclusive

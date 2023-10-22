@@ -51,6 +51,13 @@ def platform_display_move(int x, y):
     SELF
     al_set_window_position(self->a5, x, y)
 
+def platform_display_position(int *x, *y):
+    SELF
+    al_get_window_position(self->a5, x, y)
+
+def platform_display_initial_position(int x, y):
+    al_set_new_window_position(x, y)
+
 def platform_display_resize(int w, h):
     SELF
     al_resize_display(self->a5, w, h)

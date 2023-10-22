@@ -246,6 +246,8 @@ def land_font_destroy(LandFont *self):
     if self.filename:
         land_free(self.filename)
     platform_font_destroy(self)
+    if land_font_state.font == self:
+        land_font_state.font = initial
     
 def land_font_new() -> LandFont *:
     LandFont *f = platform_font_new()
@@ -348,8 +350,12 @@ def land_print_string(char const *s, int newline, int alignment):
         float xo = 0, yo = 0
         if alignment & LandAlignMiddle:
             yo = eh / 2
+        if alignment & LandAlignBottom:
+            yo = eh
         if alignment & LandAlignCenter:
             xo = ew / 2
+        if alignment & LandAlignRight:
+            xo = ew
         land_filled_rounded_rectangle(lfs.x_pos - xo - r, lfs.y_pos - r - yo,
             lfs.x_pos - xo + ew + r, lfs.y_pos - yo + eh + r, r)
         land_color_set(backup)
@@ -455,6 +461,10 @@ def land_print_right(char const *text, ...):
 def land_print_bottom(char const *text, ...):
     VPRINT
     land_print_string(s, 1, LandAlignBottom)
+
+def land_print_bottom_right(char const *text, ...):
+    VPRINT
+    land_print_string(s, 1, LandAlignRight | LandAlignBottom)
 
 def land_print_center(char const *text, ...):
     VPRINT
