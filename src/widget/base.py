@@ -228,6 +228,8 @@ class LandWidgetInterface:
     void (*move)(LandWidget *self, float dx, float dy)
     # Called whenever the widget's size changes. It is called after te resizing
     # was done.
+    # fixme: if the layout algorithm updates container children, we only
+    # call layout_changing and layout_changed above, but not 'size'
     void (*size)(LandWidget *self, float dx, float dy)
 
     void (*get_inner_size)(LandWidget *self, float *w, float *h)
@@ -265,7 +267,9 @@ class LandWidget:
     unsigned int only_border with 1 # draw only a border, for performance
         # reasons
     # Widget is not displayed at all, e.g. hidden scrollbar.
-    unsigned int hidden with 1 
+    unsigned int hidden with 1
+    # Like hidden but for mouse handling only
+    unsigned int nomouse with 1
     # inhibit layout updates, for performance reasons
     unsigned int no_layout with 1
     # when changing the layout from within the layout update this flag
@@ -344,7 +348,12 @@ def land_widget_info_string(LandWidget *w) -> char const *:
         sprintf(str, "menubutton %s", b->text)
     elif land_widget_is(w, LAND_WIDGET_ID_BUTTON):
         LandWidgetButton *b = (void *)w
-        sprintf(str, "button %s", b->text)
+        if b.text:
+            sprintf(str, "button %.10s", b.text)
+        elif b.spans:
+            sprintf(str, "button (%d spans)", land_array_count(b->spans->spans))
+        else:
+            sprintf(str, "button (no text)")
     elif land_widget_is(w, LAND_WIDGET_ID_CHECKBOX):
         sprintf(str, "checkbox")
     elif land_widget_is(w, LAND_WIDGET_ID_BOOK):
@@ -367,6 +376,8 @@ def land_widget_info_string(LandWidget *w) -> char const *:
         sprintf(str, "panel")
     elif land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
         sprintf(str, "container")
+    elif land_widget_is(w, LAND_WIDGET_ID_BASE):
+        sprintf(str, "base")
     else:
         sprintf(str, "unknown (%d)", w.vt.id)
     return str
@@ -599,7 +610,6 @@ def land_widget_request_keyboard_focus(LandWidget *self):
         w.want_focus = True
         w = w.parent
 
-
 def land_widget_retain_keyboard_focus(LandWidget *self):
     """
     Called in keyboard_leave to keep the focus. Doesn't usually make sense.
@@ -704,6 +714,15 @@ def land_widget_get_inner_size(LandWidget *self, float *w, *h):
         *w -= self.element->ir
         *h -= self.element->ib
 
+def land_widget_get_inner_center(LandWidget *self, float *x, *y):
+    float l, t, r, b
+    land_widget_inner_extents(self, &l, &t, &r, &b)
+    *x = (l + r) / 2
+    *y = (t + b) / 2
+
+def land_widget_inner_width(LandWidget *self) -> float:
+    return self->box.w - self.element->il - self.element->ir
+
 def land_widget_inner_height(LandWidget *self) -> float:
     return self->box.h - self.element->it - self.element->ib
 
@@ -720,6 +739,9 @@ def land_widget_base_interface_initialize():
 def land_widget_debug(LandWidget *w, int indentation):
     for int i in range(indentation):
         printf("  ");
+    if not w:
+        print("(none)")
+        return
     printf("%s %d %d %d %d %s\n", land_widget_info_string(w),
         w->box.x, w->box.y, w->box.w, w->box.h, land_widget_flags_string(w))
 

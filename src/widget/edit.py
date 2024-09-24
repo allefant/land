@@ -207,3 +207,8 @@ def land_widget_edit_interface_initialize():
 def land_widget_edit_last_key(LandWidget* self) -> int:
     LandWidgetEdit *edit = LAND_WIDGET_EDIT(self)
     return edit.last_key
+
+def land_widget_is_editing(LandWidget *container) -> bool:
+    LandWidget *focus = land_widget_container_get_keyboard_focus(container)
+    if not focus: return False
+    return True

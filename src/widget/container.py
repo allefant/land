@@ -205,6 +205,7 @@ def land_widget_container_get_child_at_pos(LandWidget *super,
     for  while item with item = item->prev:
         LandWidget *child = item->data
         if child->hidden: continue
+        if child->nomouse: continue
         if (x >= child->box.x
         and y >= child->box.y
         and x < child->box.x + child->box.w
@@ -410,6 +411,18 @@ def land_widget_container_remove(LandWidget *base, LandWidget *rem):
     # reference to it, which it has to give up now.
     land_widget_unreference(rem)
 
+def land_widget_container_replace_child(LandWidget *super, *remove, *new_widget):
+    auto item = land_widget_container_child_item(super, remove)
+    item.data = new_widget
+    land_widget_reference(new_widget)
+    land_widget_unreference(remove)
+
+def land_widget_replace(LandWidget *self, *other):
+    other.box = self.box
+    other.box.lookup_grid = None
+    # note: self will likely get freed here and cannot be used after
+    land_widget_container_replace_child(self.parent, self, other)
+
 def land_widget_container_remove_all(LandWidget *base):
     while True:
         LandWidget *child = land_widget_container_child(base)
@@ -471,10 +484,14 @@ def land_widget_get_sibling(LandWidget *widget, int d) -> LandWidget *:
         prev = w
     return None
 
-
 def land_widget_container_is_empty(LandWidget *super) -> int:
     LandWidgetContainer *self = (LandWidgetContainer *)super
     return not self.children or self->children->count == 0
+
+def land_widget_container_count(LandWidget *super) -> int:
+    LandWidgetContainer *self = (LandWidgetContainer *)super
+    if not self.children: return 0
+    return self.children.count
 
 def land_widget_container_initialize(LandWidget *super, *parent,
     int x, y, w, h):

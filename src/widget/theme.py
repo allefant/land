@@ -284,7 +284,7 @@ def land_widget_theme_element_new(
         char *arg = land_buffer_finish(buf)
         snprintf(iname, sizeof iname, "%s%s%s", theme->prefix, arg, theme->suffix)
         land_free(arg)
-        img = land_image_load(iname)
+        img = land_image_load_cached(iname)
         if img:
             for int a = 1 while a < argc with a++:
                 buf = land_array_get_nth(argv, a)
@@ -483,8 +483,8 @@ def land_widget_theme_draw(LandWidget *self):
     if self.no_decoration: return
     if element->transparent: return
 
-    if land_completely_clipped():
-        print("warning: widget clipped %s", land_widget_info_string(self))
+    #if land_completely_clipped():
+    #    print("warning: widget clipped %s", land_widget_info_string(self))
 
     draw_bitmap(element, self.box.x, self->box.y, self->box.w, self->box.h,
         self.only_border)
@@ -511,14 +511,17 @@ def land_widget_theme_set_minimum_size_for_contents(LandWidget *self,
     if h < element.minh: h = element.minh
     land_widget_layout_set_minimum_size(self, w, h)
 
+    # TODO: not sure this is the right place
+    if self.box.w < w: self.box.w = w
+    if self.box.h < h: self.box.h = h
+
 def land_widget_theme_set_minimum_size_for_text(LandWidget *self,
     char const *text):
     LandWidgetThemeElement *element = land_widget_theme_element(self)
     if not element: return
     land_font_set(element->font)
-    int w = land_text_get_width(text)
-    int h = land_text_height() # not line height (or we would cut off over/under parts)
-    land_widget_theme_set_minimum_size_for_contents(self, w, h)
+    (float w, h) = land_text_get_extents(text) # not line height (or we would cut off over/under parts)
+    land_widget_theme_set_minimum_size_for_contents(self, (int)w, (int)h)
 
 def land_widget_theme_set_minimum_width_for_text(LandWidget *self, str text):
     LandWidgetThemeElement *element = land_widget_theme_element(self)

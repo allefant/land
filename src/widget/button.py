@@ -1,5 +1,6 @@
-import base, land/image, land/animation
+import base, land.image, land.animation, land.font
 import land.color
+import land.span
 
 # TODO: It's time to split this up into simple buttons, image buttons, and
 # text widgets.
@@ -24,7 +25,9 @@ class LandWidgetButton:
     bool want_image_destroyed
     char *text
     LandArray *lines
+    LandTextCache *text_cache
     LandHash *line_colors
+    LandText *spans
     void (*clicked)(LandWidget *self)
     void (*rclicked)(LandWidget *self)
     void (*dynamic_text_cb)(LandWidget *self)
@@ -82,6 +85,21 @@ def land_widget_button_draw(LandWidget *base):
         else:
             land_image_draw(image, x + image->x, y + image->y)
 
+    int offset_x = self.xshift
+    if self.spans:
+        (float l, t, r, b) = land_widget_inner_extents(base)
+        self.spans.x = l + self.xshift
+        self.spans.y = t
+        self.spans.w = r - l
+        self.spans.h = b - t
+        if self.text_cache:
+            land_text_cache_repeat(self.text_cache, self.spans.x, self.spans.y)
+        else:
+            self.text_cache = land_text_cache_new()
+            
+            land_text_cache_start_recording(self.text_cache, self.spans.x, self.spans.y)
+            land_text_draw(self.spans)
+            land_text_cache_stop_recording(self.text_cache)
 
     if self.text:
         int x, y = base->box.y + base->element->it
@@ -91,6 +109,8 @@ def land_widget_button_draw(LandWidget *base):
             land_widget_theme_color(base)
         land_widget_theme_font(base)
         int th = land_font_height(land_font_current())
+        if self.multiline:
+            th *= land_array_count(self.lines)
         switch self.yalign:
             case 1: y = base->box.y + base->box.h - base->element->ib - th; break
             case 2: y = base->box.y + (base->box.h - base->element->it +
@@ -100,7 +120,7 @@ def land_widget_button_draw(LandWidget *base):
         switch self.xalign:
             case 0:
                 x = base->box.x + base->element->il
-                x += self.xshift
+                x += offset_x
                 land_text_pos(x, y)
                 if self.multiline:
                     land_print_colored_lines(self.lines, 0, self.line_colors)
@@ -109,20 +129,20 @@ def land_widget_button_draw(LandWidget *base):
                 break
             case 1:
                 x = base->box.x + base->box.w - base->element->ir
-                x += self.xshift
+                x += offset_x
                 land_text_pos(x, y)
                 if self.multiline:
-                    land_print_lines(self.lines, 1)
+                    land_print_colored_lines(self.lines, 1, self.line_colors)
                 else:
                     land_print_right("%s", self.text)
                 break
             case 2:
                 x = base->box.x + (base->box.w - base->element->il +
                     base->element->ir) / 2
-                x += self.xshift
+                x += offset_x
                 land_text_pos(x, y)
                 if self.multiline:
-                    land_print_lines(self.lines, 2)
+                    land_print_colored_lines(self.lines, 2, self.line_colors)
                 else:
                     land_print_center("%s", self.text)
                 break
@@ -133,7 +153,7 @@ def land_widget_button_draw(LandWidget *base):
 def land_widget_button_size(LandWidget *base, float dx, dy):
     if not (dx or dy): return
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
-    land_widget_button_multiline(base, button.multiline)
+    land_widget_button_update_multiline(base, button.multiline)
 
 def land_widget_button_mouse_tick(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -274,11 +294,16 @@ def land_widget_button_replace_text(LandWidget *base, char const *text):
     if text:
         button->text = land_strdup(text)
     if button.multiline:
-        land_widget_button_multiline(base, button.multiline)
+        land_widget_button_update_multiline(base, button.multiline)
 
 def land_widget_button_set_text(LandWidget *base, char const *text):
     land_widget_button_replace_text(base, text)
     land_widget_button_layout_text(base)
+
+def land_widget_button_refresh_text(LandWidget *base):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    if button.multiline:
+        land_widget_button_update_multiline(base, button.multiline)
 
 def land_widget_button_get_text(LandWidget *base) -> str:
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -288,7 +313,7 @@ def land_widget_button_layout_text(LandWidget *base):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
     if button->text:
         if button->multiline:
-            land_widget_button_multiline(base, button->multiline)
+            land_widget_button_update_multiline(base, button->multiline)
         else:
             land_widget_theme_set_minimum_size_for_text(base, button->text)
     if base->parent: land_widget_layout(base->parent)
@@ -301,6 +326,20 @@ def land_widget_button_append(LandWidget *base, char const *text):
     land_concatenate(&newt, text)
     button.text = newt
     land_widget_button_layout_text(base)
+
+def land_widget_button_span(LandWidget *base, char const *text, LandColor color, LandFont *font):
+    LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
+    button.multiline = 2
+    LandTextSpan *span; land_alloc(span)
+    span.text = land_strdup(text)
+    span.color = color
+    span.font = font
+    if not button.spans:
+        button.spans = land_text_new(0, 0, 0, 0)
+    land_text_add_span(button.spans, font, color, text)
+    if button.text_cache:
+        land_text_cache_destroy(button.text_cache)
+        button.text_cache = None
 
 def land_widget_button_append_row(LandWidget *base, char const *text):
     LandWidgetButton *button = LAND_WIDGET_BUTTON(base)
@@ -320,7 +359,7 @@ def land_widget_button_line_count(LandWidget* base) -> int:
         return 1
     return land_array_count(button.lines)
 
-def land_widget_button_multiline(LandWidget *self, int style):
+def land_widget_button_update_multiline(LandWidget *self, int style):
     """
     If style is 0, the text of this widget is a single line. No newline
     characters are allowed.
@@ -334,10 +373,35 @@ def land_widget_button_multiline(LandWidget *self, int style):
         land_array_for_each(button->lines, _linedelcb, None)
         land_array_destroy(button->lines)
         button->lines = None
+    if button.spans:
+        (float l, t, r, b) = land_widget_inner_extents(self)
+        button.spans.x = l + button.xshift
+        button.spans.y = t
+        button.spans.w = r - l
+        button.spans.h = b - t
+        (float w, h) = land_text_get_size(button.spans)
+        # the initial w/h could have been 0/0, so now we get the absolute
+        # minimum width back (and a phantasy height with each word in
+        # its own line)
+        land_widget_theme_set_minimum_size_for_contents(self, w, h)
+        (float l2, t2, r2, b2) = land_widget_inner_extents(self)
+        if r2 - l2 != r - l or b2 - r2 != b - t:
+            button.spans.w = r2 - l2
+            button.spans.h = b2 - t2
+            (float w2, h2) = land_text_get_size(button.spans)
+            # we now calculated a second size, where we use the width
+            # from above, and get the actual height required to fit all
+            # text
+            land_widget_theme_set_minimum_size_for_contents(self, w, h2)
+            if button.text_cache:
+                land_text_cache_destroy(button.text_cache)
+                button.text_cache = None
     if style and button->text:
         float x, y, w, h
         land_widget_theme_font(self)
         land_widget_inner(self, &x, &y, &w, &h)
+        #print("inner %.1f/%.1f", w, h)
+        if h < 0: h = 0
         if style == 0 or style == 1:
             button.lines = land_text_splitlines(button->text)
             int ww = 0
@@ -349,8 +413,8 @@ def land_widget_button_multiline(LandWidget *self, int style):
             land_widget_layout(self)
         else:
             button->lines = land_wordwrap_text(w, 0, button->text)
-            float ww, wh
-            land_wordwrap_extents(&ww, &wh)
+            (float ww, wh) = land_wordwrap_extents()
+            #print("%.0f/%.0f %.0f/%.0f", w, h, ww, wh)
             if ww - w > 0.1:
                 # We can not wrap up text shorter than the single longest word
                 # (which can't be split). So if our first try of wrapping was not
@@ -398,7 +462,13 @@ def land_widget_button_destroy(LandWidget *base):
         land_hash_destroy(button.line_colors)
     if button.image and button.want_image_destroyed:
         land_image_destroy(button.image)
+    if button.spans:
+        land_text_destroy(button.spans)
     land_widget_base_destroy(base)
+
+def land_text_span_destroy(LandTextSpan *span):
+    land_free(span.text)
+    land_free(span)
 
 def land_widget_button_set_minimum_text(LandWidget *base, char const *text):
     land_widget_theme_set_minimum_size_for_text(base, text)

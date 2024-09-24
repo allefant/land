@@ -24,7 +24,8 @@ class LandWidgetScrolling:
     # 1 = scrolling [default]
     # 2 = unlimited
     unsigned int scrollwheel
-    bool fixed_width, fixed_height
+    bool fixed_width # never show horizontal scrollbar
+    bool fixed_height # never show vertical scrollbar
 
 macro LAND_WIDGET_SCROLLING(widget) ((LandWidgetScrolling *)
     land_widget_check(widget, LAND_WIDGET_ID_SCROLLING, __FILE__, __LINE__))
@@ -126,6 +127,10 @@ def land_widget_scrolling_get_view(LandWidget *base, float *l, *t, *r, *b):
     """
     LandWidget *contents = land_widget_scrolling_get_container(base)
     land_widget_inner_extents(contents, l, t, r, b)
+
+def land_widget_scrolling_get_width(LandWidget *base) -> float:
+    (float l, t, r, b) = land_widget_scrolling_get_view(base)
+    return r - l
 
 def land_widget_scrolling_scrollto(LandWidget *base, float x, y):
     LandWidget *contents = LAND_WIDGET_CONTAINER(base)->children->first->data
@@ -284,6 +289,7 @@ def land_widget_scrolling_initialize(LandWidget *widget,
     widget->vt = land_widget_scrolling_interface
     land_widget_theme_initialize(widget)
 
+    land_widget_layout(widget)
     _scrolling_layout(widget)
 
 def _scrolling_layout(LandWidget *self):
@@ -295,6 +301,18 @@ def _scrolling_layout(LandWidget *self):
     auto empty = land_widget_scrolling_get_empty(self)
     LandWidget* hbar = land_widget_container_child(horizontal)
     LandWidget* vbar = land_widget_container_child(vertical)
+
+    #  ___________ _
+    # [container  | ]vertical
+    # [           | ]
+    # [           |#]vbar
+    # [           |#]
+    # [           |#]
+    # [___________|_]
+    # [__###______|_]empty
+    #  horizontal
+    #    hbar
+    #
 
     LandWidgetThemeElement *element = land_widget_theme_element(self)
 
@@ -316,9 +334,14 @@ def _scrolling_layout(LandWidget *self):
     land_widget_move_to(container, l, t)
     land_widget_move_to(horizontal, l, b - hor_h)
     land_widget_move_to(vertical, r - ver_w, t)
-    land_widget_move_to(empty, r - ver_w, b - hor_h)
 
-    land_widget_set_size(container, r - l, b - t)
+    # We give all space to the container first.
+    # TODO: we shouldn't have to, we do know the area, but the container
+    # also has no layout so the resize should not affect the actual
+    # content (?)
+    int w = r - l
+    int h = b - t
+    land_widget_set_size(container, w, h)
     float vw, vh
     land_widget_get_inner_size(container, &vw, &vh)
 
@@ -338,14 +361,16 @@ def _scrolling_layout(LandWidget *self):
 
     #printf("scroll x/y/w/h: %.1f/%.1f/%.1f/%.1f\n", sx, sy, sw, sh)
 
-    float su = 0, sd = 0, sl = 0, sr = 0, sr2 = 0, sd2 = 0
+    # how much sticks out on all sides, without scrollbars
+    float su = 0, sd = 0, sl = 0, sr = 0
     # sx     0          sx+sw
     # [      <___>      ]
     if sx < 0: sl = -sx
     if sy < 0: su = -sy
     if sx + sw > vw: sr = sx + sw - vw
     if sy + sh > vh: sd = sy + sh - vh
-    # scroll variations in case bars are shown
+    # versions of sr and sd in case the corresponding scrollbars are shown
+    float sr2 = 0, sd2 = 0
     if sx + sw > vw - hgap - ver_w: sr2 = sx + sw - vw + hgap + ver_w
     if sy + sh > vh - vgap - hor_h: sd2 = sy + sh - vh + vgap + hor_h
 
@@ -355,24 +380,44 @@ def _scrolling_layout(LandWidget *self):
     if scrolling.fixed_height:
         sd2 = 0
 
-    int w = r - l
-    int h = b - t
-    if sl + sr == 0 and su + sd == 0:
-        # no scrollbars needed
-        if scrolling.autohide & 1: hor_h = 0
-        if scrolling.autohide & 2: ver_w = 0
-    elif su + sd > 0 and sl + sr2 == 0:
-        # only vertical bar needed
-        if scrolling.autohide & 1: hor_h = 0
-    elif sl + sr > 0 and su + sd2 == 0:
-        # only horizontal bar needed
-        if scrolling.autohide & 2: ver_w = 0
-    else:
-        # both bars needed
-        pass
+    int ew = 0, eh = 0
+    if sl + sr == 0 and su + sd == 0: # no scrollbars needed
+        if scrolling.autohide & 4: pass
+        elif scrolling.autohide & 8: pass
+        else: ew = ver_w; eh = hor_h
 
-    if ver_w > 0: w -= hgap + ver_w
-    if hor_h > 0: h -= vgap + hor_h
+        if scrolling.autohide & 1: hor_h = 0
+        if scrolling.autohide & 2: ver_w = 0
+    elif su + sd > 0 and sl + sr2 == 0: # only vertical bar needed
+        if scrolling.autohide & 4: ew = ver_w; eh = hor_h
+        elif scrolling.autohide & 8: pass
+        else: ew = ver_w; eh = hor_h
+        if scrolling.autohide & 1: hor_h = 0
+    elif sl + sr > 0 and su + sd2 == 0: # only horizontal bar needed
+        if scrolling.autohide & 4: ew = ver_w; eh = hor_h
+        elif scrolling.autohide & 8: pass
+        else: ew = ver_w; eh = hor_h
+        if scrolling.autohide & 1: hor_h = 0
+        if scrolling.autohide & 2: ver_w = 0
+    else: # both bars needed
+        ew = ver_w; eh = hor_h
+
+    if ew == 0 and eh == 0:
+        land_widget_set_hidden(empty, True)
+    else:
+        land_widget_set_hidden(empty, False)
+
+    if ver_w > 0:
+        w -= hgap + ver_w
+    elif ew > 0:
+        w -= hgap + ew
+
+    if hor_h > 0:
+        h -= vgap + hor_h
+    elif eh > 0:
+        h -= vgap + eh
+
+    #land_widget_debug(self, 0)
 
     if scrolling.fixed_width:
         LandWidget *child = land_widget_scrolling_get_child(self)
@@ -390,18 +435,17 @@ def _scrolling_layout(LandWidget *self):
             land_widget_resize(child, 0, h - child.box.h)
             ver_w = 0
 
+    land_widget_set_size(empty, ew, eh)
+    land_widget_move_to(empty, r - ew, b - eh)
     land_widget_set_size(container, w, h)
     land_widget_set_size(horizontal, w, hor_h)
     land_widget_set_size(vertical, ver_w, h)
-    land_widget_set_size(empty, ver_w, hor_h)
-
     land_widget_set_hidden(horizontal, hor_h == 0)
     land_widget_set_hidden(vertical, ver_w == 0)
-    land_widget_set_hidden(empty, hor_h == 0 or ver_w == 0)
-    
+
     land_widget_scrollbar_update(hbar, 0)
     land_widget_scrollbar_update(vbar, 0)
-    
+
 def land_widget_scrolling_wheel(LandWidget *widget, int wheel):
     """
     0: no wheel scrolling
