@@ -7,7 +7,7 @@ def _test_yaml1:
     land_yaml_save(y)
     land_yaml_destroy(y)
 
-    LandYaml *y2 = land_yaml_load("test1.yaml")
+    LandYaml *y2 = land_yaml_load("./test1.yaml")
     assert_string(land_yaml_get_scalar(y2.root), "a b c")
 
 def _test_yaml2:
@@ -18,7 +18,7 @@ def _test_yaml2:
     land_yaml_done(y)
     land_yaml_save(y)
 
-    LandYaml *y2 = land_yaml_load("test2.yaml")
+    LandYaml *y2 = land_yaml_load("./test2.yaml")
     assert_length(land_yaml_get_sequence(y2.root), 20)
 
 def _test_yaml3:
@@ -30,7 +30,7 @@ def _test_yaml3:
     land_yaml_done(y)
     land_yaml_save(y)
 
-    LandYaml *y2 = land_yaml_load("test3.yaml")
+    LandYaml *y2 = land_yaml_load("./test3.yaml")
     #land_yaml_dump(y2)
     assert_entries(land_yaml_get_mapping(y2.root), 20)
 
@@ -46,13 +46,13 @@ def _test_yaml4:
     land_yaml_done(y)
     land_yaml_save(y)
 
-    LandYaml *y2 = land_yaml_load("test4.yaml")
+    LandYaml *y2 = land_yaml_load("./test4.yaml")
     #land_yaml_dump(y2)
     assert_entries(land_yaml_get_mapping(y2.root), 3)
 
 def _test_yaml5:
     # read XML into our internal structure
-    LandYaml *y = land_yaml_load_xml("../../data/test.xml")
+    LandYaml *y = land_yaml_load_xml("test.xml")
 
     # write it out as .yaml
     land_yaml_rename(y, "test5.yaml")
@@ -63,11 +63,11 @@ def _test_yaml5:
     land_yaml_save_xml(y)
 
     # load that xml and write it again
-    LandYaml *y2 = land_yaml_load_xml("test5.yaml.xml")
+    LandYaml *y2 = land_yaml_load_xml("./test5.yaml.xml")
     land_yaml_rename(y2, "test5b.yaml")
     land_yaml_save(y2)
 
-    assert_files_identical("test5.yaml", "test5.yaml")
+    assert_files_identical("./test5.yaml", "./test5.yaml")
 
 def _test_yaml6:
     LandYaml *y = land_yaml_new("test6.xml")

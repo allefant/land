@@ -5,9 +5,7 @@ macro S 16
 
 char words[N][S]
 
-def main(int argc, char **argv) -> int:
-    land_init()
-
+def _com:
     printf("Generating %d random strings.\n", N)
     for int i = 0 while i < N with i++:
         for int j = 0 while j < S - 1 with j++:
@@ -35,4 +33,4 @@ def main(int argc, char **argv) -> int:
 
     land_hash_print_stats(hash)
 
-    return 0
+land_commandline_example()

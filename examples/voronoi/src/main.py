@@ -106,6 +106,9 @@ def _cb(int x, y, unsigned char *rgba, void *user):
 def _init:
     gen(new=True, only_dist=False)
 
+def _done:
+    pass
+
 def gen(bool new, bool only_dist):
     int w = use_w
     int h = use_h
@@ -204,7 +207,7 @@ def _tick:
     if land_key_pressed('f'): use_edge_display = (use_edge_display + 1) % 4; gen(False, True)
     if land_shift_pressed('C'): use_count += 1; gen(False, False)
     if land_shift_pressed('c'): use_count -= 1; gen(False, False)
-    if land_key_pressed('i'): print_all()
+    if land_key_pressed('i'): _print_all()
     if land_shift_pressed('P'):
         use_passes += 1
         gen(False, False)
@@ -317,7 +320,7 @@ def _draw:
             py = y
         _edge(px, py, x0, y0, ni0)
 
-def print_all:
+def _print_all:
     print("coordinates")
     printf("[")
     for int i in range(voronoi.n + voronoi.en):
@@ -339,10 +342,4 @@ def print_all:
             printf("%d", xy.neighbors[e])
         print("")
 
-def begin():
-    land_init()
-    land_set_display_percentage_aspect(0.5, 4.0 / 3, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE)
-    land_callbacks(_init, _tick, _draw, None)
-    land_mainloop()
-
-land_use_main(begin)
+land_standard_example()

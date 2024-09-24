@@ -2,13 +2,19 @@ import land.land
 
 global int tests_count = 0
 global int tests_failed = 0
+global str suite_name = None
 
 def test_want(str name) -> bool:
     if land_argc == 1:
         return True
+    bool suite = False
     for int i in range(1, land_argc):
         str key = land_argv[i]
-        if land_ends_with(key, "*"):
+        if land_equals(key, suite_name):
+            suite = True
+        if land_equals(key, "*"):
+            return True
+        elif land_ends_with(key, "*"):
             char k[strlen(key) + 1]
             strcpy(k, key)
             k[strlen(key) - 1] = 0
@@ -17,6 +23,17 @@ def test_want(str name) -> bool:
         else:
             if land_equals(name, key):
                 return True
+    return suite
+
+def test_want_suite(str name) -> bool:
+    if land_argc == 1:
+        return True
+    for int i in range(1, land_argc):
+        str key = land_argv[i]
+        if land_equals(key, name):
+            return True
+        if land_equals(key, "all"):
+            return True
     return False
 
 str _test_name
@@ -67,10 +84,25 @@ def assert_equals(str actual, str expected):
         printf("expected: '%s'\n", expected)
     _after_assert()
 
+def assert_fail_silent:
+    _test_failed = True
+
+macro assert_equals_num(actual, expected, f, explanation):
+    if actual != expected:
+        printf("%s actual: '", explanation)
+        printf(f, actual)
+        printf("'\n")
+        printf("%s expected: '", explanation)
+        printf(f, expected)
+        printf("'\n")
+        assert_fail_silent()
+
 def assert_bool(bool actual, expected, str explanation):
     _assert_failed = actual != expected
     if _assert_failed:
-        print("%s is %i but should be %i", explanation, actual, expected)
+        print("%s is %s but should be %s", explanation,
+            "True" if actual else "False",
+            "True" if expected else "False")
     _after_assert()
 
 def assert_int(int actual, expected, str explanation):

@@ -82,11 +82,11 @@ static def on_new(LandWidget *self):
 static def on_clear(LandWidget *self):
     printf("Clear!\n")
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
-    land_font_load("data/galaxy.ttf", 12)
+    land_font_load("galaxy.ttf", 12)
 
-    land_widget_theme_set_default(land_widget_theme_new("data/classic.cfg"))
+    land_widget_theme_set_default(land_widget_theme_new("classic.cfg"))
     desktop = land_widget_board_new(None, 0, 0, 640, 480)
     land_widget_reference(desktop)
 
@@ -118,13 +118,13 @@ static def game_init(LandRunner *self):
 
     desktop->vt->mouse_tick = my_mouse_tick
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_widget_draw(desktop)
 
     LandWidget *widget
@@ -151,18 +151,9 @@ static def game_draw(LandRunner *self):
         if not container->keyboard: break
         widget = container->keyboard
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_theme_destroy(land_widget_theme_default())
     land_widget_unreference(desktop)
     land_font_destroy(land_font_current())
 
-static def begin():
-    land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
-    LandRunner *game_runner = land_runner_new("menu", game_init,
-        NULL, game_tick, game_draw, NULL, game_exit)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
-
-land_use_main(begin)
+land_standard_example()

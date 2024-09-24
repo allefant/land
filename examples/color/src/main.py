@@ -1,23 +1,27 @@
 import global land.land
 import palette
 
-static LandImage *zpics[3][12]
+static LandImage *zpics[4][12]
 static enum Mode:
     XYY
     CIELAB
+    OKLAB
     LIST
     CLOUD
     CUBE
-    CUBE2
+    CUBE_LAB
+    CUBE_OK
     
 static Mode mode
 
 class Color:
     LandColor rgb
     double l, a, b
+    double ol, oa, ob
     LandArray *close
     double x, y, z, dx, dy
     bool fixed
+    int marked
 
 class Neighbor:
     Color *c
@@ -31,6 +35,7 @@ LandFloat mindist
 Color *maximum_grid_color
 LandFloat maximum_grid_distance
 int selected
+bool show_marked
 
 def hex(Color *c, char *out):
     sprintf(out, "#%02x%02x%02x",
@@ -74,7 +79,7 @@ static def get_xi(float x) -> int:
 static def get_yi(float y) -> int:
     return 255 - (y - 0.0) / 0.6 * 255.0
 
-static def init:
+static def _init:
     mode = CIELAB
 
     test_ciede2000()
@@ -102,9 +107,12 @@ static def init:
             land_color_to_cielab(c, &l, &a, &b)
             printf("                      = Lab %.2f/%.2f/%.2f\n",
                 l, a, b)
+            land_color_to_oklab(c, &l, &a, &b)
+            printf("                      = OkLab %.2f/%.2f/%.2f\n",
+                l, a, b)
 
-    # create XYZ and xyY pictures
-    for int m in range(2):
+    # create XYZ and xyY and oklab pictures
+    for int m in range(3):
         for int zi in range(12):
             double Y = get_Y(zi)
             double l = get_L(zi)
@@ -122,6 +130,8 @@ static def init:
                     LandColor c = {0, 0, 0, 0}
                     if m == XYY: c = land_color_xyy(x, y, Y)
                     if m == CIELAB: c = land_color_cielab(l, a, b)
+                    if m == OKLAB:
+                        c = land_color_oklab(l, a / 4, b / 4)
                     if c.r < 0 or c.g < 0 or c.b < 0 or c.r > 1 or c.g > 1 or c.b > 1:
                         c.r = c.g = c.b = 0
                     cr = c.r * 255
@@ -137,12 +147,16 @@ static def init:
     # color cube
     arrange_cube()
 
+def _done:
+    pass
+
 def color_new(float r, g, b) -> Color*:
     Color *color; land_alloc(color)
     color.rgb.r = r
     color.rgb.g = g
     color.rgb.b = b
     land_color_to_cielab(color.rgb, &color.l, &color.a, &color.b)
+    land_color_to_oklab(color.rgb, &color.ol, &color.oa, &color.ob)
     return color
 
 def color_add(float r, g, b) -> Color*:
@@ -272,10 +286,6 @@ def arrange_fruits:
 
 def find_neighbors:
     double close = 0.3
-    double min_close = close
-    Color *min_a = None
-    Color *min_b = None
-    
     land_array_sort(colors, comp_l)
 
     int cn = land_array_count(colors)
@@ -294,16 +304,41 @@ def find_neighbors:
                 ne.c = o
                 ne.delta = d
                 land_array_add(c.close, ne)
-            if d < min_close:
-                min_close = d
-                min_a = c
-                min_b = o
 
     for Color *col in colors:
         land_array_sort(col.close, comp_delta)
 
-    if min_a:
-        printf("Closest pair: %.3f: %s <-> %s\n", min_close, color_name(min_a), color_name(min_b))
+    float mind = 1
+    float maxd = 0
+    Color *mindc = None, *mindc2
+    Color *maxdc = None, *maxdc2
+    for Color *col in colors:
+        if land_array_count(col.close) == 0:
+            continue
+        Neighbor *a = land_array_get(col.close, 0)
+        Neighbor *b = land_array_get(col.close, -1)
+        if a.delta < mind:
+            mind = a.delta
+            mindc = col
+            mindc2 = a.c
+        if a.delta > maxd:
+            maxd= a.delta
+            maxdc = col
+            maxdc2 = b.c
+
+    print("Smallest delta: %.3f: %s <-> %s", mind, color_name(mindc), color_name(mindc2))
+    print("Largest delta: %.3f: %s <-> %s", maxd, color_name(maxdc), color_name(maxdc2))
+
+    for Color *col in colors:
+        col.marked = 0
+        if land_array_count(col.close) == 0:
+            col.marked = 1
+            continue
+        Neighbor *a = land_array_get(col.close, 0)
+        if a.delta >= 0.050:
+            col.marked = 1
+        if a.delta < 0.020:
+            col.marked = 2
 
 static def comp_delta(void const *a, void const *b) -> int:
     Neighbor * const *ap = a
@@ -351,6 +386,17 @@ def select_color(float mx, my) -> int:
         return i
     return -1
 
+def select_color_rgb(float r, g, b) -> int:
+    int i = 0
+    float e = 0.001
+    print("colors: %d", land_array_count(colors))
+    for Color *c in colors:
+        print("%d: %f %f %f", i, fabs(c.rgb.r - r), fabs(c.rgb.g - g), fabs(c.rgb.b - b))
+        if fabs(c.rgb.r - r) < e and fabs(c.rgb.g - g) < e and fabs(c.rgb.b - b) < e:
+            return i
+        i += 1
+    return -1
+
 char _cns[10][100]
 int _cnsi
 def color_name(Color *c) -> str:
@@ -367,7 +413,7 @@ def color_name(Color *c) -> str:
     sprintf(_cns[i], "%s (%s)", h, name)
     return _cns[i]
 
-static def tick:
+static def _tick:
     land_scale_to_fit(1200, 900, 256)
     LandFloat mx = land_mouse_x()
     LandFloat my = land_mouse_y()
@@ -379,12 +425,13 @@ static def tick:
     if land_closebutton():
         land_quit()
 
-    if land_key_pressed('1'): arrange_cube()
-    if land_key_pressed('2'): arrange_center()
-    if land_key_pressed('3'): arrange_random()
-    if land_key_pressed('4'): arrange_fruits()
+    if land_key_pressed('1'): arrange_cube(); find_neighbors()
+    if land_key_pressed('2'): arrange_center(); find_neighbors()
+    if land_key_pressed('3'): arrange_random(); find_neighbors()
+    if land_key_pressed('4'): arrange_fruits(); find_neighbors()
 
     if land_key_pressed('s'): print_colors()
+    if land_key_pressed('m'): show_marked = not show_marked
     if land_key_pressed('d'): find_grid_distances()
     if land_key_pressed('a'):
         if maximum_grid_color:
@@ -393,7 +440,9 @@ static def tick:
                 (int)(rgb.r * 255), (int)(rgb.g * 255), (int)(rgb.b * 255))
                 
             color_add(rgb.r, rgb.g, rgb.b)
-    if land_key_pressed('m'):
+            find_neighbors()
+            selected = select_color_rgb(rgb.r, rgb.g, rgb.b)
+    if land_key_pressed('n'):
         int j = select_color(mx, my)
         if j > 0 and j != selected:
             Color* c1 = land_array_get(colors, selected)
@@ -409,8 +458,10 @@ static def tick:
                 (int)(rgb.r * 255), (int)(rgb.g * 255), (int)(rgb.b * 255))
             color_add(rgb.r, rgb.g, rgb.b)
 
-    if land_key_pressed(LandKeyFunction + 1): mode = XYY
-    if land_key_pressed(LandKeyFunction + 2): mode = CIELAB
+    if land_key_pressed(LandKeyFunction + 1):
+        if mode == CIELAB: mode = OKLAB
+        elif mode == OKLAB: mode = XYY
+        else: mode = CIELAB
     if land_key_pressed(LandKeyFunction + 3):
         mode = LIST
         find_neighbors()
@@ -429,7 +480,9 @@ static def tick:
     if land_key_pressed(LandKeyFunction + 5):
         mode = CUBE
     if land_key_pressed(LandKeyFunction + 6):
-        mode = CUBE2
+        mode = CUBE_LAB
+    if land_key_pressed(LandKeyFunction + 7):
+        mode = CUBE_OK
 
     if mode == LIST:
         if land_mouse_button_clicked(LandButtonLeft):
@@ -504,7 +557,7 @@ static def tick:
             if c.y > 900: c.y = 900
             id++
 
-    if mode == CUBE or mode == CUBE2:
+    if mode == CUBE or mode == CUBE_LAB or mode == CUBE_OK:
         # LLoyd's (but too slow as brute force)
         # 1. for each color, assign to it all the colors closer to it
         #    than to any other
@@ -540,6 +593,7 @@ static def tick:
                 if not col.fixed:
                     col.rgb = rgb2
                     land_color_to_cielab(col.rgb, &col.l, &col.a, &col.b)
+                    land_color_to_oklab(col.rgb, &col.ol, &col.oa, &col.ob)
                 mindist = mindist * 0.99 + md2 * 0.01
 
 static def marker(float x, y):
@@ -548,22 +602,38 @@ static def marker(float x, y):
 static def draw_color(Color *c, float x, y):
     land_color(c.rgb.r, c.rgb.g, c.rgb.b, 1)
     land_filled_rectangle(x - 30, y - 30, x + 30, y + 30)
-    int n = land_array_count(c.close)
-    for int i in range(n):
-        if i >= 6: break
-        Neighbor *ne = land_array_get_nth(c.close, i)
-        Color *o = ne.c
-        float dx = cos(LAND_PI * 2 * i / 6)
-        float dy = sin(LAND_PI * 2 * i / 6)
-        float ox = x + 20 * dx
-        float oy = y + 20 * dy
-        if c.l < 0.5:
-            land_color(1, 1, 1, 1)
-        else:
+
+    if not show_marked:
+        int n = land_array_count(c.close)
+        for int i in range(n):
+            if i >= 6: break
+            Neighbor *ne = land_array_get_nth(c.close, i)
+            Color *o = ne.c
+            float dx = cos(LAND_PI * 2 * i / 6)
+            float dy = sin(LAND_PI * 2 * i / 6)
+            float ox = x + 20 * dx
+            float oy = y + 20 * dy
+            if c.l < 0.5:
+                land_color(1, 1, 1, 1)
+            else:
+                land_color(0, 0, 0, 1)
+            land_line(x + 10 * dx, y + 10 * dy, x + 15 * dx, y + 15 * dy)
+            land_color(o.rgb.r, o.rgb.g, o.rgb.b, 1)
+            land_filled_circle(ox - 5, oy - 5, ox + 5, oy + 5)
+
+    int a = 28
+    int b = 29
+    if show_marked:
+        if c.marked == 1:
             land_color(0, 0, 0, 1)
-        land_line(x + 10 * dx, y + 10 * dy, x + 15 * dx, y + 15 * dy)
-        land_color(o.rgb.r, o.rgb.g, o.rgb.b, 1)
-        land_filled_circle(ox - 5, oy - 5, ox + 5, oy + 5)
+            land_rectangle(x - a, y - a, x + b, y + b)
+            land_color(0, 1, 0, 1)
+            land_rectangle(x - b, y - b, x + a, y + a)
+        if c.marked == 2:
+            land_color(0, 0, 0, 1)
+            land_rectangle(x - a, y - a, x + b, y + b)
+            land_color(1, 0, 0, 1)
+            land_rectangle(x - b, y - b, x + a, y + a)
 
 def _show_selected:
     int i = selected
@@ -576,7 +646,7 @@ def _show_selected:
     land_thickness(2)
     land_rectangle(x, y, x + 60, y + 60)
 
-static def draw:
+static def _draw:
     land_scale_to_fit(1200, 900, 0)
 
     if mode == LIST:
@@ -602,7 +672,7 @@ static def draw:
             land_filled_circle(x - 30, y - 30, x + 30, y + 30)
             land_filled_circle(1200 + x - 30, y - 30, 1200 + x + 30, y + 30)
 
-    elif mode == CUBE or mode == CUBE2:
+    elif mode == CUBE or mode == CUBE_LAB or mode == CUBE_OK:
         land_clear(0.5, 0.5, 0.5, 1)
         land_color(0.8, 0.8, 0.8, 1)
 
@@ -630,8 +700,10 @@ static def draw:
         for Color *col in colors:
             LandColor c = col.rgb
             LandVector p = {c.r, c.g, c.b}
-            if mode == CUBE2:
-                p = (LandVector){col.a + 0.5, col.l, col.b + 0.5}
+            if mode == CUBE_LAB:
+                p = (LandVector){(1 + col.a) / 2, col.l, (1 + col.b) / 2}
+            if mode == CUBE_OK:
+                p = (LandVector){0.5 + col.oa  * 2, col.ol, 0.5 + col.ob * 2}
             LandVector v = land_vector_matmul(p, &m)
             col.x = v.x
             col.y = v.y
@@ -657,7 +729,7 @@ static def draw:
             land_print("Maximum distance: %f", maximum_grid_distance)
             draw_color(maximum_grid_color, 30, land_text_y() + 60)
 
-    elif mode == XYY or mode == CIELAB:
+    elif mode == XYY or mode == CIELAB or mode == OKLAB:
 
         land_clear(0, 0, 0, 1)
         
@@ -671,6 +743,7 @@ static def draw:
                 land_text_pos(x_, y_ - 20)
                 if mode == XYY: land_print("Y = %.2f", get_Y(i))
                 if mode == CIELAB: land_print("L = %.2f", get_L(i))
+                if mode == OKLAB: land_print("L = %.2f", get_L(i))
                 land_rectangle(x_, y_, x_ + 256, y_ + 256)
 
                 if mode == XYY:
@@ -726,7 +799,7 @@ static def draw:
 
     land_text_pos(0, 900 - 12)
     land_color(1, 1, 1, 1)
-    land_print("F3=list F4=cloud F5=cube F6=cube2 1=565 2=gray 3=random 4=fruits")
+    land_print("F3=list F4=cloud F5=cube F6=lab F7=ok 1=565 2=gray 3=random 4=fruits")
 
 static def comp_z(void const *a, void const *b) -> int:
     Color const * const *as = a
@@ -737,10 +810,6 @@ static def comp_z(void const *a, void const *b) -> int:
     if ac.z > bc.z: return 1
     return 0
 
-static def _main:
-    land_init()
+def _config:
     land_set_display_parameters(2400, 64+1800, LAND_WINDOWED)
-    land_callbacks(init, tick, draw, None)
-    land_mainloop()
-
-land_use_main(_main)
+land_example(_config, _init, _tick, _draw, _done)

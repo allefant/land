@@ -1,10 +1,8 @@
 import global land.land
 
-def main() -> int:
-    land_init()
-
+def _com:
     land_find_data_prefix("data/")
-    LandProtobuf *p = land_protobuf_load("data/config.protobuf")
+    LandProtobuf *p = land_protobuf_load("config.protobuf")
 
     int id
     uint64_t size
@@ -106,4 +104,4 @@ def main() -> int:
 
     land_protobuf_destroy(p)
 
-    return 0
+land_commandline_example()

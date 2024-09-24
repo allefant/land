@@ -5,13 +5,8 @@ LandWidgetTheme *theme
 LandWidget *desktop
 LandWidget *scrolling1
 LandWidget *outside
-LandWidget *list
-LandWidget *vbox
-LandWidget *button
-LandWidget *panel
-LandWidget *slider
 
-static def my_draw(LandWidget *self):
+def _my_draw(LandWidget *self):
     land_color(1, 1, 0, 1)
     int x, y
     x = self->box.x
@@ -35,7 +30,7 @@ static def my_draw(LandWidget *self):
 #        0, 0, 1, 1)
 #    land_widget_layout_set_expanding(entry, 1, 1)
 
-static def init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
     my_font = land_font_load("galaxy.ttf", 10)
     land_font_set(my_font)
@@ -58,7 +53,7 @@ static def init(LandRunner *self):
     LAND_WIDGET_SIZER(sizer)->target = window
     outside = land_widget_box_new(scrolling1, 102, 202, 200, 200)
     land_widget_create_interface(outside, "mine")
-    outside->vt->draw = my_draw
+    outside->vt->draw = _my_draw
 
     #LandWidget *text = land_widget_text_new(desktop, "Land Widgets Example", 0, 10, 10, 100, 20)
 
@@ -69,7 +64,7 @@ static def init(LandRunner *self):
     #land_widget_text_new(desktop, "Slider", 0, 100, 30, 3, 3)
     #slider = land_widget_slider_new(desktop, -1, 1, False, None, 100, 50, 100, 10)
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
 
@@ -109,7 +104,7 @@ static def debug(LandWidget *w):
             land_print("(empty)")
         land_text_pos(land_text_x_pos() - 10, land_text_y_pos())
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0.5, 0.5, 0.5, 1)
     land_widget_draw(desktop)
 
@@ -117,11 +112,9 @@ static def draw(LandRunner *self):
     land_color(0, 0, 0, 0.75)
     debug(desktop)
 
-static def done(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_unreference(desktop)
     land_widget_theme_destroy(theme)
     land_font_destroy(my_font)
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL, init, NULL, tick,
-        draw, NULL, done)
-
+land_standard_example()

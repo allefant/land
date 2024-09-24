@@ -23,7 +23,7 @@ static def sprite_drawer(MySprite *self, LandView *view):
 
     sprites++
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     map = land_map_new()
 
     LandLayer *layer = land_layer_new()
@@ -59,7 +59,7 @@ static def game_init(LandRunner *self):
 
     land_font_load("../../data/galaxy.ttf", 10)
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     int kx = 0, ky = 0
     if land_key(LandKeyEscape):
         land_quit()
@@ -87,7 +87,7 @@ static def game_tick(LandRunner *self):
     my_view->scroll_x += kx / my_view->scale_x
     my_view->scroll_y += ky / my_view->scale_y
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     sprites = 0
     land_clear(0, 0, 0, 0)
     land_color(0, 0, 1, 1)
@@ -100,16 +100,8 @@ static def game_draw(LandRunner *self):
     land_color(1, 1, 1, 1)
     land_print("%d/%d sprites visible", sprites, sprites_count)
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     pass
 
-def begin():
-    land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
-    LandRunner *game_runner = land_runner_new("game",
-        game_init, NULL, game_tick, game_draw, NULL, game_exit)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
-
-land_use_main(begin)
+def _config(): land_default_display()
+land_example(_config, _init, _tick, _draw, _done)

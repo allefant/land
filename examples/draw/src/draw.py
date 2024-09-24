@@ -1,6 +1,6 @@
 import global land/land
 
-static def game_tick(LandRunner *self):
+def _tick:
     if land_key(LandKeyEscape):
         land_quit()
 
@@ -46,7 +46,7 @@ static def draw_star(float middle_x, middle_y, int n, float r,
         a += da
 
 
-static def game_draw(LandRunner *self):
+def _draw:
     land_scale_to_fit(640, 480, 0)
 
     land_clear(0, 0, 0, 1)
@@ -117,12 +117,8 @@ static def game_draw(LandRunner *self):
        
         t++
 
-def begin():
-    land_init()
+def _config():
     land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE)
-    LandRunner *game_runner = land_runner_new("game", NULL, NULL, game_tick, game_draw, NULL, NULL)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
 
-land_use_main(begin)
+land_example(_config, None, _tick, _draw, None)
+

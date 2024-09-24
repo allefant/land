@@ -5,7 +5,7 @@ LandWidget *desktop
 LandWidget *window
 LandWidget *scrolling
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
 
     land_font_load("galaxy.ttf", 12)
@@ -27,7 +27,7 @@ static def game_init(LandRunner *self):
     land_widget_sizer_set_target(sizer, window)
     land_widget_box_new(scrolling, 0, 0, 256, 256)
 
-static def debug(LandWidget *w):
+def _debug(LandWidget *w):
     land_print("* %s: %d %d %d %d %s]", w->vt->name,
         w->box.x, w->box.y, w->box.w, w->box.h, w->hidden ? "H" : ".")
     if land_widget_is(w, LAND_WIDGET_ID_CONTAINER):
@@ -37,14 +37,14 @@ static def debug(LandWidget *w):
             LandListItem *i = l->first
             while i:
                 LandWidget *w = i->data
-                debug(w)
+                _debug(w)
                 i = i->next
         else:
             land_print("(empty)")
         land_text_pos(land_text_x_pos() - 10, land_text_y_pos())
 
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
     
@@ -58,26 +58,17 @@ static def game_tick(LandRunner *self):
 
     land_widget_tick(desktop)
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_widget_draw(desktop)
     
     land_text_pos(300, 10)
     land_color(0, 0, 0, 0.75)
-    debug(desktop)
+    _debug(desktop)
 
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_theme_destroy(land_widget_theme_default())
     land_widget_unreference(desktop)
     land_font_destroy(land_font_current())
 
-def begin():
-    land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
-    LandRunner *game_runner = land_runner_new("scrolling", game_init,
-        NULL, game_tick, game_draw, NULL, game_exit)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
-
-land_use_main(begin)
+land_standard_example()

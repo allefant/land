@@ -7,8 +7,7 @@ def print_cb(void *item, void *data) -> int:
     printf(" * %s\n", (char *)item)
     return 0
 
-def main() -> int:
-    land_init()
+def _com:
     LandQueue *queue = land_queue_new(string_cmp)
 
     land_queue_add(queue, "Elephant")
@@ -27,4 +26,5 @@ def main() -> int:
     land_array_for_each(array, print_cb, None)
 
     land_array_destroy(array)
-    return 0
+
+land_commandline_example()

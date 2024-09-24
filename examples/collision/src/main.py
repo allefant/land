@@ -9,7 +9,7 @@ class Game:
 
 Game game
 
-static def game_init(LandRunner *self):
+static def _init(LandRunner *self):
     land_find_data_prefix("data/")
     land_font_load("data/galaxy.ttf", 10)
 
@@ -46,7 +46,7 @@ static def game_init(LandRunner *self):
     game.x = land_mouse_x()
     game.y = land_mouse_y()
 
-static def game_tick(LandRunner *self):
+static def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape):
         land_quit()
 
@@ -89,7 +89,7 @@ static def game_tick(LandRunner *self):
         game.angle = a
 
 
-static def game_draw(LandRunner *self):
+static def _draw(LandRunner *self):
     land_clear(0.5, 0.5, 0.5, 1)
     land_image_draw_rotated(game.img1, (int)game.x, (int)game.y, game.angle)
     land_image_draw(game.img2, game.x_, game.y_)
@@ -102,8 +102,7 @@ static def game_draw(LandRunner *self):
     land_color(1, 1, 1, 1)
     land_print("Collision")
 
-static def game_exit(LandRunner *self):
+static def _done(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE,
-    game_init, NULL, game_tick, game_draw, NULL, game_exit)
+land_standard_example()

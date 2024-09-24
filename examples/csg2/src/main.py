@@ -34,7 +34,7 @@ static def triangles(LandCSG *model, Triangles *t):
             vt[5] = c.b
             i++
 
-static def init(LandRunner *self):
+def _init(LandRunner *self):
 
     land_font_load("../../data/galaxy.ttf", 12)
 
@@ -49,14 +49,14 @@ static def init(LandRunner *self):
     triangles(model, &t1)
     
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
 
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
     land_clear_depth(1)
 
@@ -84,7 +84,7 @@ static def draw(LandRunner *self):
 
     land_3d_triangles(t1.n, t1.v)
 
-static def done(LandRunner *self):
+def _done(LandRunner *self):
     if theme:
         land_widget_theme_destroy(theme)
     if desktop:
@@ -92,5 +92,5 @@ static def done(LandRunner *self):
     if land_font_current():
         land_font_destroy(land_font_current())
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_DEPTH,
-    init, NULL, tick, draw, NULL, done)
+
+land_standard_example()

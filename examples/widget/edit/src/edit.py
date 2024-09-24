@@ -47,7 +47,7 @@ static def slider(LandWidget *self):
     land_widget_spin_set_value(edit_blue, b)
     redraw(self)
 
-static def init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
     af = land_font_load("galaxy.ttf", 20)
 
@@ -84,7 +84,7 @@ static def init(LandRunner *self):
     prev = land_image_create(128, 128)
     current = land_image_create(128, 128)
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
@@ -93,17 +93,15 @@ static def tick(LandRunner *self):
 
     land_widget_tick(desktop)
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_widget_draw(desktop)
 
     land_image_draw(prev, 320, 10)
     land_image_draw(current, 320, 20 + 128)
 
-static def done(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_theme_destroy(theme)
     land_widget_unreference(desktop)
     land_font_destroy(land_font_current())
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE, init, NULL, tick,
-        draw, NULL, done)
-
+land_standard_example()

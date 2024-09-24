@@ -2,7 +2,7 @@ import global land/land
 
 LandImage *image
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     image = land_image_new(16, 16)
     land_set_image_display(image)
     land_clear(0.5, 0.5, 0.5, 1)
@@ -12,11 +12,11 @@ static def game_init(LandRunner *self):
     
     #glEnable(GL_POLYGON_SMOOTH)
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key(LandKeyEscape) or land_closebutton():
         land_quit()
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clip(0, 0, 640, 480)
     land_color(1, 1, 0, 1)
     land_filled_rectangle(0, 0, 640, 480)
@@ -39,5 +39,7 @@ static def game_draw(LandRunner *self):
             land_clip(0, 0, clip, 480)
             land_image_draw_tinted(image, x, y, 0, 1, 0, 0.8)
 
-land_begin_shortcut(640, 480, 120, LAND_WINDOWED | LAND_OPENGL,
-    game_init, NULL, game_tick, game_draw, NULL, NULL)
+def _done:
+    land_image_destroy(image)
+
+land_standard_example()

@@ -4,7 +4,7 @@ LandWidget *desktop
 LandWidgetTheme *theme
 LandWidgetTheme *classic, *green, *wesnoth
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
 
     land_font_load("galaxy.ttf", 12)
@@ -36,7 +36,7 @@ static def game_init(LandRunner *self):
     land_buffer_destroy(b)
     land_widget_scrolling_autohide(s, 1, 0, 2)
    
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
     
@@ -48,24 +48,15 @@ static def game_tick(LandRunner *self):
 
     land_widget_tick(desktop)
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_widget_draw(desktop)
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_theme_destroy(land_widget_theme_default())
     land_widget_unreference(desktop)
     land_font_destroy(land_font_current())
 
-def begin():
-    land_init()
-    land_set_display_parameters(640, 480, LAND_WINDOWED | LAND_OPENGL)
-    LandRunner *game_runner = land_runner_new("scrolling", game_init,
-        NULL, game_tick, game_draw, NULL, game_exit)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
-
-land_use_main(begin)
+land_standard_example()
 
 str _animals = """
 Aardvark

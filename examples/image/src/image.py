@@ -51,9 +51,10 @@ static def create_test_image() -> LandImage *:
     land_unset_image_display()
     return image
 
-static def init(LandRunner *self):
+def _init(LandRunner *self):
+    land_find_data_prefix("data/")
     image = create_test_image()
-    image = land_image_load("../../data/land3.png")
+    image = land_image_load("land3.png")
     land_image_offset(image, 20, 12)
 
     int w = land_image_width(image)
@@ -64,20 +65,20 @@ static def init(LandRunner *self):
     image_parts[2] = land_image_new_from(image, w / 2, h / 2, w / 2, h / 2)
     image_parts[3] = land_image_new_from(image, 0, h / 2, w / 2, h / 2)
 
-static def destroy(LandRunner *self):
+def _done(LandRunner *self):
     int i
     for i = 0 while i < 4 with i++:
         land_image_del(image_parts[i])
     land_image_del(image)
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
 
     if land_key_pressed(LandKeyFunction + 1):
         crop_test()
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     static float angle = 0
     int w = land_image_width(image)
     int h = land_image_height(image)
@@ -147,8 +148,8 @@ static def draw(LandRunner *self):
     if cropped:
         land_image_draw(cropped, 320, 0)
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE | LAND_MULTISAMPLE,
-    init, NULL, tick, draw, NULL, destroy)
+def _config(): land_default_display_flags(LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE | LAND_MULTISAMPLE)
+land_example(_config, _init, _tick, _draw, _done)
 
 def crop_test:
     if cropped:

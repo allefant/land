@@ -6,11 +6,12 @@ LandWidget *desktop
 
 LandWidgetInterface *reddish
 
-static def init(LandRunner *self):
-    my_font = land_font_load("../../data/galaxy.ttf", 10)
+def _init(LandRunner *self):
+    land_find_data_prefix("data/")
+    my_font = land_font_load("galaxy.ttf", 10)
     land_font_set(my_font)
 
-    theme = land_widget_theme_new("../../data/classic.cfg")
+    theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
 
     desktop = land_widget_container_new(NULL, 0, 0, 640, 480)
@@ -24,20 +25,18 @@ static def init(LandRunner *self):
     panel->vt = reddish
     land_widget_theme_initialize(panel)
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
     land_widget_tick(desktop)
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0.5, 0.5, 0.5, 1)
     land_widget_draw(desktop)
 
-static def done(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_unreference(desktop)
     land_widget_theme_destroy(theme)
     land_font_destroy(my_font)
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL, init, NULL, tick,
-        draw, NULL, done)
-
+land_standard_example()

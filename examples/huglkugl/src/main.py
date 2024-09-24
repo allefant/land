@@ -18,7 +18,7 @@ Game game
 
 LandSprite *sprites[100]
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_font_load("../../data/Muli-Regular.ttf", 12)
 
     game.map = land_map_new()
@@ -52,7 +52,7 @@ static def game_init(LandRunner *self):
         x += 128
 
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape): land_quit()
 
     int kx = 0, ky = 0
@@ -68,7 +68,7 @@ static def game_tick(LandRunner *self):
 
     land_view_ensure_visible(game.view, sprites[0]->x, sprites[0]->y, 140, 140)
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
     land_map_draw(game.map, game.view)
 
@@ -86,8 +86,8 @@ static def game_draw(LandRunner *self):
         land_list_destroy(overlappers)
 
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 60, LAND_OPENGL | LAND_WINDOWED,
-    game_init, NULL, game_tick, game_draw, NULL, game_exit)
+def _config(): land_default_display()
+land_example(_config, _init, _tick, _draw, _done)

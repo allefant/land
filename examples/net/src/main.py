@@ -277,7 +277,7 @@ def my_tick(LandWidget *self):
                 server_notify_lost(my->id)
             break
 
-def my_draw(LandWidget *self):
+def _my_draw(LandWidget *self):
     MyWidget *my = (MyWidget *)self
 
     float x, y, w, h;
@@ -313,7 +313,7 @@ def my_widget_new(LandWidget *parent, int state, id) -> LandWidget *:
     if not vt:
         land_widget_button_interface_initialize()
         vt = land_widget_copy_interface(land_widget_base_interface, "button")
-        vt->draw = my_draw
+        vt->draw = _my_draw
         vt->mouse_tick = my_mouse_tick
     MyWidget *self
     land_alloc(self)
@@ -347,7 +347,7 @@ def create_gui():
         clients[i] = my_widget_new(vbox, FREE, i / 2)
     land_widget_layout(desktop)
 
-def init(LandRunner *self):
+def _init(LandRunner *self):
     if land_argc > 1:
         address = land_argv[1]
 
@@ -355,7 +355,7 @@ def init(LandRunner *self):
 
     create_gui()
 
-def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
     land_widget_tick(desktop)
@@ -368,10 +368,10 @@ def tick(LandRunner *self):
 
     ticks++
 
-def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_widget_draw(desktop)
 
-def done(LandRunner *self):
+def _done(LandRunner *self):
     int i
 
     for i = 0 while i < 8 with i++:
@@ -384,14 +384,8 @@ def done(LandRunner *self):
     if conn_listen:
         land_net_del (conn_listen)
 
-def my_main():
-    land_init()
+def _config():
     land_set_display_parameters(320, 240,
         LAND_WINDOWED | LAND_OPENGL)
-    LandRunner *runner = land_runner_new("main", init, None, tick, draw, None,
-        done)
     land_set_fps(6)
-    land_set_initial_runner(runner)
-    land_mainloop()
-
-land_use_main(my_main)
+land_example(_config, _init, _tick, _draw, _done)

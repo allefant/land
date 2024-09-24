@@ -6,12 +6,12 @@ LandImage *cache
 
 float angle = 0
 
-def init(LandRunner *self):
+def _init(LandRunner *self):
     land_clear(1, 0.9, 0.8, 1)
     land_flip()
     cache = land_image_new(1024, 1024)
 
-def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape):
         land_quit()
 
@@ -45,7 +45,7 @@ def paint(int x, y, w, h, xp, yp, tw, th):
             land_color(c.r, c.g, c.b, 1)
             land_plot(x + i - xp + 0.5, y + j - yp + 0.5)
 
-def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(1, 0.9, 0.8, 1)
     float w = land_display_width()
     float h = land_display_height()
@@ -78,5 +78,6 @@ def draw(LandRunner *self):
     #land_clear(1, 0, 0, 1)
     #land_image_draw(cache, 0, 0)
 
-land_begin_shortcut(0, 0, 60, LAND_OPENGL | LAND_FULLSCREEN,
-    init, NULL, tick, draw, NULL, NULL)
+def _done: pass
+
+land_example_flags(LAND_OPENGL | LAND_FULLSCREEN)

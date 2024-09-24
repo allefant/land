@@ -35,7 +35,7 @@ static def restart():
 
     land_map_add_layer(map, layer)
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_font_load("../../data/galaxy.ttf", 20)
     tiles[0] = land_image_load("../../data/isotile1.png")
     tiles[1] = land_image_load("../../data/isotile2.png")
@@ -48,7 +48,7 @@ static def game_init(LandRunner *self):
 
     view = land_view_new(100, 100, land_display_width() - 200, land_display_height() - 200)
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     int kx = 0, ky = 0
     while not land_keybuffer_empty():
         int k, u
@@ -96,7 +96,7 @@ static def game_tick(LandRunner *self):
     view->scroll_x += kx
     view->scroll_y += ky
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
     if clip:
         land_clip(view->x, view->y, view->x + view->w, view->y + view->h)
@@ -113,10 +113,7 @@ static def game_draw(LandRunner *self):
         land_mouse_x(), land_mouse_y(), &x, &y)
     land_print("%.2f / %.2f", x, y)
 
-static def game_exit(LandRunner *self):
+def _done(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 120,
-    LAND_WINDOWED | LAND_OPENGL,
-    game_init, NULL, game_tick, game_draw, NULL, game_exit)
-
+land_standard_example()

@@ -100,7 +100,7 @@ def add_kind(str name, str pattern) -> Kind*:
         for LandTriangles* t in LandArray* tris:
             land_triangles_shader(t, "elephant", render.vertex_shader,
                 render.fragment_shader)
-            printf("%s vertices: %d\n", name, t.n)
+            printf("%s vertices: %lu\n", name, t.n)
 
         land_array_add(k.frames, tris)
 
@@ -135,7 +135,7 @@ def add_object(float x, y, z, scale, str kind)
     else:
         hash_static_object(render.spatial_hash, o)
 
-def game_init(LandRunner* _):
+def _init(LandRunner* _):
     kinds = land_array_new()
     land_array_add(kinds, None)
     dynamic = land_array_new()
@@ -171,6 +171,9 @@ def game_init(LandRunner* _):
     render.cam = land_camera_new()
     land_camera_translate(render.cam, land_vector(0, 0, 100))
     land_camera_change_freely(render.cam, -pi * 0.4, 0, 0)
+
+def _done:
+    pass
 
 def draw_object(Object* ob):
     if not ob: return
@@ -245,7 +248,7 @@ def draw_cells(SpatialHash* h):
                 land_array_add(render.cellstack,
                     land_array_get(h.cells, cell.x + (cell.y + 1) * h.size))
 
-def game_draw(LandRunner* _):
+def _draw(LandRunner* _):
     render.stats_triangles = 0
 
     land_render_state(LAND_DEPTH_TEST, True)
@@ -306,14 +309,14 @@ def game_draw(LandRunner* _):
 
     land_print("triangles: %dk", render.stats_triangles // 1000)
 
-def game_tick(LandRunner* _):
+def _tick(LandRunner* _):
     if land_key_pressed(LandKeyEscape): land_quit()
 
     if land_mouse_button(0):
         float rotx = land_mouse_delta_y() * LandPi / 180
         float roty = land_mouse_delta_x() * LandPi / 180
 
-        land_camera_change_locked_constrained(render.cam, rotx, roty, -pi * 0.53, pi * 0.05)
+        land_camera_change_locked_constrained(render.cam, rotx, roty, -pi * 0.05, pi * 0.53)
 
     float kx = 0, ky = 0
     if land_key(LandKeyLeft): kx = -1
@@ -333,14 +336,5 @@ def game_tick(LandRunner* _):
 
     render.cam->zoom += land_mouse_delta_z() * 0.01
 
-def begin():
-    land_init()
-    land_set_display_parameters(2048, 1024, LAND_WINDOWED | LAND_RESIZE | LAND_OPENGL | LAND_DEPTH)
-    LandRunner *game_runner = land_runner_new("game",
-        game_init, NULL, game_tick, game_draw, NULL, NULL)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
-
-land_use_main(begin)
+land_standard_example()
 

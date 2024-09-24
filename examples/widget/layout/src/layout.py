@@ -8,7 +8,7 @@ int page = 0
 
 #extern int gul_debug;
 
-def my_draw(LandWidget *self):
+def _my_draw(LandWidget *self):
     land_widget_theme_draw(self)
     float x, y, w, h
     land_widget_inner(self, &x, &y, &w, &h)
@@ -21,12 +21,12 @@ def my_draw(LandWidget *self):
     land_color(0, 0, 0, 1)
     land_print("%d x %d", self->box.w, self->box.h)
 
-def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
+static def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
     static LandWidgetInterface *myvt = NULL
     if not myvt:
         land_widget_box_interface_initialize()
         myvt = land_widget_copy_interface(land_widget_box_interface, "mybox")
-        myvt->draw = my_draw
+        myvt->draw = _my_draw
 
     LandWidget *self = land_widget_box_new(parent, 0, 0, 0, 0) 
     self->vt = myvt
@@ -113,13 +113,13 @@ def panel_5():
     land_widget_layout_set_grid_extra(box4, 0, 1)
     land_widget_layout_set_grid_position(box5, 1, 1)
 
-def init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
-    font = land_font_load("data/galaxy.ttf", 12)
-    theme[0] = land_widget_theme_new("data/classic.cfg")
-    theme[1] = land_widget_theme_new("data/green.cfg")
-    theme[2] = land_widget_theme_new("data/blue/agup.cfg")
-    theme[3] = land_widget_theme_new("data/wesnoth_ui/widget.ini")
+    font = land_font_load("galaxy.ttf", 12)
+    theme[0] = land_widget_theme_new("classic.cfg")
+    theme[1] = land_widget_theme_new("green.cfg")
+    theme[2] = land_widget_theme_new("blue/agup.cfg")
+    theme[3] = land_widget_theme_new("wesnoth_ui/widget.ini")
     land_widget_theme_set_default(theme[selected])
     desktop = land_widget_board_new(NULL, 20, 20, 600, 440)
 
@@ -127,7 +127,7 @@ def init(LandRunner *self):
 
     panel_0()
 
-def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
 
@@ -147,7 +147,7 @@ def tick(LandRunner *self):
         selected %= count
         land_widget_theme_apply(desktop, theme[selected])
 
-def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0.5, 0.5, 1, 1)
     land_widget_draw(desktop)
 
@@ -157,12 +157,10 @@ def draw(LandRunner *self):
     land_text_pos(0, land_display_height() - land_text_height())
     land_print("Dialog is inside a 300x300 pixel square")
 
-def done(LandRunner *self):
+def _done(LandRunner *self):
     land_widget_unreference(desktop)
     for int i in range(count):
         land_widget_theme_destroy(theme[i])
     land_font_destroy(font)
 
-land_begin_shortcut(640, 480, 100,
-    LAND_WINDOWED | LAND_OPENGL,
-    init, NULL, tick, draw, NULL, done)
+land_standard_example()

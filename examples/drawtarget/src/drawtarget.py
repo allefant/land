@@ -3,7 +3,7 @@ import global land/land
 LandImage *image
 float angle = 0
 
-def init(LandRunner *self):
+def _init(LandRunner *self):
     image = land_image_new(100, 100); 
     land_image_center(image)
     land_set_image_display(image)
@@ -19,7 +19,7 @@ def init(LandRunner *self):
     land_filled_circle(mx - r, my - r, mx + r, my + r)
     land_unset_image_display()
 
-def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape):
         land_quit()
     angle += 0.1
@@ -33,7 +33,7 @@ def tick(LandRunner *self):
     land_filled_circle(x - r, y - r, x + r, y + r)
     land_unset_image_display()
 
-def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0.2, 0.1, 0, 1)
     int x = 320
     int y = 240
@@ -49,15 +49,10 @@ def draw(LandRunner *self):
     land_image_draw_scaled_rotated(image, x, y + t, 1, 1, -angle)
     land_image_draw_scaled_rotated(image, x, y, 1, 1, angle)
 
-def done(LandRunner *self):
+def _done(LandRunner *self):
     land_image_destroy(image)
 
-def main() -> int:
-    land_init()
-    LandRunner *runner = land_runner_new("Draw Target", init, NULL, tick, draw, NULL, done)
-    land_runner_register(runner)
-    land_set_initial_runner(runner)
+def _config:
     land_set_display_parameters(640, 480, LAND_OPENGL | LAND_WINDOWED)
     land_set_fps(100)
-    land_mainloop()
-    return 0
+land_example(_config, _init, _tick, _draw, _done)

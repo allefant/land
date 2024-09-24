@@ -128,8 +128,8 @@ static def triangles(LandCSG *model, Triangles *t):
             vt[5] = c.b
             i++
 
-static def init(LandRunner *self):
-
+def _init(LandRunner *self):
+    land_find_data_prefix("data/")
     if False:
         LandCSG *cubeA = csg_cube(None)
         LandCSG *cubeB = csg_cube(None)
@@ -143,9 +143,9 @@ static def init(LandRunner *self):
         land_quit()
         return
   
-    land_font_load("../../data/galaxy.ttf", 12)
+    land_font_load("galaxy.ttf", 12)
 
-    theme = land_widget_theme_new("../../data/classic.cfg")
+    theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
     desktop = land_widget_panel_new(NULL, 0, 0, 640, 480)
     land_widget_reference(desktop)
@@ -166,14 +166,14 @@ static def init(LandRunner *self):
     triangles(raspberry, &t2)
     
 
-static def tick(LandRunner *self):
+def _tick(LandRunner *self):
 
     if land_key_pressed(LandKeyEscape) or land_closebutton():
         land_quit()
 
     land_widget_tick(desktop)
 
-static def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0, 0, 0, 1)
     land_clear_depth(1)
 
@@ -202,7 +202,7 @@ static def draw(LandRunner *self):
     land_3d_triangles(t1.n, t1.v)
     land_3d_triangles(t2.n, t2.v)
 
-static def done(LandRunner *self):
+def _done(LandRunner *self):
     if theme:
         land_widget_theme_destroy(theme)
     if desktop:
@@ -210,5 +210,4 @@ static def done(LandRunner *self):
     if land_font_current():
         land_font_destroy(land_font_current())
 
-land_begin_shortcut(640, 480, 60, LAND_WINDOWED | LAND_OPENGL | LAND_DEPTH,
-    init, NULL, tick, draw, NULL, done)
+land_standard_example()

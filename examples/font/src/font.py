@@ -8,7 +8,7 @@ LandFont *paletted
 LandFont *muli
 LandImage *gradient
 
-static def game_init(LandRunner *self):
+def _init(LandRunner *self):
     land_find_data_prefix("data/")
     big = land_font_load("galaxy.ttf", 60)
     small = land_font_load("DejaVuSans.ttf", 30)
@@ -26,11 +26,11 @@ static def game_init(LandRunner *self):
         }
     land_image_set_rgba_data(gradient, rgba)
 
-static def game_tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key(LandKeyEscape):
         land_quit()
 
-static def game_draw(LandRunner *self):
+def _draw(LandRunner *self):
     float w = land_display_width()
     float h = land_display_height()
     land_clear(0, 0, 0, 1)
@@ -122,14 +122,6 @@ static def game_draw(LandRunner *self):
     land_text_pos(0, -30)
     land_print_center("paletted")
 
-def my_main():
-    land_init()
-    land_set_display_parameters(640, 480,
-        LAND_WINDOWED | LAND_OPENGL | LAND_MULTISAMPLE | LAND_ANTIALIAS)
-    LandRunner *game_runner = land_runner_new("font example",
-        game_init, NULL, game_tick, game_draw, NULL, NULL)
-    land_runner_register(game_runner)
-    land_set_initial_runner(game_runner)
-    land_mainloop()
+def _done: pass
 
-land_use_main(my_main)
+land_standard_example()

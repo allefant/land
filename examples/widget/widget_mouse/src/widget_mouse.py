@@ -1,9 +1,8 @@
 import global land/land
 
 LandWidget *desktop, *panel
-int page = 0
 
-def my_draw(LandWidget *self):
+def _my_draw(LandWidget *self):
     land_widget_theme_draw(self)
     float x, y, w, h
     land_widget_inner(self, &x, &y, &w, &h)
@@ -20,7 +19,7 @@ def cleanup(void *data):
         land_free(land_array_get_nth(a, i))
     land_array_destroy(a)
 
-def my_mouse_tick(LandWidget *self):
+def _my_mouse_tick(LandWidget *self):
     if land_mouse_delta_b():
         LandArray *history = land_widget_get_property(self, "history") 
         land_free(land_array_get_nth(history, 0))
@@ -35,13 +34,13 @@ def my_mouse_tick(LandWidget *self):
         land_array_replace_nth(history, land_array_count(history) - 1,
             land_strdup(str))
 
-def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
+static def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
     static LandWidgetInterface *myvt = NULL
     if not myvt:
         land_widget_box_interface_initialize()
         myvt = land_widget_copy_interface(land_widget_box_interface, "mybox")
-        myvt->draw = my_draw
-        myvt->mouse_tick = my_mouse_tick
+        myvt->draw = _my_draw
+        myvt->mouse_tick = _my_mouse_tick
 
     LandWidget *self = land_widget_box_new(parent, 0, 0, 0, 0) 
     self->vt = myvt
@@ -54,8 +53,9 @@ def land_widget_mybox_new(LandWidget *parent) -> LandWidget *:
     land_widget_set_property(self, "history", history, cleanup)
     return self
 
-def panel_1():
-    panel = land_widget_panel_new(desktop, 20, 20, 300, 300)
+def _panel_1():
+    int s = (land_display_height() - 20) * 0.75
+    panel = land_widget_panel_new(desktop, 20, 20, s * 1.5, s)
 
     LandWidget *vbox = land_widget_vbox_new(panel, 0, 0, 0, 0)
     land_widget_vbox_set_columns(vbox, 2)
@@ -67,29 +67,27 @@ def panel_1():
     land_widget_mybox_new(vbox)
     land_widget_mybox_new(vbox)
 
-def init(LandRunner *self):
-    land_font_load("../../data/galaxy.ttf", 12)
-    LandWidgetTheme *theme = land_widget_theme_new("../../data/classic.cfg")
+def _init(LandRunner *self):
+    land_font_load_zoom("galaxy.ttf", 1.0)
+    LandWidgetTheme *theme = land_widget_theme_new("classic.cfg")
     land_widget_theme_set_default(theme)
-    desktop = land_widget_board_new(NULL, 10, 10, 620, 460)
+    desktop = land_widget_board_new(NULL, 10, 10, land_display_width() - 20, land_display_height() - 20)
 
     land_widget_reference(desktop)
 
-    panel_1()
+    _panel_1()
 
-def tick(LandRunner *self):
+def _tick(LandRunner *self):
     if land_key_pressed(LandKeyEscape): land_quit()
     if land_closebutton(): land_quit()
 
     land_widget_tick(desktop)
 
-def draw(LandRunner *self):
+def _draw(LandRunner *self):
     land_clear(0.5, 0.5, 1, 1)
     land_widget_draw(desktop)
 
-def done(LandRunner *self):
+def _done(LandRunner *self):
     pass
 
-land_begin_shortcut(640, 480, 100,
-    LAND_WINDOWED | LAND_OPENGL,
-    init, NULL, tick, draw, NULL, done)
+land_standard_example()
