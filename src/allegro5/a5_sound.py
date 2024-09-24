@@ -11,6 +11,7 @@ static class LandSoundPlatform:
     ALLEGRO_SAMPLE_ID last_playing
     void *buffer
     bool last_failed
+    bool last_started
 
 static class LandStreamPlatform:
     LandStream super
@@ -72,10 +73,13 @@ def platform_sound_play(LandSound *s, float volume, pan, frequency,
     bool loop):
     LandSoundPlatform *self = (void *)s
     if not self.a5: return
-    self.last_failed = False
-    if not al_play_sample(self.a5, volume, pan, frequency,
+    if al_play_sample(self.a5, volume, pan, frequency,
             loop ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE,
             &self.last_playing):
+        self.last_started = True
+        self.last_failed = False
+    else:
+        self.last_started = False
         self.last_failed = True
 
 def platform_sound_change(LandSound *s, float volume, pan, frequency):
@@ -91,6 +95,18 @@ def platform_sound_stop(LandSound *s):
     if self.last_failed:
         return
     al_stop_sample(&self.last_playing)
+    self.last_started = False
+
+def platform_sound_is_playing(LandSound *s) -> bool:
+    LandSoundPlatform *self = (void *)s
+    if self.last_failed:
+        return False
+    if not self.last_started:
+        return False
+    ALLEGRO_SAMPLE_INSTANCE* inst = al_lock_sample_id(&self.last_playing)
+    bool r = al_get_sample_instance_playing(inst)
+    al_unlock_sample_id(&self.last_playing)
+    return r
 
 def platform_sound_destroy(LandSound *s):
     LandSoundPlatform *self = (void *)s
@@ -102,7 +118,7 @@ def platform_sound_destroy(LandSound *s):
 def platform_sound_init():
     al_init_acodec_addon()
     al_install_audio()
-    al_reserve_samples(8)
+    al_reserve_samples(32)
 
 def platform_sound_exit():
     if streaming:

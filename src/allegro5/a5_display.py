@@ -133,6 +133,8 @@ def platform_display_set():
         al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
     if super->flags & LAND_DEPTH:
         al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 16, ALLEGRO_SUGGEST)
+    if super->flags & LAND_DEPTH32:
+        al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 32, ALLEGRO_SUGGEST)
     if super->flags & LAND_LANDSCAPE:
         al_set_new_display_option(ALLEGRO_SUPPORTED_ORIENTATIONS,
             ALLEGRO_DISPLAY_ORIENTATION_LANDSCAPE, ALLEGRO_SUGGEST)
@@ -358,7 +360,6 @@ def platform_ribbon_loop(int n, float *xy):
 
     uncheck_blending()
 
-
 def platform_filled_ribbon(int n, float *xy):
     SELF
     check_blending_and_transform()
@@ -418,6 +419,34 @@ def platform_filled_ribbon(int n, float *xy):
 
     uncheck_blending()
 
+def platform_colored_ribbon(LandRibbon *ribbon):
+    SELF
+    check_blending_and_transform()
+
+    if not ribbon.pos:
+        land_ribbon_color(ribbon, land_color_get())
+
+    if not ribbon.filled and not ribbon.w:
+        land_ribbon_width(ribbon, super->thickness if super->thickness > 0 else 1)
+
+    if not ribbon.calculated:
+        land_ribbon_calculate(ribbon)
+
+    int how = ALLEGRO_PRIM_TRIANGLE_STRIP
+    if ribbon.fan: how = ALLEGRO_PRIM_TRIANGLE_FAN
+    _polygon(None, ribbon.vertex_count, ribbon.v, None, ribbon.vcol, how)
+
+    # for int i in range(1, segments + 1):
+        # int j = i - 1
+        # float x1 = (v[j * 4 + 0] + v[j * 4 + 2]) / 2
+        # float y1 = (v[j * 4 + 1] + v[j * 4 + 3]) / 2
+        # float x2 = (v[i * 4 + 0] + v[i * 4 + 2]) / 2
+        # float y2 = (v[i * 4 + 1] + v[i * 4 + 3]) / 2
+        # al_draw_line(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2, al_map_rgb_f(1, 1, 0), 0)
+
+    uncheck_blending()
+
+
 def platform_line(float x, y, x_, y_):
     SELF
     check_blending_and_transform()
@@ -450,8 +479,20 @@ def platform_filled_polygon(int n, float *xy):
     al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
     uncheck_blending()
 
-def platform_textured_colored_polygon(LandImage *image, int n,
-        float *xy, *uv, *rgba):
+def platform_filled_strip(int n, float *xy):
+    SELF
+    ALLEGRO_VERTEX v[n]
+    memset(v, 0, n * sizeof(ALLEGRO_VERTEX))
+    int j = 0
+    for int i = 0 while i < n with i++:
+        v[i].x = xy[j++]
+        v[i].y = xy[j++]
+        v[i].color = self->c
+    check_blending_and_transform()
+    al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_STRIP)
+    uncheck_blending()
+
+def _polygon(LandImage *image, int n, const float *xy, *uv, *rgba, int arrangement):
     SELF
     
     LandImagePlatform *pim = (void *)image;
@@ -478,8 +519,11 @@ def platform_textured_colored_polygon(LandImage *image, int n,
         else:
             v[i].color = self->c
     check_blending_and_transform()
-    al_draw_prim(v, None, pim ? pim->a5 : None, 0, n, ALLEGRO_PRIM_TRIANGLE_FAN)
+    al_draw_prim(v, None, pim ? pim->a5 : None, 0, n, arrangement)
     uncheck_blending()
+
+def platform_textured_colored_polygon(LandImage *image, int n, float *xy, *uv, *rgba):
+    _polygon(image, n, xy, uv, rgba, ALLEGRO_PRIM_TRIANGLE_FAN)
 
 def platform_textured_polygon(LandImage *image, int n, float *xy, float *uv):
     platform_textured_colored_polygon(image, n, xy, uv, None)
@@ -566,12 +610,14 @@ def platform_set_default_shaders():
     if not self->default_shader:
         ALLEGRO_SHADER *shader
         shader = al_create_shader(ALLEGRO_SHADER_GLSL)
-        al_attach_shader_source(shader, ALLEGRO_VERTEX_SHADER,
-            al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
-            ALLEGRO_VERTEX_SHADER))
-        al_attach_shader_source(shader, ALLEGRO_PIXEL_SHADER,
-            al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
-            ALLEGRO_PIXEL_SHADER))
+        str vs = al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
+            ALLEGRO_VERTEX_SHADER)
+        str fs = al_get_default_shader_source(ALLEGRO_SHADER_AUTO,
+            ALLEGRO_PIXEL_SHADER)
+        #print("vertex shader: %s", vs)
+        #print("fragment shader: %s", fs)
+        al_attach_shader_source(shader, ALLEGRO_VERTEX_SHADER, vs)
+        al_attach_shader_source(shader, ALLEGRO_PIXEL_SHADER, fs)
         al_build_shader(shader)
         self->default_shader = shader
     al_use_shader(self->default_shader)

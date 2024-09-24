@@ -6,6 +6,7 @@ static import land/allegro5/a5_display
 static class LandFontPlatform:
     LandFont super
     ALLEGRO_FONT *a5
+    LandHash *glyph_advance_cache
 
 def platform_font_init():
     al_init_font_addon()
@@ -44,6 +45,67 @@ def platform_font_from_image(LandImage *image, int n_ranges,
     super.yscaling = 1.0
     return super
 
+def platform_text_width(LandFontState *lfs, str text) -> float:
+    LandFont *super = lfs->font
+    LandFontPlatform *self = (void *)super
+
+    if not self.a5: return 0
+
+    double xscaling = super.xscaling
+    #return al_get_text_width(self.a5, text) * xscaling
+
+    char key[9]
+    int w = 0
+    int prev = ALLEGRO_NO_KERNING
+    char *p = (char *)text
+    while True:
+        int codepoint = land_utf8_char(&p)
+        # -1 is not encoded into the string properly so we use 31
+        int prev2 = prev
+        if prev2 == ALLEGRO_NO_KERNING:
+            prev2 = 31
+        int n = land_utf8_encode(prev2, key)
+        n += land_utf8_encode(codepoint, key + n)
+        key[n] = 0
+        if not self.glyph_advance_cache:
+            self.glyph_advance_cache = land_hash_new()
+        int x = 0
+        int *wp = land_hash_get(self.glyph_advance_cache, key)
+        if wp:
+            x = *wp
+        else:
+            x = al_get_glyph_advance(self.a5, prev, codepoint)
+            land_alloc(wp)
+            *wp = x
+            land_hash_insert(self.glyph_advance_cache, key, wp)
+        w += x
+        if codepoint == 0:
+            break
+        prev = codepoint
+
+    return w * xscaling
+    
+    """
+    LandFont *current = land_font_state.font
+    if current.string_width_cache:
+        float *wp = land_hash_get(current.string_width_cache, s)
+        if wp:
+            return *wp
+    int onoff = land_font_state.off
+    land_font_state.off = 1
+    platform_font_print(land_font_state, s, 0)
+    land_font_state.off = onoff
+    if not current.string_width_cache:
+        current.string_width_cache = land_hash_new()
+    float *wp = land_calloc(sizeof *wp)
+    *wp = land_font_state.w
+    # fixme: we need something better, but huge cache here is even slower
+    # then recalculating every time
+    if land_hash_count(current.string_width_cache) < 1000:
+        land_hash_insert(current.string_width_cache, s, wp)
+    return land_font_state.w
+    """
+
 def platform_font_print(LandFontState *lfs,
     char const *str, int alignment):
     LandFont *super = lfs->font
@@ -53,18 +115,35 @@ def platform_font_print(LandFontState *lfs,
 
     double xscaling = super.xscaling
     double yscaling = super.yscaling
+    double rotation = super.rotation
 
-    float x = lfs->x = lfs->x_pos
+    float x = lfs->x_pos
     float y = lfs->y = lfs->y_pos
     lfs->w = al_get_text_width(self.a5, str) * xscaling
     lfs->h = al_get_font_line_height(self.a5) * yscaling
 
+    if lfs.confine_hor:
+        float left = x
+        if alignment & LandAlignCenter:
+            left -= lfs->w / 2
+        if alignment & LandAlignRight:
+            left -= lfs->w
+        if left < lfs.confine_x:
+            x += lfs.confine_x - left
+        if left + lfs.w > lfs.confine_x + lfs.confine_w:
+            x -= left + lfs.w - (lfs.confine_x + lfs.confine_w)
+
+    lfs.x = x
+
     if lfs->off: return
 
-    if xscaling != 1 or yscaling != 1:
+    bool transformed = False
+    if xscaling != 1 or yscaling != 1 or rotation != 0:
+        transformed = True
         land_push_transform()
         land_translate(x, y)
         land_scale(xscaling, yscaling)
+        land_rotate(rotation)
         land_translate(-x, -y)
 
     ALLEGRO_STATE state
@@ -103,7 +182,7 @@ def platform_font_print(LandFontState *lfs,
     
     al_restore_state(&state)
 
-    if xscaling != 1 or yscaling != 1:
+    if transformed:
         land_pop_transform()
 
 def platform_font_new() -> LandFont *:

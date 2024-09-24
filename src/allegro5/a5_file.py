@@ -179,3 +179,6 @@ def platform_file_time(char const *path) -> int64_t:
     time_t t = al_get_fs_entry_mtime(e)
     al_destroy_fs_entry(e)
     return t
+
+def platform_change_directory(str path):
+    al_change_directory(path)

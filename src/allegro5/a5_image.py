@@ -34,8 +34,12 @@ def platform_image_empty(LandImage *super):
             al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP)
         if super.flags & LAND_IMAGE_DEPTH:
             al_set_new_bitmap_depth(16)
+        if super.flags & LAND_IMAGE_DEPTH32:
+            al_set_new_bitmap_depth(16)
         self->a5 = al_create_bitmap(super->width, super->height)
         if super.flags & LAND_IMAGE_DEPTH:
+            al_set_new_bitmap_depth(0)
+        if super.flags & LAND_IMAGE_DEPTH32:
             al_set_new_bitmap_depth(0)
         if super.flags & LAND_IMAGE_MEMORY:
             al_restore_state(&state)
@@ -293,6 +297,16 @@ def platform_image_crop(LandImage *super, int x, y, w, h):
     ALLEGRO_STATE state
     if x == 0 and y == 0 and w == super.width and h == super.height:
         return
+    if x < 0:
+        w += x
+        x = 0
+    if y < 0:
+        h += y
+        y = 0
+    if x + w > super.width:
+        w = super.width - x
+    if y + h > super.height:
+        h = super.height - y
     al_store_state(&state, ALLEGRO_STATE_TARGET_BITMAP |
         ALLEGRO_STATE_BLENDER)
     ALLEGRO_BITMAP *cropped = al_create_bitmap(w, h)

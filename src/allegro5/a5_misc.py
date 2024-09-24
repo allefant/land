@@ -10,6 +10,7 @@ def platform_color_hsv(float hue, sat, val) -> LandColor:
 
 def platform_color_name(char const *name) -> LandColor:
     LandColor c
+    if name[0] == ' ': name++
     if land_equals(name, "sequoia"): return land_color_name("#905060")
     if land_equals(name, "banana"): return land_color_name("#ffeb00")
     if land_equals(name, "citron"): return land_color_name("#d9f51f")
