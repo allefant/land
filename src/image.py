@@ -13,6 +13,9 @@ macro LAND_IMAGE_DEPTH 128 # image has depth buffer
 macro LAND_LOADING 256 # async loading in progress
 macro LAND_LOADING_COMPLETE 512 # async loading complete
 macro LAND_NO_PREMUL 1024
+macro LAND_IMAGE_DEPTH32 2048 # image has 32-bit depth buffer
+macro LAND_IMAGE_WANT_CACHE 4096 # image should be cached
+macro LAND_IMAGE_FROM_CACHE 8192 # image is in the cache
 
 static macro LOG_COLOR_STATS 0
 
@@ -46,6 +49,8 @@ class LandSubImage:
     LandImage *parent
     float x, y, w, h
 
+LandHash *_loaded_cache
+
 static import global string
 static import display, data
 
@@ -65,6 +70,11 @@ def land_image_set_callback(void (*cb)(char const *path, LandImage *image)):
 
 def _load_prep(str filename) -> LandImage*:
     char *path = land_path_with_prefix(filename)
+    if _loaded_cache and land_hash_has(_loaded_cache, path):
+        LandImage *self = land_hash_get(_loaded_cache, path)
+        self.flags |= LAND_IMAGE_FROM_CACHE
+        land_log_message("land_image_load %s: CACHED\n", path)
+        return self
     land_log_message("land_image_load %s..\n", path)
     LandImage *self = land_display_new_image()
     self.filename = land_strdup(path)
@@ -77,7 +87,19 @@ def _load(char const *filename, bool mem) -> LandImage *:
     _load2(self)
     return self
 
+def _cache(LandImage *self):
+    if not _loaded_cache:
+        _loaded_cache = land_hash_new()
+    land_hash_insert(_loaded_cache, self.filename, self)
+    self.flags |= LAND_IMAGE_FROM_CACHE # it's also a cached image now
+
 def _load2(LandImage *self):
+    if self.flags & LAND_IMAGE_FROM_CACHE:
+        # it's already loaded
+        # Note: we ignore different flags etc. - when using the cache
+        # each filename gets an entry, loading the same name with
+        # different flags is not supported.
+        return
     platform_image_load_on_demand(self)
 
     if self.flags & LAND_LOADED:
@@ -104,6 +126,8 @@ def _load2(LandImage *self):
 
         bitmap_memory += w * h * 4
         land_log_message(" %d bitmaps (%.1fMB).\n", bitmap_count, bitmap_memory / 1024.0 / 1024.0)
+        if self.flags & LAND_IMAGE_WANT_CACHE:
+            _cache(self)
     else:
         land_log_message_nostamp("failure\n")
 
@@ -123,6 +147,16 @@ def land_image_load_no_premul(str filename) -> LandImage*:
     image.flags |= LAND_NO_PREMUL
     _load2(image)
     return image
+
+def land_image_load_cached(str filename) -> LandImage*:
+    auto image = _load_prep(filename)
+    image.flags |= LAND_IMAGE_WANT_CACHE
+    _load2(image)
+    return image
+
+def land_image_uncache(LandImage *self):
+    if _loaded_cache and land_hash_has(_loaded_cache, self.filename):
+        land_hash_remove(_loaded_cache, self.filename)
 
 def land_image_new_deferred(char const *filename) -> LandImage *:
     LandImage *self = land_image_new(0, 0)
@@ -253,6 +287,8 @@ def land_image_create(int w, int h) -> LandImage *:
 
 def land_image_del(LandImage *self):
     if not self: return
+    # remove it from the cache first with land_image_uncache
+    if self.flags & LAND_IMAGE_FROM_CACHE: return
     # Sub-bitmaps have no own names or masks or anything. They are
     # just a reference with their own cut-out rectangle.
     if not (self.flags & LAND_SUBIMAGE):
@@ -266,6 +302,11 @@ def land_image_del(LandImage *self):
 
 def land_image_destroy(LandImage *self):
     land_image_del(self)
+
+def land_image_destroy_and_null(LandImage **self):
+    if *self:
+        land_image_del(*self)
+        *self = None
 
 def land_image_crop(LandImage *self, int x, y, w, h):
     """
@@ -662,12 +703,18 @@ def land_image_draw_scaled_tinted(LandImage *self, float x, float y, float sx, f
 def land_image_draw(LandImage *self, float x, float y):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, 1, 1, 1, 1)
 
+def land_image_draw_into(LandImage *self, float x, y, w, h):
+    land_image_draw_scaled_rotated_tinted(self, x, y, w / self.width, h / self.height, 0, 1, 1, 1, 1)
+
 def land_image_draw_flipped(LandImage *self, float x, float y):
     land_image_draw_scaled_rotated_tinted_flipped(self, x, y, 1, 1, 0, 1, 1, 1, 1, 1)
 
 def land_image_draw_tinted(LandImage *self, float x, float y, float r, float g,
     float b, float alpha):
     land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, r, g, b, alpha)
+
+def land_image_draw_color(LandImage *self, float x, y, LandColor color):
+    land_image_draw_scaled_rotated_tinted(self, x, y, 1, 1, 0, color.r, color.g, color.b, color.a)
 
 def land_image_grab(LandImage *self, int x, int y):
     platform_image_grab_into(self, x, y, 0, 0, self.width, self->height)
@@ -732,6 +779,10 @@ def land_image_height(LandImage *self) -> int:
 def land_image_width(LandImage *self) -> int:
     return self.width
 
+def land_image_size(LandImage *self, int *w, *h):
+    *w = self.width
+    *h = self.height
+
 def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
     """
     Copies rgba data into the specified buffer. It has to be large
@@ -739,12 +790,24 @@ def land_image_get_rgba_data(LandImage *self, unsigned char *rgba):
     """
     platform_image_get_rgba_data(self, rgba)
 
+def land_image_allocate_rgba_data(LandImage *self) -> byte*:
+    (int w, h) = land_image_size(self)
+    byte *rgba = land_calloc(w * h * 4)
+    platform_image_get_rgba_data(self, rgba)
+    return rgba
+
 def land_image_set_rgba_data(LandImage *self, unsigned char const *rgba):
     """
     Copies the rgba data, overwriting the image contents. Since data are copied
     rgba can be safely deleted after returning from the function.
     """
     platform_image_set_rgba_data(self, rgba)
+
+def land_image_clear(LandImage *self, LandColor color):
+    land_set_image_display(self)
+    land_color_set(color)
+    land_clear_color()
+    land_unset_image_display()
 
 def land_image_save(LandImage *self, char const *filename):
     platform_image_save(self, filename)
@@ -778,6 +841,27 @@ def land_image_clone(LandImage *self) -> LandImage *:
     land_free(rgba)
     clone->x = self.x
     clone->y = self.y
+    return clone
+
+def land_image_thumbnail(LandImage *self, int w, h) -> LandImage *:
+    LandImage *clone = land_image_new(w, h)
+    clone.name = land_strdup("thumbnail of ")
+    if self.filename: land_append(&clone.name, self.filename)
+
+    land_set_image_display(clone)
+    # blending changes only for image display which is destroyed a line later
+    land_blend(LAND_BLEND_SOLID)
+    int cx = w // 2
+    int cy = h // 2
+    (int ow, oh) = land_image_size(self)
+    float s1 = w * 1.0f / ow
+    float s2 = h * 1.0f / oh
+    float s = max(s1, s2)
+    int nw = ow * s
+    int nh = oh * s
+    land_image_draw_scaled(self, cx - nw // 2, cy - nh // 2, s, s)
+    land_unset_image_display()
+
     return clone
 
 def land_image_fade_to_color(LandImage *self):
@@ -873,6 +957,18 @@ def land_image_read_write_callback(LandImage *self, void (*cb)(int x, int y,
             p += 4
     land_image_set_rgba_data(self, rgba)
     land_free(rgba)
+
+def _remove_transparency_cb(int x, int y, unsigned char *rgba, void *user):
+    LandColor *c = user
+    if rgba[3] < 255:
+        float a = rgba[3]
+        rgba[3] = 255
+        rgba[0] = rgba[0] + c.r * (255 - a)
+        rgba[1] = rgba[1] + c.g * (255 - a)
+        rgba[2] = rgba[2] + c.b * (255 - a)
+
+def land_image_remove_transparency(LandImage *self, LandColor c):
+    land_image_read_write_callback(self, _remove_transparency_cb, &c)
 
 def land_image_read_backup_write_callback(LandImage *self, void (*cb)(int x, int y,
         int w, int h,

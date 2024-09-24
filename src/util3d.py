@@ -246,6 +246,9 @@ def land_vector_normalize(LandVector v) -> LandVector:
     """
     return land_vector_div(v, land_vector_norm(v))
 
+def land_vector_distance(LandVector v1, LandVector v2) -> LandFloat:
+    return land_vector_norm(land_vector_sub(v2, v1))
+
 def land_vector_quatmul(LandVector v, LandQuaternion q) -> LandQuaternion:
     """
     Multiply the vector with a quaternion. The result is a quaternion. For
@@ -764,6 +767,11 @@ def land_4x4_matrix_get_back(Land4x4Matrix *m) -> LandVector:
 
 def land_4x4_matrix_get_position(Land4x4Matrix *m) -> LandVector:
     return land_vector(m.v[3], m.v[7], m.v[11])
+
+def land_4x4_matrix_set_position(Land4x4Matrix *m, LandVector p):
+    m.v[3] = p.x
+    m.v[7] = p.y
+    m.v[11] = p.z
 
 def land_quaternion_normalize(LandQuaternion *q) -> double:
     """

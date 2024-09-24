@@ -36,12 +36,19 @@ static int skip_counter
 int _flip_count
 int _flips_at_tick[256]
 int _flip_tick_i
+char *_land_app_name
 
 static def land_exit():
     if not land_active: return
     land_active = False
     land_free(parameters)
     land_log_message("land_exit\n")
+
+def land_set_app_name(str name):
+    _land_app_name = land_strdup(name)
+
+def land_get_app_name -> str:
+    return _land_app_name
 
 def land_halt:
     if _land_halted: return
@@ -159,9 +166,21 @@ def land_display_initial_position(int x, y):
     parameters.y = y
     parameters.flags |= LAND_POSITIONED
 
+def land_display_center:
+    (int w, h) = land_display_desktop_size()
+    land_display_initial_position((w - parameters.w) // 2, (h - parameters.h) // 2)
+
 def land_set_initial_runner(LandRunner *runner):
     """Set the initial runner."""
     parameters->start = runner
+
+def land_default_display:
+    land_set_display_percentage_aspect(0.5, 16 / 9.0, LAND_WINDOWED | LAND_OPENGL | LAND_RESIZE | LAND_DEPTH)
+    land_display_center()
+
+def land_default_display_flags(int flags):
+    land_set_display_percentage_aspect(0.5, 16 / 9.0, flags)
+    land_display_center()
 
 def land_get_fps() -> double:
     """Return the current frequency."""

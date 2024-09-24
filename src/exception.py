@@ -31,10 +31,7 @@ def land_exception(char const *format, ...):
     va_start(args, format)
     vsnprintf(exception_string, 1024, format, args)
     va_end(args)
-    
-    fprintf(stderr, "%s", exception_string)
-    
-    # for now, let's not use longjmp
+
     int r = land_exception_handler(exception_string)
     if r: abort()
     #longjmp(exception, 1)

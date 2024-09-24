@@ -95,6 +95,7 @@ import list, image, log, mem, font, main
 import util3d
 import color
 static import global math
+import ribbon
 
 enum:
     LAND_WINDOWED = 1
@@ -109,6 +110,7 @@ enum:
     LAND_LANDSCAPE = 512
     LAND_FRAMELESS = 1024
     LAND_POSITIONED = 2048
+    LAND_DEPTH32 = 4096
 
 enum:
     LAND_BLEND_SOLID = 1
@@ -275,6 +277,9 @@ def land_scale_to_fit(float w, h, int how) -> double:
     float dh = land_display_height()
     return land_scale_to_fit_into(w, h, 0, 0, dw, dh, how)
 
+def land_scale_to_fit_reverse(float w, h, int how) -> double:
+    return land_scale_to_fit(w, h, how | 256)
+
 def land_get_left -> LandFloat:
     LandFloat *m = _land_active_display->matrix.v
     return -m[3] / m[0]
@@ -374,6 +379,10 @@ def land_clear(float r, float g, float b, float a):
     LandDisplay *d = _land_active_display
     platform_display_clear(d, r, g, b, a)
 
+def land_clear_color:
+    LandDisplay *d = _land_active_display
+    platform_display_clear(d, d.color_r, d.color_g, d.color_b, d.color_a)
+
 def land_clear_depth(float z):
     LandDisplay *d = _land_active_display
     platform_display_clear_depth(d, z)
@@ -389,6 +398,10 @@ def land_color(float r, float g, float b, float a):
     d->color_b = b
     d->color_a = a
     platform_display_color()
+
+def land_alpha(float a):
+    LandColor c = land_color_get()
+    land_premul(c.r, c.g, c.b, a)
 
 def land_premul(float r, g, b, a):
     land_color_set(land_color_premul(r, g, b, a))
@@ -430,6 +443,14 @@ def land_clip(float x, float y, float x_, float y_):
     d->clip_y1 = y
     d->clip_x2 = x_
     d->clip_y2 = y_
+    platform_display_clip()
+
+def land_clip_grow(int r):
+    LandDisplay *d = _land_active_display
+    d->clip_x1 -= r
+    d->clip_y1 -= r
+    d->clip_x2 += r
+    d->clip_y2 += r
     platform_display_clip()
 
 def land_clip_transformed(float x, y, x_, y_):
@@ -517,20 +538,43 @@ def land_flip():
 def land_rectangle(float x, y, x_, y_):
     platform_rectangle(x, y, x_, y_)
 
+def land_rounded_rectangle(float x, y, x_, y_, r):
+    land_line(x + r, y, x_ - r, y)
+    land_line(x_, y + r, x_, y_ - r)
+    land_line(x_ - r, y_, x + r, y_)
+    land_line(x, y_ - r, x, y + r)
+
+    land_arc(x, y, x + r * 2, y + r * 2, pi, pi + pi / 2)
+    land_arc(x_ - r * 2, y, x_, y + r * 2, pi + pi / 2, 2 * pi)
+    land_arc(x_ - r * 2, y_ - r * 2, x_, y_, 0, pi / 2)
+    land_arc(x, y_ - r * 2, x + r * 2, y_, pi / 2, pi)
+
 def land_filled_rectangle(float x, y, x_, y_):
     platform_filled_rectangle(x, y, x_, y_)
 
 def land_filled_circle(float x, y, x_, y_):
     platform_filled_circle(x, y, x_, y_)
 
+def land_filled_circle_around(float x, y, r):
+    platform_filled_circle(x - r, y - r, x + r, y + r)
+
 def land_circle(float x, y, x_, y_):
     platform_circle(x, y, x_, y_)
+
+def land_circle_around(float x, y, r):
+    platform_circle(x - r, y - r, x + r, y + r)
 
 def land_arc(float x, y, x_, y_, a, a_):
     platform_arc(x, y, x_, y_, a, a_)
 
+def land_arc_around(float x, y, r, a, a_):
+    platform_arc(x - r, y - r, x + r, y + r, a, a_)
+
 def land_filled_pieslice(float x, y, x_, y_, a, a_):
     platform_filled_pieslice(x, y, x_, y_, a, a_)
+
+def land_filled_pieslice_around(float x, y, r, a, a_):
+    platform_filled_pieslice(x - r, y - r, x + r, y + r, a, a_)
 
 def land_filled_rounded_rectangle(float x, y, x_, y_, r):
     land_filled_rectangle(x + r, y + r, x_ - r, y_ - r)
@@ -560,11 +604,28 @@ def land_line_to(float x, y):
 def land_ribbon(int n, float *xy):
     platform_ribbon(n, xy)
 
+def land_colored_ribbon(int n, subdiv, float *xy, int cn, float *rgba, *pos):
+    LandDisplay *d = _land_active_display
+    LandRibbon *ribbon = land_ribbon_new(n, subdiv, xy)
+    land_ribbon_gradient(ribbon, cn, rgba, pos)
+    float w[] = {d.thickness, d.thickness}
+    float p[] = {0, 1}
+    land_ribbon_thickness(ribbon, 2, w, p)
+    platform_colored_ribbon(ribbon)
+    land_ribbon_destroy(ribbon)
+
+def land_ribbon_draw(LandRibbon *self):
+    platform_colored_ribbon(self)
+
 def land_ribbon_loop(int n, float *xy):
     platform_ribbon_loop(n, xy)
 
 def land_filled_ribbon(int n, float *xy):
     platform_filled_ribbon(n, xy)
+
+def land_polygon_xy(float *xy, int i, float x, y):
+    xy[i * 2 + 0] = x
+    xy[i * 2 + 1] = y
 
 def land_polygon(int n, float *xy):
     platform_polygon(n, xy)
@@ -572,6 +633,28 @@ def land_polygon(int n, float *xy):
 def land_filled_polygon(int n, float *xy):
     platform_filled_polygon(n, xy)
 
+def land_filled_star(int n, float x, y, outer_r, inner_r, angle):
+    float xy[2 + n * 4 + 2]
+    # we add a center point, that way triangle-fan will work to draw
+    # a refular star
+    xy[0] = x
+    xy[1] = y
+    for int i in range(n * 2 + 1):
+        float a = 2 * pi * i / 2 / n
+        float c = cosf(angle + a)
+        float s = sinf(angle + a)
+        float r = outer_r if i % 2 == 0 else inner_r
+        float cx = s * r
+        float cy = c * r
+        xy[2 + i * 2 + 0] = x + cx
+        xy[2 + i * 2 + 1] = y + cy
+    land_filled_polygon(1 + n * 2 + 1, xy)
+
+def land_triangle(float x0, y0, x1, y1, x2, y2):
+    land_line(x0, y0, x1, y1)
+    land_line(x1, y1, x2, y2)
+    land_line(x2, y2, x0, y0)
+    
 def land_filled_triangle(float x0, y0, x1, y1, x2, y2):
     float xy[6] = {x0, y0, x1, y1, x2, y2}
     platform_filled_polygon(3, xy)
@@ -591,6 +674,19 @@ def land_filled_polygon_with_holes(int n, float *xy, int *holes):
 def land_filled_colored_polygon(int n, float *xy, *rgba):
     platform_filled_colored_polygon(n, xy, rgba):
 
+def land_gradient(float x1, y1, x2, y2, thickness, LandColor c1, c2):
+    float dx = x2 - x1
+    float dy = y2 - y1
+    float nx = dy
+    float ny = -dx
+    float d = sqrtf(dx * dx + dy * dy)
+    float tx = thickness * nx / d
+    float ty = thickness * ny / d
+    float xy[8] = {x1 - tx, y1 - ty, x1 + tx, y1 + ty, x2 + tx, y2 + ty, x2 - tx, y2 - ty}
+    float rgba[16] = {c1.r, c1.g, c1.b, c1.a, c1.r, c1.g, c1.b, c1.a,
+        c2.r, c2.g, c2.b, c2.a, c2.r, c2.g, c2.b, c2.a,}
+    land_filled_colored_polygon(4, xy, rgba)
+
 def land_plot(float x, y):
     platform_plot(x, y)
     
@@ -607,6 +703,12 @@ def land_display_height() -> int:
     if not self: return 0
     return self.h
 
+def land_display_size(int *w, *h):
+    LandDisplay *self = _land_active_display
+    if not self: return
+    *w = self.w
+    *h = self.h
+
 def land_display_resize(int w, h):
     """
     Resize the current display to the given dimensions.
@@ -622,6 +724,16 @@ def land_display_move(int x, y):
 
 def land_display_position(int *x, *y):
     platform_display_position(x, y)
+
+def land_display_x -> int:
+    int x, y
+    platform_display_position(&x, &y)
+    return x
+
+def land_display_y -> int:
+    int x, y
+    platform_display_position(&x, &y)
+    return y
 
 def land_display_desktop_size(int *w, *h):
     platform_display_desktop_size(w, h)
@@ -841,3 +953,39 @@ def land_display_dpi -> int:
 
 def land_display_debug_frame:
     _land_active_display.debug_frame = True
+
+def land_moon(float x0, y0, x_, y_, d1, d2, int steps):
+    """
+    Draw the filled area between two arcs.
+
+    steps = 0 means nothing is drawn
+    steps = 1 means nothing is drawn
+    steps = 2 means the arc has two halves
+    """
+    if steps == 0: return
+    float dx = x_ - x0
+    float dy = y_ - y0
+    float l = sqrt(dx * dx + dy * dy)
+    float xy[steps * 4]
+    int a = 0
+    xy[a++] = x0
+    xy[a++] = y0
+    for int i in range(1, steps):
+        float sx = x0 + dx * i / steps
+        float sy = y0 + dy * i / steps
+        float r = 0.5
+        float x = (float)i / steps - r
+        float y = sqrt(r * r - x * x) * 2
+        float r1 = y * d1
+        float r2 = y * d2
+        float x1 = sx - dy * r1 / l
+        float y1 = sy + dx * r1 / l
+        float x2 = sx - dy * r2 / l
+        float y2 = sy + dx * r2 / l
+        xy[a++] = x1
+        xy[a++] = y1
+        xy[a++] = x2
+        xy[a++] = y2
+    xy[a++] = x_
+    xy[a++] = y_
+    platform_filled_strip(a // 2, xy)

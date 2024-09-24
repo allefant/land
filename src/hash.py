@@ -338,6 +338,13 @@ def land_hash_print_stats(LandHash *hash):
         c, hash->count, hash->count ? 100 * c / hash->count : 0,
         l)
 
+def land_hash_insert_int(LandHash *self, str key, int x):
+    land_hash_insert(self, key, (void*)(intptr_t)x)
+
+def land_hash_get_int(LandHash *self, str key) -> int:
+    void *val = land_hash_get(self, key)
+    return (intptr_t)val
+
 global *** "ifdef" LAND_MEMLOG
 
 macro land_hash_new() land_hash_new_memlog(__FILE__, __LINE__)

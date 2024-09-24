@@ -96,6 +96,23 @@ string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} Darwin OSX)
 string(REGEX MATCH ".*emcc" EMSCRIPTEN ${CMAKE_C_COMPILER})
 string(COMPARE NOTEQUAL "${EMSCRIPTEN}" "" EMSCRIPTEN)
 
+function(target_libraries extra)
+  target_link_libraries(${libname}${extra}
+    ${ALLEGRO}
+    #${ALLEGRO_MAIN}
+    ${ALLEGRO_FONT}
+    ${ALLEGRO_PRIMITIVES}
+    ${ALLEGRO_AUDIO}
+    ${ALLEGRO_ACODEC}
+    ${ALLEGRO_COLOR}
+    ${ALLEGRO_TTF}
+    ${ALLEGRO_IMAGE}
+    ${ALLEGRO_DIALOG}
+    z
+    ${OPENGL}
+    )
+endfunction()
+
 if (WINDOWS)
     message("Windows version")
     set(CFLAGS "${CFLAGS} -DWINDOWS")
@@ -204,21 +221,20 @@ if (SHARED)
             target_include_directories(${libname}-debug
                 PUBLIC "/usr/local/include"
             )
-            target_link_libraries(${libname}-debug
-                ${ALLEGRO}
-                #${ALLEGRO_MAIN}
-                ${ALLEGRO_FONT}
-                ${ALLEGRO_PRIMITIVES}
-                ${ALLEGRO_AUDIO}
-                ${ALLEGRO_ACODEC}
-                ${ALLEGRO_COLOR}
-                ${ALLEGRO_TTF}
-                ${ALLEGRO_IMAGE}
-                ${ALLEGRO_DIALOG}
-                z
-                ${OPENGL}
-                )
+            target_libraries(-debug)
+            
         endif()
+    elseif (PROFILE)
+        add_library(${libname}-profile SHARED ${cfiles})
+        set_target_properties(${libname}-profile
+            PROPERTIES
+            COMPILE_FLAGS "${CFLAGS} ${WFLAGS} ${PFLAGS}"
+            LINK_FLAGS "-p -rdynamic ${LFLAGS}"
+            )
+        target_include_directories(${libname}-profile
+            PUBLIC "/usr/local/include"
+        )
+        target_libraries(-profile)
     elseif (NOT DEBUG)
         add_library(${libname} SHARED ${cfiles})
         set_target_properties(${libname}

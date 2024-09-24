@@ -6,6 +6,7 @@ class LandFont:
     int size
     double xscaling
     double yscaling
+    double rotation
     int flags
     char *filename
 
@@ -26,6 +27,20 @@ class LandFontState:
     bool background
     float background_radius
     LandColor background_color
+    bool confine_hor, confine_ver
+    float confine_x, confine_y, confine_w, confine_h
+
+    LandTextCache *cache
+
+class LandTextCacheEntry:
+    LandFont *font
+    LandColor color
+    LandFloat x, y, w, h
+    char *text
+
+class LandTextCache:
+    LandFloat x, y
+    LandArray *texts
 
 enum:
     LandAlignRight = 1
@@ -83,7 +98,7 @@ static def letter(char glyph, str code):
     land_color(0, 0, 0, 0)
     land_unclip()
     land_blend(LAND_BLEND_SOLID)
-    land_filled_rectangle(x + 1, y + 1, x + 11, y + 11)
+    land_filled_rectangle(x + 1, y + 1, x + 11, y + 12)
     land_clip(x + 1, y + 1, x + 11, y + 11)
     land_color(1, 1, 1, 1)
     for int i in range(n):
@@ -113,6 +128,35 @@ static def letter(char glyph, str code):
             x += v[0]
             y += v[1]
             vi = 0
+        elif c == 'c':
+            int dx = sgn(v[0])
+            int dy = sgn(v[1])
+            line(1 + x, 1 + y, 1 + x + v[0] - dx, 1 + y)
+            line(1 + x + v[0], 1 + y + dy, 1 + x + v[0], 1 + y + v[1])
+            x += v[0]
+            y += v[1]
+            vi = 0
+        elif c == 'd':
+            int dx = sgn(v[0])
+            int dy = sgn(v[1])
+            line(1 + x, 1 + y, 1 + x, 1 + y + v[1] - dy)
+            line(1 + x + dx, 1 + y + v[1], 1 + x + v[0], 1 + y + v[1])
+            x += v[0]
+            y += v[1]
+            vi = 0
+        elif c == '>' or c == '<':
+            int dx = v[0] // 2
+            int dy = v[1] // 2
+            int nx = dy
+            int ny = -dx
+            if c == '<':
+                nx = -nx
+                ny = -ny
+            line(1 + x, 1 + y, 1 + x + dx + nx, 1 + y + dy + ny)
+            line(1 + x + dx + nx, 1 + y + dy + ny, 1 + x + v[0], 1 + y + v[1])
+            x += v[0]
+            y += v[1]
+            vi = 0
 
 static def initial_font:
     LandImage *i = land_image_new(128 * 16, 16)
@@ -121,9 +165,9 @@ static def initial_font:
     land_clear(1, 1, 0, 1)
     for int i in range(128): letter(i, "")
     letter('A', "0 8 m 0 -8 l 8 0 l 0 8 l 0 -3 m -8 0 l")
-    letter('B', "0 8 l 6 0 l 2 -2 l -2 -2 l 2 -2 l -2 -2 l -6 0 l 0 4 m 6 0 l")
+    letter('B', "0 8 l 6 0 l 0 -4 < 0 -4 < -6 0 l 0 4 m 6 0 l")
     letter('C', "8 0 m -8 0 l 0 8 l 8 0 l")
-    letter('D', "0 8 l 4 0 l 4 -4 l -4 -4 l -4 0 l")
+    letter('D', "0 8 l 4 0 l 0 -8 < -4 0 l")
     letter('E', "0 8 l 8 0 l -8 -4 m 8 0 l -8 -4 m 8 0 l")
     letter('F', "0 8 l 0 -4 m 8 0 l -8 -4 m 8 0 l")
     letter('G', "8 0 m -8 0 l 0 8 l 8 0 l 0 -4 l -4 0 l")
@@ -135,9 +179,9 @@ static def initial_font:
     letter('M', "0 8 m 0 -8 l 8 0 l 0 8 l -4 0 m 0 -8 l")
     letter('N', "0 8 m 0 -8 l 8 0 l 0 8 l")
     letter('O', "8 0 l 0 8 l -8 0 l 0 -8 l")
-    letter('P', "0 8 l 0 -8 m 6 0 l 2 2 l -2 2 l -6 0 l")
+    letter('P', "0 8 l 0 -8 m 6 0 l 0 4 > -6 0 l")
     letter('Q', "8 0 l 0 8 l -8 0 l 0 -8 l 4 4 m 4 4 l")
-    letter('R', "0 8 l 0 -8 m 6 0 l 2 2 l -2 2 l -6 0 l 4 0 m 4 4 l")
+    letter('R', "0 8 l 0 -8 m 6 0 l 0 4 > -6 0 l 4 0 m 4 4 l")
     letter('S', "8 0 m -8 0 l 0 4 l 8 0 l 0 4 l -8 0 l")
     letter('T', "8 0 l -4 0 m 0 8 l")
     letter('U', "0 8 l 8 0 l 0 -8 l")
@@ -154,8 +198,8 @@ static def initial_font:
     letter('f', "3 0 m 0 8 l -2 -4 m 4 0 l -2 -4 m 4 0 l")
     letter('g', "1 2 m 6 0 l 0 6 l -6 0 l 0 -2 m 6 0 l -6 0 m 0 -4 l")
     letter('h', "1 0 m 0 8 l 0 -6 m 6 0 l 0 6 l")
-    letter('i', "1 4 m 3 0 l 0 4 l 3 0 l -3 -6 m 0 0 l")
-    letter('j', "5 4 m 0 4 l -4 0 l 4 -6 m 0 0 l")
+    letter('i', "1 2 m 3 0 l 0 6 l 3 0 l -3 -8 m 0 0 l")
+    letter('j', "5 2 m 0 6 l -4 0 l 4 -8 m 0 0 l")
     letter('k', "1 0 m 0 8 l 0 -3 m 3 0 l 3 3 l -3 -3 m 3 -3 l")
     letter('l', "1 0 m 3 0 l 0 8 l 3 0 l")
     letter('m', "1 8 m 0 -6 l 6 0 l 0 6 l -3 0 m 0 -6 l")
@@ -173,34 +217,50 @@ static def initial_font:
     letter('y', "1 2 m 3 3 l 3 -3 m -6 6 l")
     letter('z', "1 2 m 6 0 l -6 6 l 6 0 l")
     letter('.', "4 8 m 0 0 l")
+    letter(':', "4 4 m 0 0 l 0 4 m 0 0 l")
     letter('/', "0 8 m 8 -8 l")
+    letter('%', "0 8 m 8 -8 l -8 0 m 2 0 l 0 2 l -2 0 l 0 -2 l 6 6 m 2 0 l 0 2 l -2 0 l 0 -2 l")
     letter('\\', "8 8 l")
     letter('-', "1 4 m 6 0 l")
+    letter('=', "1 3 m 6 0 l 0 3 m -6 0 l")
     letter('+', "1 4 m 6 0 l -3 -3 m 0 6 l")
-    letter('0', "8 0 l 0 8 l -8 0 l 0 -8 l")
+    letter('0', "2 0 m 4 0 l 2 2 l 0 4 l -2 2 l -4 0 l -2 -2 l 0 -4 l 2 -2 l")
     letter('1', "2 0 m 2 0 l 0 8 l -4 0 m 8 0 l")
-    letter('2', "8 0 l 0 4 l -8 4 l 8 0 l")
-    letter('3', "8 0 l 0 4 l -8 0 l 8 0 m 0 4 l -8 0 l")
-    letter('4', "0 4 l 8 0 l 0 -4 m 0 8 l")
-    letter('5', "8 0 m -8 0 l 0 4 l 8 0 l 0 4 l -8 0 l")
-    letter('6', "8 0 m -8 0 l 0 8 l 8 0 l 0 -4 l -8 0 l")
+    letter('2', "0 1 m 1 -1 l 6 0 l 1 1 l 0 3 l -8 4 l 8 0 l")
+    letter('3', "6 0 l 2 2 l -2 2 l -6 0 l 6 0 m 2 2 l -2 2 l -6 0 l")
+    letter('4', "6 0 m -6 6 l 8 0 l -1 -6 m 0 8 l")
+    letter('5', "7 0 m -7 0 l 0 4 l 6 0 l 2 2 l -2 2 l -6 0 l")
+    letter('6', "7 1 m -1 -1 l -4 0 l -2 2 l 0 4 l 2 2 l 4 0 l 2 -2 l -2 -2 l -5 0 l")
     letter('7', "8 0 l -4 8 l")
     letter('8', "2 4 m -2 2 l 2 2 l 4 0 l 2 -2 l -2 -2 l 2 -2 l -2 -2 l -4 0 l -2 2 l 2 2 l 4 0 l")
-    letter('9', "8 0 l 0 8 l -8 0 l 0 -8 m 0 4 l 8 0 l")
-    letter('(', "6 0 m -2 1 l -2 2 l 0 2 l 2 2 l 2 1 l")
-    letter(')', "2 8 m 2 -1 l 2 -2 l 0 -2 l -2 -2 l -2 -1 l")
+    letter('9', "7 4 m -5 0 l -2 -2 l 2 -2 l 4 0 l 2 2 l 0 4 l -2 2 l -4 0 l")
+    letter('(', "6 0 m -1 0 l -2 2 l 0 4 l 2 2 l 1 0 l")
+    letter(')', "2 0 m 1 0 l 2 2 l 0 4 l -2 2 l -1 0 l")
     letter('[', "6 0 m -2 0 l 0 8 l 2 0 l")
     letter(']', "4 0 m 2 0 l 0 8 l -2 0 l")
-    letter('<', "6 0 m -4 4 l 4 4 l")
-    letter('>', "2 0 m 4 4 l -4 4 l")
-    letter('{', "6 0 m -2 0 l 0 3 l -2 1 l 2 1 l 0 3 l 2 0 l")
-    letter('}', "4 0 m 2 0 l 0 3 l 2 1 l -2 1 l 0 3 l -2 0 l")
+    letter('<', "6 8 m 0 -8 >")
+    letter('>', "2 0 m 0 8 >")
+    letter('{', "6 0 m -2 2 c 0 4 < 2 2 d")
+    letter('}', "4 0 m 2 2 c 0 4 > -2 2 d")
+    letter('#', "2 0 m 0 8 l 4 0 m 0 -8 l 2 2 m -8 0 l 0 4 m 8 0 l")
+    letter('*', "4 4 m 0 -3 m 0 6 l 3 -1 m -2 -2 l 2 -2 l -6 0 m 2 2 l -2 2 l")
+    letter('"', "2 0 m 0 2 l 4 0 m 0 -2 l")
+    letter('\'', "4 0 m 0 2 l")
+    letter(',', "4 6 m 0 2 l")
+    letter('_', "0 8 m 8 0 l")
+    letter('&', "2 4 m -2 2 l 2 2 l 2 0 l 4 -4 l 0 4 m -4 -4 l 2 -2 l -2 -2 l -2 0 l -2 2 l 2 2 l 2 0 l")
+    letter('?', "4 8 m 0 0 l 0 -2 m 0 -1 l 3 -3 l -2 -2 l -3 0 l -2 2 l")
+    letter('!', "4 8 m 0 0 l 0 -2 m 0 -6 l")
+    letter('|', "4 0 m 0 8 l")
     land_unset_image_display()
 
     int r[] = {0, 127}
     LandFont *f = land_font_from_image(i, 1, r)
     land_font_state.font = initial = f
     land_image_destroy(i)
+
+def land_initial_font -> LandFont*:
+    return initial
 
 def land_font_init():
     if active: return
@@ -215,6 +275,15 @@ def land_font_exit():
     land_free(land_font_state)
     platform_font_exit()
     active = 0
+
+def land_font_reset:
+    land_font_state.off = False
+    land_font_state.in_paragraph = False
+    land_font_state.print_override = None
+    land_font_state.background = False
+    land_font_state.background = False
+    land_font_state.confine_hor = False
+    land_font_state.confine_ver = False
 
 def land_font_active() -> int:
     return active
@@ -231,6 +300,10 @@ def land_font_load(char const *filename, float size) -> LandFont *:
     if self.flags & LAND_LOADED:
         land_font_state.font = self
     return self
+
+def land_font_load_zoom(str filename, float size) -> LandFont *:
+    double s = land_display_width() / 64.0 * size
+    return land_font_load(filename, s)
 
 def land_font_check_loaded(LandFont *self):
     if self.flags & LAND_LOADED:
@@ -259,7 +332,11 @@ def land_font_scale(LandFont *f, double scaling):
 def land_font_yscale(LandFont *f, double scaling):
     f.yscaling = scaling
 
+def land_font_rotation(LandFont *f, double rotation):
+    f.rotation = rotation
+
 def land_font_set(LandFont *self):
+    if not self: self = initial
     land_font_state.font = self
 
 def land_text_pos(float x, float y):
@@ -274,6 +351,33 @@ def land_text_set_y(float y):
 
 def land_text_set_width(float w):
     land_font_state.adjust_width = w
+
+def land_text_pos_add(float xa, ya):
+    land_font_state.x_pos += xa
+    land_font_state.y_pos += ya
+
+def land_text_pos_x(float x):
+    land_font_state.x_pos = x
+
+def land_newline:
+    land_font_state.y_pos += land_line_height()
+
+# Confine text drawing to inside the given column
+def land_text_confine(float x, w):
+    if w <= 0:
+        land_font_state.confine_hor = False
+        return
+    land_font_state.confine_hor = True
+    land_font_state.confine_x = x
+    land_font_state.confine_w = w
+
+def land_text_confine_vertical(float y, h):
+    if h <= 0:
+        land_font_state.confine_ver = False
+        return
+    land_font_state.confine_ver = True
+    land_font_state.confine_y = y
+    land_font_state.confine_h = h
 
 # Current cursor X coordinate.
 def land_text_x_pos() -> float:
@@ -290,6 +394,14 @@ def land_text_x() -> float:
 # Top edge of last printed text.
 def land_text_y() -> float:
     return land_font_state.y
+
+# Right edge of last printed text.
+def land_text_x2() -> float:
+    return land_font_state.x + land_font_state.w
+
+# Bottom edge of last printed text.
+def land_text_y2() -> float:
+    return land_font_state.y + land_font_state.h
 
 # Width of last printed text.
 def land_text_width() -> float:
@@ -316,6 +428,9 @@ def land_text_off():
 
 def land_text_on():
     land_font_state.off = 0
+
+def land_text_is_on -> bool:
+    return land_font_state.off == 0
 
 def land_paragraph_start(float wrap_width):
     land_font_state.in_paragraph = True
@@ -356,8 +471,23 @@ def land_print_string(char const *s, int newline, int alignment):
             xo = ew / 2
         if alignment & LandAlignRight:
             xo = ew
-        land_filled_rounded_rectangle(lfs.x_pos - xo - r, lfs.y_pos - r - yo,
-            lfs.x_pos - xo + ew + r, lfs.y_pos - yo + eh + r, r)
+        float x0 = lfs.x_pos - xo - r
+        float y0 = lfs.y_pos - r - yo
+        float x1 = lfs.x_pos - xo + ew + r
+        float y1 = lfs.y_pos - yo + eh + r
+        if lfs.confine_hor:
+            float over = lfs.confine_x - x0
+            if over > 0:
+                x0 += over
+                x1 += over
+        if lfs.confine_ver:
+            float over = lfs.confine_y - y0
+            if over > 0:
+                y0 += over
+                y1 += over
+    
+        land_filled_rounded_rectangle(x0, y0,
+            x1, y1, r)
         land_color_set(backup)
 
     if lfs.print_override:
@@ -367,6 +497,8 @@ def land_print_string(char const *s, int newline, int alignment):
         lfs.print_override = backup
     else:
         platform_font_print(land_font_state, s, alignment)
+        if lfs.cache:
+            land_text_cache_add(lfs.cache, s)
 
     if newline:
         lfs.y_pos = lfs.y + lfs.h
@@ -384,12 +516,8 @@ def land_print_space(int x):
 def land_font_set_print_override(PrintFunc print_override):
     land_font_state.print_override = print_override
 
-def land_text_get_width(char const *str) -> float:
-    int onoff = land_font_state.off
-    land_font_state.off = 1
-    platform_font_print(land_font_state, str, 0)
-    land_font_state.off = onoff
-    return land_font_state.w
+def land_text_get_width(str s) -> float:
+    return platform_text_width(land_font_state, s)
 
 def land_text_get_extents(char const *str, float *w, *h):
     int onoff = land_font_state.off
@@ -415,14 +543,20 @@ def land_text_get_multiline_size(char const *s, float *w, *h):
     land_font_state.x_pos = x_pos
     land_font_state.y_pos = y_pos
 
-# Get the position at which the nth character is drawn. 
-def land_text_get_char_offset(char const *str, int nth) -> int:
-    char *u = land_strdup(str)
+def land_text_get_char_offset(char const *s, int nth) -> float:
+    """
+    Get the position at which the nth character is drawn. 
+    """
+    # fixme: can we avoid memory allocation in this function?
+    if nth <= 0: return 0
+    char *u = land_strdup(s)
     char *p = u
+    int c = 0
     for int i = 0 while i < nth with i++:
-        land_utf8_char(&p)
-    *p = 0
-    int x = land_text_get_width(u)
+        c = land_utf8_char(&p)
+        if c == 0: break
+    if c != 0: *p = 0
+    float x = land_text_get_width(u)
     land_free(u)
     return x
 
@@ -465,6 +599,10 @@ def land_print_bottom(char const *text, ...):
 def land_print_bottom_right(char const *text, ...):
     VPRINT
     land_print_string(s, 1, LandAlignRight | LandAlignBottom)
+
+def land_print_bottom_center(char const *text, ...):
+    VPRINT
+    land_print_string(s, 1, LandAlignCenter | LandAlignBottom)
 
 def land_print_center(char const *text, ...):
     VPRINT
@@ -512,67 +650,157 @@ def land_writev(char const *text, va_list args):
 
     land_print_string(s, 0, 0)
 
-static def _wordwrap_helper(char const *text, int w, h,
-    void (*cb)(int a, int b, void *data), void *data) -> int:
-    int y = land_text_y_pos()
-    float fh = land_font_state.font->size
+def land_indent(char const *text, ...):
+    VPRINT
+    land_font_state.x_pos += land_text_get_width(s)
 
-    char const *line_start_p = text
-    land_font_state.adjust_width = w
-    #printf("wordwrap %d %d\n", w, h)
+class LandWordWrapState:
+    str line_start_p # start of current line
+    str word_end_p # to (one past) end of last word
+    str prev_word_end_p # so we can jump back after a wrap
 
-    while 1:
-        # A new line begins.
-        if h > 0 and land_text_y_pos() >= y + h: break
-        float width_of_line = 0
-        int word_end_glyphs = 0
-        char const *word_end_p = line_start_p
-        char const *prev_word_end_p = line_start_p
-        char const *ptr
-        int c
-        while 1:
-            # Find next possible break location.
-            bool inside_leading_whitespace = True
-            ptr = word_end_p
-            int glyphs = word_end_glyphs
-            while 1:
-                c = land_utf8_char_const(&ptr)
-                if c == 0: break
-                if c == '\n': break
-                if c == ' ':
-                    if not inside_leading_whitespace: break
-                else:
-                    inside_leading_whitespace = False
-                if inside_leading_whitespace and word_end_glyphs == 0:
-                    line_start_p = ptr
-                else:
-                    glyphs++
-                    word_end_p = ptr
+    bool after_newline
 
-            int x = land_text_get_char_offset(line_start_p, glyphs)
-            if x > w: # found break point
-                if word_end_glyphs == 0: # uh oh, only a single word
-                    word_end_glyphs = glyphs
-                    width_of_line = x
-                else:
-                    c = ' ' # in case it was 0 so we don't lose the last word
-                    ptr = word_end_p = prev_word_end_p
+    int break_char # one of ' ', '\n', '\0'
+
+    float x, y, w, h
+    float cursor_x, cursor_y
+
+    void (*cb)(int a, int b, void *data)
+    void *data
+    str text
+
+def land_wordwrap_new(float x, y, w, h) -> LandWordWrapState*:
+    LandWordWrapState *self; land_alloc(self)
+    self.x = x
+    self.y = y
+    self.w = w
+    self.h = h
+    self.cursor_x = x
+    self.cursor_y = y
+    self.after_newline = True
+    return self
+
+def land_wordwrap_destroy(LandWordWrapState *self):
+    land_free(self)
+
+def land_wordwrap_print_string(LandWordWrapState *self, str text,
+        void (*cb)(int a, int b, void *data), void *data):
+    self.line_start_p = text
+    self.word_end_p = text
+    self.prev_word_end_p = text
+    self.text = text
+    self.cb = cb
+    self.data = data
+    float prev_x = self.cursor_x - self.x
+    #print("NEW")
+    while True:
+        if self.h > 0:
+            if self.cursor_y >= self.y + self.h:
                 break
-            width_of_line = x
-            word_end_glyphs = glyphs
-            prev_word_end_p = word_end_p
-            if c == 0 or c == '\n':
+        _find_next_word(self)
+        float x = land_text_get_char_offset(self.line_start_p, self.word_end_p - self.line_start_p)
+        #printf("'")
+        #for str c = self.line_start_p while c != self.word_end_p with c++:
+        #    if *c <= 32: printf("[%d]", *c)
+        #    else: printf("%c", *c)
+        #printf("' %.0f (%.0f>%.0f)\n", x, self.cursor_x + x, self.x + self.w)
+        #land_wait(0.01)
+        if self.cursor_x + x > self.x + self.w: # we're over
+            if self.prev_word_end_p == self.line_start_p:
+                if self.after_newline:
+                    # just a singe long word, and at start of line
+                    _print_wordwrap_line(self, newline=True, x)
+                    if self.break_char == '\0':
+                        break
+                else:
+                    # long word which doesn't fit, but might in the next
+                    # line
+                    self.word_end_p = self.prev_word_end_p
+                    self.break_char = ' '
+                    _wordwrap_newline(self)
+            else:
+                self.word_end_p = self.prev_word_end_p
+                self.break_char = ' '
+                _print_wordwrap_line(self, newline=True, prev_x)
+
+        else: # we're not over
+            if self.break_char == '\0':
+                _print_wordwrap_line(self, newline=False, x)
                 break
-        if width_of_line > land_font_state.wordwrap_width:
-            land_font_state.wordwrap_width = width_of_line
-        land_font_state.wordwrap_height += fh
-        if word_end_p < line_start_p:
-            cb(line_start_p - text, line_start_p - text, data)
-        else
-            cb(line_start_p - text, word_end_p - text, data)
-        line_start_p = ptr
-        if c == 0: break
-    return line_start_p - text
+            elif self.break_char == '\n':
+                _print_wordwrap_line(self, newline=True, x)
+            else:
+                # points to space
+                self.prev_word_end_p = self.word_end_p
+        prev_x = x
+
+def _print_wordwrap_line(LandWordWrapState *self, bool newline, float w):
+    # TODO: with different font heights, take maximum? but that is only
+    # known later... we'd need two passes, first to find maximum font,
+    # then to print
+    land_text_pos(self.cursor_x, self.cursor_y)
+    self.cb(self.line_start_p - self.text, self.word_end_p - self.text, self.data)
+    float h = land_line_height()
+    if self.cursor_x + w - self.x > land_font_state.wordwrap_width:
+        land_font_state.wordwrap_width = self.cursor_x + w - self.x
+    if self.cursor_y + h - self.y > land_font_state.wordwrap_height:
+        land_font_state.wordwrap_height = self.cursor_y + h - self.y
+    if newline:
+        _wordwrap_newline(self)
+        _consume_breakchar(self)
+        self.prev_word_end_p = self.word_end_p
+    else:
+        self.after_newline = False
+        self.cursor_x += w
+    self.line_start_p = self.word_end_p
+
+def _consume_breakchar(LandWordWrapState *self):
+    str scan_p = self.word_end_p
+    int c = land_utf8_char_const(&scan_p)
+    if c == ' ' or c == '\n':
+        self.word_end_p = scan_p
+
+def _wordwrap_newline(LandWordWrapState *self):
+    self.cursor_x = self.x
+    self.cursor_y += land_line_height()
+    self.after_newline = True
+    self.prev_word_end_p = self.word_end_p
+
+def _find_next_word(LandWordWrapState *self):
+    """
+    advance word_end_p to possible break and set break_char.
+    word_end_p will point exactly to a space or newline.
+    """
+    bool inside_leading_whitespace = True
+    str scan_p = self.word_end_p
+    int c = 0
+    while True:
+        str last_p = scan_p
+        c = land_utf8_char_const(&scan_p)
+        self.word_end_p = last_p # on the \0 or \n or space
+        if c == '\n' or c == '\0': break
+        if c == ' ':
+            if not inside_leading_whitespace: break
+        else:
+            inside_leading_whitespace = False
+    self.break_char = c
+
+# the callback is called for each line
+#
+# Existing newlines are honored. If you want to wrap already wrapped
+# text to a different width, first remove the newlines.
+#
+# Extra spaces are prepended to the following word, if you don't want
+# them, remove them first.
+def land_wordwrap_helper(char const *text, int width, height, xoffset,
+        void (*cb)(int a, int b, void *data), void *data) -> int:
+    #print("helper %d/%d", width, height)
+    auto w = land_wordwrap_new(0, 0, width, height)
+    land_wordwrap_print_string(w, text, cb, data)
+    int n = w.word_end_p - text
+    land_wordwrap_destroy(w)
+    return n
 
 static def _print_wordwrap_cb(int a, b, void *data):
     void **p = data
@@ -582,9 +810,9 @@ static def _print_wordwrap_cb(int a, b, void *data):
     char s[b - a + 1]
     strncpy(s, text + a, b - a + 1)
     s[b - a] = 0
-    land_print_string(s, 1, *alignment)
+    land_print_string(s, 0, *alignment)
 
-def land_print_string_wordwrap(char const *text, int w, h, alignment) -> int:
+def land_print_string_wordwrap(char const *text, int w, h, offset, alignment) -> int:
     """
     Print text inside, and starts a new line whenever the text goes over the
     given width, wrapping at whitespace. If a single word is bigger than w, it
@@ -594,19 +822,28 @@ def land_print_string_wordwrap(char const *text, int w, h, alignment) -> int:
     printed character.
     """
     void *data[] = {(void *)text, &alignment}
-    return _wordwrap_helper(text, w, h, _print_wordwrap_cb, data)
+    land_wordwrap_reset()
+    return land_wordwrap_helper(text, w, h, offset, _print_wordwrap_cb, data)
+
+def land_wordwrap_reset:
+    land_font_state.wordwrap_width = 0
+    land_font_state.wordwrap_height = 0
 
 def land_print_wordwrap(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(s, w, h, 0)
+    return land_print_string_wordwrap(s, w, h, offset=0, 0)
+
+def land_print_wordwrap_offset(int w, h, offset, char const *text, ...) -> int:
+    VPRINT
+    return land_print_string_wordwrap(s, w, h, offset, 0)
 
 def land_print_wordwrap_right(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(s, w, h, 1)
+    return land_print_string_wordwrap(s, w, h, offset=0, 1)
 
 def land_print_wordwrap_center(int w, h, char const *text, ...) -> int:
     VPRINT
-    return land_print_string_wordwrap(s, w, h, 2)
+    return land_print_string_wordwrap(s, w, h, offset=0, 2)
 
 static def land_wordwrap_text_cb(int a, b, void *data):
     void **p = data
@@ -617,7 +854,7 @@ static def land_wordwrap_text_cb(int a, b, void *data):
     s[b - a] = 0
     land_array_add(lines, s)
 
-def land_wordwrap_text(int w, h, char const *str) -> LandArray *:
+def land_wordwrap_text_offset(int w, h, offset, char const *str) -> LandArray *:
     """
     Splits the given string into multiple lines no longer than w pixels. The
     returned array will have a newly allocated string for each line. You are
@@ -628,13 +865,16 @@ def land_wordwrap_text(int w, h, char const *str) -> LandArray *:
     You can call land_wordwrap_extents after this functions to get the
     dimensions of a box which will be able to hold all the text.
     """
+    #print("land_wordwrap_text_offset %d/%d", w, h)
     LandArray *lines = land_array_new()
-    land_font_state.wordwrap_width = 0
-    land_font_state.wordwrap_height = 0
+    land_wordwrap_reset()
     if str:
         void *data[] = {(void *)str, lines}
-        _wordwrap_helper(str, w, h, land_wordwrap_text_cb, data)
+        land_wordwrap_helper(str, w, h, offset, land_wordwrap_text_cb, data)
     return lines
+
+def land_wordwrap_text(int w, h, char const *str) -> LandArray *:
+    return land_wordwrap_text_offset(w, h, offset=0, str)
 
 def land_text_destroy_lines(LandArray *lines):
     if not lines: return
@@ -645,6 +885,7 @@ def land_text_splitlines(char const *str) -> LandArray *:
     Splits the text into lines, and updates the wordwrap extents.
     """
     land_font_state.wordwrap_width = 0
+    LandFont *super = land_font_state.font
 
     LandArray *lines = land_array_new()
     while 1:
@@ -663,7 +904,7 @@ def land_text_splitlines(char const *str) -> LandArray *:
         if p[0] == 0: break
         str = p + 1
     land_font_state.wordwrap_height = land_font_state.font->size *\
-        land_array_count(lines)
+        land_array_count(lines) * super.yscaling
     return lines
 
 def land_wordwrap_extents(float *w, float *h):
@@ -674,6 +915,7 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     """
     Given an array of lines, print the visible ones.
     """
+    auto lfs = land_font_state
     float cl, ct, cr, cb
     land_get_clip(&cl, &ct, &cr, &cb)
     LandColor original = land_color_get()
@@ -690,12 +932,32 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
         alignment ^= LandAlignMiddle
         land_font_state.y_pos -= n * fh / 2
     land_font_state.y_pos += fh * first
-    bool restore_background = land_font_state.background
-    if land_font_state.background:
-        land_font_state.background = False
-        float ew, eh
-        land_wordwrap_extents(&ew, &eh)
-        float r = land_font_state.background_radius
+
+    float ew, eh
+    land_wordwrap_extents(&ew, &eh)
+    float backup_xpos = lfs.x_pos
+
+    float r = land_font_state.background_radius
+
+    if lfs.confine_hor:
+        float over = (lfs.x_pos + ew) - (lfs.confine_x + lfs.confine_w)
+        if lfs.background:
+            over += r
+        if over > 0:
+            lfs.x_pos -= over
+
+    if lfs.confine_ver:
+        float over = (lfs.y_pos + eh) - (lfs.confine_y + lfs.confine_h)
+        if lfs.background:
+            over += r
+        if over > 0:
+            lfs.y_pos -= over # we actually move the text cursor vertically
+        if lfs.y_pos < lfs.confine_y:
+            lfs.y_pos = lfs.confine_y
+
+    bool restore_background = lfs.background
+    if lfs.background:
+        lfs.background = False
         float x = land_font_state.x_pos
         float y = land_font_state.y_pos
         LandColor backup = land_color_get()
@@ -723,6 +985,7 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     land_font_state.background = restore_background
 
     land_color_set(original)
+    lfs.x_pos = backup_xpos
 
 def land_set_line_color(LandHash *colors, int i, str col):
     char ckey[] = {i % 256, i / 256, 0}
@@ -748,3 +1011,42 @@ def land_print_multiline_centered(char const *text, ...):
     auto a = land_text_splitlines(s)
     land_print_lines(a, LandAlignCenter)
     land_array_destroy_with_strings(a)
+
+def land_text_cache_new -> LandTextCache*:
+    LandTextCache *self; land_alloc(self)
+    self.texts = land_array_new()
+    return self
+
+def land_text_cache_start_recording(LandTextCache *self, LandFloat x, y):
+    self.x = x
+    self.y = y
+    land_font_state.cache = self
+
+def land_text_cache_stop_recording(LandTextCache *self):
+    land_font_state.cache = None
+
+def land_text_cache_add(LandTextCache *self, str text):
+    LandTextCacheEntry *e; land_alloc(e)
+    e.text = land_strdup(text)
+    e.x = land_text_x()
+    e.y = land_text_y()
+    e.w = land_text_width()
+    e.h = land_text_height()
+    e.font = land_font_current()
+    e.color = land_color_get()
+    land_array_add(self.texts, e)
+
+def land_text_cache_repeat(LandTextCache *self, LandFloat x, y):
+    for LandTextCacheEntry *text in self.texts:
+        land_text_pos(text.x - self.x + x, text.y - self.y + y)
+        land_font_set(text.font)
+        land_color_set(text.color)
+        land_print(text.text)
+
+def land_text_cache_destroy(LandTextCache *self):
+    for LandTextCacheEntry *text in self.texts:
+        land_free(text.text)
+        land_free(text)
+    land_array_destroy(self.texts)
+    land_free(self)
+

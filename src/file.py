@@ -6,6 +6,7 @@ import land.buffer
 enum:
     LAND_FULL_PATH = 1
     LAND_RELATIVE_PATH = 2
+    LAND_VISIT_DIRECTORIES = 4
 
 class LandFile:
     char *path
@@ -99,6 +100,21 @@ def land_file_fputs(LandFile *self, char const *string) -> int:
 def land_file_getc(LandFile *self) -> int:
     return platform_fgetc(self.f)
 
+def land_file_gets(LandFile *self, char *buf, int maxn) -> int:
+    int i = 0
+    while True:
+        if i == maxn - 1:
+            break
+        int c = land_file_getc(self)
+        if c <= 0: break
+        buf[i] = c
+        i += 1
+        if c == '\n':
+            break
+    buf[i] = 0
+    i += 1
+    return i
+
 def land_file_putc(LandFile *self, int x):
     return platform_fputc(self.f, x)
 
@@ -173,6 +189,9 @@ def land_get_current_directory() -> char *:
 def land_make_directory(str path):
     platform_make_directory(path)
 
+def land_mkdir(str path):
+    platform_make_directory(path)
+
 def land_file_copy(str src, dst) -> bool:
     """
     Copies file at src to dst, creating any needed destination folders.
@@ -186,15 +205,18 @@ def land_file_copy(str src, dst) -> bool:
     if not srcf: return False
     auto dstf = land_file_new(dst, "wb")
     if not dstf: return False
+    land_file_read_write(srcf, dstf)
+    land_file_destroy(srcf)
+    land_file_destroy(dstf)
+    return True
+
+def land_file_read_write(LandFile *srcf, *dstf):
     int s = 1024 # macos only has like 8KB of stack
     char buf[s]
     while True:
         int n = land_file_read(srcf, buf, s)
         if n == 0: break
         land_file_write(dstf, buf, n)
-    land_file_destroy(srcf)
-    land_file_destroy(dstf)
-    return True
 
 def land_get_data_path() -> char *:
     return platform_get_data_path()
@@ -213,7 +235,7 @@ def land_path_with_prefix(char const *name) -> char *:
     Returns a new string with has the global data prefix prefixed to
     the given path.
     """
-    if land_is_absolute(name):
+    if land_is_absolute(name) or name[0] == '.':
         return land_strdup(name)
     int n = strlen(name)
     if prefix:
@@ -234,6 +256,7 @@ def land_path_without_prefix(str path) -> char*:
 
 def land_path_with_absolute_prefix(char const *name) -> char *:
     char *x = land_get_current_directory()
+    print("current is %s", x)
     char *path = land_path_with_prefix(name)
     if not land_is_absolute(name):
         land_append(&x, "/")
@@ -260,7 +283,6 @@ def land_find_data_prefix(char const *path):
         char *p = land_path_with_prefix(path)
         if land_file_is_dir(p):
             land_set_prefix(p)
-            land_free(p)
 
             # If the data folder has a single file named "link" in it
             # then we append the path in that file. So for example
@@ -269,10 +291,12 @@ def land_find_data_prefix(char const *path):
             char* link = land_read_text("link")
             if link:
                 land_strip(&link)
-                p = land_path_with_prefix(link)
+                land_append(&p, link)
                 land_set_prefix(p)
                 land_free(p)
                 land_free(link)
+            else:
+                land_free(p)
             return
         strcat(s, "../")
     land_set_prefix(path)
@@ -300,6 +324,15 @@ def land_replace_folder(str path, folder) -> char *:
     land_prepend(&r, folder)
     return r
 
+def land_filename(str path) -> char *:
+    char *slash = strrchr(path, '/')
+    char *r
+    if slash:
+        r = land_strdup(slash + 1)
+    else:
+        r = land_strdup(path)
+    return r
+
 def land_file_remove(char const *path) -> bool:
     return platform_remove_file(path)
 
@@ -308,3 +341,7 @@ def land_file_time(char const *path) -> int64_t:
 
 def land_user_data_path(char const *app, *path) -> char*:
     return platform_get_app_data_file(app, path)
+
+def land_change_directory(str path):
+    print("changing current to %s", path)
+    platform_change_directory(path)

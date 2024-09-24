@@ -53,11 +53,17 @@ def land_sound_change(LandSound *s, float volume, pan, frequency):
 
 def land_sound_loop(LandSound *s, float volume, pan, frequency):
     if not s: return
+    # TODO: do we want an API which allows looping the same sound twice?
+    if platform_sound_is_playing(s): return
     platform_sound_play(s, volume, pan, frequency, true)
 
 def land_sound_stop(LandSound *s):
     if not s: return
     platform_sound_stop(s)
+
+def land_sound_is_playing(LandSound *s) -> bool:
+    if not s: return False
+    return platform_sound_is_playing(s)
 
 def land_sound_destroy(LandSound *s):
     if not s: return

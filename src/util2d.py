@@ -53,6 +53,23 @@ def land_ortho2d(float ax, ay, *bx, *by):
     *bx = -ay;
     *by = ax;
 
+def land_orthonormal2d(float ax, ay, *bx, *by):
+    land_ortho2d(ax, ay, bx, by)
+    float n = land_norm2d(ax, ay)
+    *bx /= n
+    *by /= n
+
+def land_diffnormal2d(float ax, ay, bx, by, *dx, *dy):
+    *dx = bx - ax
+    *dy = by - ay
+    float n = land_norm2d(*dx, *dy)
+    *dx /= n
+    *dy /= n
+
+def land_flip2d(LandFloat *x, *y):
+    *x = -*x
+    *y = -*y
+
 def land_rotate2d(LandFloat *x, *y, angle):
     """
     Rotate x/y around 0/0 by angle in counter clockwise direction.

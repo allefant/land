@@ -2,6 +2,7 @@ class LandColor:
    float r, g, b, a
 
 import global stdint
+static import land.external.google_material_design
 static import land/allegro5/a5_misc
 static import global ctype
 static import global string
@@ -22,10 +23,18 @@ static double const delta2 = 6.0 / 29 * 6.0 / 29
 static double const delta3 = 6.0 / 29 * 6.0 / 29 * 6.0 / 29
 static double const tf7 = 1.0 / 4 / 4 / 4 / 4 / 4 / 4 / 4
 
+def land_color_alpha(float a) -> LandColor:
+    LandColor c = {0, 0, 0, a}
+    return c
+
 def land_color_hsv(float hue, sat, val) -> LandColor:
     return platform_color_hsv(hue, sat, val)
 
 def land_color_rgba(float r, g, b, a) -> LandColor:
+    LandColor c = {r, g, b, a}
+    return c
+
+def land_rgba(float r, g, b, a) -> LandColor:
     LandColor c = {r, g, b, a}
     return c
 
@@ -129,10 +138,32 @@ def land_color_cielab(double L, a, b) -> LandColor:
     double z = Zn * cielab_f_inv((L + 0.16) / 1.16 - b / 2.00)
     return land_color_xyz(x, y, z)
 
+def land_color_to_lch(LandColor col, double *l, *c, *h):
+    double a, b
+    land_color_to_cielab(col, l, &a, &b)
+
+    *h = atan2(b, a)
+    if *h < 0: *h += 2 * pi
+
+    *c = sqrt(a * a + b * b)
+
 def land_color_lch(double l, c, h) -> LandColor:
     double a = c * cos(h)
     double b = c * sin(h)
     return land_color_cielab(l, a, b)
+
+def land_color_to_oklch(LandColor col, double *l, *c, *h):
+    double a, b
+    land_color_to_oklab(col, l, &a, &b)
+    *c = sqrt(a * a + b * b) / 0.25 # why the 0.25?
+    *h = atan2(b, a)
+    if *h < 0: *h += 2 * pi
+
+def land_color_oklch(double l, c, h) -> LandColor:
+    c *= 0.25
+    double a = c * cos(h)
+    double b = c * sin(h)
+    return land_color_oklab(l, a, b)
 
 def land_color_xyy(double x, y, Y) -> LandColor:
     # x = X / (X + Y + Z)
@@ -285,6 +316,10 @@ def land_color_premul(float r, g, b, a) -> LandColor:
     LandColor c = {r * a, g * a, b * a, a}
     return c
 
+def land_color_alphamul(LandColor c, float a) -> LandColor:
+    LandColor c2 = {c.r * a, c.g * a, c.b * a, c.a * a}
+    return c2
+
 static int hexval(char c):
     c = tolower(c)
     if c >= '0' and c <= '9': return (c - '0')
@@ -337,6 +372,10 @@ def land_color_mix(LandColor c, LandColor mix, float p) -> LandColor:
     c.b = c.b * q + mix.b * p
     c.a = c.a * q + mix.a * p
     return c
+
+def land_color_mix_current(LandColor mix, float p):
+    LandColor c = land_color_get()
+    land_color_set(land_color_mix(c, mix, p))
 
 def land_color_to_html(LandColor c, char html[8]):
     int r = land_constraini(c.r * 255, 0, 255)
@@ -438,3 +477,208 @@ def land_color_copy_to_bytes(LandColor c, uint8_t *rgba):
     rgba[1] = land_constrainf(c.g, 0, 1) * 255
     rgba[2] = land_constrainf(c.b, 0, 1) * 255
     rgba[3] = land_constrainf(c.a, 0, 1) * 255
+
+def land_color_copy_to_floats(LandColor c, float *rgba):
+    rgba[0] = c.r
+    rgba[1] = c.g
+    rgba[2] = c.b
+    rgba[3] = c.a
+
+def land_black -> LandColor: return land_color_rgba(0, 0, 0, 1)
+def land_white -> LandColor: return land_color_rgba(1, 1, 1, 1)
+def land_transparent -> LandColor: return land_color_rgba(0, 0, 0, 0)
+def land_set_black: land_color_set(land_black())
+def land_set_white: land_color_set(land_white())
+def land_set_transparent: land_color_set(land_transparent())
+
+str _palette_14_x_11_names[14 * 11] = {
+    "maroon/2", "maroon", "saddlebrown/2", "dark goldenrod/2",
+    "moccasin/2", "dark olivegreen/2", "dark green/2", "teal",
+    "dark slategray/2", "deepskyblue/2", "midnightblue/2", "indigo/2",
+    "purple/2", "black", "rosybrown/2", "dark red", "saddlebrown",
+    "dark goldenrod", "olive", "dark green", "green", "dark cyan", "teal/2",
+    "royalblue", "navy", "indigo", "medium violetred/2", "dimgray/2",
+    "brown", "firebrick", "peru", "gold", "goldenrod", "dark olivegreen",
+    "forestgreen", "medium seagreen", "dark slategray", "steelblue",
+    "midnightblue", "dark violet", "purple", "dimgray", "crimson",
+    "sienna", "dark orange", "wheat", "dark khaki", "olivedrab",
+    "seagreen", "light seagreen", "cadetblue", "slategray", "medium blue",
+    "thistle/2", "dark magenta", "gray", "indianred", "red", "sandybrown",
+    "navajowhite", "khaki", "yellowgreen", "dark seagreen",
+    "dark turquoise", "skyblue", "light slategray", "dark slateblue",
+    "blueviolet", "sequoia", "dark gray", "rosybrown", "chocolate",
+    "orange", "moccasin", "palegoldenrod", "chartreuse", "limegreen",
+    "medium aquamarine", "light blue", "dodgerblue", "blue", "dark orchid",
+    "medium violetred", "silver", "light coral", "orangered", "tan",
+    "antiquewhite", "banana", "citron", "light green", "medium turquoise",
+    "powderblue", "cornflowerblue", "rebeccapurple", "medium orchid",
+    "deeppink", "light gray", "salmon", "tomato", "burlywood",
+    "blanchedalmond", "beige", "greenyellow", "lime", "turquoise",
+    "paleturquoise", "deepskyblue", "slateblue", "orchid", "magenta",
+    "gainsboro", "light pink", "coral", "peachpuff", "papayawhip",
+    "yellow", "light goldenrodyellow", "springgreen", "medium springgreen",
+    "cyan", "light steelblue", "medium slateblue", "violet",
+    "palevioletred", "whitesmoke", "pink", "dark salmon", "bisque",
+    "oldlace", "cornsilk", "light yellow", "palegreen", "aquamarine",
+    "light cyan", "light skyblue", "medium purple", "plum", "hotpink",
+    "ghostwhite", "mistyrose", "light salmon", "seashell", "floralwhite",
+    "lemonchiffon", "ivory", "honeydew", "mintcream", "azure", "aliceblue",
+    "lavender", "thistle", "lavenderblush", "white"
+    }
+LandHash *_palettes
+def _get_palette(str name) -> LandArray*:
+    if not _palettes:
+        _palettes = land_hash_new()
+    LandArray *pal = land_hash_get(_palettes, name)
+    if pal:
+        return pal
+    if land_equals(name, "14x11"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor *c; land_alloc(c)
+            *c = land_color_name(_palette_14_x_11_names[i])
+            land_array_add(pal, c)
+        land_hash_insert(_palettes, "14x11", pal)
+        return pal
+    if land_equals(name, "light"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor col = land_palette_color("14x11", i)
+            (double l, a, b) = land_color_to_oklab(col)
+            if l > 0.92:
+                LandColor *cp; land_alloc(cp)
+                *cp = col
+                land_array_add(pal, cp)
+        _sort(pal)
+        land_hash_insert(_palettes, "light", pal)
+        return pal
+    if land_equals(name, "dark"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor col = land_palette_color("14x11", i)
+            (double l, a, b) = land_color_to_oklab(col)
+            if l < 0.33:
+                LandColor *cp; land_alloc(cp)
+                *cp = col
+                land_array_add(pal, cp)
+        _sort(pal)
+        land_hash_insert(_palettes, "dark", pal)
+        return pal
+    if land_equals(name, "greys"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor col = land_palette_color("14x11", i)
+            (double l, c, h) = land_color_to_oklch(col)
+            if c < 0.01:
+                LandColor *cp; land_alloc(cp)
+                *cp = col
+                land_array_add(pal, cp)
+        _sort(pal)
+        land_hash_insert(_palettes, "greys", pal)
+        return pal
+    if land_equals(name, "reds"): return _make_palette_hue("reds", 0.1, 0.75)
+    if land_equals(name, "browns"): return _make_palette_hue("browns", 0.75, 1.33)
+    if land_equals(name, "yellows"): return _make_palette_hue("yellows", 1.33, 2.1)
+    if land_equals(name, "greens"): return _make_palette_hue("greens", 2.1, 3)
+    if land_equals(name, "blues"): return _make_palette_hue("blues", 3, 4.9)
+    if land_equals(name, "purples"): return _make_palette_hue("purples", 4.9, 0.1)
+    if land_equals(name, "colorless"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor col = land_palette_color("14x11", i)
+            (double l, c, h) = land_color_to_oklch(col)
+            if c >= 0.1: continue
+            LandColor *cp; land_alloc(cp)
+            *cp = col
+            land_array_add(pal, cp)
+        _sort(pal)
+        land_hash_insert(_palettes, "colorless", pal)
+        return pal
+    if land_equals(name, "colorful"):
+        pal = land_array_new()
+        for int i in range(14 * 11):
+            LandColor col = land_palette_color("14x11", i)
+            (double l, c, h) = land_color_to_oklch(col)
+            if c < 0.7: continue
+            if l < 0.5: continue
+            LandColor *cp; land_alloc(cp)
+            *cp = col
+            land_array_add(pal, cp)
+        _sort(pal)
+        land_hash_insert(_palettes, "colorful", pal)
+        return pal
+    if land_equals(name, "material-red"): return _material(name)
+    if land_equals(name, "material-pink"): return _material(name)
+    if land_equals(name, "material-purple"): return _material(name)
+    if land_equals(name, "material-deep purple"): return _material(name)
+    if land_equals(name, "material-indigo"): return _material(name)
+    if land_equals(name, "material-blue"): return _material(name)
+    if land_equals(name, "material-light blue"): return _material(name)
+    if land_equals(name, "material-cyan"): return _material(name)
+    if land_equals(name, "material-teal"): return _material(name)
+    if land_equals(name, "material-green"): return _material(name)
+    if land_equals(name, "material-light green"): return _material(name)
+    if land_equals(name, "material-lime"): return _material(name)
+    if land_equals(name, "material-yellow"): return _material(name)
+    if land_equals(name, "material-amber"): return _material(name)
+    if land_equals(name, "material-orange"): return _material(name)
+    if land_equals(name, "material-deep orange"): return _material(name)
+    if land_equals(name, "material-brown"): return _material(name)
+    if land_equals(name, "material-grey"): return _material(name)
+    if land_equals(name, "material-blue grey"): return _material(name)
+    return None
+
+def _material(str palname) -> LandArray *:
+    LandArray *pal = google_material_palette(palname + strlen("material-"))
+    land_hash_insert(_palettes, palname, pal)
+    return pal
+
+def _make_palette_hue(str name, float h1, h2) -> LandArray *:
+    LandArray *pal = land_array_new()
+    for int i in range(14 * 11):
+        LandColor col = land_palette_color("14x11", i)
+        (double l, c, h) = land_color_to_oklch(col)
+        if c < 0.1: continue
+        if (h2 > h1 and h > h1 and h < h2) or (h2 < h1 and (h > h1 or h < h2)):
+            LandColor *cp; land_alloc(cp)
+            *cp = col
+            land_array_add(pal, cp)
+    _sort(pal)
+    land_hash_insert(_palettes, name, pal)
+    return pal
+
+def _cmp_lum(void const *a, void const *b) -> int:
+    LandColor *const*ac = a
+    LandColor *const *bc = b
+    (double la, aa, ba) = land_color_to_oklab(**ac)
+    (double lb, ab, bb) = land_color_to_oklab(**bc)
+    if la < lb: return -1
+    if la > lb: return 1
+    return 0
+
+def _sort(LandArray *pal):
+    land_array_sort(pal, _cmp_lum)
+
+def land_palette_color(char const * name, int p) -> LandColor:
+    auto pal = _get_palette(name)
+    if not pal:
+        return land_transparent()
+    LandColor *col = land_array_get_wrap(pal, p)
+    return *col
+
+def land_palette_close(char const * name, LandColor orig) -> LandColor:
+    auto pal = _get_palette(name)
+    double cd = 1000
+    LandColor found
+    for LandColor *c in pal:
+        double d = land_color_distance_ciede2000(*c, orig)
+        if d < cd:
+            cd = d
+            found = *c
+    return found
+
+def land_palette_length(char const* name) -> int:
+    auto pal = _get_palette(name)
+    if not pal:
+        return 0
+    return land_array_count(pal)

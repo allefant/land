@@ -4,6 +4,7 @@ with GLSL.
 """
 static import log
 static import mem
+static import file
 import land.util
 import allegro5.a5_opengl
 
@@ -105,6 +106,32 @@ def land_glsl_shader_new(char const *name,
         char const *vertex_glsl,
         char const *fragment_glsl) -> LandGLSLShader *:
     LandGLSLShader *self; land_alloc(self)
+    shader_setup(self, name, vertex_glsl, fragment_glsl)
+    return self
+
+def land_glsl_shader_load(str name, bool simple) -> LandGLSLShader *:
+    LandGLSLShader *self; land_alloc(self)
+    char *vertex_glsl = None
+    char *fragment_glsl = None
+    str kinds[2] = {"vertex", "fragment"}
+    for int i in range(2):
+        str kind = kinds[i]
+        char *path = land_str("shader/%s_%s.glsl", name, kind)
+
+        if simple:
+            char *path2 = land_str("shader/%s_%s_simple.glsl", name, kind)
+            if land_data_file_exists(path2):
+                land_free(path)
+                path = path2
+            else:
+                land_free(path2)
+
+        char *text = land_read_text(path)
+        if not text:
+            print("Error: could not find %s", path)
+        if i == 0: vertex_glsl = text
+        if i == 1: fragment_glsl = text
+        land_free(path)
     shader_setup(self, name, vertex_glsl, fragment_glsl)
     return self
 

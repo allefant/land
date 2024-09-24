@@ -15,6 +15,11 @@ class LandBufferAsFile:
     int pos
     int ungetc
 
+# can take from start without having to copy memory
+class LandRingBuffer:
+    LandBuffer ring
+    uint64_t c, offset
+
 *** "ifdef" LAND_MEMLOG
 
 *** "undef" land_buffer_new
@@ -83,6 +88,7 @@ def land_buffer_destroy(LandBuffer *self):
     land_free(self)
 
 def land_buffer_grow(LandBuffer *self, int n):
+    # size: 0 1 2 4 8 16 32 64 128 256 ...
     self.n += n
     if self.n > self.size:
         if not self.size: self.size = 1
@@ -91,6 +97,12 @@ def land_buffer_grow(LandBuffer *self, int n):
         self.buffer = land_realloc(self.buffer, self.size)
         if not self.buffer:
             land_exception("could not allocate %lu bytes\n", self.size)
+
+def land_buffer_shrink(LandBuffer *self, uint64_t n):
+    if n <= self.n:
+        self.n -= n
+    else:
+        self.n = 0
 
 def land_buffer_insert(LandBuffer *self, int pos, char const *buffer, int n):
     land_buffer_grow(self, n)
@@ -152,6 +164,14 @@ def land_buffer_get_uint32_t(LandBuffer *self, int pos) -> uint32_t:
     u += *(uc++) << 24
     return u
 
+def land_buffer_pop_uint32_t(LandBuffer *self) -> uint32_t:
+    if self.n < 4:
+        return 0
+    int pos = self.n // 4 - 1
+    uint32_t x = land_buffer_get_uint32_t(self, pos)
+    land_buffer_shrink(self, 4)
+    return x
+
 def land_buffer_get_uint16_t(LandBuffer *self, int pos) -> uint16_t:
     uint8_t *uc = (uint8_t *)self->buffer + pos
     uint16_t u = *(uc++)
@@ -182,6 +202,7 @@ def land_buffer_len_land_float(LandBuffer *self) -> int:
     return self.n / sizeof(LandFloat)
 
 def land_buffer_len_uint32(LandBuffer *self) -> int:
+    if not self: return 0
     return self.n / sizeof(uint32_t)
 
 def land_buffer_add_land_float(LandBuffer *self, LandFloat f):
@@ -374,6 +395,71 @@ def land_buffer_write_to_file(LandBuffer *self, char const *filename) -> bool
     uint64_t written = land_file_write(pf, self.buffer, self.n)
     land_file_destroy(pf)
     return written == self.n
+
+def land_ring_buffer_new -> LandRingBuffer*:
+    LandRingBuffer *self
+    land_alloc(self)
+    return self
+
+def land_ring_buffer_destroy(LandRingBuffer* self):
+    if self.ring.buffer:
+        land_free(self.ring.buffer)
+    land_free(self)
+
+def land_ring_add_uint32(LandRingBuffer *self, uint32_t x):
+    # size=8, n=7, c=0, offset=3
+    # |   |   |   | a | b | c | d |   |
+    # |_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|
+    # size=8, n=8, c=1, offset=3
+    # | f |   |   | a | b | c | d | e |
+    # |_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|
+    # size=8, n=8, c=2, offset=7
+    # | b | c |   |   |   |   |   | a |
+    # |_0_|_1_|_2_|_3_|_4_|_5_|_6_|_7_|
+
+    # we have space at the end of the buffer
+    if self.offset + self.ring.n + 4 <= self.ring.size:
+        uint32_t *ring = (void*)self.ring.buffer
+        int i = self.ring.n // 4
+        ring[i] = x
+        self.ring.n += 4
+    # we have space at the beginning, before offset
+    elif self.c + 4 <= self.offset:
+        uint32_t *ring = (void*)self.ring.buffer
+        int i = self.c // 4
+        ring[i] = x
+        self.c += 4
+    # we are full and need to reallocate
+    else:
+        land_buffer_grow(&self.ring, self.c + 4)
+        # first copy the self.c ring bytes to the end
+        memmove(self.ring.buffer + self.ring.n, self.ring.buffer, self.c)
+        # then shuffle everything back to offset 0
+        memmove(self.ring.buffer, self.ring.buffer + self.offset, self.ring.n)
+        self.ring.n = self.ring.n - self.offset + self.c
+        self.c = 0
+        self.offset = 0
+        uint32_t *ring = (void*)self.ring.buffer
+        int i = self.ring.n // 4 - 1
+        ring[i] = x
+
+def land_ring_pop_first_uint32(LandRingBuffer *self) -> uint32_t:
+    if self.ring.n == 0: return 0
+    uint32_t *ring = (void *)self.ring.buffer
+    int i = self.offset // 4
+    uint32_t x = ring[i]
+    self.offset += 4
+    if self.offset == self.ring.n:
+        self.offset = 0
+        self.ring.n = self.c
+        self.c = 0
+    return x
+
+def land_ring_len(LandRingBuffer *self) -> uint64_t:
+    return self.ring.n - self.offset + self.c
+
+def land_ring_len_uint32(LandRingBuffer *self) -> uint64_t:
+    return land_ring_len(self) // sizeof(uint32_t)
 
 *** "ifndef" LAND_NO_COMPRESS
 def land_buffer_compress(LandBuffer *self):

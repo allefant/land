@@ -77,6 +77,12 @@ def land_yaml_has_entry(LandYamlEntry *self, str name) -> bool:
 def land_yaml_get_entry_scalar(LandYamlEntry *self, char const *name) -> char const *:
     return land_yaml_get_if_scalar(land_yaml_get_entry(self, name))
 
+def land_yaml_get_entry_dup(LandYamlEntry *self, char const *name) -> char *:
+    str s = land_yaml_get_if_scalar(land_yaml_get_entry(self, name))
+    if s:
+        return land_strdup(s)
+    return None
+
 def land_yaml_set_entry_scalar(LandYaml* yaml, LandYamlEntry *entry, str key, val):
     auto already = land_yaml_get_entry(entry, key)
     if already:

@@ -18,6 +18,9 @@ static LandList *runners
 
 static LandRunner *active_runner
 
+def land_runner_get_all -> LandList*:
+    return runners
+
 def land_runner_register(LandRunner *self):
     land_log_message("land_runner_register \"%s\"\n", self.name)
     land_add_list_data(&runners, self)
@@ -77,9 +80,9 @@ def land_runner_destroy_all():
         return
     for i = runners->first while i with i = i->next:
         LandRunner *self = (LandRunner *)i->data
-        if self.destroy:
+        if self.destroy and self.inited:
             self.destroy(self)
-        land_log_message("destroyed %s\n", self.name)
+        land_log_message("destroyed runner %s\n", self.name)
         land_free(self.name)
         if self.allocated: land_free(self)
 

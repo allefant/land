@@ -62,7 +62,9 @@ static class Waves:
     int count
     float *xy
 
-def land_noise_new(LandNoiseType t, int seed) -> LandNoise*:
+
+def land_noise_new_with_seed(LandNoiseType t, LandRandom *gen) -> LandNoise*:
+    
     LandNoise *self; land_alloc(self)
 
     self.t = t
@@ -78,9 +80,28 @@ def land_noise_new(LandNoiseType t, int seed) -> LandNoise*:
     self.maxval = +1e9
 
     self.wrap = True
-    self.seed = land_random_new(seed)
+    self.seed = gen
 
     return self
+
+def land_noise_new(LandNoiseType t, int seed) -> LandNoise*:
+    return land_noise_new_with_seed(t, land_random_new(seed))
+
+def land_noise_new_from_bytes(uint8_t *rgba, int w, h, planes, plane) -> LandNoise*:
+    auto noise = land_noise_new(LandNoiseValue, 0)
+    land_noise_set_size(noise, w, h)
+    land_noise_prepare(noise)
+    for int y in range(h):
+        for int x in range(w):
+            float v = rgba[y * w * planes + x * planes + plane] / 255.0
+            land_noise_set_value(noise, x, y, v)
+    return noise
+
+def land_noise_to_bytes(LandNoise *self, uint8_t *rgba, int planes, plane):
+    for int y in range(self.h):
+        for int x in range(self.w):
+            uint8_t c = self.cache[x + y *self.w] * 255
+            rgba[y * self.w * planes + x * planes + plane] = c
 
 def land_noise_set_random(LandNoise *self, LandRandom *random):
     """
@@ -146,6 +167,12 @@ def land_noise_set_blur(LandNoise *self, LandNoise *blur, LandFloat size):
     self.w = blur.w
     self.h = blur.h
     land_array_add(self.noise, blur)
+
+def land_noise_blurred(LandNoise *self, LandFloat size) -> LandNoise*:
+    LandNoise *blurred = land_noise_new_with_seed(LandNoiseValue, None)
+    land_noise_set_blur(blurred, self, size)
+    blurred.external_blur = self.external_blur
+    return blurred
 
 def land_noise_set_wrap(LandNoise *self, bool wrap):
     self.wrap = wrap
@@ -346,7 +373,8 @@ def land_noise_prepare(LandNoise *self):
         land_array_add(self.noise, noise)
 
     if self.t == LandNoiseValue:
-        self.cache = land_calloc(self.w * self.h * sizeof *self.cache)
+        if not self.cache:
+            self.cache = land_calloc(self.w * self.h * sizeof *self.cache)
         if self.value_cb:
             for int y in range(self.h):
                 for int x in range(self.w):

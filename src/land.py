@@ -199,25 +199,100 @@ import noise
 import image_op
 import camera
 import bitset
+import argparse
+import land.obj.obj
+import land.glsl
+import land.util2d
+import land.util3d
+import land.scene3d
 
 import land/allegro5/a5_opengl
 import land/allegro5/a5_misc
 
 static str _version = "1.0.0"
 
-def land_version -> char const *:
+def land_version -> str:
     return _version
 
 static LandArray *exit_functions
 static int _exitcode
-   
-macro land_use_main(m):
+
+global *** "define" _MAKE_CONFIG_NAME(n) config_******n
+global *** "define" MAKE_CONFIG_NAME(n) _MAKE_CONFIG_NAME(n)()
+global *** "define" _STRINGIFY(n) ***n
+global *** "define" STRINGIFY(n) _STRINGIFY(n)
+
+global *** "ifndef" LAND_NO_MAIN
+# when ran standalone
+global macro land_use_main(m):
     def main(int argc, char **argv) -> int:
         land_argc = argc
         land_argv = argv
         m()
         land_log_message("Return code is %d.\n", land_get_exitcode())
         return land_get_exitcode()
+global macro land_example(config, init, tick, draw, destroy):
+    def main(int argc, char **argv) -> int:
+        land_argc = argc
+        land_argv = argv
+        land_init()
+        config()
+        LandRunner *runner = land_runner_new(STRINGIFY(EXAMPLE_NAME),
+            (void *)init, None, (void *)tick, (void *)draw,
+            None, (void *)destroy)
+        land_runner_register(runner)
+        land_set_initial_runner(runner)
+        land_mainloop()
+        land_log_message("Return code is %d.\n", land_get_exitcode())
+        return land_get_exitcode()
+global macro land_commandline_example():
+    def main(int argc, char **argv) -> int:
+        land_argc = argc
+        land_argv = argv
+        land_init()
+        _com()
+        return land_get_exitcode()
+
+global macro land_standard_example():
+    def _config:
+        land_default_display()
+    land_example(_config, _init, _tick, _draw, _done)
+
+global macro land_example_flags(flags):
+    def _config:
+        land_default_display_flags(flags)
+    land_example(_config, _init, _tick, _draw, _done)
+
+
+global *** "else"
+# when used from run_all
+
+global macro land_use_main(m):
+    pass
+
+global macro land_example(config, init, tick, draw, destroy):
+    def _unused(void *c):
+        (void)c
+    def MAKE_CONFIG_NAME(EXAMPLE_NAME):
+        _unused(config)
+        LandRunner *runner = land_runner_new(STRINGIFY(EXAMPLE_NAME),
+            (void *)init, None, (void *)tick, (void *)draw,
+            None, (void *)destroy)
+        land_runner_register(runner)
+
+global macro land_commandline_example():
+    def MAKE_CONFIG_NAME(EXAMPLE_NAME):
+        LandRunner *runner = land_runner_new(STRINGIFY(EXAMPLE_NAME),
+            (void *)_com, None, None, None, None, None)
+        land_runner_register(runner)
+
+global macro land_standard_example():
+    land_example(None, _init, _tick, _draw, _done)
+
+global macro land_example_flags(flags):
+    land_example(None, _init, _tick, _draw, _done)
+
+global *** "endif"
 
 macro land_begin_shortcut(w, h, hz, flags, init, enter, tick, draw,
     leave, destroy):

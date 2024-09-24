@@ -625,6 +625,25 @@ def csg_extrude_triangle(LandVector a, b, LandFloat d, void *shared) -> LandCSG*
     add_quad_flip(polygons, b, a, a_, b_, shared, d > 0)
     return land_csg_new_from_polygons(polygons)
 
+def csg_extrude_polygon(LandFloat depth, int n, LandFloat *xy, void *shared) -> LandCSG*:
+    """
+    This extrudes a polygon with triangles from 0/0/0 to points x/y/0 along z.
+    """
+    LandArray *polygons = land_array_new()
+    LandVector z = land_vector(0, 0, 0)
+    LandVector z_ = land_vector(0, 0, depth)
+    for int i in range(n):
+        int j = (i + 1) % n
+        LandVector v1 = land_vector(xy[i * 2 + 0], xy[i * 2 + 1], 0)
+        LandVector v2 = land_vector(xy[j * 2 + 0], xy[j * 2 + 1], 0)
+        LandVector v1_ = land_vector(xy[i * 2 + 0], xy[i * 2 + 1], depth)
+        LandVector v2_ = land_vector(xy[j * 2 + 0], xy[j * 2 + 1], depth)
+        add_tri(polygons, z, v2, v1, shared)
+        add_tri_flip(polygons, z_, v2_, v1_, shared, True)
+        add_quad(polygons, v1, v2, v2_, v1_, shared)
+
+    return land_csg_new_from_polygons(polygons)
+
 def csg_irregular_tetrahedron(LandVector a, b, c, d, void *shared) -> LandCSG*:
     LandArray *polygons = land_array_new()
     add_tri(polygons, a, b, c, shared)

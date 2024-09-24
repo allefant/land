@@ -1,10 +1,33 @@
 static import land.mem
+import land.array
 
 class LandMemoryPool:
+    """
+    Allocate by adding to a contiguous memory block.
+    """
     LandMemoryPool *prev
     int allocated
     int used
     void *memory
+
+class LandAutoFree:
+    """
+    Keep a list of pointers to be freed later.
+    """
+    LandArray *pointers
+
+def land_auto_free_new -> LandAutoFree*:
+    LandAutoFree *self; land_alloc(self)
+    self.pointers = land_array_new()
+    return self
+
+def land_auto_free_add(LandAutoFree *self, void *pointer):
+    if not self: return
+    land_array_add(self.pointers, pointer)
+
+def land_auto_free(LandAutoFree *self):
+    land_array_destroy_with_free(self.pointers)
+    land_free(self)
 
 def land_pool_new_initial(int initial) -> LandMemoryPool *:
     LandMemoryPool *self; land_alloc(self)

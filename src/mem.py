@@ -2,6 +2,7 @@ import global stdlib, string, stdbool
 import config
 
 macro land_alloc(self) self = land_calloc(sizeof *self)
+macro land_alloc_array(self, n) self = land_calloc(n * sizeof *self)
 
 static import global stdio
 
@@ -222,6 +223,10 @@ def land_strdup(char const *s) -> char *:
 
 def land_free(void *ptr):
     free(ptr)
+
+def land_free_and_null(void *ptr):
+    free(*((void**)ptr))
+    *(void **)ptr = None
 
 *** "endif"
 

@@ -45,6 +45,11 @@ def land_array_new() -> LandArray *:
     land_alloc(self)
     return self
 
+def land_array_destroy_with_free_and_recreate(LandArray **a):
+    if *a:
+        land_array_destroy_with_free(*a)
+    *a = land_array_new()
+
 def land_array_add(LandArray *self, void *data):
     """
     Add data to an array.
@@ -180,6 +185,12 @@ def land_array_get_nth(LandArray const *array, int i) -> void *:
     if i < 0: i += array->count
     return array->data[i]
 
+def land_array_get_wrap(LandArray const *array, int i) -> void *:
+    if array.count == 0: return None
+    i %= array.count
+    if i < 0: i += array.count
+    return array->data[i]
+
 def land_array_get_or_none(LandArray const *array, int i) -> void *:
     if i < 0 or i >= array.count: return None
     return land_array_get_nth(array, i)
@@ -283,6 +294,10 @@ def land_array_clear(LandArray *self):
     Clear all elements in the array.
     """
     self.count = 0
+
+def land_array_clear_with_free(LandArray *self):
+    land_array_for_each(self, cb_free, None)
+    land_array_clear(self)
 
 def land_array_concat(LandArray *self, LandArray const *other):
     int new_count = self.count + other->count

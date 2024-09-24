@@ -167,6 +167,10 @@ def land_mouse_z() -> int:
     """Return the mouse wheel coordinate for the current tick."""
     return mz
 
+def land_mouse_pos(int *x, int *y):
+    *x = mx
+    *y = my
+
 def land_mouse_transformed(float *x, *y):
     LandFloat x1 = mx
     LandFloat y1 = my

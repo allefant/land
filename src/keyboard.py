@@ -115,6 +115,8 @@ def land_keybuffer_empty() -> bool:
     return keybuffer_last == keybuffer_first
 
 def land_keybuffer_next(int *k, int *u):
+    *k = 0
+    *u = 0
     if keybuffer_first < keybuffer_last:
         *k = keybuffer_keycode[keybuffer_first]
         *u = keybuffer_unicode[keybuffer_first]
@@ -124,6 +126,11 @@ def land_keybuffer_get -> int:
     int k = 0, u = 0
     land_keybuffer_next(&k, &u)
     return k
+
+def land_keybuffer_unicode -> int:
+    int k = 0, u = 0
+    land_keybuffer_next(&k, &u)
+    return u
 
 def land_key_name(int k) -> char const *:
     return platform_key_name(k)

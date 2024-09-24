@@ -131,6 +131,28 @@ def land_list_remove_item(LandList *list, LandListItem *item):
 
     list->count--
 
+def land_list_replace_item(LandList *list, LandListItem *item, *replace):
+    land_list_insert_item_before(list, item, replace)
+    land_list_remove_item(list, item)
+
+# Returns None if the list is empty. Also returns None if the data value
+# of the first list tiem is None.
+def land_list_pop_first(LandList *self) -> void *:
+    LandListItem *first = self.first
+    if not first: return None
+    void *data = first.data
+    land_list_remove_item(self, first)
+    land_listitem_destroy(first)
+    return data
+
+def land_list_pop_last(LandList *self) -> void *:
+    LandListItem *last = self.last
+    if not last: return None
+    void *data = last.data
+    land_list_remove_item(self, last)
+    land_listitem_destroy(last)
+    return data
+
 # Given a pointer to a (possibly NULL valued) list pointer, create a new node
 # with the given data, and add to the (possibly newly created) list.
 # 

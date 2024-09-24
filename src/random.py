@@ -1,6 +1,8 @@
 import global stdint
 import global stdbool
 static import land.mem
+static import time
+static import land.main
 
 #
 #   A C-program for MT19937, with initialization improved 2002/1/26.
@@ -171,8 +173,16 @@ static def genrand_res53() -> double:
 
 static macro MAX_NUMBER 4294967295U
 
+def land_make_seed -> int:
+    time_t t
+    time(&t)
+    return t + land_get_ticks()
+
 def land_seed(int seed):
     init_genrand(&default_state, seed)
+
+def land_reseed:
+    land_seed(land_make_seed())
 
 # rmin is inclusive, rmax is exclusive
 def land_rnd(double rmin, rmax) -> double:
@@ -182,6 +192,12 @@ def land_rnd(double rmin, rmax) -> double:
 # note: not threadsafe, will crash in genrand_int32
 def land_rand(int64_t rmin, rmax) -> int:
     return land_random(&default_state, rmin, rmax)
+
+# If we repeat something with the same seed, and the first time
+# 0..100 yields 40, then on another run with 0..50 we want it to yield
+# 20. land_rand does not do that because it uses modulo.
+def land_rand_repeatable(int64_t rmin, rmax) -> int:
+    return land_rnd(rmin, rmax + 1)
 
 def land_random_new(int seed) -> LandRandom *:
     LandRandom *self
@@ -214,18 +230,29 @@ def land_random_f(LandRandom *r, double rmin, rmax) -> double:
     return rmin + (
         (double)genrand_int32(r) / MAX_NUMBER) * (rmax - rmin)
 
+def land_random_repeatable(LandRandom *r, int64_t rmin, rmax) -> int:
+    """
+    like land_random but without modulo, so when changing range from
+    e.g. 0..50 to 0..100, the same sequence will be repatably twice
+    as large.
+    """
+    return land_random_f(r, rmin, rmax + 1)
+
 def land_probability(double p) -> bool:
     return land_rnd(0, 1) < p
 
-def land_shuffle(int *a, int n):
+def land_random_shuffle(LandRandom *rng, int *a, int n):
     for int i in range(n):
         a[i] = i
     # n=6: 0 1 2 3 4 5
     for int i in range(n - 1): # 0 1 2 3 4
-        int j = land_rand(i, n - 1) # [0..5], [1..5], [2..5], [3..5], [4..5]
+        int j = land_random(rng, i, n - 1) # [0..5], [1..5], [2..5], [3..5], [4..5]
         int t = a[i]
         a[i] = a[j]
         a[j] = t
+
+def land_shuffle(int *a, int n):
+    land_random_shuffle(&default_state, a, n)
 
 def land_select_random(int *weights, int n) -> int:
     int total = 0

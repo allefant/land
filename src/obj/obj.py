@@ -1,4 +1,5 @@
 import land.land
+import land.glsl
 import global ctype
 
 class LandObjMaterial:

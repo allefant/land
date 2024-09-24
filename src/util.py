@@ -198,6 +198,34 @@ def land_utf8_copy(char *target, int size, char const *source):
         prev = ptr
     target[i] = 0
 
+def land_utf8_copy_range(char *target, int size, str source, int first, n) -> int:
+    """
+    Copy into target, start at first character (not byte) and copy n
+    characters (not bytes) if there is room in target. Returns the number
+    of characters (not bytes) copied before target was full, or else at
+    most n.
+    """
+    int x = 0
+    int copied = 0
+    int i = 0
+    char const *ptr = source
+    char const *prev = source
+    while land_utf8_char_const(&ptr):
+        int s = ptr - prev
+        if x >= first:
+            if i + s < size:
+                memcpy(target + i, prev, s)
+                i += s
+                copied += 1
+                if copied >= n:
+                    break
+            else:
+                break
+        x += 1
+        prev = ptr
+    target[i] = 0
+    return copied
+
 def land_fnmatch(char const *pattern, char const *name) -> bool:
     """
     Match ? and * in the pattern.
@@ -267,8 +295,13 @@ def land_equals(char const *s, *s2) -> bool:
 def land_zero(void *ptr, int n):
     memset(ptr, 0, n)
 
-def land_copy_bytes(void *to, void *fro, int n):
+def land_copy_bytes(void *to, void const *fro, int n):
     memmove(to, fro, n)
+
+def land_duplicate_bytes(const void *p, int n) -> void*:
+    void *r = land_malloc(n)
+    memcpy(r, p, n)
+    return r
 
 def land_ends_with(char const *s, *end) -> bool:
     size_t n = strlen(end)
@@ -306,6 +339,21 @@ def land_append(char **s, str format, ...):
     land_appendv(s, format, args)
     va_end(args)
 
+def land_appendln(char **s, str format, ...):
+    va_list args
+    va_start(args, format)
+    land_appendv(s, format, args)
+    land_append(s, "\n")
+    va_end(args)
+
+def land_str(str format, ...) -> char*:
+    char *s = None
+    va_list args
+    va_start(args, format)
+    land_appendv(&s, format, args)
+    va_end(args)
+    return s
+
 def land_format(str format, ...) -> char*:
     va_list args
     va_start(args, format)
@@ -328,7 +376,23 @@ def land_concatenate_with_separator(char **s, char const *cat, *sep):
         land_concatenate(s, sep)
         land_concatenate(s, cat)
 
-def land_prepend(char **s, char const *pre):
+def land_prepend(char **s, str format, ...):
+    va_list args
+    va_start(args, format)
+    land_prependv(s, format, args)
+    va_end(args)
+
+def land_prependv(char **s, str format, va_list args):
+    va_list args2
+    va_copy(args2, args)
+    int n = vsnprintf(None, 0, format, args2)
+    va_end(args2)
+    if n < 0: n = 1023
+    char f[n + 1]
+    vsnprintf(f, n + 1, format, args)
+    land_prepend_string(s, f)
+
+def land_prepend_string(char **s, char const *pre):
     int slen = strlen(*s)
     int n = slen + strlen(pre) + 1
     char *re = land_realloc(*s, n)
@@ -401,6 +465,17 @@ def land_replace_all(char **s, char const *wat, char const *wit) -> int:
             return c
         c++
 
+def land_prefix_lines(char **s, str prefix):
+    int pl = strlen(prefix)
+    char p2[pl + 2]
+    land_copy_bytes(p2 + 1, prefix, pl)
+    p2[0] = '\n'
+    p2[pl + 1] = '\0'
+    if land_ends_with(*s, "\n"):
+        land_shorten(s, 0, -1)
+    land_replace_all(s, "\n", p2)
+    land_prepend(s, prefix)
+
 def land_lowercase_copy(str s) -> char*:
     char const *pos = s
     char *news = land_strdup("")
@@ -466,6 +541,11 @@ def land_strip(char **s):
     land_free(*s)
     *s = land_buffer_finish(b)
 
+def land_strip_path_from_filename(char **s):
+    char *fn = land_filename(*s)
+    land_free(*s)
+    *s = fn
+
 def land_filelist(char const *dir,
     int (*filter)(char const *, bool is_dir, void *data), int flags, void *data) -> LandArray *:
     """
@@ -488,7 +568,7 @@ def land_filelist(char const *dir,
     land_free(dir2)
     return array
 
-def _filter(char const *name, bool is_dir, void *data) -> int:
+def _filter1(char const *name, bool is_dir, void *data) -> int:
     char const *pattern = data
     if is_dir:
         return 2
@@ -496,7 +576,29 @@ def _filter(char const *name, bool is_dir, void *data) -> int:
         return 1
     return 0
 
+def _filter2(char const *name, bool is_dir, void *data) -> int:
+    char const *pattern = data
+    if is_dir:
+        return 0
+    if land_fnmatch(pattern, name):
+        return 1
+    return 0
+
+def _add_cb(str path, void *data):
+    LandArray *l = data
+    char *path2 = land_strdup(path)
+    land_array_add(l, path2)
+
+# Use land_array_destroy_with_strings to free the returned array
+def land_list_wildcard(str pattern) -> LandArray*:
+    LandArray *l = land_array_new()
+    land_for_each_file_flags(pattern, _add_cb, LAND_RELATIVE_PATH, l)
+    return l
+
 def land_for_each_file(str pattern, void (*cb)(str path, void* data), void* data) -> int:
+    return land_for_each_file_flags(pattern, cb, LAND_RELATIVE_PATH | LAND_VISIT_DIRECTORIES, data)
+
+def land_for_each_file_flags(str pattern, void (*cb)(str path, void* data), int flags, void* data) -> int:
     LandBuffer* dirbuf = land_buffer_new()
     int j = 0
     for int i = 0 while pattern[i] with i++:
@@ -508,7 +610,9 @@ def land_for_each_file(str pattern, void (*cb)(str path, void* data), void* data
     char *dirpath = land_buffer_finish(dirbuf)
 
     int count = 0
-    LandArray* filenames = land_filelist(dirpath, _filter, LAND_RELATIVE_PATH, (void *)pattern)
+    LandArray* filenames = land_filelist(dirpath,
+        _filter1 if (flags & LAND_VISIT_DIRECTORIES) else _filter2,
+        flags, (void *)pattern)
     if filenames:
         count = filenames->count
 
@@ -615,3 +719,6 @@ def land_get_seconds -> uint64_t:
 
 def land_string_to_float(str f) -> LandFloat:
     return strtod(f, None)
+
+def sgn(int x) -> int:
+    return (x > 0) - (x < 0)
