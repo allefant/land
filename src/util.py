@@ -424,6 +424,11 @@ def land_replace(char **s, int off, char const *wat, *wit) -> int:
     *s = re
     return pn + strlen(wit)
 
+def land_string_replaced(char *s, str wat, wit) -> char*:
+    char *ns = land_strdup(s)
+    land_replace(&ns, 0, wat, wit)
+    return ns
+
 def land_contains(str hay, needle) -> bool:
     return strstr(hay, needle) != None
 
@@ -483,6 +488,18 @@ def land_lowercase_copy(str s) -> char*:
         int c = land_utf8_char_const(&pos)
         if not c: break
         news = land_utf8_realloc_insert(news, -1, tolower(c))
+    return news
+
+def land_capitalized_copy(str s) -> char*:
+    char const *pos = s
+    char *news = land_strdup("")
+    int i = 0
+    while True:
+        int c = land_utf8_char_const(&pos)
+        if not c: break
+        news = land_utf8_realloc_insert(news, -1, toupper(c) if i == 0 else tolower(c))
+        i += 1
+        if c == ' ': i = 0
     return news
 
 def land_shorten(char **s, int start, end):
