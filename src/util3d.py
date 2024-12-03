@@ -183,6 +183,9 @@ def land_vector_mul(LandVector v, LandFloat s) -> LandVector:
     LandVector r = {v.x * s, v.y * s, v.z * s}
     return r
 
+def land_vector_flip(LandVector v) -> LandVector:
+    return land_vector(-v.x, -v.y, -v.z)
+
 def land_vector_div(LandVector v, LandFloat s) -> LandVector:
     LandVector r  = {v.x / s, v.y / s, v.z / s}
     return r
