@@ -12,7 +12,12 @@ class YamlParser:
     int flags
     int indent
     bool cannot_break # whatever is written next cannot start on a new line
-    
+
+static enum ParserMode:
+    ParserModeNormal
+    ParserModeWhiteSpace
+    ParserModeDoubleString
+
 def land_yaml_load(char const *filename) -> LandYaml *:
     LandFile *f = land_file_new(filename, "rb")
     if not f:
@@ -21,15 +26,23 @@ def land_yaml_load(char const *filename) -> LandYaml *:
     land_log_message("Parsing yaml %s\n", filename)
     LandYaml *yaml = land_yaml_new(filename)
     LandBuffer *value = land_buffer_new()
-    bool ignore_whitespace = True
+    ParserMode mode = ParserModeWhiteSpace
 
     while True:
         int c = land_file_getc(f)
-        if ignore_whitespace:
+        if mode == ParserModeWhiteSpace:
             if c == ' ': continue
             if c == '\n': continue
-        ignore_whitespace = False
-        if c < 0 or strchr("{}[],:\n", c):
+            mode = ParserModeNormal
+        bool done = False
+        if mode == ParserModeNormal:
+            if strchr("{}[],:\n", c):
+                done = True
+        elif mode == ParserModeDoubleString:
+            if c == '"':
+                c = 0
+                mode = ParserModeWhiteSpace
+        if c < 0 or done:
             if value.n:
                 land_buffer_add_char(value, 0)
                 land_yaml_add_scalar(yaml, land_strdup(value.buffer))
@@ -38,22 +51,26 @@ def land_yaml_load(char const *filename) -> LandYaml *:
         if c < 0: break
         if c == '{':
             land_yaml_add_mapping(yaml)
-            ignore_whitespace = True
+            mode = ParserModeWhiteSpace
         elif c == '[':
             land_yaml_add_sequence(yaml)
-            ignore_whitespace = True
+            mode = ParserModeWhiteSpace
         elif c == '}':
             land_yaml_done(yaml)
-            ignore_whitespace = True
+            mode = ParserModeWhiteSpace
         elif c == ']':
             land_yaml_done(yaml)
-            ignore_whitespace = True
+            mode = ParserModeWhiteSpace
         elif c == ',':
-            ignore_whitespace = True
+            mode = ParserModeWhiteSpace
         elif c == ':':
-            ignore_whitespace = True
-        elif c == '\n': pass
-        else: land_buffer_add_char(value, c)
+            mode = ParserModeWhiteSpace
+        elif c == '"':
+            mode = ParserModeDoubleString
+        elif c == '\n':
+            pass
+        else:
+            land_buffer_add_char(value, c)
 
     land_file_destroy(f)
     land_buffer_destroy(value)
