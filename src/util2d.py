@@ -333,3 +333,10 @@ def land_point_segment_distance(LandFloat px, py, ax, ay, bx, by) -> LandFloat:
     if d  > ll:
         return sqrt(pow(px - bx, 2) + pow(py - by, 2))
     return fabs(land_cross2d(lx, ly, x, y)) / sqrt(ll)
+
+def land_rectangles_overlap(LandRectangle r1, r2) -> bool:
+    if r1.x >= r2.x + r2.w: return False
+    if r1.y >= r2.y + r2.h: return False
+    if r2.x >= r1.x + r1.w: return False
+    if r2.y >= r1.y + r1.h: return False
+    return True
