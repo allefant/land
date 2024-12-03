@@ -131,6 +131,9 @@ def land_widget_checkbox_set(LandWidget *base, bool checked):
         # _cb_clicked will change the state for us!
         land_widget_checkbox_clicked(box)
     
+def land_widget_checkbox_togle(LandWidget *base):
+    land_widget_checkbox_set(base, not land_widget_checkbox_is_checked(base))
+    
 def land_widget_checkbox_interface_initialize():
     if land_widget_checkbox_interface: return
     land_widget_container_interface_initialize()

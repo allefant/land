@@ -40,6 +40,8 @@ class LandWidgetTheme:
     # TODO: instead of a list, use a mapping from the widget names. 
     LandList *elements
 
+    float border_scale
+
 static LandWidgetTheme *default_theme
 
 def land_widget_theme_default() -> LandWidgetTheme *:
@@ -63,100 +65,8 @@ static inline def centered_offset (int size1, int size2) -> int:
         o -= size2
     return o
 
-static inline def _masked_non_stretched_blit(LandImage *s,
-    int sx, sy, w, h, dx, dy, _, __) -> void:
-    land_image_clip(s, sx, sy, sx + w, sy + h)
-    land_image_draw(s, dx - sx, dy - sy)
-
-static inline def _masked_stretched_blit(LandImage *s,
-    int sx, sy, w, h, dx, dy, dw, dh) -> void:
-    land_image_clip(s, sx, sy, sx + w, sy + h)
-    land_image_draw_scaled(s, dx - sx, dy - sy, (float)dw / w,
-        (float)dh / h)
-
-static enum COLUMN_TYPE:
-    COLUMN_CENTER = 1
-    COLUMN_STRETCH
-    COLUMN_LEFT
-    COLUMN_MIDDLE
-    COLUMN_RIGHT
-
-# Draw a column of pattern pat (at bx, width bw) into the given rectangle.
-# 
-static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
-    int x, int y, int w, int h, int skip_middle) -> void:
-    int oy
-    int j
-    int bh = land_image_height(pat->bmp)
-    int bm = bh - pat->bt - pat->bb
-
-    void (*bfunc)(LandImage *, int, int, int, int, int, int, int, int)
-    bfunc = _masked_non_stretched_blit
-
-    if bm < 1:
-        return
-
-    if pat->flags & ALIGN_V:
-        # TODO: anchor
-        oy = (y / bm) * bm - y
-
-    else:
-        oy = centered_offset (h, bm)
-
-    if w != bw:
-        bfunc = _masked_stretched_blit
-
-    if pat->flags & CENTER_V:
-        bfunc (pat->bmp, bx, 0, bw, land_image_height(pat->bmp), x,
-               y + h / 2 - land_image_height(pat->bmp) / 2, w, land_image_height(pat->bmp))
-
-    elif pat->flags & STRETCH_V:
-        _masked_stretched_blit(pat->bmp, bx, 0, bw, land_image_height(pat->bmp), x, y, w, h)
-
-    else: # pattern :
-        # .....bx......
-        #  ___ ___ ___
-        # |   |   |   | .bt
-        # |___|___|___|
-        # |   |   |   | bm
-        # |___|___|___|
-        # |   |   |   | .bb
-        # |___|___|___|
-        #   
-        int bt = pat->bt
-        int bb = pat->bb
-        if bt + bb > h:
-            bt = h / 2
-            bb = h - bt
-
-        # top 
-        if bt and y + bt >= _land_active_display->clip_y1:
-            land_clip_push()
-            land_clip_intersect(0, y, land_display_width(),  min(y + h, y + bt))
-            bfunc(pat->bmp, bx, 0, bw, bt, x, y, w, bt)
-            land_clip_pop()
-
-        # middle 
-        if h - pat->bt - pat->bb > 0 and not skip_middle:
-            land_clip_push()
-            land_clip_intersect(0, min(y + h, y + pat->bt), land_display_width(), max(y, y + h - pat->bb))
-            int start = max(0, (_land_active_display->clip_y1 - (y + oy)) / bm)
-            start = y + oy + start * bm
-            int end = min(_land_active_display->clip_y2, y + h)
-            for j = start while j < end with j += bm:
-                bfunc(pat->bmp, bx, pat->bt, bw, bm, x, j, w, bm)
-
-            land_clip_pop()
-
-        # bottom 
-        if bb and y + h - bb < _land_active_display->clip_y2:
-            land_clip_push()
-            land_clip_intersect(0, max(y, y + h - bb), land_display_width(), y + h)
-            bfunc(pat->bmp, bx, land_image_height(pat->bmp) - bb, bw, bb, x,
-                y + h - bb, w, bb)
-            land_clip_pop()
-
-
+def _part(LandImage *image, float sx, sy, sw, sh, dx, dy, dw, dh):
+    land_image_draw_partial_into(image, sx, sy, sw, sh, dx, dy, dw, dh)
 
 # Draw the pattern pat into the specified rectangle, following the contained
 # tiling, stretching, alignement and bordering constraints.
@@ -171,81 +81,47 @@ static inline def blit_column(LandWidgetThemeElement *pat, int bx, int bw,
 # align flag is set. In this case, it will be aligned NW to the anchor.
 #
 # 
-static def draw_bitmap(LandWidgetThemeElement *pat, int x, int y, int w, int h,
-    int skip_middle):
-    int i
+def _draw_bitmap(LandWidgetThemeElement *pat, int x, y, w, h,
+        bool skip_middle):
+    LandWidgetTheme *t = pat.theme
 
-    int bw = land_image_width(pat->bmp)
-    int bm = bw - pat->bl - pat->br
+    int bl = pat.bl * t.border_scale
+    int bt = pat.bt * t.border_scale
+    int br = pat.br * t.border_scale
+    int bb = pat.bb * t.border_scale
+    int iw = land_image_width(pat.bmp)
+    int ih = land_image_height(pat.bmp)
 
-    if w < 1 or h < 1 or bm < 1:
-        return
+    #
+    # |    bw     |
+    # |.bl|bm |.br|
+    #  ___ ___ ___
+    # |   |   |   |
+    # |___|___|___|
+    # |   |   |   |
+    # |___|___|___|
+    # |   |   |   |
+    # |___|___|___|
+    #
+    float imw = iw - pat.bl - pat.br
+    float imh = ih - pat.bb - pat.bt
+    float x2 = x + w - br
+    float y2 = y + h - bb
+    float w2 = w - bl - br
+    float h2 = h - bb - bt
 
-    land_clip_push()
-    land_clip_intersect(x, y, x + w, y + h)
+    _part(pat.bmp, 0, 0, pat.bl, pat.bt, x, y, bl, bt)
+    _part(pat.bmp, pat.bl, 0, imw, pat.bt, x + bl, y, w2, bt)
+    _part(pat.bmp, iw - pat.br, 0, pat.br, pat.bt, x2, y, br, bt)
 
-    if pat->flags & CENTER_H:
-        blit_column(pat, 0, bw, x + w / 2 - bw / 2, y, bw, h, 0)
-
-    elif pat->flags & STRETCH_H:
-        blit_column(pat, 0, bw, x, y, w, h, 0)
-
-    else: # pattern
-        int ox
-        if pat->flags & ALIGN_H:
-            # TODO: anchor
-            ox = (x / bm) * bm - x
-        else:
-            ox = centered_offset(w, bm)
-
-        #
-        # |    bw     |
-        # |.bl|bm |.br|
-        #  ___ ___ ___
-        # |   |   |   |
-        # |___|___|___|
-        # |   |   |   |
-        # |___|___|___|
-        # |   |   |   |
-        # |___|___|___|
-        #
-
-        int bl = pat->bl
-        int br = pat->br
-        if bl + br > w:
-            bl = w / 2
-            br = w - bl
-
-        # left 
-        if bl and x + bl >= _land_active_display->clip_x1:
-            land_clip_push()
-            land_clip_intersect(x, 0, min(x + w, x + bl), land_display_height())
-            blit_column(pat, 0, bl, x, y, bl, h, 0)
-            land_clip_pop()
-            
-        # middle 
-        if w - pat->bl - pat->br > 0:
-            land_clip_push()
-            land_clip_intersect(min(x + w, x + pat->bl), 0, max(x, x + w - pat->br),
-                land_display_height())
-
-            int start = max(0, (_land_active_display->clip_x1 - (x + ox)) / bm)
-            start = x + ox + start * bm
-            int end = min(_land_active_display->clip_x2, x + w - pat->br)
-            for i = start while i < end with i += bm:
-                blit_column(pat, pat->bl, bm, i, y, bm, h, skip_middle)
-
-            land_clip_pop()
-
-        # right 
-        if br and x + w - br < _land_active_display->clip_x2:
-            land_clip_push()
-            land_clip_intersect(max(x, x + w - br), 0, x + w, land_display_height())
-            blit_column(pat, bw - br, br, x + w - br, y, br, h, 0)
-            land_clip_pop()
-
-
-    land_clip_pop()
+    _part(pat.bmp, 0, pat.bt, pat.bl, imh, x, y + bt, bl, h2)
+    if not skip_middle:
+        _part(pat.bmp, pat.bl, pat.bt, imw, imh, x + bl, y + bt, w2, h2)
+    _part(pat.bmp, iw - pat.br, pat.bt, pat.br, imh, x2, y + bt, br, h2)
+    
+    _part(pat.bmp, 0, ih - pat.bb, pat.bl, pat.bb, x, y2, bl, bb)
+    _part(pat.bmp, pat.bl, ih - pat.bb, imw, pat.bb, x + bl, y2, w2, bb)
+    _part(pat.bmp, iw - pat.br, ih - pat.bb, pat.br, pat.bb, x2, y2, br, bb)
 
 static def read_int_arg(int argc, LandArray *argv, int *a, int *val):
     (*a)++
@@ -373,6 +249,8 @@ def land_widget_theme_new(char const *filename) -> LandWidgetTheme *:
     LandWidgetTheme *self
     land_alloc(self)
 
+    self.border_scale = 1
+
     LandIniFile *config = land_ini_read(filename)
 
     LandBuffer *prefix = land_buffer_new()
@@ -486,7 +364,7 @@ def land_widget_theme_draw(LandWidget *self):
     #if land_completely_clipped():
     #    print("warning: widget clipped %s", land_widget_info_string(self))
 
-    draw_bitmap(element, self.box.x, self->box.y, self->box.w, self->box.h,
+    _draw_bitmap(element, self.box.x, self->box.y, self->box.w, self->box.h,
         self.only_border)
 
 def land_widget_theme_color(LandWidget *self):
@@ -622,3 +500,9 @@ def land_widget_debug_theme(LandWidget *w, int indentation):
             for LandWidget *child in LandList *c.children:
                 land_widget_debug_theme(child, indentation + 1)
     
+def land_widget_theme_set_stretch(LandWidgetTheme *self, bool hor, ver):
+    for LandWidgetThemeElement *element in LandList *self.elements:
+        if hor: element.flags |= STRETCH_H
+        else: element.flags &= ~STRETCH_H
+        if ver: element.flags |= STRETCH_V
+        else: element.flags &= ~STRETCH_V

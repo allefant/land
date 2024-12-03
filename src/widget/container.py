@@ -540,3 +540,15 @@ def land_widget_container_interface_initialize():
         land_widget_container_keyboard_enter
     land_widget_container_interface->keyboard_leave =\
         land_widget_container_keyboard_leave
+
+def land_widget_confine_to_parent(LandWidget *self):
+    LandWidget *parent = self.parent
+    (float pl, pt, pr, pb) = land_widget_inner_extents(parent)
+    (float l0, t0, r, b) = land_widget_inner_extents(self)
+    float l = l0
+    float t = t0
+    if r > pr: l -= r - pr
+    if b > pb: t -= b - pb
+    if l < pl: l = pl
+    if t < pt: t = pt
+    land_widget_move(self, l - l0, t - t0)

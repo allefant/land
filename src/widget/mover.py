@@ -4,6 +4,7 @@ class LandWidgetMover:
     LandWidgetButton super
     LandWidget *target
     int dragged
+    bool confined
 
 macro LAND_WIDGET_MOVER(widget) ((LandWidgetMover *)widget)
 
@@ -22,6 +23,8 @@ def land_widget_mover_mouse_tick(LandWidget *super):
 
     if (land_mouse_b() & 1) and self.dragged:
         land_widget_move(self.target, land_mouse_delta_x(), land_mouse_delta_y())
+        if self.confined:
+            land_widget_confine_to_parent(self.target)
 
 
 def land_widget_mover_new(LandWidget *parent, char const *text, int x, int y, int w, int h) -> LandWidget *:
@@ -60,3 +63,6 @@ def land_widget_mover_interface_initialize():
     land_widget_mover_interface = land_widget_copy_interface(
         land_widget_button_interface, "mover")
     land_widget_mover_interface->mouse_tick = land_widget_mover_mouse_tick
+
+def land_widget_mover_confine(LandWidget *self):
+    LAND_WIDGET_MOVER(self)->confined = True
