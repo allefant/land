@@ -113,7 +113,7 @@ def land_yaml_get_entry_double(LandYamlEntry *self,
     return land_yaml_get_scalar_double(land_yaml_get_entry(self, name))
 
 def land_yaml_get_nth(LandYamlEntry *self, int i) -> LandYamlEntry *:
-    return land_array_get_nth(land_yaml_get_sequence(self), i)
+    return land_array_get_or_none(land_yaml_get_sequence(self), i)
 
 def land_yaml_get_nth_int(LandYamlEntry *self, int i) -> int:
     return land_yaml_get_scalar_int(
@@ -146,7 +146,7 @@ def land_yaml_new(char const *filename) -> LandYaml *:
     yaml.parents = land_array_new()
     return yaml
 
-static def _add_entry(LandYaml *yaml, LandYamlEntry *entry):
+def _add_entry(LandYaml *yaml, LandYamlEntry *entry):
     if yaml.parent:
         if yaml.parent->type == YamlSequence:
             land_array_add(yaml.parent->sequence, entry)
