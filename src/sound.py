@@ -92,6 +92,8 @@ def land_stream_fill(LandStream *self):
     platform_stream_fill(self)
 
 def land_stream_music(LandStream *self, char const *filename):
+    if self == None:
+        self = land_stream_default()
     self.filename = land_path_with_prefix(filename)
     platform_stream_music(self, self.filename, true)
 
@@ -110,5 +112,5 @@ def land_stream_set_playing(LandStream *self, bool onoff):
 
 def land_stream_default -> LandStream*:
     if _default: return _default
-    _default = land_stream_new(2048, 4, 22050, 16, 2)
+    _default = land_stream_new(2048, 4, 44100, 16, 2)
     return _default

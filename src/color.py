@@ -23,6 +23,41 @@ static double const delta2 = 6.0 / 29 * 6.0 / 29
 static double const delta3 = 6.0 / 29 * 6.0 / 29 * 6.0 / 29
 static double const tf7 = 1.0 / 4 / 4 / 4 / 4 / 4 / 4 / 4
 
+str _palette_14_x_11_names[14 * 11] = {
+    "maroon/2", "maroon", "saddlebrown/2", "dark goldenrod/2",
+    "moccasin/2", "dark olivegreen/2", "dark green/2", "teal",
+    "dark slategray/2", "deepskyblue/2", "midnightblue/2", "indigo/2",
+    "purple/2", "black", "rosybrown/2", "dark red", "saddlebrown",
+    "dark goldenrod", "olive", "dark green", "green", "dark cyan", "teal/2",
+    "royalblue", "navy", "indigo", "medium violetred/2", "dimgray/2",
+    "brown", "firebrick", "peru", "gold", "goldenrod", "dark olivegreen",
+    "forestgreen", "medium seagreen", "dark slategray", "steelblue",
+    "midnightblue", "dark violet", "purple", "dimgray", "crimson",
+    "sienna", "dark orange", "wheat", "dark khaki", "olivedrab",
+    "seagreen", "light seagreen", "cadetblue", "slategray", "medium blue",
+    "thistle/2", "dark magenta", "gray", "indianred", "red", "sandybrown",
+    "navajowhite", "khaki", "yellowgreen", "dark seagreen",
+    "dark turquoise", "skyblue", "light slategray", "dark slateblue",
+    "blueviolet", "sequoia", "dark gray", "rosybrown", "chocolate",
+    "orange", "moccasin", "palegoldenrod", "chartreuse", "limegreen",
+    "medium aquamarine", "light blue", "dodgerblue", "blue", "dark orchid",
+    "medium violetred", "silver", "light coral", "orangered", "tan",
+    "antiquewhite", "banana", "citron", "light green", "medium turquoise",
+    "powderblue", "cornflowerblue", "rebeccapurple", "medium orchid",
+    "deeppink", "light gray", "salmon", "tomato", "burlywood",
+    "blanchedalmond", "beige", "greenyellow", "lime", "turquoise",
+    "paleturquoise", "deepskyblue", "slateblue", "orchid", "magenta",
+    "gainsboro", "light pink", "coral", "peachpuff", "papayawhip",
+    "yellow", "light goldenrodyellow", "springgreen", "medium springgreen",
+    "cyan", "light steelblue", "medium slateblue", "violet",
+    "palevioletred", "whitesmoke", "pink", "dark salmon", "bisque",
+    "oldlace", "cornsilk", "light yellow", "palegreen", "aquamarine",
+    "light cyan", "light skyblue", "medium purple", "plum", "hotpink",
+    "ghostwhite", "mistyrose", "light salmon", "seashell", "floralwhite",
+    "lemonchiffon", "ivory", "honeydew", "mintcream", "azure", "aliceblue",
+    "lavender", "thistle", "lavenderblush", "white"
+    }
+
 def land_color_alpha(float a) -> LandColor:
     LandColor c = {0, 0, 0, a}
     return c
@@ -365,6 +400,14 @@ def land_color_name(char const *name) -> LandColor:
 
     return platform_color_name(name)
 
+def land_color_to_name(LandColor c, char buf[32]):
+    for int i in range(14 * 11):
+        LandColor cn = land_color_name(_palette_14_x_11_names[i])
+        if cn.r == c.r and cn.g == c.g and cn.b == c.b:
+            strncpy(buf,_palette_14_x_11_names[i], 32)
+            return
+    land_color_to_html(c, buf)
+
 def land_color_mix(LandColor c, LandColor mix, float p) -> LandColor:
     float q = 1 - p
     c.r = c.r * q + mix.r * p
@@ -491,40 +534,6 @@ def land_set_black: land_color_set(land_black())
 def land_set_white: land_color_set(land_white())
 def land_set_transparent: land_color_set(land_transparent())
 
-str _palette_14_x_11_names[14 * 11] = {
-    "maroon/2", "maroon", "saddlebrown/2", "dark goldenrod/2",
-    "moccasin/2", "dark olivegreen/2", "dark green/2", "teal",
-    "dark slategray/2", "deepskyblue/2", "midnightblue/2", "indigo/2",
-    "purple/2", "black", "rosybrown/2", "dark red", "saddlebrown",
-    "dark goldenrod", "olive", "dark green", "green", "dark cyan", "teal/2",
-    "royalblue", "navy", "indigo", "medium violetred/2", "dimgray/2",
-    "brown", "firebrick", "peru", "gold", "goldenrod", "dark olivegreen",
-    "forestgreen", "medium seagreen", "dark slategray", "steelblue",
-    "midnightblue", "dark violet", "purple", "dimgray", "crimson",
-    "sienna", "dark orange", "wheat", "dark khaki", "olivedrab",
-    "seagreen", "light seagreen", "cadetblue", "slategray", "medium blue",
-    "thistle/2", "dark magenta", "gray", "indianred", "red", "sandybrown",
-    "navajowhite", "khaki", "yellowgreen", "dark seagreen",
-    "dark turquoise", "skyblue", "light slategray", "dark slateblue",
-    "blueviolet", "sequoia", "dark gray", "rosybrown", "chocolate",
-    "orange", "moccasin", "palegoldenrod", "chartreuse", "limegreen",
-    "medium aquamarine", "light blue", "dodgerblue", "blue", "dark orchid",
-    "medium violetred", "silver", "light coral", "orangered", "tan",
-    "antiquewhite", "banana", "citron", "light green", "medium turquoise",
-    "powderblue", "cornflowerblue", "rebeccapurple", "medium orchid",
-    "deeppink", "light gray", "salmon", "tomato", "burlywood",
-    "blanchedalmond", "beige", "greenyellow", "lime", "turquoise",
-    "paleturquoise", "deepskyblue", "slateblue", "orchid", "magenta",
-    "gainsboro", "light pink", "coral", "peachpuff", "papayawhip",
-    "yellow", "light goldenrodyellow", "springgreen", "medium springgreen",
-    "cyan", "light steelblue", "medium slateblue", "violet",
-    "palevioletred", "whitesmoke", "pink", "dark salmon", "bisque",
-    "oldlace", "cornsilk", "light yellow", "palegreen", "aquamarine",
-    "light cyan", "light skyblue", "medium purple", "plum", "hotpink",
-    "ghostwhite", "mistyrose", "light salmon", "seashell", "floralwhite",
-    "lemonchiffon", "ivory", "honeydew", "mintcream", "azure", "aliceblue",
-    "lavender", "thistle", "lavenderblush", "white"
-    }
 LandHash *_palettes
 def _get_palette(str name) -> LandArray*:
     if not _palettes:
@@ -665,6 +674,13 @@ def land_palette_color(char const * name, int p) -> LandColor:
         return land_transparent()
     LandColor *col = land_array_get_wrap(pal, p)
     return *col
+
+def land_palette_color_name(char const *name, int p) -> char const*:
+    if land_equals(name, "14x11"):
+        if p < 14 * 11:
+            return _palette_14_x_11_names[p]
+        return None
+    return None
 
 def land_palette_close(char const * name, LandColor orig) -> LandColor:
     auto pal = _get_palette(name)

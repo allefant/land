@@ -91,15 +91,20 @@ class LandGrid:
     int x_cells, y_cells # in cells 
     int cell_w, cell_h # in pixels
     
-    # A scale factor applied to cell_w/cell_h as well as the contents
-    # of the grid.
-    float scale_x, scale_y
+    # A scale factor applied for drawing each individual cell
+    float draw_scale_x, draw_scale_y
+    float draw_offset_x, draw_offset_y
+
     bool wrap
+
+    int stats_drawn
+    bool debug_bounds
 
 static import grid, log, tilegrid, isometric, sprite
 static import global math
 
 def land_grid_draw(LandGrid *self, LandView *view):
+    self.stats_drawn = 0
     self.vt->draw(self, view)
 
 def land_grid_get_cell_at(LandGrid *self, LandView *view, float view_x, view_y,
@@ -131,6 +136,8 @@ def land_grid_initialize(LandGrid *self,
     self.y_cells = y_cells
     self.cell_w = cell_w
     self.cell_h = cell_h
+    self.draw_scale_x = 1
+    self.draw_scale_y = 1
 
 def land_grid_init():
     land_log_message("land_grid_init\n")
@@ -146,3 +153,9 @@ def land_grid_exit():
 
 def land_grid_del(LandGrid *self):
     land_call_method(self, del, (self))
+
+def land_grid_height(LandGrid *self) -> int:
+    return self.y_cells * self.cell_h
+
+def land_grid_width(LandGrid *self) -> int:
+    return self.x_cells * self.cell_w

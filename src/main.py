@@ -37,6 +37,7 @@ int _flip_count
 int _flips_at_tick[256]
 int _flip_tick_i
 char *_land_app_name
+global bool _skip_frames
 
 static def land_exit():
     if not land_active: return
@@ -140,6 +141,10 @@ def land_set_fps(int f):
 
 def land_skip_render(int skip):
     parameters.skip = skip
+
+def land_skip_frames:
+    # deprecated
+    _skip_frames = True
 
 def land_set_display_parameters(int w, int h, int flags):
     """Set the display parameters to use initially.

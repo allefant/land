@@ -39,16 +39,6 @@ class LandImage:
 
     float l, t, r, b # Cut-away left, top, right, bottom. 
 
-# TODO
-class LandSubImage:
-    """
-    A sub-image is an image sharing all of its pixels with some other image. If
-    the other image is changed, then also the sub-image changes.
-    """
-    LandImage super
-    LandImage *parent
-    float x, y, w, h
-
 LandHash *_loaded_cache
 
 static import global string
@@ -760,6 +750,18 @@ def land_image_unclip(LandImage *self):
     self.t = 0
     self.r = 0
     self.b = 0
+
+def land_image_draw_partial_into(LandImage *self, float sx, sy, sw, sh, dx, dy, dw, dh):
+    float l = self.l
+    float t = self.t
+    float r = self.r
+    float b = self.b
+    land_image_clip(self, sx, sy, sx + sw, sy + sh)
+    land_image_draw_scaled(self, dx - sx * dw / sw, dy - sy * dh / sh, dw / sw, dh / sh)
+    self.l = l
+    self.t = t
+    self.r = r
+    self.b = b
 
 def land_image_draw_partial(LandImage *self, float x, y, sx, sy, sw, sh):
     float l = self.l

@@ -660,7 +660,10 @@ def land_filled_triangle(float x0, y0, x1, y1, x2, y2):
     platform_filled_polygon(3, xy)
 
 def land_3d_triangles(int n, LandFloat *xyzrgb):
-    platform_3d_triangles(n, xyzrgb)
+    platform_3d_triangles(n, xyzrgb, None)
+
+def land_3d_triangles_textured(int n, LandFloat *xyzrgbuv, LandImage *image):
+    platform_3d_triangles(n, xyzrgbuv, image)
 
 def land_textured_polygon(LandImage *image, int n, float *xy, *uv):
     platform_textured_polygon(image, n, xy, uv):

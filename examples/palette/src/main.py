@@ -22,6 +22,17 @@ def _tick:
     if land_key_pressed(' '):
         mode += 1
         if mode == 4: mode = 0
+    if land_key_pressed(LandKeyF2):
+        auto f = land_file_new("land.gpl", "wb")
+        land_file_print(f, "GIMP Palette")
+        land_file_print(f, "Name: land")
+        land_file_print(f, "Columns: 14")
+        land_file_print(f, "#")
+        for int j in range(11 * 14):
+            int i = j
+            LandColor c = land_palette_color("14x11", i)
+            land_file_print(f, "%3.0f %3.0f %3.0f %s", c.r * 255, c.g * 255, c.b * 255,
+                land_palette_color_name("14x11", i))
 
 def _draw:
     land_color(0, 0, 0, 1)

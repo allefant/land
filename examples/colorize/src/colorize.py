@@ -62,6 +62,7 @@ static def read_colors():
     land_file_destroy(f)
 
 def _init(LandRunner *self):
+    land_find_data_prefix("data/")
     read_colors()
     image[0][0] = land_image_load("wesnoth/sylph.png")
     image[0][1] = land_image_load("wesnoth/sylph-magic.png")

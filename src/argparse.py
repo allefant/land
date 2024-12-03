@@ -61,9 +61,9 @@ def land_arguments_parse:
         if land_starts_with(arg, "-"):
             LandArgument *a
             if land_starts_with(arg, "--"):
-                a = _find_long(arg + 2)
+                a = _find_long(arg)
             else:
-                a = _find_short(arg + 1)
+                a = _find_short(arg)
             take_value = None
             if a:
                 if a.is_flag:
@@ -71,7 +71,7 @@ def land_arguments_parse:
                 else:
                     take_value = a
             else:
-                print("Unknown argument", arg)
+                print("Unknown argument %s", arg)
             continue
         land_array_add(_g_argp.remain, land_strdup(arg))
     if take_value:

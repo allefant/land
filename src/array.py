@@ -293,6 +293,7 @@ def land_array_clear(LandArray *self):
     """
     Clear all elements in the array.
     """
+    if not self: return
     self.count = 0
 
 def land_array_clear_with_free(LandArray *self):

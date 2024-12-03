@@ -233,7 +233,7 @@ def land_random_f(LandRandom *r, double rmin, rmax) -> double:
 def land_random_repeatable(LandRandom *r, int64_t rmin, rmax) -> int:
     """
     like land_random but without modulo, so when changing range from
-    e.g. 0..50 to 0..100, the same sequence will be repatably twice
+    e.g. 0..50 to 0..100, the same sequence will be repeatably twice
     as large.
     """
     return land_random_f(r, rmin, rmax + 1)

@@ -102,3 +102,86 @@ def land_spiral_reveal(LandImage *cover, float rw, rh, float p):
             land_filled_triangle(cx, cy, x1, y1, x2, y2)
             counter += 1
     land_unset_image_display()
+
+def _gradient_step(LandFloat x) -> LandFloat:
+    if x < 0.5: return 0
+    return 1
+
+def _gradient_circular(LandFloat x) -> LandFloat:
+    return 1 - sqrt(1 - x * x)
+
+def _gradient_square(LandFloat x) -> LandFloat:
+    return x * x
+
+def _gradient_linear(LandFloat x) -> LandFloat:
+    return x
+
+def _gradient_root(LandFloat x) -> LandFloat:
+    return sqrt(x)
+
+def _gradient_circular_inv(LandFloat x) -> LandFloat:
+    return sqrt(1 - (1 - x) * (1 - x))
+
+enum LandGradientType:
+    LandGradientStep
+    LandGradientCircular # slower than square
+    LandGradientSquare # slower than linear
+    LandGradientLinear
+    LandGradientRoot # faster than linear
+    LandGradientCircularInv # faster than root
+
+LandFloat (*_funcs[])(LandFloat) = {
+    _gradient_step,
+    _gradient_circular,
+    _gradient_square,
+    _gradient_linear,
+    _gradient_root,
+    _gradient_circular_inv
+}
+
+def land_image_brush(LandColor color, float radius, LandGradientType lgt) -> LandImage*:
+    int ri = ceil(radius)
+    int w = ri + 1 + ri
+    int h = w
+    LandImage *image = land_image_new(w, h)
+    byte *rgba = land_image_allocate_rgba_data(image)
+    for int yi in range(h):
+        int y = yi - ri
+        for int xi in range(w):
+            int x = xi - ri
+            LandFloat d = sqrt(x * x + y * y) / radius
+            LandFloat a = 1 - _funcs[lgt](d)
+            if a < 0: a = 0
+            byte *p = rgba + 4 * (yi * w + xi)
+            p[0] = color.r * 255 * a
+            p[1] = color.g * 255 * a
+            p[2] = color.b * 255 * a
+            p[3] = color.a * 255 * a
+    land_image_set_rgba_data(image, rgba)
+    land_free(rgba)
+    return image
+
+def land_image_blend_into(LandImage *a, *b, float left_x, left_p, right_x, right_p):
+    """
+    Draw image b over image a, with a blending gradient.
+    """
+    byte *rgba_a = land_image_allocate_rgba_data(a)
+    byte *rgba_b = land_image_allocate_rgba_data(b)
+    (int w, h) = land_image_size(a)
+    int sx = w * left_x
+    int ex = w * right_x
+    for int yi in range(h):
+        for int xi in range(w):
+            float a = (xi - sx) * 1.0 / (ex - sx)
+            if a < 0: a = 0
+            if a > 1: a = 1
+            float p = left_p * (1 - a) + right_p * a
+            byte *pa = rgba_a + 4 * (yi * w + xi)
+            byte *pb = rgba_b + 4 * (yi * w + xi)
+            pa[0] = pa[0] * (1 - p) + pb[0] * p
+            pa[1] = pa[1] * (1 - p) + pb[1] * p
+            pa[2] = pa[2] * (1 - p) + pb[2] * p
+            pa[3] = pa[3] * (1 - p) + pb[3] * p
+    land_image_set_rgba_data(a, rgba_a)
+    land_free(rgba_a)
+    land_free(rgba_b)

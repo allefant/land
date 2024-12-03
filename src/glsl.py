@@ -128,7 +128,9 @@ def land_glsl_shader_load(str name, bool simple) -> LandGLSLShader *:
 
         char *text = land_read_text(path)
         if not text:
-            print("Error: could not find %s", path)
+            char* path2 = land_path_with_prefix(path)
+            print("Error: could not find %s (%s)", path, path2)
+            land_free(path2)
         if i == 0: vertex_glsl = text
         if i == 1: fragment_glsl = text
         land_free(path)

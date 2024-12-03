@@ -3,6 +3,7 @@ import array, display, hash
 import land.color
 
 class LandFont:
+    float load_size
     int size
     double xscaling
     double yscaling
@@ -76,7 +77,7 @@ static def line(int x1, y1, x2, y2):
         int y = fy
         land_filled_rectangle(x, y, x + 1, y + 1)
 
-static def letter(char glyph, str code):
+def _letter(char glyph, str code, int gs, s, float f):
     #            _______
     # |         |        
     # |         |
@@ -87,10 +88,10 @@ static def letter(char glyph, str code):
     # |         |         
     # |         |_______
     #
-    int x = glyph * 16
-    int y = 0
+    float x = glyph * gs
+    float y = 0
     int n = strlen(code)
-    int v[2] = {0, 0}
+    float v[2] = {0, 0}
     int vi = 0
     int vc = 0
     int vs = 0
@@ -98,9 +99,12 @@ static def letter(char glyph, str code):
     land_color(0, 0, 0, 0)
     land_unclip()
     land_blend(LAND_BLEND_SOLID)
-    land_filled_rectangle(x + 1, y + 1, x + 11, y + 12)
-    land_clip(x + 1, y + 1, x + 11, y + 11)
+    int gap = s // 8
+    land_filled_rectangle(x + 1, y + 1, x + 1 + s + gap + 1, y + 1 + s + 3)
+    land_clip(x + 1, y + 1, x + 1 + s + gap + 1, y + 1 + s + 2)
     land_color(1, 1, 1, 1)
+    x += 1.5
+    y += 1.5
     for int i in range(n):
         char c = code[i]
         if c >= '0' and c <= '9':
@@ -113,7 +117,7 @@ static def letter(char glyph, str code):
             if vn:
                 if vs: vc = -vc
                 if vi < 2:
-                    v[vi] = vc
+                    v[vi] = vc * f
                 else:
                     print("ERROR: can only have two parameters")
                 vi++
@@ -124,23 +128,26 @@ static def letter(char glyph, str code):
             y += v[1]
             vi = 0
         elif c == 'l':
-            line(1 + x, 1 + y, 1 + x + v[0], 1 + y + v[1])
+            line(x, y, x + v[0], y + v[1])
             x += v[0]
             y += v[1]
+            vi = 0
+        elif c == 't':
+            line(x, y, x + v[0], y + v[1])
             vi = 0
         elif c == 'c':
             int dx = sgn(v[0])
             int dy = sgn(v[1])
-            line(1 + x, 1 + y, 1 + x + v[0] - dx, 1 + y)
-            line(1 + x + v[0], 1 + y + dy, 1 + x + v[0], 1 + y + v[1])
+            line(x, y, x + v[0] - dx, y)
+            line(x + v[0], y + dy, x + v[0], y + v[1])
             x += v[0]
             y += v[1]
             vi = 0
         elif c == 'd':
             int dx = sgn(v[0])
             int dy = sgn(v[1])
-            line(1 + x, 1 + y, 1 + x, 1 + y + v[1] - dy)
-            line(1 + x + dx, 1 + y + v[1], 1 + x + v[0], 1 + y + v[1])
+            line(x, y, x, y + v[1] - dy)
+            line(x + dx, y + v[1], x + v[0], y + v[1])
             x += v[0]
             y += v[1]
             vi = 0
@@ -152,17 +159,20 @@ static def letter(char glyph, str code):
             if c == '<':
                 nx = -nx
                 ny = -ny
-            line(1 + x, 1 + y, 1 + x + dx + nx, 1 + y + dy + ny)
-            line(1 + x + dx + nx, 1 + y + dy + ny, 1 + x + v[0], 1 + y + v[1])
+            line(x, y, x + dx + nx, y + dy + ny)
+            line(x + dx + nx, y + dy + ny, x + v[0], y + v[1])
             x += v[0]
             y += v[1]
             vi = 0
 
-static def initial_font:
-    LandImage *i = land_image_new(128 * 16, 16)
+def _initial_font(int s) -> LandFont *:
+    int gs = s * 2
+    float f = s / 8.0f
+    LandImage *i = land_image_new(128 * gs, gs)
     land_set_image_display(i)
     land_blend(LAND_BLEND_SOLID) # applies only to the current image
     land_clear(1, 1, 0, 1)
+    macro letter(a, b) _letter(a, b, gs, s, f)
     for int i in range(128): letter(i, "")
     letter('A', "0 8 m 0 -8 l 8 0 l 0 8 l 0 -3 m -8 0 l")
     letter('B', "0 8 l 6 0 l 0 -4 < 0 -4 < -6 0 l 0 4 m 6 0 l")
@@ -194,7 +204,7 @@ static def initial_font:
     letter('b', "1 0 m 0 8 l 3 0 l 3 -3 l -3 -3 l -3 0 l")
     letter('c', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 0 l")
     letter('d', "7 0 m 0 8 l -3 0 l -3 -3 l 3 -3 l 3 0 l")
-    letter('e', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 0 l 0 3 l -4 0 l")
+    letter('e', "7 8 m -3 0 l -3 -3 l 3 -3 l 3 0 l 0 3 l -5 0 l")
     letter('f', "3 0 m 0 8 l -2 -4 m 4 0 l -2 -4 m 4 0 l")
     letter('g', "1 2 m 6 0 l 0 6 l -6 0 l 0 -2 m 6 0 l -6 0 m 0 -4 l")
     letter('h', "1 0 m 0 8 l 0 -6 m 6 0 l 0 6 l")
@@ -222,13 +232,13 @@ static def initial_font:
     letter('%', "0 8 m 8 -8 l -8 0 m 2 0 l 0 2 l -2 0 l 0 -2 l 6 6 m 2 0 l 0 2 l -2 0 l 0 -2 l")
     letter('\\', "8 8 l")
     letter('-', "1 4 m 6 0 l")
-    letter('=', "1 3 m 6 0 l 0 3 m -6 0 l")
+    letter('=', "1 2 m 6 0 l 0 4 m -6 0 l")
     letter('+', "1 4 m 6 0 l -3 -3 m 0 6 l")
     letter('0', "2 0 m 4 0 l 2 2 l 0 4 l -2 2 l -4 0 l -2 -2 l 0 -4 l 2 -2 l")
     letter('1', "2 0 m 2 0 l 0 8 l -4 0 m 8 0 l")
     letter('2', "0 1 m 1 -1 l 6 0 l 1 1 l 0 3 l -8 4 l 8 0 l")
     letter('3', "6 0 l 2 2 l -2 2 l -6 0 l 6 0 m 2 2 l -2 2 l -6 0 l")
-    letter('4', "6 0 m -6 6 l 8 0 l -1 -6 m 0 8 l")
+    letter('4', "6 0 m -6 6 l 8 0 l -2 -6 m 0 8 l")
     letter('5', "7 0 m -7 0 l 0 4 l 6 0 l 2 2 l -2 2 l -6 0 l")
     letter('6', "7 1 m -1 -1 l -4 0 l -2 2 l 0 4 l 2 2 l 4 0 l 2 -2 l -2 -2 l -5 0 l")
     letter('7', "8 0 l -4 8 l")
@@ -243,7 +253,7 @@ static def initial_font:
     letter('{', "6 0 m -2 2 c 0 4 < 2 2 d")
     letter('}', "4 0 m 2 2 c 0 4 > -2 2 d")
     letter('#', "2 0 m 0 8 l 4 0 m 0 -8 l 2 2 m -8 0 l 0 4 m 8 0 l")
-    letter('*', "4 4 m 0 -3 m 0 6 l 3 -1 m -2 -2 l 2 -2 l -6 0 m 2 2 l -2 2 l")
+    letter('*', "4 1 m 0 6 l 0 -4 m 3 3 t -3 3 t 0 2 m 3 -3 t -3 -3 l")
     letter('"', "2 0 m 0 2 l 4 0 m 0 -2 l")
     letter('\'', "4 0 m 0 2 l")
     letter(',', "4 6 m 0 2 l")
@@ -255,12 +265,27 @@ static def initial_font:
     land_unset_image_display()
 
     int r[] = {0, 127}
-    LandFont *f = land_font_from_image(i, 1, r)
-    land_font_state.font = initial = f
+    LandFont *fon = land_font_from_image(i, 1, r)
+    land_font_state.font = fon
     land_image_destroy(i)
+
+    fon.load_size = s
+    return fon
+
+def land_font_size(LandFont *self) -> int:
+    """line height of the font"""
+    return self.size
+
+def land_font_load_size(LandFont *self) -> float:
+    """size parameter passed when loading the font"""
+    return self.load_size
 
 def land_initial_font -> LandFont*:
     return initial
+
+def land_create_builtin_font(int s) -> LandFont*:
+    auto f = _initial_font(s)
+    return f
 
 def land_font_init():
     if active: return
@@ -268,7 +293,7 @@ def land_font_init():
     land_alloc(land_font_state)
     platform_font_init()
     active = 1
-    initial_font()
+    initial = _initial_font(8)
 
 def land_font_exit():
     if not active: return
@@ -299,6 +324,7 @@ def land_font_load(char const *filename, float size) -> LandFont *:
     self.filename = path
     if self.flags & LAND_LOADED:
         land_font_state.font = self
+    self.load_size = size
     return self
 
 def land_font_load_zoom(str filename, float size) -> LandFont *:
@@ -931,25 +957,32 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     if alignment & LandAlignMiddle:
         alignment ^= LandAlignMiddle
         land_font_state.y_pos -= n * fh / 2
+    if alignment & LandAlignBottom:
+        alignment ^= LandAlignBottom
+        land_font_state.y_pos -= n * fh
     land_font_state.y_pos += fh * first
 
     float ew, eh
     land_wordwrap_extents(&ew, &eh)
     float backup_xpos = lfs.x_pos
 
-    float r = land_font_state.background_radius
+    float r = 0
+    if lfs.background:
+        r = land_font_state.background_radius
+
+    if alignment & LandAlignRight:
+        lfs.x_pos -= ew
+        alignment ^= LandAlignRight
 
     if lfs.confine_hor:
         float over = (lfs.x_pos + ew) - (lfs.confine_x + lfs.confine_w)
-        if lfs.background:
-            over += r
         if over > 0:
             lfs.x_pos -= over
+        if lfs.x_pos - r < lfs.confine_x:
+            lfs.x_pos = lfs.confine_x + r
 
     if lfs.confine_ver:
         float over = (lfs.y_pos + eh) - (lfs.confine_y + lfs.confine_h)
-        if lfs.background:
-            over += r
         if over > 0:
             lfs.y_pos -= over # we actually move the text cursor vertically
         if lfs.y_pos < lfs.confine_y:
@@ -958,8 +991,8 @@ def land_print_colored_lines(LandArray *lines, int alignment, LandHash *colors):
     bool restore_background = lfs.background
     if lfs.background:
         lfs.background = False
-        float x = land_font_state.x_pos
-        float y = land_font_state.y_pos
+        float x = lfs.x_pos
+        float y = lfs.y_pos
         LandColor backup = land_color_get()
         land_color_set(land_font_state.background_color)
         float xo = 0, yo = 0
@@ -1010,6 +1043,12 @@ def land_print_multiline_centered(char const *text, ...):
     VPRINT
     auto a = land_text_splitlines(s)
     land_print_lines(a, LandAlignCenter)
+    land_array_destroy_with_strings(a)
+
+def land_print_multiline_right(char const *text, ...):
+    VPRINT
+    auto a = land_text_splitlines(s)
+    land_print_lines(a, LandAlignRight)
     land_array_destroy_with_strings(a)
 
 def land_text_cache_new -> LandTextCache*:

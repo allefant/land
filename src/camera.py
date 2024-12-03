@@ -456,3 +456,7 @@ def land_debug_camera(LandCamera *cam) -> char*:
     land_appendln(&s, "y % .2f,% .2f,% .2f", cam.y.x, cam.y.y, cam.y.z)
     land_append(&s, "z % .2f,% .2f,% .2f", cam.z.x, cam.z.y, cam.z.z)
     return s
+
+def land_camera_flip(LandCamera *cam):
+    cam.x = land_vector_flip(cam.x)
+    cam.z = land_vector_flip(cam.z)

@@ -1,5 +1,7 @@
 import grid, image
 
+#*** "define" DEBUG_GRID
+
 class LandTileGrid:
     LandGrid super
     LandImage **tiles
@@ -15,7 +17,7 @@ def land_tilegrid_new(int cell_w, int cell_h, int x_cells, int y_cells) -> LandG
     land_alloc(self)
     land_grid_initialize(&self.super, cell_w, cell_h, x_cells, y_cells)
     self.super.vt = land_grid_vtable_tilegrid
-    
+
     self.tiles = land_calloc(x_cells * y_cells * sizeof *self->tiles)
     return &self.super
 
@@ -36,9 +38,12 @@ static def land_tilegrid_draw_cell(LandGrid *self, LandView *view,
     LandImage *image = LAND_TILE_GRID(self)->tiles[
         cell_y * self.x_cells + cell_x]
     if image:
-        land_image_draw_scaled(image, pixel_x, pixel_y,
-            view->scale_x, view->scale_y)
-
+        self.stats_drawn += 1
+        land_image_draw_scaled(image,
+            pixel_x + self.draw_offset_x,
+            pixel_y + self.draw_offset_y,
+            view.scale_x * self.draw_scale_x,
+            view.scale_y * self.draw_scale_y)
 
 # Convert a view position inside the grid into cell and pixel position. 
 static def view_x_to_cell_and_pixel_x(LandGrid *self, float view_x, int *cell_x,
@@ -112,6 +117,10 @@ def land_grid_draw_normal(LandGrid *self, LandView *view):
                 break
 
             self.vt->draw_cell(self, view, cell_x, cell_y, pixel_x, pixel_y)
+            *** "ifdef" DEBUG_GRID
+            land_premul(1, 0, 0, .5)
+            land_rectangle(pixel_x + 1, pixel_y + 1, pixel_x + self.cell_w - 2, pixel_y + self.cell_h - 2)
+            *** "endif"
 
 def land_tilemap_init():
     land_log_message("land_tilemap_init\n")

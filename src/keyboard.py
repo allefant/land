@@ -63,6 +63,8 @@ enum LandKeyboardKeys:
     LandKeysCount = 228
 
     LandKeyShift = LandKeysCount + 1
+    LandKeyControl = LandKeysCount + 2
+    LandKeyAlt = LandKeysCount + 3
 
 static int key_state[LandKeysCount]
 static int key_pressed[LandKeysCount]
@@ -85,17 +87,37 @@ def land_keyboard_init():
 def land_key(int k) -> int:
     if k == LandKeyShift:
         return key_state[LandKeyLeftShift] | key_state[LandKeyRightShift]
+    if k == LandKeyControl:
+        return key_state[LandKeyLeftControl] | key_state[LandKeyRightControl]
+    if k == LandKeyAlt:
+        return key_state[LandKeyLeftAlt] | key_state[LandKeyRightAlt]
     return key_state[k]
 
 def land_key_pressed(int k) -> int:
     return key_pressed[k]
 
 def land_shift_pressed(int c) -> int:
+    """
+    Like land_key_pressed, but only works for a-z and A-Z and also
+    checks the status of the shift key pressed (A-Z) or not (a-z).
+    """
     if c >= 'a'and c <= 'z':
         return land_key_pressed(c) and not land_key(LandKeyShift)
     if c >= 'A' and c <= 'Z':
         int k = c - 'A' + 'a'
         return land_key_pressed(k) and land_key(LandKeyShift)
+    return False
+
+def land_key_pressed_with(int k, bool shift, ctrl, alt) -> int:
+    """
+    Like land_key_pressed but also checks modified keys.
+    """
+    
+    if land_key_pressed(k):
+        if shift != (land_key(LandKeyShift) != 0): return False
+        if ctrl != (land_key(LandKeyControl) != 0): return False
+        if alt != (land_key(LandKeyAlt) != 0): return False
+        return True
     return False
 
 def land_keyboard_tick():

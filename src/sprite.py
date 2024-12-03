@@ -7,6 +7,7 @@ macro LAND_SPRITES_GRID(x) ((LandSpritesGrid *)(x))
 
 import array, display, grid, animation
 static import tilegrid, pixelmask
+import land.util2d
 
 #*** "define" DEBUG_MASK
 
@@ -28,7 +29,7 @@ class LandSpriteType:
     float w, h
 
     # How to draw sprites of this type.
-    void (*draw)(LandSprite *self, LandView *view)
+    void (*draw)(LandSprite *self, LandView *view, LandGrid *grid)
     # Sprite-sprite collision detection.
     int (*overlap)(LandSprite *self, LandSprite *other)
     # How to initialize sprites of this type
@@ -52,17 +53,20 @@ class LandSpriteTypeImage:
     LandImage *image
 
 # All sprites of this type share the same animation.
+# must use LandSpriteAnimated sprites
 class LandSpriteTypeAnimation:
     LandSpriteTypeImage super
     LandAnimation *animation
+    int auto_speed
 
 # A simple sprite, with just a position and (optional) rotation.
 class LandSprite:
-    float x, y, angle
+    float x, y, sx, sy, angle
     LandSpriteType *type
     int tag
     bool shown
     bool flipped
+    int sid # can be used by games to identify the kind of sprite
 
 # A sprite with a dynamic image, i.e. each sprite has its own image,
 # independent of its type.
@@ -74,7 +78,6 @@ class LandSpriteWithImage:
 class LandSpriteAnimated:
     LandSprite super
     int frame
-    float sx, sy
     float r, g, b, a
 
 class LandSpritesGrid:
@@ -131,7 +134,7 @@ def land_sprites_grid_del(LandGrid *super):
     land_free(self)
 
 
-static def dummy(LandSprite *self, LandView *view):
+static def dummy(LandSprite *self, LandView *view, LandGrid *grid):
 
     float x = (self.x - view->scroll_x) * view->scale_x + view->x
     float y = (self.y - view->scroll_y) * view->scale_y + view->y
@@ -140,51 +143,74 @@ static def dummy(LandSprite *self, LandView *view):
         y + self.type->h * view->scale_y)
 
 
-static def dummy_image(LandSprite *self, LandView *view):
+static def dummy_image(LandSprite *self, LandView *view, LandGrid *grid):
     LandSpriteTypeImage *image = LAND_SPRITE_TYPE_IMAGE(self.type)
     float x = (self.x - view->scroll_x) * view->scale_x + view->x
     float y = (self.y - view->scroll_y) * view->scale_y + view->y
 
     land_image_draw_scaled_rotated_tinted_flipped(image->image,
-        x, y, view->scale_x, view->scale_y, self.angle,
+        x, y, view->scale_x * self.sx, view->scale_y * self.sy, self.angle,
         view->r, view->g, view->b, view->a, self.flipped)
-    
+
+    if grid.debug_bounds:
+        land_premul(1, 0, 0, .5)
+        float x2 = x - self.type.x
+        float y2 = y - self.type.y
+        land_rectangle(x2 + 1, y2 + 1, x2 + image.super.w - 2, y2 + image.super.h - 2)
+
     *** "ifdef" DEBUG_MASK
     if image->image->mask:
         land_image_debug_pixelmask(image->image, x, y, self.angle, self->flipped)
     *** "endif"
 
 
-static def dummy_animation(LandSprite *self, LandView *view):
+static def dummy_animation(LandSprite *self, LandView *view, LandGrid *grid):
 
     LandSpriteTypeAnimation *animation = (LandSpriteTypeAnimation *)self->type
     LandSpriteAnimated *animated = (LandSpriteAnimated *)self
     float x = (self.x - view->scroll_x) * view->scale_x + view->x
     float y = (self.y - view->scroll_y) * view->scale_y + view->y
+    float sx = self.sx
+    float sy = self.sy
     LandImage *image
     if animation->animation:
-        image = land_animation_get_frame(animation->animation,
-            animated->frame)
+        int f = animated.frame
+        if animation.auto_speed:
+            f = land_get_ticks() // animation.auto_speed
+            int n = land_array_count(animation.animation.frames)
+            if n > 0:
+                f %= n
+        image = land_animation_get_frame(animation->animation, f)
     else:
         image = animation->super.image
     land_image_draw_scaled_rotated_tinted(image, x, y,
-        animated->sx * view->scale_x, animated->sy * view->scale_y, self.angle,
+        sx * view->scale_x, sy * view->scale_y, self.angle,
         animated->r * view->r, animated->g * view->g, animated->b * view->b,
         animated->a * view->b)
     # land_image_draw_scaled_rotated(image, x, y, animated->sx, animated->sy,
     #    self.angle)
+    if grid.debug_bounds:
+        float x2 = x - self.type.x
+        float y2 = y - self.type.y
+        land_premul(1, 0, 1, .5)
+        land_rectangle(x2 + 1, y2 + 1, x2 + self.type.w - 2, y2 + self.type.h - 2)
     *** "ifdef" DEBUG_MASK
     if animation->super.image->mask:
         land_image_debug_pixelmask(animation->super.image, x, y,
             self.angle, self->flipped)
     *** "endif"
 
+def land_sprite_set_frame(LandSprite *self, int frame):
+    LandSpriteAnimated *a = (void *)self
+    a.frame = frame
+
 def land_sprite_initialize(LandSprite *self, LandSpriteType *type):
 
     self.type = type
+    self.sx = 1
+    self.sy = 1
     if self.type->initialize:
         self.type->initialize(self)
-
 
 def land_sprite_new(LandSpriteType *type) -> LandSprite *:
 
@@ -205,8 +231,6 @@ def land_sprite_with_image_new(LandSpriteType *type, LandImage
     self.image = image
     return LAND_SPRITE(self)
 
-
-
 def land_sprite_image_destroy(LandSprite *self):
     pass
 
@@ -215,8 +239,6 @@ def land_sprite_image_initialize(LandSprite *super):
 
 def land_sprite_animated_initialize(LandSprite *super):
     LandSpriteAnimated *self = (void *)super
-    self.sx = 1
-    self.sy = 1
     self.r = 1
     self.g = 1
     self.b = 1
@@ -383,10 +405,10 @@ def land_sprites_grid_get_circle(LandGrid *sprites_grid, float x, y,
 def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
     float l, t, r, b) -> LandList *:
     """
-    Return a list of all sprites in the given rectangle. All the sprites who
-    are in one of the grid cells overlapped by the rectangle are returned.
+    Return a list of all sprites in the given rectangle. All the sprites
+    who overlap one of the grid cells overlapped by the rectangle are
+    returned.
     """
-
     LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
     LandList *retlist = None
     int tl = l / grid->super.cell_w
@@ -400,12 +422,9 @@ def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
     if tb >= grid->super.y_cells: tb = grid->super.y_cells - 1
     grid->tag++
     for ty = tt while ty <= tb with ty++:
-
         for tx = tl while tx <= tr with tx++:
-
             LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
             if list:
-
                 LandListItem *item = list->first
                 while item:
                     LandSprite *other = item->data
@@ -415,6 +434,52 @@ def land_sprites_grid_get_rectangle(LandGrid *sprites_grid,
                     item = item->next
 
     return retlist
+
+def land_sprites_grid_get_rectangle_exact(LandGrid *sprites_grid,
+        float l, t, r, b) -> LandList *:
+    LandList *retlist = None
+    land_sprites_grid_get_rectangle_exact_into_list(sprites_grid, l, t, r, b, &retlist)
+    return retlist
+
+def land_sprites_grid_get_rectangle_exact_into_list(LandGrid *sprites_grid,
+        float l, t, r, b, LandList **retlist) -> bool:
+    LandRectangle qrect = {l, t, r - l, b - t}
+    LandSpritesGrid *grid = LAND_SPRITES_GRID(sprites_grid)
+    if retlist:
+        *retlist = None
+    int tl = l / grid->super.cell_w
+    int tt = t / grid->super.cell_h
+    int tr = r / grid->super.cell_w
+    int tb = b / grid->super.cell_h
+    int tx, ty
+    if tl < 0: tl = 0
+    if tt < 0: tt = 0
+    if tr >= grid->super.x_cells: tr = grid->super.x_cells - 1
+    if tb >= grid->super.y_cells: tb = grid->super.y_cells - 1
+    grid->tag++
+    for ty = tt while ty <= tb with ty++:
+        for tx = tl while tx <= tr with tx++:
+            LandList *list = grid->sprites[ty * grid->super.x_cells + tx]
+            if list:
+                LandListItem *item = list->first
+                while item:
+                    LandSprite *other = item->data
+                    if other->tag != grid->tag:
+                        other->tag = grid->tag
+    
+                        LandRectangle srect = land_sprite_rect(other)
+                            
+                        if land_rectangles_overlap(qrect, srect):
+                            if retlist:
+                                land_add_list_data(retlist, other)
+                            else:
+                                return True
+                    item = item->next
+    return False
+
+def land_sprite_rect(LandSprite *self) -> LandRectangle:
+    return (LandRectangle){self.x - self.type.x, self.y - self.type.y,
+        self.type.w, self.type.h}
 
 def land_sprites_grid_get_in_cell(LandGrid *grid,
     int cx, cy) -> LandList *:
@@ -610,7 +675,8 @@ def land_sprites_grid_draw_cell(LandSpritesGrid *self, LandView *view,
 
             LandSprite *sprite = item->data
             if sprite->tag != self.tag:
-                sprite->type->draw(sprite, view)
+                self.super.stats_drawn += 1
+                sprite->type->draw(sprite, view, &self.super)
                 sprite->tag = self.tag
 
             item = item->next
@@ -688,6 +754,7 @@ def land_spritetype_image_initialize(LandSpriteType *super,
 
 # Create a new image sprite type with the given image. The source clipping of
 # the image is honored.
+# Ownership of the image is transferred.
 def land_spritetype_image_new(LandImage *image, bool mask,
     int n) -> LandSpriteType *:
 
@@ -737,3 +804,7 @@ def land_spritetype_animation_destroy(LandSpriteType *base):
     LandSpriteTypeAnimation *self = LAND_SPRITE_TYPE_ANIMATION(base)
     if self.animation: land_animation_destroy(self->animation)
 
+def land_spritetype_animation_get_animation(LandSpriteType *base) -> LandAnimation *:
+
+    LandSpriteTypeAnimation *self = LAND_SPRITE_TYPE_ANIMATION(base)
+    return self.animation

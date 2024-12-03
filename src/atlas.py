@@ -2,6 +2,7 @@ import common
 import image
 import hash
 import array
+import animation
 
 static class LandAtlasSprite:
     int x, y, w, h, ox, oy, ow, oh
@@ -81,15 +82,21 @@ def land_atlas_load_all(LandAtlas *self):
 static def atlas_load_picture(LandAtlas *self, char const *filename) -> LandAtlasSprite *:
     return land_hash_get(self.sprites, filename)
     
-def land_atlas_image_create(LandAtlas *self, char const *filename) -> LandImage*:
+def land_atlas_image_create_flags(LandAtlas *self, char const *filename, int flags) -> LandImage*:
     LandAtlasSprite *sprite = atlas_load_picture(self, filename)
     if not sprite:
         land_log_message("Could not find picture %s in atlas %s\n", filename, self.filename)
         return None
     LandImage *image = land_image_sub(sprite.sheet.image, sprite.x, sprite.y,
         sprite.w, sprite.h)
-    land_image_offset(image, -sprite.ox, -sprite.oy)
+    if flags & LAND_IMAGE_CENTER:
+        land_image_offset(image, -sprite.ox + sprite.ow / 2, -sprite.oy + sprite.oh / 2)
+    else:
+        land_image_offset(image, -sprite.ox, -sprite.oy)
     return image
+
+def land_atlas_image_create(LandAtlas *self, char const *filename) -> LandImage*:
+    return land_atlas_image_create_flags(self, filename, 0)
 
 def land_atlas_image_original_size(LandAtlas *self, char const *filename, int *w, *h) -> bool:
     LandAtlasSprite *sprite = atlas_load_picture(self, filename)
@@ -97,3 +104,30 @@ def land_atlas_image_original_size(LandAtlas *self, char const *filename, int *w
     *w = sprite.ow
     *h = sprite.oh
     return True
+
+def land_atlas_animation_create_fixed_count(LandAtlas *self, str pattern, int flags, count) -> LandAnimation*:
+    # example: land_atlas_animation_create(atlas, "elephant_%04d.png", center)
+    char *first = land_str(pattern, 1)
+    LandArray *frames = None
+    for str key in LandHashKeys *self.sprites:
+        if land_equals(key, first):
+            int f = 1
+            while True:
+                char *name = land_str(pattern, f)
+                f += 1
+                auto frame = land_atlas_image_create_flags(self, name, flags)
+                land_free(name)
+                if count == 0 and not frame:
+                    break
+                if not frames: frames = land_array_new()
+                land_array_add(frames, frame) # even if frame is None
+                if count > 0 and f == count + 1:
+                    break
+            break
+    land_free(first)
+    if not frames:
+        return None
+    return land_animation_new(frames)
+
+def land_atlas_animation_create(LandAtlas *self, str pattern, int flags) -> LandAnimation*:
+    return land_atlas_animation_create_fixed_count(self, pattern, flags, 0)

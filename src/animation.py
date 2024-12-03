@@ -4,6 +4,8 @@ static import main
 class LandAnimation:
     float fps
     LandArray *frames
+    int n
+    int auto_ticks
 
 static import animation, mem
 
@@ -102,13 +104,34 @@ def land_animation_load_async(LandAnimation* self):
     for LandImage* image in LandArray* self.frames:
         land_image_load_async(image)
 
-def land_animation_draw(LandAnimation* self, float x, y, int f):
+def _get_frame_num(LandAnimation *self, int f) -> int:
     int n = land_animation_length(self)
-    f %= n
-    land_animation_draw_frame(self, f, x, y)
+    if n == 5 and self.n == 8:
+        f %= 8
+        if f >= 5:
+            f = 8 - f
+    else:
+        f %= n
+    return f
+
+def land_animation_draw(LandAnimation* self, float x, y, int f):
+    int i = _get_frame_num(self, f)
+    land_animation_draw_frame(self, i, x, y)
 
 def land_animation_draw_scaled(LandAnimation* self, float x, y, sx, sy, int f):
-    int n = land_animation_length(self)
-    f %= n
-    LandImage *frame = land_animation_get_frame(self, f)
+    int i = _get_frame_num(self, f)
+    LandImage *frame = land_animation_get_frame(self, i)
     land_image_draw_scaled(frame, x, y, sx, sy)
+
+def land_animation_draw_scaled_rotated_tinted_flipped(LandAnimation* self, float x, y, sx, sy,
+        float angle, float r, float g, float b, float alpha, bool flipped, int f):
+    int i = _get_frame_num(self, f)
+    LandImage *frame = land_animation_get_frame(self, i)
+    land_image_draw_scaled_rotated_tinted_flipped(frame, x, y, sx, sy, angle, 1, 1, 1, 1, flipped)
+
+def land_animation_set_frames_count(LandAnimation *self, int n):
+    self.n = n
+
+def land_animation_shift(LandAnimation *self, float x, y):
+    for LandImage* image in LandArray* self.frames:
+        land_image_shift(image, x, y)

@@ -99,7 +99,7 @@ string(COMPARE NOTEQUAL "${EMSCRIPTEN}" "" EMSCRIPTEN)
 function(target_libraries extra)
   target_link_libraries(${libname}${extra}
     ${ALLEGRO}
-    #${ALLEGRO_MAIN}
+    ${ALLEGRO_MAIN}
     ${ALLEGRO_FONT}
     ${ALLEGRO_PRIMITIVES}
     ${ALLEGRO_AUDIO}
