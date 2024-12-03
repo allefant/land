@@ -110,6 +110,7 @@ def uncheck_blending: platform_uncheck_blending()
 
 def platform_display_set():
     SELF
+    if land_get_app_name(): al_set_new_window_title(land_get_app_name())
     int f = 0
     if self->a5:
         # FIXME: check for changed parameters
@@ -539,21 +540,28 @@ def platform_filled_polygon_with_holes(int n, float *xy, int *holes):
         holes, self->c)
     uncheck_blending()
 
-def platform_3d_triangles(int n, LandFloat *xyzrgb):
+def platform_3d_triangles(int n, LandFloat *xyzrgb, LandImage *image):
+    LandImagePlatform *pim = (void *)image
     ALLEGRO_VERTEX v[n]
+    int stride = 6
+    if image: stride = 8
     for int i in range(n):
-        LandFloat *f = xyzrgb + i * 6
+        LandFloat *f = xyzrgb + i * stride
         v[i].x = f[0]
         v[i].y = f[1]
         v[i].z = f[2]
-        v[i].u = 0
-        v[i].v = 0
+        if image:
+            v[i].u = f[6]
+            v[i].v = f[7]
+        else:
+            v[i].u = 0
+            v[i].v = 0
         v[i].color.r = f[3]
         v[i].color.g = f[4]
         v[i].color.b = f[5]
         v[i].color.a = 1
     check_blending_and_transform()
-    al_draw_prim(v, None, None, 0, n, ALLEGRO_PRIM_TRIANGLE_LIST)
+    al_draw_prim(v, None, pim.a5 if pim else None, 0, n, ALLEGRO_PRIM_TRIANGLE_LIST)
     uncheck_blending()
 
 def platform_plot(float x, y):

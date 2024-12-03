@@ -170,16 +170,23 @@ def platform_image_draw_scaled_rotated_tinted_flipped(LandImage *super, float x,
             restore = True
 
     int flags = 0
-    if flip == 1 or flip == 3: flags |= ALLEGRO_FLIP_HORIZONTAL
-    if flip == 2 or flip == 3: flags |= ALLEGRO_FLIP_VERTICAL
+    int iw = super->width - super->l - super->r
+    int ih = super->height - super->t - super->b
+    int ix = super.x - super.l
+    int iy = super.y - super.t
+    if flip == 1 or flip == 3:
+        flags |= ALLEGRO_FLIP_HORIZONTAL
+        ix = iw - ix
+    if flip == 2 or flip == 3:
+        flags |= ALLEGRO_FLIP_VERTICAL
+        iy = ih - iy
 
     ALLEGRO_COLOR tint = al_map_rgba_f(r, g, b, alpha)
 
     al_draw_tinted_scaled_rotated_bitmap_region(self->a5,
         super->l, super->t,
-        super->width - super->l - super->r,
-        super->height - super->t - super->b,
-        tint, super->x - super->l, super->y - super->t,
+        iw, ih,
+        tint, ix, iy,
         x, y, sx, sy, -angle, flags)
 
     if restore:

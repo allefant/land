@@ -278,6 +278,7 @@ def platform_frame:
         if redraw and (_land_synchronized or
                 al_event_queue_is_empty(queue)):
             platform_trigger_redraw()
+            _skip_frames = False
 
         while True:
             ALLEGRO_EVENT event
@@ -294,8 +295,9 @@ def platform_frame:
                     break
                 case ALLEGRO_EVENT_TIMER:
                     if not _land_halted:
-                        land_tick()
-                        _land_frames++
+                        if not _skip_frames:
+                            land_tick()
+                            _land_frames++
                         redraw = True
                     break
                 case ALLEGRO_EVENT_KEY_DOWN:
